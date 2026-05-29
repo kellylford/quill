@@ -6,9 +6,10 @@ import pytest
 
 from quill.core.a11y_regions import RegionTracker
 from quill.core.document import Document
-from quill.core.epub import EpubBook, EpubChapter
+from quill.core.epub import EpubBook, EpubChapter, EpubHeading
 from quill.core.features import FEATURE_DEFINITIONS, feature_for_command
 from quill.core.locations import LocationRing
+from quill.core.spellcheck import Misspelling
 from quill.ui.main_frame import MainFrame
 
 
@@ -377,6 +378,7 @@ def test_build_outline_navigator_nodes_tracks_heading_hierarchy() -> None:
     assert [node.label for node in nodes] == ["Title", "Next"]
     assert [node.label for node in nodes[0].children] == ["Child"]
     assert "## Child" in nodes[0].children[0].preview
+    assert nodes[0].children[0].action_label == "Jump to Heading"
 
 
 def test_build_epub_navigator_nodes_uses_chapter_titles_and_preview() -> None:
@@ -384,7 +386,12 @@ def test_build_epub_navigator_nodes_uses_chapter_titles_and_preview() -> None:
     book = EpubBook(
         title="Sample Book",
         chapters=(
-            EpubChapter(title="One", href="one.xhtml", text="First chapter"),
+            EpubChapter(
+                title="One",
+                href="one.xhtml",
+                text="Heading First chapter",
+                headings=(EpubHeading(level=1, title="Heading"),),
+            ),
             EpubChapter(title="Two", href="two.xhtml", text="Second chapter"),
         ),
     )
@@ -392,8 +399,46 @@ def test_build_epub_navigator_nodes_uses_chapter_titles_and_preview() -> None:
     nodes = frame._build_epub_navigator_nodes(book)
 
     assert [node.label for node in nodes] == ["One", "Two"]
-    assert nodes[0].payload == 0
+    assert nodes[0].action_label == "Open Chapter"
+    assert nodes[0].children[0].label == "Heading"
+    assert nodes[0].children[0].action_label == "Jump to Heading"
     assert "First chapter" in nodes[0].preview
+
+
+def test_find_heading_position_returns_matching_heading_offset() -> None:
+    frame = _build_frame("# EPUB", insertion_point=0)
+    chapter_text = "# Chapter\n\nIntro text Heading body\n"
+
+    position = frame._find_heading_position(chapter_text, "Heading", 0)
+
+    assert position == chapter_text.index("Heading")
+
+
+def test_build_misspelling_navigator_nodes_uses_line_and_column() -> None:
+    frame = _build_frame("hello\nwrng word\n", insertion_point=0)
+    nodes = frame._build_misspelling_navigator_nodes(
+        [Misspelling(word="wrng", start=6, end=10)]
+    )
+
+    assert nodes[0].label == "wrng (Ln 2, Col 1)"
+    assert nodes[0].action_label == "Jump to Occurrence"
+    assert "wrng word" in nodes[0].preview
+
+
+def test_open_misspelling_list_jumps_to_selected_occurrence(monkeypatch: pytest.MonkeyPatch) -> None:
+    frame = _build_frame("hello\nwrng word\n", insertion_point=0)
+    item = Misspelling(word="wrng", start=6, end=10)
+    frame._spell_dictionary = lambda: {"hello", "word"}  # type: ignore[method-assign]
+    frame._show_tree_navigator = lambda **_kwargs: item  # type: ignore[method-assign]
+    monkeypatch.setattr(
+        "quill.ui.main_frame.list_misspellings",
+        lambda _text, _dictionary: [item],
+    )
+
+    frame.open_misspelling_list()
+
+    assert frame.editor.GetInsertionPoint() == 6
+    assert frame.editor.selection == (6, 10)
 
 
 def test_save_all_files_calls_save_file() -> None:

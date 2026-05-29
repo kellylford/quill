@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 if TYPE_CHECKING:  # imports kept out of cold-start path
-    from quill.core.epub import EpubBook
+    from quill.core.epub import EpubBook, EpubChapter
 
 from quill import __version__
 from quill.core import thesaurus as thesaurus_engine
@@ -138,6 +138,7 @@ from quill.core.sessions import (
 )
 from quill.core.settings import STATUS_BAR_ITEMS, load_settings, save_settings
 from quill.core.spellcheck import (
+    Misspelling,
     add_word_to_scope,
     list_misspellings,
     load_combined_dictionary,
@@ -203,7 +204,14 @@ class _NavigatorNode:
     label: str
     preview: str
     payload: object
+    action_label: str
     children: list[_NavigatorNode]
+
+
+@dataclass(frozen=True, slots=True)
+class _EpubNavigatorTarget:
+    chapter_index: int
+    heading_index: int | None = None
 
 
 @dataclass(slots=True)
@@ -720,6 +728,12 @@ class MainFrame:
             "Next Misspelling",
             self.next_misspelling,
             self._binding_for("tools.next_misspelling"),
+        )
+        self.commands.register(
+            "tools.misspelling_list",
+            "Misspelling List...",
+            self.open_misspelling_list,
+            self._binding_for("tools.misspelling_list"),
         )
         self.commands.register(
             "tools.thesaurus",
@@ -1978,6 +1992,7 @@ class MainFrame:
         self._id_word_count = wx.NewIdRef()
         self._id_spell_check = wx.NewIdRef()
         self._id_next_misspelling = wx.NewIdRef()
+        self._id_misspelling_list = wx.NewIdRef()
         self._id_dictionary_status = wx.NewIdRef()
         self._id_epub_navigator = wx.NewIdRef()
         self._id_ocr_image = wx.NewIdRef()
@@ -2054,6 +2069,10 @@ class MainFrame:
         tools_menu.Append(
             self._id_next_misspelling,
             self._menu_label("Next &Misspelling", "tools.next_misspelling"),
+        )
+        tools_menu.Append(
+            self._id_misspelling_list,
+            self._menu_label("&Misspelling List...", "tools.misspelling_list"),
         )
         self._id_thesaurus = wx.NewIdRef()
         tools_menu.Append(
@@ -2689,6 +2708,11 @@ class MainFrame:
         )
         self.frame.Bind(
             wx.EVT_MENU,
+            lambda _e: self.open_misspelling_list(),
+            id=self._id_misspelling_list,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
             lambda _e: self.show_thesaurus(),
             id=self._id_thesaurus,
         )
@@ -2996,6 +3020,7 @@ class MainFrame:
             "tools.word_count": self._id_word_count,
             "tools.spell_check_dialog": self._id_spell_check,
             "tools.next_misspelling": self._id_next_misspelling,
+            "tools.misspelling_list": self._id_misspelling_list,
             "tools.thesaurus": self._id_thesaurus,
             "tools.dictionary_status": self._id_dictionary_status,
             "tools.epub_navigator": self._id_epub_navigator,
@@ -6301,7 +6326,6 @@ class MainFrame:
             title="Outline Navigator",
             root_label="Headings",
             nodes=nodes,
-            open_label="Jump to Heading",
         )
         if not isinstance(selected, OutlineEntry):
             self._set_status("Outline navigation cancelled")
@@ -6384,6 +6408,7 @@ class MainFrame:
                 label=entry.title,
                 preview=preview,
                 payload=entry,
+                action_label="Jump to Heading",
                 children=[],
             )
             while stack and stack[-1][0] >= entry.level:
@@ -6396,15 +6421,66 @@ class MainFrame:
         return roots
 
     def _build_epub_navigator_nodes(self, book: EpubBook) -> list[_NavigatorNode]:
-        return [
-            _NavigatorNode(
+        roots: list[_NavigatorNode] = []
+        for chapter_index, chapter in enumerate(book.chapters):
+            chapter_node = _NavigatorNode(
                 label=chapter.title,
-                preview=f"# {chapter.title}\n\n{chapter.text}\n",
-                payload=index,
+                preview=self._render_epub_chapter_text(chapter),
+                payload=_EpubNavigatorTarget(chapter_index=chapter_index),
+                action_label="Open Chapter",
                 children=[],
             )
-            for index, chapter in enumerate(book.chapters)
-        ]
+            heading_stack: list[tuple[int, _NavigatorNode]] = []
+            for heading_index, heading in enumerate(chapter.headings):
+                heading_node = _NavigatorNode(
+                    label=heading.title,
+                    preview=self._render_epub_heading_preview(chapter, heading.title),
+                    payload=_EpubNavigatorTarget(
+                        chapter_index=chapter_index,
+                        heading_index=heading_index,
+                    ),
+                    action_label="Jump to Heading",
+                    children=[],
+                )
+                while heading_stack and heading_stack[-1][0] >= heading.level:
+                    heading_stack.pop()
+                if heading_stack:
+                    heading_stack[-1][1].children.append(heading_node)
+                else:
+                    chapter_node.children.append(heading_node)
+                heading_stack.append((heading.level, heading_node))
+            roots.append(chapter_node)
+        return roots
+
+    def _render_epub_chapter_text(self, chapter: EpubChapter) -> str:
+        return f"# {chapter.title}\n\n{chapter.text}\n"
+
+    def _render_epub_heading_preview(self, chapter: EpubChapter, heading_title: str) -> str:
+        return f"# {chapter.title}\n\n## {heading_title}\n\n{chapter.text}\n"
+
+    def _build_misspelling_navigator_nodes(
+        self,
+        misspellings: list[Misspelling],
+    ) -> list[_NavigatorNode]:
+        text = self.editor.GetValue()
+        nodes: list[_NavigatorNode] = []
+        for item in misspellings:
+            line, column = line_column_for_position(text, item.start)
+            line_start = text.rfind("\n", 0, item.start) + 1
+            line_end = text.find("\n", item.end)
+            if line_end == -1:
+                line_end = len(text)
+            excerpt = text[line_start:line_end].strip() or item.word
+            nodes.append(
+                _NavigatorNode(
+                    label=f'{item.word} (Ln {line}, Col {column})',
+                    preview=f'Line {line}, Column {column}\n\n{excerpt}',
+                    payload=item,
+                    action_label="Jump to Occurrence",
+                    children=[],
+                )
+            )
+        return nodes
 
     def _show_tree_navigator(
         self,
@@ -6412,7 +6488,6 @@ class MainFrame:
         title: str,
         root_label: str,
         nodes: list[_NavigatorNode],
-        open_label: str,
     ) -> object | None:
         wx = self._wx
         dialog = wx.Dialog(self.frame, title=title, size=(900, 620))
@@ -6442,10 +6517,9 @@ class MainFrame:
             preview.ChangeValue(nodes[0].preview)
 
         buttons = dialog.CreateButtonSizer(wx.OK | wx.CANCEL)
+        ok_button = None
         if buttons is not None:
-            ok = buttons.FindWindowById(wx.ID_OK)
-            if ok is not None:
-                ok.SetLabel(open_label)
+            ok_button = buttons.FindWindowById(wx.ID_OK)
         layout = wx.BoxSizer(wx.VERTICAL)
         layout.Add(splitter, 1, wx.EXPAND | wx.ALL, 8)
         if buttons is not None:
@@ -6461,6 +6535,8 @@ class MainFrame:
 
         collect(nodes)
         selected_payload = nodes[0].payload if nodes else None
+        if ok_button is not None and nodes:
+            ok_button.SetLabel(nodes[0].action_label)
 
         def on_select(event: object) -> None:
             nonlocal selected_payload
@@ -6468,7 +6544,10 @@ class MainFrame:
             payload = item_payloads.get(item)
             if payload in node_by_payload:
                 selected_payload = payload
-                preview.ChangeValue(node_by_payload[payload].preview)
+                node = node_by_payload[payload]
+                preview.ChangeValue(node.preview)
+                if ok_button is not None:
+                    ok_button.SetLabel(node.action_label)
             event.Skip()
 
         tree.Bind(wx.EVT_TREE_SEL_CHANGED, on_select)
@@ -6639,6 +6718,28 @@ class MainFrame:
             self._set_status("Spell check reviewed")
             return
         self._add_word_to_dictionary_scope(item.word, scope)
+
+    def open_misspelling_list(self) -> None:
+        dictionary = self._spell_dictionary()
+        misspellings = list_misspellings(self.editor.GetValue(), dictionary)
+        if not misspellings:
+            self._set_status("No misspellings found")
+            return
+        nodes = self._build_misspelling_navigator_nodes(misspellings)
+        selected = self._show_tree_navigator(
+            title="Misspelling List",
+            root_label="Misspellings",
+            nodes=nodes,
+        )
+        if not isinstance(selected, Misspelling):
+            self._set_status("Misspelling list cancelled")
+            return
+        self._record_location_before_jump()
+        self.editor.SetInsertionPoint(selected.start)
+        self.editor.SetSelection(selected.start, selected.end)
+        self.editor.SetFocus()
+        self._location_ring.record(selected.start)
+        self._set_status(f'Jumped to misspelling "{selected.word}"')
 
     def next_misspelling(self) -> None:
         dictionary = self._spell_dictionary()
@@ -6839,22 +6940,60 @@ class MainFrame:
             title=f"Navigator - {book.title}",
             root_label=book.title,
             nodes=nodes,
-            open_label="Open Chapter in Editor",
         )
-        if not isinstance(selected, int) or selected < 0 or selected >= len(book.chapters):
+        if not isinstance(selected, _EpubNavigatorTarget):
             self._set_status("Closed EPUB Navigator")
             return
-        chapter = book.chapters[selected]
-        chapter_text = f"# {chapter.title}\n\n{chapter.text}\n"
+        chapter_index = selected.chapter_index
+        if chapter_index < 0 or chapter_index >= len(book.chapters):
+            self._set_status("Closed EPUB Navigator")
+            return
+        chapter = book.chapters[chapter_index]
+        chapter_text = self._render_epub_chapter_text(chapter)
         self._create_document_tab(
             Document(text=chapter_text, path=None, modified=False),
             select=True,
         )
-        self.editor.SetInsertionPoint(0)
-        self.editor.SetSelection(0, 0)
+        target_position = 0
+        status = (
+            f'Opened chapter "{chapter.title}" from EPUB navigator'
+        )
+        if (
+            selected.heading_index is not None
+            and 0 <= selected.heading_index < len(chapter.headings)
+        ):
+            heading = chapter.headings[selected.heading_index]
+            target_position = self._find_heading_position(
+                chapter_text,
+                heading.title,
+                selected.heading_index,
+            )
+            status = (
+                f'Jumped to heading "{heading.title}" '
+                f'in chapter "{chapter.title}"'
+            )
+        self.editor.SetInsertionPoint(target_position)
+        self.editor.SetSelection(target_position, target_position)
         self.editor.SetFocus()
         self._refresh_title()
-        self._set_status(f'Opened chapter "{chapter.title}" from EPUB navigator')
+        self._set_status(status)
+
+    def _find_heading_position(
+        self,
+        chapter_text: str,
+        heading_title: str,
+        heading_index: int,
+    ) -> int:
+        occurrences = 0
+        search_from = 0
+        while True:
+            position = chapter_text.find(heading_title, search_from)
+            if position == -1:
+                return 0
+            if occurrences == heading_index:
+                return position
+            occurrences += 1
+            search_from = position + len(heading_title)
 
     def toggle_read_aloud(self) -> None:
         wx = self._wx

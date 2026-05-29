@@ -418,6 +418,7 @@ def feature_for_command(command_id: str) -> str:
         "tools.word_count": "core.analysis",
         "tools.spell_check_dialog": "core.spellcheck",
         "tools.next_misspelling": "core.spellcheck",
+        "tools.misspelling_list": "core.spellcheck",
         "tools.dictionary_status": "core.spellcheck",
         "tools.epub_navigator": "core.navigate",
         "tools.ocr_image": "core.ocr",
