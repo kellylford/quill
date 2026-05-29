@@ -127,8 +127,10 @@ def build_windows_distribution(
     resolved_source_root = source_root or Path(".")
     portable_dir = output_dir / "portable"
     installer_dir = output_dir / "installer"
+    reference_installer_dir = pyproject.parent / "installer"
     portable_dir.mkdir(parents=True, exist_ok=True)
     installer_dir.mkdir(parents=True, exist_ok=True)
+    reference_installer_dir.mkdir(parents=True, exist_ok=True)
 
     launcher = portable_dir / "run-quill.cmd"
     launcher.write_text(_render_launcher_script(), encoding="utf-8")
@@ -162,10 +164,10 @@ def build_windows_distribution(
     write_json_atomic(manifest_path, manifest)
 
     installer_script = installer_dir / "quill.iss"
-    installer_script.write_text(
-        build_inno_setup_script(version=version),
-        encoding="utf-8",
-    )
+    reference_installer_script = reference_installer_dir / "quill.iss"
+    installer_script_text = build_inno_setup_script(version=version)
+    installer_script.write_text(installer_script_text, encoding="utf-8")
+    reference_installer_script.write_text(installer_script_text, encoding="utf-8")
 
     python_runtime_dir: Path | None = None
     if bundle_python:
@@ -178,6 +180,7 @@ def build_windows_distribution(
     result = {
         "portable_dir": str(portable_dir),
         "installer_script": str(installer_script),
+        "reference_installer_script": str(reference_installer_script),
     }
     if python_runtime_dir is not None:
         result["python_runtime"] = str(python_runtime_dir)
@@ -339,7 +342,7 @@ def build_inno_setup_script(version: str) -> str:
         "VersionInfoDescription={#AppName} accessible writing environment",
         "DefaultDirName={autopf}\\{#AppName}",
         "DefaultGroupName={#AppName}",
-        "DisableDirPage=auto",
+        "DisableDirPage=no",
         "DisableProgramGroupPage=auto",
         "AllowNoIcons=yes",
         "PrivilegesRequired=lowest",
@@ -355,6 +358,7 @@ def build_inno_setup_script(version: str) -> str:
         "UninstallDisplayName={#AppName} {#AppVersion}",
         "UninstallDisplayIcon={app}\\{#AppExeName}",
         "LicenseFile=..\\..\\LICENSE",
+        "InfoAfterFile=..\\portable\\README.txt",
         "SetupLogging=yes",
         "",
         "[Languages]",

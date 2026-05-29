@@ -35,7 +35,7 @@ Quill diagnostics are a user-exported bundle for support and bug triage. The bun
 2. Quill previews included artifacts and redaction rules.
 3. User confirms output path.
 4. Quill writes `quill-diagnostics-YYYYMMDD-HHMMSS.zip`.
-5. User attaches the zip to a GitHub issue or support ticket.
+5. User attaches the zip to the Community Access support form or another support ticket if requested.
 
 ## Triage checklist
 

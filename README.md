@@ -32,6 +32,12 @@ Today Quill can detect or bundle tools such as:
 
 The External Tools and Format Support dialog explains what each tool unlocks, whether Quill can already see it, and which wizard or workflow is the best first touch point.
 
+## Feedback Path
+
+The primary support and feedback route for Quill 0.1 Beta is inside Quill itself.
+
+Use **Help -> Save Diagnostics...** when you want to create a reviewable diagnostics bundle, then use **Help -> Report a Bug...** to open Quill's guided report summary and handoff into the Community Access support form.
+
 ## Key Documents
 
 User-facing and release-facing documentation lives in `docs/`:

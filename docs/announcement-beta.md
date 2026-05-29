@@ -73,15 +73,21 @@ If something feels rough, that feedback is valuable. If something delights you, 
 
 We want the beta feedback path to be inclusive and low-friction.
 
-Inside Quill 0.1 Beta, that process now starts in the Help menu. `Save Diagnostics...` opens an in-app review screen before writing the zip, and `Report a Bug...` opens an in-app review screen before launching the Community Access support form. That gives users one last chance to confirm what is being shared instead of treating support like a blind jump into the browser.
+Inside Quill 0.1 Beta, the primary feedback path starts in the Help menu.
 
-GitHub issues are useful for testers who already use GitHub, but they should not be the only way people can report problems. Before the broadest public beta push, Quill should have a secure no-login feedback route with optional diagnostics upload.
+If you want to report a problem, Quill now guides you through it like this:
 
-In the meantime, Quill is moving toward a more humane support story: diagnostics can be packaged locally, support information can be reviewed before it leaves the machine, and the broader Community Access support-hub model can give the project a better route than forcing every tester into a raw GitHub issue workflow.
+1. Open **Help -> Save Diagnostics...** if you want a support bundle.
+2. Review the diagnostics summary in Quill and decide whether to include plain file paths.
+3. Save the diagnostics zip somewhere easy to find, such as your Desktop or Downloads folder.
+4. Open **Help -> Report a Bug...**.
+5. Review the in-app support summary that Quill prepares for you.
+6. Choose **Open Support Form** to open the Community Access support page.
+7. Describe what happened in plain language and attach the diagnostics zip if it will help.
 
-Even before the final support route lands, Quill 0.1 Beta now ships a stronger intermediate experience: local diagnostics packaging, an in-app bug-report review step, a support-oriented launch point, and clearer documentation about what each feedback path is for.
+That is the intended user route. It keeps the work inside Quill for as long as possible, explains what is being shared, and gives the user a clearer handoff into the Community Access support process.
 
-Until that path is fully published, treat GitHub as the optional technical route rather than the only official route.
+There is still room to improve this over time, especially around future no-login upload flows, but the important point for Quill 0.1 Beta is that users should start in **Help**, not by hunting for a GitHub page.
 
 ## Thank you for trying Quill
 

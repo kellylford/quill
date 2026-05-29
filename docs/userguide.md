@@ -421,6 +421,21 @@ The **Help** menu is where Quill becomes a guide.
 
 If you only remember one thing about Help, remember this: it is a working surface, not a dead-end menu. The welcome guide teaches the basics, the keyboard reference reflects your live bindings, the user guide gives the full map, diagnostics package the current state, and the bug-report action turns that state into a support-ready starting point.
 
+### How to report a problem from inside Quill
+
+Use this path when Quill is behaving unexpectedly or when you want to send the team a feature request.
+
+1. Open **Help -> Save Diagnostics...**.
+2. Read the review screen and decide whether Quill should include plain file paths.
+3. Save the diagnostics bundle to a location you can find again easily.
+4. Open **Help -> Report a Bug...**.
+5. Read the in-app report summary Quill prepares for you.
+6. Choose **Open Support Form**.
+7. When the Community Access support page opens, describe the problem, what you expected, and what actually happened.
+8. Attach the diagnostics zip if it is relevant to the issue.
+
+If you do not need diagnostics, you can still open **Help -> Report a Bug...** directly. The key point is that the Help menu is the normal support route.
+
 ## Writing and Editing
 
 Quill's editing model is fast once you stop thinking of it as only a textbox.
@@ -712,7 +727,7 @@ Today, Quill already has the foundations for careful support work:
 
 ### What still needs to improve
 
-Today, Quill still does **not** yet ship a polished no-login secure upload path directly from the desktop app, and it still needs a more public, more discoverable support route than a GitHub-backed form alone.
+Today, Quill still does **not** yet ship a polished no-login secure upload path directly from the desktop app, and the support handoff still depends on a browser form after the in-app review step.
 
 ### Best beta-launch recommendation
 
@@ -721,9 +736,9 @@ Before the broadest public rollout, publish one secure feedback route that does 
 1. a BITS-controlled HTTPS feedback form
 2. optional upload of a user-reviewed diagnostics bundle
 3. a plain-language bug template with environment summary and reproduction steps
-4. GitHub issues as a secondary path for testers who already use GitHub
+4. the current **Help -> Report a Bug...** handoff kept as the guided in-app bridge until the fuller route is live
 
-Until that exists, use the current support-hub issue form as a practical bridge rather than the final answer. The important improvement in Quill 0.1 Beta is that Quill now helps users gather diagnostics locally, review what is being shared, and start a structured support report without throwing them into an empty issue box.
+Until that exists, use the current Help-menu path as the practical bridge. The important improvement in Quill 0.1 Beta is that Quill now helps users gather diagnostics locally, review what is being shared, and start a structured support report without forcing them to begin outside the tool.
 
 ## A Fast Shortcut Tour
 

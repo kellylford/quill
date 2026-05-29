@@ -60,6 +60,8 @@ version = "2.4.6"
 
     assert installer_script.exists()
     assert bundle["installer_script"] == str(installer_script)
+    assert (tmp_path / "installer" / "quill.iss").exists()
+    assert bundle["reference_installer_script"] == str(tmp_path / "installer" / "quill.iss")
 
 
 def test_build_inno_setup_script_mentions_portable_bundle() -> None:
@@ -71,6 +73,8 @@ def test_build_inno_setup_script_mentions_portable_bundle() -> None:
     assert "Blind Information Technology Solutions (BITS) and Community Access" in script
     assert "PrivilegesRequired=lowest" in script
     assert "WizardStyle=modern" in script
+    assert "DisableDirPage=no" in script
+    assert "InfoAfterFile=..\\portable\\README.txt" in script
     assert "User Guide" in script
     assert "Beta Announcement" in script
     assert "Product Requirements" in script

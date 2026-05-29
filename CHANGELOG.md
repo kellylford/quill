@@ -30,7 +30,7 @@ Quill also now has a more practical format-bridge story. With Pandoc available, 
 
 ### Support and feedback
 
-Quill 0.1 Beta uses the Community Access support hub as its current structured feedback route. `Help -> Report a Bug...` prepares the report in-app, copies the summary to the clipboard, and then opens the support form for user review and submission.
+Quill 0.1 Beta uses the Help menu as its primary guided feedback route. `Help -> Save Diagnostics...` prepares a reviewable bundle, and `Help -> Report a Bug...` prepares the report in-app before opening the Community Access support form for user review and submission.
 
 ### Notes
 
