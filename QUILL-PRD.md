@@ -308,7 +308,7 @@ The table below lists every format family Quill adds, why each matters, and how 
 | **Audio with transcript** | `.mp3`/`.wav`/`.m4a`/`.opus` paired with `.vtt`/`.srt`/`.txt` | Podcasts, lectures, interviews with transcripts | Opens the transcript; optional playback plugin syncs cursor to audio |
 | **Code-block exchange** | Gist URLs, Pastebin URLs, snippet bundles | Developers share text via URLs daily | One-shot fetch + open as unsaved document |
 
-Some renderers (notably KFX, PST, legacy proprietary office, and some iWork variants) require optional helper tools installed locally. Quill detects what is present at startup and the Open dialog only advertises formats it can actually read on this machine. The Settings → Format Support page lists every format, shows which engine is handling it, and offers one-click installation hints (with a copy-to-clipboard PowerShell command, never an automatic install).
+Some renderers (notably KFX, PST, legacy proprietary office, and some iWork variants) require optional helper tools installed locally. Quill detects what is present at startup and the Open dialog only advertises formats it can actually read on this machine. The long-term design is a full Settings → Format Support page; the current beta already ships an External Tools and Format Support dialog that shows supported helpers, the capabilities they unlock, and copy-to-clipboard installation hints (never an automatic install).
 
 #### Editable vs. read-only matrix
 
@@ -720,7 +720,7 @@ A dedicated menu surfacing transforms that are otherwise reachable via Tools or 
   - the screen-reader detection result and version (if available),
   - basic environment info (Windows build, Python build, wxPython build, locale).
 - Nothing leaves the machine. The user chooses where to save the zip and what to do with it.
-- `Help → Report a Bug…` opens a pre-filled GitHub issue template in the default browser with a copy of the environment info (no logs); the user reviews and submits manually.
+- `Help → Report a Bug…` opens a pre-filled Community Access support-hub issue form in the default browser with a copy of the environment info (no logs); the user reviews and submits manually.
 
 ### 5.34 Welcome and Keyboard Reference
 

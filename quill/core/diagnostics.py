@@ -109,7 +109,9 @@ def build_bug_report_payload(
     document_label = "No document open"
     if current_document is not None:
         snapshot = document_snapshot(current_document, include_file_paths=False)
-        document_label = snapshot.get("name", document_label)
+        name = snapshot.get("name")
+        if isinstance(name, str) and name.strip():
+            document_label = name
     summary = f"Bug report: {document_label}"
     details = [
         "Please describe what happened and what you expected to happen.",

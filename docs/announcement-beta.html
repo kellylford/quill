@@ -175,30 +175,6 @@
 <header id="title-block-header">
 <h1 class="title">Announcing Quill Beta</h1>
 </header>
-<nav id="TOC" role="doc-toc">
-<ul>
-<li><a href="#announcing-quill-beta"
-id="toc-announcing-quill-beta">Announcing Quill Beta</a>
-<ul>
-<li><a href="#a-screen-reader-first-writing-environment-for-windows"
-id="toc-a-screen-reader-first-writing-environment-for-windows">A
-screen-reader-first writing environment for Windows</a></li>
-<li><a href="#what-makes-quill-special"
-id="toc-what-makes-quill-special">What makes Quill special</a></li>
-<li><a href="#the-new-glow-experience-inside-quill"
-id="toc-the-new-glow-experience-inside-quill">The new GLOW experience
-inside Quill</a></li>
-<li><a href="#why-this-beta-matters" id="toc-why-this-beta-matters">Why
-this beta matters</a></li>
-<li><a href="#this-is-a-beta" id="toc-this-is-a-beta">This is a
-beta</a></li>
-<li><a href="#feedback-and-bug-reports"
-id="toc-feedback-and-bug-reports">Feedback and bug reports</a></li>
-<li><a href="#thank-you-for-trying-quill"
-id="toc-thank-you-for-trying-quill">Thank you for trying Quill</a></li>
-</ul></li>
-</ul>
-</nav>
 <h1 id="announcing-quill-beta">Announcing Quill Beta</h1>
 <h2 id="a-screen-reader-first-writing-environment-for-windows">A
 screen-reader-first writing environment for Windows</h2>
@@ -213,6 +189,13 @@ write plain text, Markdown, and HTML; inspect structure; compare
 revisions; navigate EPUB content; review extraction quality; run
 accessibility checks; work with spelling and thesaurus tools; use golden
 keyboard packs; and move through real documents with confidence.</p>
+<p>It is also a place to grow. Quill now includes guided onboarding for
+optional external tools, so users can see exactly what helpers such as
+Pandoc, Tesseract OCR, LibreOffice, and Ghostscript would unlock before
+they install anything. When Pandoc is present, Quill can open a native
+conversion wizard and turn supported source files into Markdown, HTML,
+or plain text surfaces ready for reading, editing, or GLOW-oriented
+downstream workflows.</p>
 <h2 id="what-makes-quill-special">What makes Quill special</h2>
 <p>Quill Beta already includes a broad set of everyday and specialist
 features:</p>
@@ -234,10 +217,12 @@ away</li>
 Code, Microsoft Word, and Quill-native workflows</li>
 <li>the first native GLOW workflows for deterministic audit and fix work
 inside the editor itself</li>
+<li>external tool onboarding with wizard-like guidance for Pandoc and
+other optional format helpers</li>
 <li>accessibility-focused support such as region cycling, keyboard-trap
 inspection, contrast validation, and discoverable help surfaces</li>
 <li>backups, autosave, recovery, persistent undo, trusted locations,
-notifications, and signed update checks</li>
+notifications, diagnostics export, and signed update checks</li>
 </ul>
 <h2 id="the-new-glow-experience-inside-quill">The new GLOW experience
 inside Quill</h2>
@@ -253,6 +238,20 @@ directly to the current selection.</p>
 already helps with heading spacing, heading-level jumps, generic link
 text, missing HTML language metadata, missing image alt attributes,
 dense paragraphs, and plain-language friction.</p>
+<p>Quill also now has the start of a broader format-bridge story. With
+Pandoc available, users can bring in supported text-centric source
+formats through a guided wizard instead of a command line, then continue
+the work inside Quill with structure-aware editing, compare, spell, and
+GLOW flows. That matters because accessible document work often begins
+in an awkward format and only becomes productive after it is translated
+into a surface that is stable, readable, and reviewable.</p>
+<p>That same spirit applies to the learning surface. Quill now has a
+cleaner documentation ladder: the welcome guide for a first orientation,
+the keyboard reference for exact current bindings, the full user guide
+for day-to-day depth, the beta announcement for the big-picture feature
+story, and the beta feedback plan for support expectations. The goal is
+not to bury users in docs. The goal is to make sure there is always one
+clear next document when a user asks, “What do I do now?”</p>
 <h2 id="why-this-beta-matters">Why this beta matters</h2>
 <p>Quill is being built for people who need an editor that feels
 trustworthy.</p>
@@ -264,6 +263,9 @@ HTML</li>
 <li>accessibility-minded teams reviewing structure and readability</li>
 <li>people opening difficult or imperfect source documents and trying to
 decide whether the extracted text is good enough to trust</li>
+<li>people who need one Windows editor that can stay simple for daily
+writing while expanding into optional conversion and ingestion workflows
+when needed</li>
 <li>users who want a serious editor that still teaches them what it can
 do</li>
 </ul>
@@ -288,6 +290,15 @@ next.</p>
 should not be the only way people can report problems. Before the
 broadest public beta push, Quill should have a secure no-login feedback
 route with optional diagnostics upload.</p>
+<p>In the meantime, Quill is moving toward a more humane support story:
+diagnostics can be packaged locally, support information can be reviewed
+before it leaves the machine, and the broader Community Access
+support-hub model can give the project a better route than forcing every
+tester into a raw GitHub issue workflow.</p>
+<p>Even before the final support route lands, Quill now ships a stronger
+intermediate experience: local diagnostics packaging, a support-oriented
+bug-report launch point, and clearer documentation about what each
+feedback path is for.</p>
 <p>Until that path is fully published, treat GitHub as the optional
 technical route rather than the only official route.</p>
 <h2 id="thank-you-for-trying-quill">Thank you for trying Quill</h2>

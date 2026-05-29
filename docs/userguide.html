@@ -336,8 +336,9 @@ Reporting</a>
 <ul>
 <li><a href="#what-exists-today" id="toc-what-exists-today">What exists
 today</a></li>
-<li><a href="#what-does-not-exist-yet"
-id="toc-what-does-not-exist-yet">What does not exist yet</a></li>
+<li><a href="#what-still-needs-to-improve"
+id="toc-what-still-needs-to-improve">What still needs to
+improve</a></li>
 <li><a href="#best-beta-launch-recommendation"
 id="toc-best-beta-launch-recommendation">Best beta-launch
 recommendation</a></li>
@@ -775,6 +776,8 @@ instead of making it feel like a detached compliance tool.</p>
 <h4 id="power-tools-and-cleanup">Power tools and cleanup</h4>
 <ul>
 <li><strong>Regex Helper…</strong></li>
+<li><strong>Pandoc Conversion Wizard…</strong></li>
+<li><strong>External Tools and Format Support…</strong></li>
 <li><strong>Macros</strong> submenu</li>
 <li><strong>Convert</strong> submenu with sort, reverse, deduplicate,
 trim trailing whitespace, normalize whitespace, and convert indentation
@@ -782,6 +785,15 @@ commands</li>
 </ul>
 <p>These are especially valuable in large cleanup jobs and repetitive
 editing workflows.</p>
+<p>The new external-tools surface deserves a special note. Quill does
+not treat optional tools as hidden technical chores. <strong>External
+Tools and Format Support…</strong> explains what each supported helper
+unlocks, whether Quill can already see it, and what the best first touch
+point is. If Pandoc is installed or bundled, <strong>Pandoc Conversion
+Wizard…</strong> can turn supported source files into Markdown, HTML, or
+plain text tabs that open directly in Quill. That makes Quill feel less
+like a dead-end editor and more like a calm bridge into real-world
+document cleanup and GLOW-oriented handoff work.</p>
 <h4 id="compare-and-analysis">Compare and analysis</h4>
 <ul>
 <li><strong>Compare with File…</strong></li>
@@ -837,6 +849,11 @@ document.</li>
 getting-started document.</li>
 <li><strong>Open Keyboard Reference</strong> generates the current live
 shortcut reference from the active command registry.</li>
+<li><strong>Save Diagnostics…</strong> writes a local diagnostics bundle
+you can review before sharing.</li>
+<li><strong>Report a Bug…</strong> opens the Community Access
+support-hub issue form and copies an environment summary to the
+clipboard.</li>
 <li><strong>What Can I Do Here?</strong> gives context-aware
 assistance.</li>
 <li><strong>Why Don’t I See a Feature?</strong> explains profile-driven
@@ -849,6 +866,12 @@ manifest.</li>
 <li><strong>About Quill</strong> shows version and publisher
 details.</li>
 </ul>
+<p>If you only remember one thing about Help, remember this: it is a
+working surface, not a dead-end menu. The welcome guide teaches the
+basics, the keyboard reference reflects your live bindings, the user
+guide gives the full map, diagnostics package the current state, and the
+bug-report action turns that state into a support-ready starting
+point.</p>
 <h2 id="writing-and-editing">Writing and Editing</h2>
 <p>Quill’s editing model is fast once you stop thinking of it as only a
 textbox.</p>
@@ -1146,18 +1169,23 @@ work:</p>
 <li>notifications</li>
 <li>extraction review</li>
 <li>bad-extraction package export for extraction-related issues</li>
-<li>a diagnostics bundle specification in the engineering docs</li>
+<li>a general-purpose <strong>Save Diagnostics…</strong> command that
+writes a local bundle</li>
+<li>a <strong>Report a Bug…</strong> command that opens the Community
+Access support-hub form with environment context</li>
+<li>a diagnostics runbook and beta feedback plan in the documentation
+set</li>
 </ul>
-<h3 id="what-does-not-exist-yet">What does not exist yet</h3>
-<p>Today, Quill does <strong>not</strong> yet ship a general-purpose
-public <strong>Save Diagnostics…</strong> or <strong>Report a
-Bug…</strong> command for all users, and the repository does not define
-a support mailbox or secure feedback form endpoint.</p>
+<h3 id="what-still-needs-to-improve">What still needs to improve</h3>
+<p>Today, Quill still does <strong>not</strong> yet ship a polished
+no-login secure upload path directly from the desktop app, and it still
+needs a more public, more discoverable beta support route than a
+GitHub-backed form alone.</p>
 <h3 id="best-beta-launch-recommendation">Best beta-launch
 recommendation</h3>
 <p>Before the broadest public beta push, publish one secure feedback
 route that does not require GitHub login. The best release-quality path
-is:</p>
+is still:</p>
 <ol type="1">
 <li>a BITS-controlled HTTPS feedback form</li>
 <li>optional upload of a user-reviewed diagnostics bundle</li>
@@ -1166,9 +1194,11 @@ reproduction steps</li>
 <li>GitHub issues as a secondary path for testers who already use
 GitHub</li>
 </ol>
-<p>Until that exists, use GitHub issues only as an optional path for
-GitHub users, and avoid presenting them as the only supported beta
-channel.</p>
+<p>Until that exists, use the current support-hub issue form as a
+practical bridge rather than the final answer. The important improvement
+is that Quill now helps users gather diagnostics locally, review what is
+being shared, and start a structured support report without throwing
+them into an empty issue box.</p>
 <h2 id="a-fast-shortcut-tour">A Fast Shortcut Tour</h2>
 <p>If you want a compact set of shortcuts to remember first, start
 here:</p>

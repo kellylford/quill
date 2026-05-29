@@ -348,10 +348,14 @@ The key design choice is how GLOW feels inside Quill. Audit results open as read
 #### Power tools and cleanup
 
 - **Regex Helper...**
+- **Pandoc Conversion Wizard...**
+- **External Tools and Format Support...**
 - **Macros** submenu
 - **Convert** submenu with sort, reverse, deduplicate, trim trailing whitespace, normalize whitespace, and convert indentation commands
 
 These are especially valuable in large cleanup jobs and repetitive editing workflows.
+
+The new external-tools surface deserves a special note. Quill does not treat optional tools as hidden technical chores. **External Tools and Format Support...** explains what each supported helper unlocks, whether Quill can already see it, and what the best first touch point is. If Pandoc is installed or bundled, **Pandoc Conversion Wizard...** can turn supported source files into Markdown, HTML, or plain text tabs that open directly in Quill. That makes Quill feel less like a dead-end editor and more like a calm bridge into real-world document cleanup and GLOW-oriented handoff work.
 
 #### Compare and analysis
 
@@ -405,11 +409,15 @@ The **Help** menu is where Quill becomes a guide.
 - **Open User Guide** opens this guide as an in-app document.
 - **Open Welcome Guide** opens a lighter, profile-aware getting-started document.
 - **Open Keyboard Reference** generates the current live shortcut reference from the active command registry.
+- **Save Diagnostics...** writes a local diagnostics bundle you can review before sharing.
+- **Report a Bug...** opens the Community Access support-hub issue form and copies an environment summary to the clipboard.
 - **What Can I Do Here?** gives context-aware assistance.
 - **Why Don't I See a Feature?** explains profile-driven feature visibility.
 - **Feature Profiles** commands let you switch profile, run health checks, undo the last profile change, reset to Essential, and run onboarding.
 - **Check for Updates...** verifies the signed update manifest.
 - **About Quill** shows version and publisher details.
+
+If you only remember one thing about Help, remember this: it is a working surface, not a dead-end menu. The welcome guide teaches the basics, the keyboard reference reflects your live bindings, the user guide gives the full map, diagnostics package the current state, and the bug-report action turns that state into a support-ready starting point.
 
 ## Writing and Editing
 
@@ -696,22 +704,24 @@ Today, Quill already has the foundations for careful support work:
 - notifications
 - extraction review
 - bad-extraction package export for extraction-related issues
-- a diagnostics bundle specification in the engineering docs
+- a general-purpose **Save Diagnostics...** command that writes a local bundle
+- a **Report a Bug...** command that opens the Community Access support-hub form with environment context
+- a diagnostics runbook and beta feedback plan in the documentation set
 
-### What does not exist yet
+### What still needs to improve
 
-Today, Quill does **not** yet ship a general-purpose public **Save Diagnostics...** or **Report a Bug...** command for all users, and the repository does not define a support mailbox or secure feedback form endpoint.
+Today, Quill still does **not** yet ship a polished no-login secure upload path directly from the desktop app, and it still needs a more public, more discoverable beta support route than a GitHub-backed form alone.
 
 ### Best beta-launch recommendation
 
-Before the broadest public beta push, publish one secure feedback route that does not require GitHub login. The best release-quality path is:
+Before the broadest public beta push, publish one secure feedback route that does not require GitHub login. The best release-quality path is still:
 
 1. a BITS-controlled HTTPS feedback form
 2. optional upload of a user-reviewed diagnostics bundle
 3. a plain-language bug template with environment summary and reproduction steps
 4. GitHub issues as a secondary path for testers who already use GitHub
 
-Until that exists, use GitHub issues only as an optional path for GitHub users, and avoid presenting them as the only supported beta channel.
+Until that exists, use the current support-hub issue form as a practical bridge rather than the final answer. The important improvement is that Quill now helps users gather diagnostics locally, review what is being shared, and start a structured support report without throwing them into an empty issue box.
 
 ## A Fast Shortcut Tour
 

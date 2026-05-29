@@ -38,6 +38,13 @@ User-facing and release-facing documentation lives in `docs/`:
 - `docs/announcement-beta.md` - the beta announcement and feature story
 - `docs/beta-feedback-plan.md` - the beta support and diagnostics direction
 
+These documents are meant to work together:
+
+- the README gives the product snapshot and packaging overview
+- the user guide teaches daily use inside the app
+- the announcement tells the feature story for evaluators and new testers
+- the beta feedback plan explains how support, diagnostics, and bug reporting are supposed to feel
+
 Engineering baseline docs are under `docs/engineering/`:
 
 - architecture, contracts, runtime model, data layout, diagnostics runbook, quality gates, and roadmap mapping
@@ -57,6 +64,7 @@ Quill includes a Windows distribution builder that can generate a portable bundl
 
 - bundle embedded Python for a no-Python-required install
 - stage the user guide and beta announcement into the portable bundle
+- stage the beta feedback plan into the portable bundle
 - optionally stage external tool directories such as Pandoc or Tesseract into `portable\tools\...`
 - generate installer shortcuts for the README, user guide, and announcement
 

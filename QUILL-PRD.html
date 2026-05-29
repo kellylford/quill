@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>QUILL-PRD</title>
+  <title>Quill Product Requirements Document</title>
   <style>
     /* Default styles provided by pandoc.
     ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -237,15 +237,506 @@
   </style>
 </head>
 <body>
+<header id="title-block-header">
+<h1 class="title">Quill Product Requirements Document</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#quill-product-requirements-document"
+id="toc-quill-product-requirements-document">Quill: Product Requirements
+Document</a>
+<ul>
+<li><a
+href="#a-magical-screen-reader-first-writing-and-document-environment-built-in-wxpython."
+id="toc-a-magical-screen-reader-first-writing-and-document-environment-built-in-wxpython.">A
+magical, screen-reader-first writing and document environment, built in
+wxPython.</a></li>
+<li><a href="#vision" id="toc-vision">1. Vision</a></li>
+<li><a href="#goals-and-non-goals" id="toc-goals-and-non-goals">2. Goals
+and non-goals</a>
+<ul>
+<li><a href="#goals" id="toc-goals">2.1 Goals</a></li>
+<li><a href="#non-goals" id="toc-non-goals">2.2 Non-goals</a></li>
+</ul></li>
+<li><a href="#target-users-and-primary-scenarios"
+id="toc-target-users-and-primary-scenarios">3. Target users and primary
+scenarios</a>
+<ul>
+<li><a href="#personas" id="toc-personas">3.1 Personas</a></li>
+<li><a href="#primary-scenarios" id="toc-primary-scenarios">3.2 Primary
+scenarios</a></li>
+</ul></li>
+<li><a href="#product-principles" id="toc-product-principles">4. Product
+principles</a></li>
+<li><a href="#functional-requirements"
+id="toc-functional-requirements">5. Functional requirements</a>
+<ul>
+<li><a href="#application-shell" id="toc-application-shell">5.1
+Application shell</a></li>
+<li><a href="#a-the-magical-menu-bar"
+id="toc-a-the-magical-menu-bar">5.1a The magical menu bar</a></li>
+<li><a href="#b-the-magical-status-bar"
+id="toc-b-the-magical-status-bar">5.1b The magical status bar</a></li>
+<li><a href="#c-trust-and-verification"
+id="toc-c-trust-and-verification">5.1c Trust and verification</a></li>
+<li><a href="#f-profile-safety-and-recovery"
+id="toc-f-profile-safety-and-recovery">5.1f Profile safety and
+recovery</a></li>
+<li><a href="#g-feature-registry-and-user-profiles"
+id="toc-g-feature-registry-and-user-profiles">5.1g Feature registry and
+user profiles</a></li>
+<li><a href="#d-power-search-regex-and-special-characters"
+id="toc-d-power-search-regex-and-special-characters">5.1d Power search,
+regex, and special characters</a></li>
+<li><a href="#e-feature-flags-and-profiles"
+id="toc-e-feature-flags-and-profiles">5.1e Feature flags and
+profiles</a></li>
+<li><a href="#documents-and-the-editor"
+id="toc-documents-and-the-editor">5.2 Documents and the editor</a></li>
+<li><a href="#file-operations" id="toc-file-operations">5.3 File
+operations</a></li>
+<li><a href="#a-extended-format-support"
+id="toc-a-extended-format-support">5.3a Extended format support</a></li>
+<li><a href="#pdf-handling-in-v1.0" id="toc-pdf-handling-in-v1.0">5.4
+PDF handling in v1.0</a></li>
+<li><a href="#improve-reading-order" id="toc-improve-reading-order">5.5
+Improve reading order</a></li>
+<li><a href="#html-and-markdown" id="toc-html-and-markdown">5.6 HTML and
+Markdown</a></li>
+<li><a href="#find-and-replace" id="toc-find-and-replace">5.7 Find and
+replace</a></li>
+<li><a href="#spell-checking-magical-local-first"
+id="toc-spell-checking-magical-local-first">5.8 Spell checking (magical,
+local-first)</a></li>
+<li><a href="#word-count-and-navigation"
+id="toc-word-count-and-navigation">5.9 Word count and
+navigation</a></li>
+<li><a href="#bookmarks" id="toc-bookmarks">5.10 Bookmarks</a></li>
+<li><a href="#selection-helpers-and-where-am-i"
+id="toc-selection-helpers-and-where-am-i">5.11 Selection helpers and
+Where Am I</a></li>
+<li><a href="#command-palette-visual-studio-code-style"
+id="toc-command-palette-visual-studio-code-style">5.12 Command palette
+(Visual Studio Code style)</a></li>
+<li><a href="#document-backups" id="toc-document-backups">5.13 Document
+backups</a></li>
+<li><a href="#settings" id="toc-settings">5.14 Settings</a></li>
+<li><a href="#plugin-system-v1.1" id="toc-plugin-system-v1.1">5.15
+Plugin system (v1.1)</a></li>
+<li><a href="#outline-navigator-heading-tree"
+id="toc-outline-navigator-heading-tree">5.16 Outline Navigator (heading
+tree)</a></li>
+<li><a href="#jump-by-structure-shortcuts"
+id="toc-jump-by-structure-shortcuts">5.17 Jump-by-structure
+shortcuts</a></li>
+<li><a href="#line-and-block-operations"
+id="toc-line-and-block-operations">5.18 Line and block
+operations</a></li>
+<li><a href="#document-statistics-and-reading-metrics"
+id="toc-document-statistics-and-reading-metrics">5.19 Document
+statistics and reading metrics</a></li>
+<li><a href="#accessibility-auditor" id="toc-accessibility-auditor">5.20
+Accessibility auditor</a></li>
+<li><a href="#table-mode-for-markdown-and-html-tables"
+id="toc-table-mode-for-markdown-and-html-tables">5.21 Table mode for
+Markdown and HTML tables</a></li>
+<li><a href="#editor-essentials" id="toc-editor-essentials">5.22 Editor
+essentials</a></li>
+<li><a href="#recent-locations-history-browser-style-backforward"
+id="toc-recent-locations-history-browser-style-backforward">5.23 Recent
+locations history (browser-style back/forward)</a></li>
+<li><a href="#mark-ring" id="toc-mark-ring">5.24 Mark ring</a></li>
+<li><a href="#read-aloud-secondary-voice-not-the-screen-reader"
+id="toc-read-aloud-secondary-voice-not-the-screen-reader">5.25 Read
+Aloud (secondary voice, not the screen reader)</a></li>
+<li><a href="#number-lines-and-strip-line-numbers"
+id="toc-number-lines-and-strip-line-numbers">5.26 Number lines and strip
+line numbers</a></li>
+<li><a href="#open-from-url" id="toc-open-from-url">5.27 Open from
+URL</a></li>
+<li><a href="#format-aware-bracket-and-quote-navigation"
+id="toc-format-aware-bracket-and-quote-navigation">5.28 Format-aware
+bracket and quote navigation</a></li>
+<li><a href="#format-menu-text-transforms-no-styling"
+id="toc-format-menu-text-transforms-no-styling">5.29 Format menu (text
+transforms, no styling)</a></li>
+<li><a href="#a-magical-html-and-markdown-tag-picker"
+id="toc-a-magical-html-and-markdown-tag-picker">5.29a Magical HTML and
+Markdown tag picker</a></li>
+<li><a href="#bookmark-export-and-import"
+id="toc-bookmark-export-and-import">5.30 Bookmark export and
+import</a></li>
+<li><a href="#trusted-locations-office-style"
+id="toc-trusted-locations-office-style">5.31 Trusted locations
+(Office-style)</a></li>
+<li><a href="#jump-list-and-shell-integration"
+id="toc-jump-list-and-shell-integration">5.32 Jump List and shell
+integration</a></li>
+<li><a href="#diagnostics-and-bug-reporting"
+id="toc-diagnostics-and-bug-reporting">5.33 Diagnostics and bug
+reporting</a></li>
+<li><a href="#welcome-and-keyboard-reference"
+id="toc-welcome-and-keyboard-reference">5.34 Welcome and Keyboard
+Reference</a></li>
+<li><a href="#notifications-centre" id="toc-notifications-centre">5.35
+Notifications centre</a></li>
+<li><a href="#what-changed-on-save-opt-in"
+id="toc-what-changed-on-save-opt-in">5.36 “What changed on save”
+(opt-in)</a></li>
+<li><a href="#link-tools" id="toc-link-tools">5.37 Link tools</a></li>
+<li><a href="#document-properties-and-front-matter"
+id="toc-document-properties-and-front-matter">5.38 Document properties
+and front-matter</a></li>
+<li><a href="#autosave-control-and-persistent-undo"
+id="toc-autosave-control-and-persistent-undo">5.39 Autosave control and
+persistent undo</a></li>
+<li><a href="#paragraph-line-and-footnote-refinements"
+id="toc-paragraph-line-and-footnote-refinements">5.40 Paragraph, line,
+and footnote refinements</a></li>
+<li><a href="#search-and-replace-preview-and-saved-searches"
+id="toc-search-and-replace-preview-and-saved-searches">5.41
+Search-and-replace preview and saved searches</a></li>
+<li><a href="#sort-and-transform-details"
+id="toc-sort-and-transform-details">5.42 Sort and transform
+details</a></li>
+<li><a
+href="#save-all-with-conflict-detection-and-per-file-format-memory"
+id="toc-save-all-with-conflict-detection-and-per-file-format-memory">5.43
+Save All with conflict detection and per-file format memory</a></li>
+<li><a href="#per-document-scratchpad"
+id="toc-per-document-scratchpad">5.44 Per-document scratchpad</a></li>
+<li><a href="#section-folding-announce-only"
+id="toc-section-folding-announce-only">5.45 Section folding
+(announce-only)</a></li>
+<li><a href="#spell-check-ignore-directives-and-manual-bilingual-flag"
+id="toc-spell-check-ignore-directives-and-manual-bilingual-flag">5.46
+Spell-check ignore directives and manual bilingual flag</a></li>
+<li><a
+href="#word-boundary-mode-trailing-whitespace-case-change-announcement"
+id="toc-word-boundary-mode-trailing-whitespace-case-change-announcement">5.47
+Word boundary mode, trailing whitespace, case-change
+announcement</a></li>
+<li><a href="#multi-format-export-and-reading-view"
+id="toc-multi-format-export-and-reading-view">5.48 Multi-format export
+and reading view</a></li>
+<li><a href="#welcome-back-snapshot" id="toc-welcome-back-snapshot">5.49
+Welcome-back snapshot</a></li>
+<li><a href="#per-document-keymap-override-with-explicit-consent"
+id="toc-per-document-keymap-override-with-explicit-consent">5.50
+Per-document keymap override (with explicit consent)</a></li>
+<li><a href="#settings-export-import-and-partitioned-reset"
+id="toc-settings-export-import-and-partitioned-reset">5.51 Settings
+export, import, and partitioned reset</a></li>
+<li><a href="#document-fingerprint" id="toc-document-fingerprint">5.52
+Document fingerprint</a></li>
+<li><a href="#unicode-insert" id="toc-unicode-insert">5.53 Unicode
+insert</a></li>
+<li><a href="#idle-time-prefetch" id="toc-idle-time-prefetch">5.54
+Idle-time prefetch</a></li>
+<li><a href="#atomic-on-disk-stores" id="toc-atomic-on-disk-stores">5.55
+Atomic on-disk stores</a></li>
+<li><a href="#first-run-onboarding" id="toc-first-run-onboarding">5.56
+First-run onboarding</a></li>
+<li><a href="#privacy-summary" id="toc-privacy-summary">5.57 Privacy
+summary</a></li>
+<li><a href="#licenses-screen" id="toc-licenses-screen">5.58 Licenses
+screen</a></li>
+<li><a href="#crash-recovery-transparency"
+id="toc-crash-recovery-transparency">5.59 Crash recovery
+transparency</a></li>
+<li><a href="#read-only-document-mode"
+id="toc-read-only-document-mode">5.60 Read-only document mode</a></li>
+<li><a href="#file-related-menu-helpers"
+id="toc-file-related-menu-helpers">5.61 File-related menu
+helpers</a></li>
+<li><a href="#open-recent-enhancements"
+id="toc-open-recent-enhancements">5.62 Open Recent enhancements</a></li>
+<li><a href="#document-timeline" id="toc-document-timeline">5.63
+Document timeline</a></li>
+<li><a href="#sentence-and-paragraph-navigation"
+id="toc-sentence-and-paragraph-navigation">5.64 Sentence and paragraph
+navigation</a></li>
+<li><a href="#word-count-goal-per-document"
+id="toc-word-count-goal-per-document">5.65 Word-count goal per
+document</a></li>
+<li><a href="#reading-position-memory-per-document"
+id="toc-reading-position-memory-per-document">5.66 Reading position
+memory per document</a></li>
+<li><a href="#compare-with-clipboard"
+id="toc-compare-with-clipboard">5.67 Compare with clipboard</a></li>
+<li><a href="#insert-from-file" id="toc-insert-from-file">5.68 Insert
+from file</a></li>
+<li><a href="#selection-statistics-direct-shortcut"
+id="toc-selection-statistics-direct-shortcut">5.69 Selection-statistics
+direct shortcut</a></li>
+<li><a href="#audio-cue-catalogue-opt-in"
+id="toc-audio-cue-catalogue-opt-in">5.70 Audio cue catalogue
+(opt-in)</a></li>
+<li><a href="#quiet-mode" id="toc-quiet-mode">5.71 Quiet mode</a></li>
+<li><a href="#temporary-trust-for-untrusted-location-opens"
+id="toc-temporary-trust-for-untrusted-location-opens">5.72 Temporary
+trust for untrusted-location opens</a></li>
+<li><a href="#settings-search" id="toc-settings-search">5.73 Settings
+search</a></li>
+<li><a href="#in-app-changelog-and-update-transparency"
+id="toc-in-app-changelog-and-update-transparency">5.74 In-app changelog
+and update transparency</a></li>
+<li><a href="#crash-report-opt-in-per-recovery"
+id="toc-crash-report-opt-in-per-recovery">5.75 Crash-report opt-in (per
+recovery)</a></li>
+<li><a href="#interactive-compare-mode"
+id="toc-interactive-compare-mode">5.76 Interactive compare mode</a></li>
+</ul></li>
+<li><a href="#spell-checking-deep-dive"
+id="toc-spell-checking-deep-dive">6. Spell checking deep dive</a>
+<ul>
+<li><a href="#the-tinyspell-question"
+id="toc-the-tinyspell-question">6.1 The TinySpell question</a></li>
+<li><a href="#engine-architecture-quill-spell"
+id="toc-engine-architecture-quill-spell">6.2 Engine architecture: “Quill
+Spell”</a></li>
+<li><a href="#user-experience" id="toc-user-experience">6.3 User
+experience</a></li>
+</ul></li>
+<li><a href="#command-palette-deep-dive"
+id="toc-command-palette-deep-dive">7. Command palette deep dive</a>
+<ul>
+<li><a href="#opening-and-dismissing"
+id="toc-opening-and-dismissing">7.1 Opening and dismissing</a></li>
+<li><a href="#prefix-modes" id="toc-prefix-modes">7.2 Prefix
+modes</a></li>
+<li><a href="#matching" id="toc-matching">7.3 Matching</a></li>
+<li><a href="#rows" id="toc-rows">7.4 Rows</a></li>
+<li><a href="#inline-keybinding-edit"
+id="toc-inline-keybinding-edit">7.5 Inline keybinding edit</a></li>
+<li><a href="#recently-used-and-pinned"
+id="toc-recently-used-and-pinned">7.6 Recently used and pinned</a></li>
+<li><a href="#help" id="toc-help">7.7 Help</a></li>
+<li><a href="#accessibility-specifics"
+id="toc-accessibility-specifics">7.8 Accessibility specifics</a></li>
+</ul></li>
+<li><a href="#keymap-and-keystroke-reassignment"
+id="toc-keymap-and-keystroke-reassignment">8. Keymap and keystroke
+reassignment</a>
+<ul>
+<li><a href="#where-keystrokes-live" id="toc-where-keystrokes-live">8.1
+Where keystrokes live</a></li>
+<li><a href="#keyboard-settings-page"
+id="toc-keyboard-settings-page">8.2 Keyboard settings page</a></li>
+<li><a href="#editing-a-single-binding"
+id="toc-editing-a-single-binding">8.3 Editing a single binding</a></li>
+<li><a href="#conflict-handling" id="toc-conflict-handling">8.4 Conflict
+handling</a></li>
+<li><a href="#when-contexts" id="toc-when-contexts">8.5 “When”
+contexts</a></li>
+<li><a href="#profiles-in-detail" id="toc-profiles-in-detail">8.6
+Profiles in detail</a></li>
+<li><a href="#storage-format" id="toc-storage-format">8.7 Storage
+format</a></li>
+<li><a href="#import-export-sync" id="toc-import-export-sync">8.8
+Import, export, sync</a></li>
+<li><a href="#safety-net" id="toc-safety-net">8.9 Safety net</a></li>
+</ul></li>
+<li><a href="#accessibility-wcag-2.2-aa-conformance-and-certification"
+id="toc-accessibility-wcag-2.2-aa-conformance-and-certification">9.
+Accessibility, WCAG 2.2 AA conformance, and certification</a>
+<ul>
+<li><a href="#compliance-posture-and-target-standards"
+id="toc-compliance-posture-and-target-standards">9.1 Compliance posture
+and target standards</a></li>
+<li><a href="#conformance-posture-statement-will-appear-in-the-acr"
+id="toc-conformance-posture-statement-will-appear-in-the-acr">9.2
+Conformance posture statement (will appear in the ACR)</a></li>
+<li><a href="#wcag-2.2-aa-conformance-matrix"
+id="toc-wcag-2.2-aa-conformance-matrix">9.3 WCAG 2.2 AA conformance
+matrix</a></li>
+<li><a href="#screen-reader-compatibility-matrix"
+id="toc-screen-reader-compatibility-matrix">9.4 Screen-reader
+compatibility matrix</a></li>
+<li><a href="#screen-reader-announcement-architecture"
+id="toc-screen-reader-announcement-architecture">9.5 Screen-reader
+announcement architecture</a></li>
+<li><a href="#keyboard-accessibility-gates"
+id="toc-keyboard-accessibility-gates">9.6 Keyboard accessibility
+gates</a></li>
+<li><a href="#visual-accessibility-gates"
+id="toc-visual-accessibility-gates">9.7 Visual accessibility
+gates</a></li>
+<li><a href="#cognitive-accessibility-gates"
+id="toc-cognitive-accessibility-gates">9.8 Cognitive accessibility
+gates</a></li>
+<li><a href="#accessibility-testing-pipeline"
+id="toc-accessibility-testing-pipeline">9.9 Accessibility testing
+pipeline</a></li>
+<li><a href="#vpat-acr-generation" id="toc-vpat-acr-generation">9.10
+VPAT / ACR generation</a></li>
+<li><a href="#certification-path" id="toc-certification-path">9.11
+Certification path</a></li>
+<li><a href="#gated-regressions-ci-must-pass-list"
+id="toc-gated-regressions-ci-must-pass-list">9.12 Gated regressions (CI
+must-pass list)</a></li>
+</ul></li>
+<li><a href="#technical-infrastructure"
+id="toc-technical-infrastructure">10. Technical infrastructure</a>
+<ul>
+<li><a href="#module-map-and-responsibilities"
+id="toc-module-map-and-responsibilities">10.1 Module map and
+responsibilities</a></li>
+<li><a href="#complete-dependency-manifest"
+id="toc-complete-dependency-manifest">10.2 Complete dependency
+manifest</a></li>
+<li><a href="#per-feature-technical-specifications"
+id="toc-per-feature-technical-specifications">10.3 Per-feature technical
+specifications</a></li>
+<li><a href="#threading-and-concurrency-model"
+id="toc-threading-and-concurrency-model">10.4 Threading and concurrency
+model</a></li>
+<li><a href="#data-layout-canonical" id="toc-data-layout-canonical">10.5
+Data layout (canonical)</a></li>
+<li><a href="#packaging-signing-supply-chain"
+id="toc-packaging-signing-supply-chain">10.6 Packaging, signing, supply
+chain</a></li>
+<li><a href="#build-and-dev-environment"
+id="toc-build-and-dev-environment">10.7 Build and dev
+environment</a></li>
+<li><a href="#continuous-integration-and-delivery"
+id="toc-continuous-integration-and-delivery">10.8 Continuous integration
+and delivery</a></li>
+<li><a href="#observability" id="toc-observability">10.9
+Observability</a></li>
+<li><a href="#plugin-runtime-v1.0-surface-v1.1-full"
+id="toc-plugin-runtime-v1.0-surface-v1.1-full">10.10 Plugin runtime
+(v1.0 surface, v1.1 full)</a></li>
+<li><a href="#security-architecture"
+id="toc-security-architecture">10.11 Security architecture</a></li>
+<li><a href="#update-mechanism" id="toc-update-mechanism">10.12 Update
+mechanism</a></li>
+<li><a href="#internationalisation-infrastructure"
+id="toc-internationalisation-infrastructure">10.13 Internationalisation
+infrastructure</a></li>
+<li><a href="#performance-budgets-and-instrumentation"
+id="toc-performance-budgets-and-instrumentation">10.14 Performance
+budgets and instrumentation</a></li>
+<li><a href="#coding-standards-and-review"
+id="toc-coding-standards-and-review">10.15 Coding standards and
+review</a></li>
+<li><a href="#module-ownership-and-solid-boundaries"
+id="toc-module-ownership-and-solid-boundaries">10.16 Module ownership
+and SOLID boundaries</a></li>
+<li><a href="#magic-by-construction"
+id="toc-magic-by-construction">10.17 Magic, by construction</a></li>
+</ul></li>
+<li><a href="#performance-targets" id="toc-performance-targets">11.
+Performance targets</a></li>
+<li><a href="#privacy-and-security" id="toc-privacy-and-security">12.
+Privacy and security</a></li>
+<li><a href="#internationalisation-and-localisation"
+id="toc-internationalisation-and-localisation">13. Internationalisation
+and localisation</a></li>
+<li><a href="#telemetry" id="toc-telemetry">14. Telemetry</a></li>
+<li><a href="#success-metrics" id="toc-success-metrics">15. Success
+metrics</a></li>
+<li><a href="#release-plan" id="toc-release-plan">16. Release plan</a>
+<ul>
+<li><a href="#v0.9-alpha-internal-6-weeks"
+id="toc-v0.9-alpha-internal-6-weeks">16.1 v0.9 alpha (internal, 6
+weeks)</a></li>
+<li><a href="#v1.0-beta-8-weeks-after-0.9"
+id="toc-v1.0-beta-8-weeks-after-0.9">16.2 v1.0 beta (8 weeks after
+0.9)</a></li>
+<li><a href="#v1.0-release-4-weeks-after-beta"
+id="toc-v1.0-release-4-weeks-after-beta">16.3 v1.0 release (4 weeks
+after beta)</a></li>
+<li><a href="#v1.1" id="toc-v1.1">16.4 v1.1</a></li>
+<li><a href="#v1.2" id="toc-v1.2">16.5 v1.2</a></li>
+</ul></li>
+<li><a href="#backlog-and-deferred-items"
+id="toc-backlog-and-deferred-items">17. Backlog and deferred items</a>
+<ul>
+<li><a href="#format-support-deferred-to-plugins-v1.1"
+id="toc-format-support-deferred-to-plugins-v1.1">17.1 Format support
+deferred to plugins (v1.1+)</a></li>
+<li><a href="#features-deferred" id="toc-features-deferred">17.2
+Features deferred</a></li>
+<li><a
+href="#explicitly-out-of-scope-for-quill-any-version-unless-re-evaluated"
+id="toc-explicitly-out-of-scope-for-quill-any-version-unless-re-evaluated">17.4
+Explicitly out of scope for Quill (any version unless
+re-evaluated)</a></li>
+<li><a href="#confidence-grades-shown-to-the-user"
+id="toc-confidence-grades-shown-to-the-user">17.3 Confidence grades
+shown to the user</a></li>
+</ul></li>
+<li><a href="#risks-and-mitigations" id="toc-risks-and-mitigations">18.
+Risks and mitigations</a></li>
+<li><a href="#open-questions" id="toc-open-questions">19. Open
+questions</a></li>
+<li><a href="#why-this-can-be-magical"
+id="toc-why-this-can-be-magical">20. Why this can be magical</a></li>
+<li><a href="#project-delivery-todo-living-checklist"
+id="toc-project-delivery-todo-living-checklist">21. Project delivery
+TODO (living checklist)</a>
+<ul>
+<li><a href="#application-shell-and-document-lifecycle"
+id="toc-application-shell-and-document-lifecycle">21.1 Application shell
+and document lifecycle</a></li>
+<li><a href="#core-editing-and-formatting"
+id="toc-core-editing-and-formatting">21.2 Core editing and
+formatting</a></li>
+<li><a href="#navigation-search-structure-and-links"
+id="toc-navigation-search-structure-and-links">21.3 Navigation, search,
+structure, and links</a></li>
+<li><a href="#metrics-spell-and-tools"
+id="toc-metrics-spell-and-tools">21.4 Metrics, spell, and tools</a></li>
+<li><a href="#a-trust-and-verification"
+id="toc-a-trust-and-verification">21.4a Trust and verification</a></li>
+<li><a href="#b-power-search" id="toc-b-power-search">21.4b Power
+search</a></li>
+<li><a href="#persistence-safety-and-recovery"
+id="toc-persistence-safety-and-recovery">21.5 Persistence, safety, and
+recovery</a></li>
+<li><a href="#command-palette-and-keymap-system"
+id="toc-command-palette-and-keymap-system">21.6 Command palette and
+keymap system</a></li>
+<li><a href="#format-support-and-io-coverage"
+id="toc-format-support-and-io-coverage">21.7 Format support and I/O
+coverage</a></li>
+<li><a href="#accessibility-and-ux-hardening"
+id="toc-accessibility-and-ux-hardening">21.8 Accessibility and UX
+hardening</a></li>
+<li><a href="#windows-integration" id="toc-windows-integration">21.9
+Windows integration</a></li>
+<li><a href="#ai-ocr-and-optional-network-features-deferred-to-v1.1"
+id="toc-ai-ocr-and-optional-network-features-deferred-to-v1.1">21.10 AI,
+OCR, and optional network features (deferred to v1.1)</a></li>
+<li><a href="#engineering-quality-gates-and-release"
+id="toc-engineering-quality-gates-and-release">21.11 Engineering quality
+gates and release</a></li>
+<li><a href="#documentation-and-readiness"
+id="toc-documentation-and-readiness">21.12 Documentation and
+readiness</a></li>
+<li><a href="#profile-safety-and-recovery"
+id="toc-profile-safety-and-recovery">21.13 Profile safety and
+recovery</a></li>
+<li><a href="#feature-registry-and-profiles"
+id="toc-feature-registry-and-profiles">21.14 Feature registry and
+profiles</a></li>
+<li><a href="#macro-and-compare-expansion"
+id="toc-macro-and-compare-expansion">21.15 Macro and compare
+expansion</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
 <h1 id="quill-product-requirements-document">Quill: Product Requirements
 Document</h1>
 <h2
 id="a-magical-screen-reader-first-writing-and-document-environment-built-in-wxpython.">A
 magical, screen-reader-first writing and document environment, built in
 wxPython.</h2>
-<p>Status: Draft v0.2 Owner: AccessWatch / BITS-Easy team Target
-platform: Windows 10 and Windows 11 Target screen readers: NVDA
-(primary), JAWS, Narrator UI framework: wxPython (wxWidgets 3.2 or
+<p>Status: Draft v0.2 Owner: Blind Information Technology Solutions
+(BITS) Target platform: Windows 10 and Windows 11 Target screen readers:
+NVDA (primary), JAWS, Narrator UI framework: wxPython (wxWidgets 3.2 or
 newer) Language: Python 3.11 or newer</p>
 <hr />
 <h2 id="vision">1. Vision</h2>
@@ -1234,10 +1725,11 @@ audio</td>
 <p>Some renderers (notably KFX, PST, legacy proprietary office, and some
 iWork variants) require optional helper tools installed locally. Quill
 detects what is present at startup and the Open dialog only advertises
-formats it can actually read on this machine. The Settings → Format
-Support page lists every format, shows which engine is handling it, and
-offers one-click installation hints (with a copy-to-clipboard PowerShell
-command, never an automatic install).</p>
+formats it can actually read on this machine. The long-term design is a
+full Settings → Format Support page; the current beta already ships an
+External Tools and Format Support dialog that shows supported helpers,
+the capabilities they unlock, and copy-to-clipboard installation hints
+(never an automatic install).</p>
 <h4 id="editable-vs.-read-only-matrix">Editable vs. read-only
 matrix</h4>
 <p>Not every format we open is something a user should edit. Quill is
@@ -2096,9 +2588,9 @@ locale).</li>
 </ul></li>
 <li>Nothing leaves the machine. The user chooses where to save the zip
 and what to do with it.</li>
-<li><code>Help → Report a Bug…</code> opens a pre-filled GitHub issue
-template in the default browser with a copy of the environment info (no
-logs); the user reviews and submits manually.</li>
+<li><code>Help → Report a Bug…</code> opens a pre-filled Community
+Access support-hub issue form in the default browser with a copy of the
+environment info (no logs); the user reviews and submits manually.</li>
 </ul>
 <h3 id="welcome-and-keyboard-reference">5.34 Welcome and Keyboard
 Reference</h3>

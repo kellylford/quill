@@ -37,6 +37,8 @@ This first slice focuses on plain text, Markdown, and HTML. It already helps wit
 
 Quill also now has the start of a broader format-bridge story. With Pandoc available, users can bring in supported text-centric source formats through a guided wizard instead of a command line, then continue the work inside Quill with structure-aware editing, compare, spell, and GLOW flows. That matters because accessible document work often begins in an awkward format and only becomes productive after it is translated into a surface that is stable, readable, and reviewable.
 
+That same spirit applies to the learning surface. Quill now has a cleaner documentation ladder: the welcome guide for a first orientation, the keyboard reference for exact current bindings, the full user guide for day-to-day depth, the beta announcement for the big-picture feature story, and the beta feedback plan for support expectations. The goal is not to bury users in docs. The goal is to make sure there is always one clear next document when a user asks, "What do I do now?"
+
 ## Why this beta matters
 
 Quill is being built for people who need an editor that feels trustworthy.
@@ -72,6 +74,8 @@ We want the beta feedback path to be inclusive and low-friction.
 GitHub issues are useful for testers who already use GitHub, but they should not be the only way people can report problems. Before the broadest public beta push, Quill should have a secure no-login feedback route with optional diagnostics upload.
 
 In the meantime, Quill is moving toward a more humane support story: diagnostics can be packaged locally, support information can be reviewed before it leaves the machine, and the broader Community Access support-hub model can give the project a better route than forcing every tester into a raw GitHub issue workflow.
+
+Even before the final support route lands, Quill now ships a stronger intermediate experience: local diagnostics packaging, a support-oriented bug-report launch point, and clearer documentation about what each feedback path is for.
 
 Until that path is fully published, treat GitHub as the optional technical route rather than the only official route.
 
