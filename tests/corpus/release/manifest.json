@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "plain.txt",
+      "text": "Quill release corpus plain text.\nSecond line.\n"
+    },
+    {
+      "path": "note.md",
+      "text": "# Quill release corpus\n\n- item one\n- item two\n"
+    }
+  ]
+}

@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Quill User Guide</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Quill User Guide</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#quill-user-guide" id="toc-quill-user-guide">Quill User
+Guide</a>
+<ul>
+<li><a href="#table-of-contents" id="toc-table-of-contents">Table of
+Contents</a></li>
+<li><a href="#start-here" id="toc-start-here">Start Here</a></li>
+<li><a href="#what-quill-feels-like" id="toc-what-quill-feels-like">What
+Quill Feels Like</a></li>
+<li><a href="#your-first-session" id="toc-your-first-session">Your First
+Session</a></li>
+<li><a href="#the-main-window" id="toc-the-main-window">The Main
+Window</a>
+<ul>
+<li><a href="#menu-bar" id="toc-menu-bar">Menu bar</a></li>
+<li><a href="#editor-surface" id="toc-editor-surface">Editor
+surface</a></li>
+<li><a href="#tabs-and-document-switching"
+id="toc-tabs-and-document-switching">Tabs and document
+switching</a></li>
+<li><a href="#status-bar" id="toc-status-bar">Status bar</a></li>
+<li><a href="#region-cycling" id="toc-region-cycling">Region
+cycling</a></li>
+</ul></li>
+<li><a href="#the-menu-bar-reference"
+id="toc-the-menu-bar-reference">The Menu Bar Reference</a>
+<ul>
+<li><a href="#file" id="toc-file">File</a></li>
+<li><a href="#edit" id="toc-edit">Edit</a></li>
+<li><a href="#view" id="toc-view">View</a></li>
+<li><a href="#navigate" id="toc-navigate">Navigate</a></li>
+<li><a href="#format" id="toc-format">Format</a></li>
+<li><a href="#tools" id="toc-tools">Tools</a></li>
+<li><a href="#window" id="toc-window">Window</a></li>
+<li><a href="#help" id="toc-help">Help</a></li>
+</ul></li>
+<li><a href="#writing-and-editing" id="toc-writing-and-editing">Writing
+and Editing</a>
+<ul>
+<li><a href="#everyday-editing" id="toc-everyday-editing">Everyday
+editing</a></li>
+<li><a href="#copy-with-source" id="toc-copy-with-source">Copy With
+Source</a></li>
+<li><a href="#extend-selection-mode-and-marks"
+id="toc-extend-selection-mode-and-marks">Extend Selection Mode and
+marks</a></li>
+<li><a href="#links" id="toc-links">Links</a></li>
+</ul></li>
+<li><a href="#search-replace-and-deep-navigation"
+id="toc-search-replace-and-deep-navigation">Search, Replace, and Deep
+Navigation</a>
+<ul>
+<li><a href="#standard-search" id="toc-standard-search">Standard
+search</a></li>
+<li><a href="#search-modes" id="toc-search-modes">Search modes</a></li>
+<li><a href="#navigation-that-understands-documents"
+id="toc-navigation-that-understands-documents">Navigation that
+understands documents</a></li>
+</ul></li>
+<li><a href="#formatting-and-markup-work"
+id="toc-formatting-and-markup-work">Formatting and Markup Work</a>
+<ul>
+<li><a href="#markdown-and-html-awareness"
+id="toc-markdown-and-html-awareness">Markdown and HTML
+awareness</a></li>
+<li><a href="#headings-and-lists" id="toc-headings-and-lists">Headings
+and lists</a></li>
+<li><a href="#tables-code-blocks-and-tags"
+id="toc-tables-code-blocks-and-tags">Tables, code blocks, and
+tags</a></li>
+<li><a href="#cleanup-and-normalization"
+id="toc-cleanup-and-normalization">Cleanup and normalization</a></li>
+</ul></li>
+<li><a href="#tools-for-reading-review-and-inspection"
+id="toc-tools-for-reading-review-and-inspection">Tools for Reading,
+Review, and Inspection</a>
+<ul>
+<li><a href="#read-aloud" id="toc-read-aloud">Read Aloud</a></li>
+<li><a href="#epub-navigator" id="toc-epub-navigator">EPUB
+Navigator</a></li>
+<li><a href="#ocr-image" id="toc-ocr-image">OCR Image</a></li>
+<li><a href="#document-intake-and-extraction-quality"
+id="toc-document-intake-and-extraction-quality">Document intake and
+extraction quality</a></li>
+</ul></li>
+<li><a href="#glow-workflows-inside-quill"
+id="toc-glow-workflows-inside-quill">GLOW Workflows Inside Quill</a>
+<ul>
+<li><a href="#audit-flows" id="toc-audit-flows">Audit flows</a></li>
+<li><a href="#fix-flows" id="toc-fix-flows">Fix flows</a></li>
+<li><a href="#what-glow-is-best-at-today"
+id="toc-what-glow-is-best-at-today">What GLOW is best at today</a></li>
+</ul></li>
+<li><a href="#accessibility-and-low-vision-features"
+id="toc-accessibility-and-low-vision-features">Accessibility and
+Low-Vision Features</a>
+<ul>
+<li><a href="#region-model" id="toc-region-model">Region model</a></li>
+<li><a href="#keyboard-trap-and-accessibility-audit"
+id="toc-keyboard-trap-and-accessibility-audit">Keyboard trap and
+accessibility audit</a></li>
+<li><a href="#contrast-and-theme-behavior"
+id="toc-contrast-and-theme-behavior">Contrast and theme
+behavior</a></li>
+<li><a href="#status-bar-as-an-accessible-control-surface"
+id="toc-status-bar-as-an-accessible-control-surface">Status bar as an
+accessible control surface</a></li>
+</ul></li>
+<li><a href="#profiles-keyboard-packs-and-customization"
+id="toc-profiles-keyboard-packs-and-customization">Profiles, Keyboard
+Packs, and Customization</a>
+<ul>
+<li><a href="#feature-profiles" id="toc-feature-profiles">Feature
+profiles</a></li>
+<li><a href="#keyboard-packs" id="toc-keyboard-packs">Keyboard
+packs</a></li>
+<li><a href="#keymap-editor" id="toc-keymap-editor">Keymap
+editor</a></li>
+<li><a href="#status-bar-layout" id="toc-status-bar-layout">Status bar
+layout</a></li>
+<li><a href="#settings-you-can-change-today"
+id="toc-settings-you-can-change-today">Settings you can change
+today</a></li>
+</ul></li>
+<li><a href="#trust-recovery-sessions-and-safety"
+id="toc-trust-recovery-sessions-and-safety">Trust, Recovery, Sessions,
+and Safety</a>
+<ul>
+<li><a href="#sessions" id="toc-sessions">Sessions</a></li>
+<li><a href="#autosave-and-backups"
+id="toc-autosave-and-backups">Autosave and backups</a></li>
+<li><a href="#recovery" id="toc-recovery">Recovery</a></li>
+<li><a href="#persistent-undo" id="toc-persistent-undo">Persistent
+undo</a></li>
+<li><a href="#trusted-locations" id="toc-trusted-locations">Trusted
+locations</a></li>
+<li><a href="#safe-mode" id="toc-safe-mode">Safe mode</a></li>
+<li><a href="#notifications-and-updates"
+id="toc-notifications-and-updates">Notifications and updates</a></li>
+</ul></li>
+<li><a href="#working-with-different-document-types"
+id="toc-working-with-different-document-types">Working with Different
+Document Types</a>
+<ul>
+<li><a href="#plain-text" id="toc-plain-text">Plain text</a></li>
+<li><a href="#markdown" id="toc-markdown">Markdown</a></li>
+<li><a href="#html" id="toc-html">HTML</a></li>
+<li><a href="#epub" id="toc-epub">EPUB</a></li>
+<li><a href="#pdf-and-ocr-derived-text"
+id="toc-pdf-and-ocr-derived-text">PDF and OCR-derived text</a></li>
+</ul></li>
+<li><a href="#help-learning-and-daily-confidence"
+id="toc-help-learning-and-daily-confidence">Help, Learning, and Daily
+Confidence</a></li>
+<li><a href="#beta-feedback-and-bug-reporting"
+id="toc-beta-feedback-and-bug-reporting">Beta Feedback and Bug
+Reporting</a>
+<ul>
+<li><a href="#what-exists-today" id="toc-what-exists-today">What exists
+today</a></li>
+<li><a href="#what-does-not-exist-yet"
+id="toc-what-does-not-exist-yet">What does not exist yet</a></li>
+<li><a href="#best-beta-launch-recommendation"
+id="toc-best-beta-launch-recommendation">Best beta-launch
+recommendation</a></li>
+</ul></li>
+<li><a href="#a-fast-shortcut-tour" id="toc-a-fast-shortcut-tour">A Fast
+Shortcut Tour</a></li>
+<li><a href="#closing-thought" id="toc-closing-thought">Closing
+Thought</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="quill-user-guide">Quill User Guide</h1>
+<p>Quill is a screen-reader-first writing and reading environment for
+Windows. It is designed to feel calm, predictable, deeply
+keyboard-friendly, and respectful of your focus. It is also ambitious.
+Quill is not only a place to write plain text. It is a place to open
+difficult documents, inspect structure, navigate long material, compare
+revisions, prepare content for Markdown or HTML, and work with
+accessibility and extraction issues without leaving the editor.</p>
+<p>This guide is written as a companion, not a reference wall. Read it
+from the beginning if you are new to Quill. Dip into the sections that
+matter most if you already know what kind of work you want to do.</p>
+<p>Quill is also in beta. Expect polish, depth, and real daily utility.
+Also expect rough edges, unfinished flows, and the occasional surprise.
+If you find something confusing or broken, that is useful information.
+Quill is becoming stronger because real people are trying it on real
+work.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#start-here">Start Here</a></li>
+<li><a href="#what-quill-feels-like">What Quill Feels Like</a></li>
+<li><a href="#your-first-session">Your First Session</a></li>
+<li><a href="#the-main-window">The Main Window</a></li>
+<li><a href="#the-menu-bar-reference">The Menu Bar Reference</a></li>
+<li><a href="#writing-and-editing">Writing and Editing</a></li>
+<li><a href="#search-replace-and-deep-navigation">Search, Replace, and
+Deep Navigation</a></li>
+<li><a href="#formatting-and-markup-work">Formatting and Markup
+Work</a></li>
+<li><a href="#tools-for-reading-review-and-inspection">Tools for
+Reading, Review, and Inspection</a></li>
+<li><a href="#glow-workflows-inside-quill">GLOW Workflows Inside
+Quill</a></li>
+<li><a href="#accessibility-and-low-vision-features">Accessibility and
+Low-Vision Features</a></li>
+<li><a href="#profiles-keyboard-packs-and-customization">Profiles,
+Keyboard Packs, and Customization</a></li>
+<li><a href="#trust-recovery-sessions-and-safety">Trust, Recovery,
+Sessions, and Safety</a></li>
+<li><a href="#working-with-different-document-types">Working with
+Different Document Types</a></li>
+<li><a href="#help-learning-and-daily-confidence">Help, Learning, and
+Daily Confidence</a></li>
+<li><a href="#beta-feedback-and-bug-reporting">Beta Feedback and Bug
+Reporting</a></li>
+<li><a href="#a-fast-shortcut-tour">A Fast Shortcut Tour</a></li>
+</ul>
+<h2 id="start-here">Start Here</h2>
+<p>If you only have five minutes, do this:</p>
+<ol type="1">
+<li>Press <code>Ctrl+N</code> to create a new document, or press
+<code>Ctrl+O</code> to open one.</li>
+<li>Type a few lines.</li>
+<li>Press <code>Ctrl+Shift+P</code> to open the Command Palette.</li>
+<li>Type <code>guide</code>, <code>spell</code>, <code>compare</code>,
+or <code>glow</code> and notice how quickly Quill turns intent into
+action.</li>
+<li>Press <code>F6</code> to move into the status bar and hear how Quill
+treats even the bottom of the window as a working surface.</li>
+<li>Press <code>F7</code> for spell check, <code>Ctrl+F</code> to
+search, or <code>Ctrl+K</code> to insert a link.</li>
+</ol>
+<p>If you ever feel lost, use <strong>Help → What Can I Do
+Here?</strong>. Think of that command as the editor quietly putting a
+mentor beside you.</p>
+<h2 id="what-quill-feels-like">What Quill Feels Like</h2>
+<p>Quill is built around a few promises.</p>
+<ul>
+<li>The keyboard is never second-class.</li>
+<li>Screen readers are not an afterthought.</li>
+<li>Every major action is reachable from the menu, the palette, and the
+command system.</li>
+<li>Documents open locally and stay local unless you explicitly choose a
+network-aware action.</li>
+<li>The editor should tell you what changed, where you are, and what is
+possible next.</li>
+</ul>
+<p>In practice, that means Quill spends a lot of attention on focus
+movement, meaningful status updates, discoverable commands, and native
+Windows controls. It also means Quill tries to reduce fear. When you
+open a recovered draft, compare two files, inspect extraction quality,
+or apply a deterministic GLOW fix, the point is not to feel clever. The
+point is to feel safe.</p>
+<h2 id="your-first-session">Your First Session</h2>
+<p>Imagine your first meaningful visit to Quill.</p>
+<p>You launch the app. There is no splash screen. The window appears
+quickly, with a menu bar, an editor, and a status bar. If Quill detects
+a screen reader, it adjusts its hints and announcement style. If Quill
+notices an earlier crash or autosave state, it offers recovery instead
+of silently hoping you forgot.</p>
+<p>From there, a natural first session looks like this:</p>
+<ol type="1">
+<li>Open a file with <code>Ctrl+O</code> or create one with
+<code>Ctrl+N</code>.</li>
+<li>Read or write in the editor.</li>
+<li>Use <code>Ctrl+Shift+P</code> to explore commands without memorizing
+everything.</li>
+<li>Use the <strong>Navigate</strong> menu to jump by line, heading,
+block, region, or page.</li>
+<li>Use the <strong>Tools</strong> menu for spelling, word count,
+extraction review, compare, macros, regex help, and GLOW workflows.</li>
+<li>Open <strong>Help → Open Keyboard Reference</strong> to see the
+exact shortcuts that exist in your current configuration, including your
+keyboard pack and any custom bindings.</li>
+</ol>
+<p>That first session matters because it teaches the most important
+Quill habit: you do not need to hunt. If an action exists, Quill wants
+you to be able to reach it from where you already are.</p>
+<h2 id="the-main-window">The Main Window</h2>
+<p>Quill keeps its main window intentionally simple.</p>
+<h3 id="menu-bar">Menu bar</h3>
+<p>The menu bar follows the Windows and Office order you likely
+expect:</p>
+<ul>
+<li>File</li>
+<li>Edit</li>
+<li>View</li>
+<li>Navigate</li>
+<li>Format</li>
+<li>Tools</li>
+<li>Window</li>
+<li>Help</li>
+</ul>
+<p>The menu bar is exhaustive rather than decorative. If Quill can do
+something, there is almost certainly a menu path for it.</p>
+<h3 id="editor-surface">Editor surface</h3>
+<p>The editor is the heart of Quill. It is where writing happens, where
+extracted text lands, where reports open as ordinary tabs, and where
+GLOW previews and compare summaries feel like first-class documents
+rather than pop-ups.</p>
+<p>The editor supports:</p>
+<ul>
+<li>plain text writing</li>
+<li>Markdown-aware authoring</li>
+<li>HTML-aware authoring</li>
+<li>structural navigation</li>
+<li>selection helpers</li>
+<li>text cleanup</li>
+<li>spell and thesaurus workflows</li>
+<li>link insertion and link following</li>
+<li>compare-driven review</li>
+</ul>
+<h3 id="tabs-and-document-switching">Tabs and document switching</h3>
+<p>Quill is multi-document. Each open file lives in a notebook tab. You
+can:</p>
+<ul>
+<li>move between documents with <code>Ctrl+Tab</code> and
+<code>Ctrl+Shift+Tab</code></li>
+<li>close the active document with <code>Ctrl+W</code></li>
+<li>use the tab context menu to close one tab, close other tabs, or
+close tabs to the right</li>
+<li>reveal a saved document in File Explorer directly from the tab
+context menu</li>
+</ul>
+<p>Quill also opens generated artifacts as tabs. The welcome guide,
+keyboard reference, compare summary, GLOW audit report, and GLOW fix
+preview all feel like normal working tabs. That is deliberate. Artifacts
+should stay close to the work that created them.</p>
+<h3 id="status-bar">Status bar</h3>
+<p>The status bar is interactive. It is not just a strip of passive
+text.</p>
+<p>Use <code>F6</code> to move into it. Once there, you can move between
+cells and activate them. Depending on your layout and current state, the
+status bar can surface:</p>
+<ul>
+<li>current message</li>
+<li>line and column</li>
+<li>word count</li>
+<li>insert or overwrite mode</li>
+<li>selection size</li>
+<li>encoding</li>
+<li>line endings</li>
+<li>spell-check state</li>
+<li>background task state</li>
+<li>notifications</li>
+<li>read-aloud state</li>
+<li>autosave timing</li>
+<li>current search term</li>
+<li>file path or unsaved state</li>
+</ul>
+<p>You can reorder or hide status items through <strong>Tools →
+Customize → Status Bar Layout…</strong>.</p>
+<h3 id="region-cycling">Region cycling</h3>
+<p>Use <code>F6</code> and <code>Shift+F6</code> to move between major
+regions. Quill treats region movement as a first-class accessibility
+feature. If you write, inspect, and navigate entirely from the keyboard,
+this becomes second nature quickly.</p>
+<h2 id="the-menu-bar-reference">The Menu Bar Reference</h2>
+<p>This section walks the entire menu bar in the order you will
+encounter it.</p>
+<h3 id="file">File</h3>
+<p>The <strong>File</strong> menu is the full document lifecycle.</p>
+<ul>
+<li><strong>New</strong> creates a blank document.</li>
+<li><strong>Open…</strong> opens a document from disk.</li>
+<li><strong>Open Recent</strong> returns quickly to recently used
+files.</li>
+<li><strong>Open from URL…</strong> downloads a document or text
+resource through an explicit safety flow that confirms host and expected
+size.</li>
+<li><strong>Sessions</strong> lets you save and reopen groups of
+documents.</li>
+<li><strong>Save</strong> writes the current document.</li>
+<li><strong>Save As…</strong> writes to a new path.</li>
+<li><strong>Save All</strong> writes every modified open document.</li>
+<li><strong>Save As Plain Text…</strong> exports a clean plain-text
+version.</li>
+<li><strong>Reload from Disk</strong> throws away in-memory edits and
+reloads the file from storage after confirmation.</li>
+<li><strong>Restore Backup…</strong> lets you restore a saved backup
+version.</li>
+<li><strong>Page Setup…</strong>, <strong>Print Preview…</strong>, and
+<strong>Print…</strong> support paper and print workflows.</li>
+<li><strong>Close Document</strong> closes the current tab.</li>
+<li><strong>Exit</strong> closes the application.</li>
+</ul>
+<p>The File menu is also where Quill quietly proves that it respects
+risk. Reload is explicit. Backup restore is explicit. URL opening is
+explicit. Nothing important is hidden behind a side effect.</p>
+<h3 id="edit">Edit</h3>
+<p>The <strong>Edit</strong> menu is where writing muscles live.</p>
+<p>Standard clipboard commands are here:</p>
+<ul>
+<li>Undo</li>
+<li>Redo</li>
+<li>Cut</li>
+<li>Copy</li>
+<li>Paste</li>
+<li>Copy With Source</li>
+<li>Select All</li>
+</ul>
+<p>Quill then goes further with selection and navigation-aware
+editing:</p>
+<ul>
+<li><strong>Extend Selection Mode</strong> turns selection growth into a
+dedicated mode.</li>
+<li><strong>Selection</strong> submenu includes Select Line, Select
+Paragraph, Select Block, Select to Start or End of Line, and Select to
+Start or End of Document.</li>
+<li><strong>Mark Ring</strong> commands let you set, pop, exchange, and
+list marks. If you come from editors with a stronger structural
+navigation culture, this becomes a favorite quickly.</li>
+<li><strong>Insert Link…</strong> creates a format-aware link.</li>
+<li><strong>Follow Link</strong> opens the link under the caret.</li>
+<li><strong>Find…</strong> and <strong>Replace All…</strong> sit here as
+expected.</li>
+<li><strong>Preferences…</strong> opens the broader customization
+surface.</li>
+</ul>
+<h3 id="view">View</h3>
+<p>The <strong>View</strong> menu controls how Quill behaves on screen
+without changing your content.</p>
+<ul>
+<li><strong>Enable System Tray Mode</strong> lets Quill minimize into
+the tray instead of exiting.</li>
+<li><strong>Toggle Soft Wrap</strong> changes line wrapping without
+modifying the file.</li>
+<li><strong>Toggle Dark Mode</strong> switches between system and dark
+presentation.</li>
+<li><strong>Enable Persistent Undo</strong> stores undo history across
+sessions for saved files.</li>
+<li><strong>Spell Check As You Type</strong> enables live misspelling
+hints.</li>
+<li><strong>Show Line Numbers</strong> changes the navigation and
+status-bar experience.</li>
+<li><strong>Start With No Document Open</strong> makes Quill open into
+an empty workspace instead of a starter document.</li>
+</ul>
+<h3 id="navigate">Navigate</h3>
+<p>The <strong>Navigate</strong> menu is one of Quill’s strongest
+differentiators. It assumes you may need to move through large, dense,
+or extracted material without visual scanning.</p>
+<p>Core location commands:</p>
+<ul>
+<li><strong>Go To Line…</strong></li>
+<li><strong>Go To Page…</strong></li>
+<li><strong>Back Location</strong></li>
+<li><strong>Forward Location</strong></li>
+</ul>
+<p>Structural movement commands:</p>
+<ul>
+<li><strong>Next Heading</strong></li>
+<li><strong>Previous Heading</strong></li>
+<li><strong>Next Block</strong></li>
+<li><strong>Previous Block</strong></li>
+<li><strong>Outline Navigator…</strong></li>
+<li><strong>Match Bracket</strong></li>
+<li><strong>Next Structure</strong></li>
+<li><strong>Previous Structure</strong></li>
+<li><strong>Next Region</strong></li>
+<li><strong>Previous Region</strong></li>
+</ul>
+<p>Bookmark and search navigation:</p>
+<ul>
+<li><strong>Set Bookmark…</strong></li>
+<li><strong>Go To Bookmark…</strong></li>
+<li><strong>Find Next</strong></li>
+<li><strong>Find Previous</strong></li>
+<li><strong>Find All Matches</strong></li>
+</ul>
+<p>If your work involves transcripts, legal text, long Markdown notes,
+HTML source, or extracted PDFs, spend time here. This is the menu that
+turns Quill from a text box into a navigable workspace.</p>
+<h3 id="format">Format</h3>
+<p>The <strong>Format</strong> menu handles presentation and
+markup-aware editing.</p>
+<p>Case operations:</p>
+<ul>
+<li>Upper Case</li>
+<li>Lower Case</li>
+<li>Title Case</li>
+<li>Sentence Case</li>
+<li>Toggle Case</li>
+</ul>
+<p>Comment and indentation tools:</p>
+<ul>
+<li>Toggle Line Comment</li>
+<li>Toggle Block Comment</li>
+<li>Indent</li>
+<li>Outdent</li>
+</ul>
+<p>Line operations:</p>
+<ul>
+<li>Move Line Up</li>
+<li>Move Line Down</li>
+<li>Duplicate Line</li>
+<li>Delete Line</li>
+<li>Join Lines</li>
+</ul>
+<p>Inline and structural formatting:</p>
+<ul>
+<li>Bold</li>
+<li>Italic</li>
+<li>Insert Heading levels 1 through 6</li>
+<li>Increase or decrease heading level</li>
+<li>Insert bullet, numbered, and task lists</li>
+<li>Insert code block</li>
+<li>Insert footnote</li>
+<li>Insert table</li>
+<li>Insert HTML tag</li>
+<li>Insert Markdown tag</li>
+</ul>
+<p>Quill treats Markdown and HTML as working surfaces, not
+special-purpose export formats. This menu is where that philosophy
+becomes practical.</p>
+<h3 id="tools">Tools</h3>
+<p>The <strong>Tools</strong> menu is Quill’s workshop. It contains
+high-value actions that are not best understood as raw editing.</p>
+<h4 id="discovery-and-command-access">Discovery and command access</h4>
+<ul>
+<li><strong>Command Palette…</strong></li>
+</ul>
+<p>The palette is one of the fastest ways to learn Quill. It supports
+query modes:</p>
+<ul>
+<li>normal search or <code>&gt;</code> for general command search</li>
+<li><code>:</code> to search command IDs</li>
+<li><code>?</code> to favor bound commands</li>
+<li><code>~</code> to emphasize recently used commands</li>
+</ul>
+<p>The palette also learns from usage. Commands you use more often rise
+naturally.</p>
+<h4 id="writing-aids">Writing aids</h4>
+<ul>
+<li><strong>Word Count…</strong></li>
+<li><strong>Spell Check…</strong></li>
+<li><strong>Next Misspelling</strong></li>
+<li><strong>Thesaurus…</strong></li>
+<li><strong>Dictionary Status…</strong></li>
+</ul>
+<p>These help you stay inside the editor instead of breaking flow for
+small writing chores.</p>
+<h4 id="reading-aids">Reading aids</h4>
+<ul>
+<li><strong>Read Aloud</strong> submenu for start or pause, stop, and
+voice selection</li>
+<li><strong>EPUB Navigator…</strong></li>
+<li><strong>OCR Image…</strong></li>
+</ul>
+<p>Read Aloud is particularly useful for proofreading by ear. EPUB
+Navigator gives a chapter-aware entry point when working with e-books.
+OCR Image handles image-to-text work with an explicit consent and
+progress flow.</p>
+<h4 id="document-intake-and-extraction-review">Document intake and
+extraction review</h4>
+<ul>
+<li><strong>Document Intake Report…</strong></li>
+<li><strong>Review Extraction Quality…</strong></li>
+<li><strong>Report Bad Extraction…</strong></li>
+</ul>
+<p>These commands matter when Quill is acting as a trusted reader for
+imported formats rather than a plain writer. They help answer questions
+like:</p>
+<ul>
+<li>How good was the extraction?</li>
+<li>Did the source likely contain structure that did not survive?</li>
+<li>Is this document safe to quote from directly?</li>
+<li>Do I need to escalate this source for manual cleanup?</li>
+</ul>
+<h4 id="glow">GLOW</h4>
+<ul>
+<li><strong>GLOW Audit Current Document</strong></li>
+<li><strong>GLOW Audit Selection</strong></li>
+<li><strong>GLOW Fix Current Document</strong></li>
+<li><strong>GLOW Fix Selection</strong></li>
+</ul>
+<p>GLOW inside Quill is a guided layout and output workflow for
+deterministic text review. Today it focuses on plain text, Markdown, and
+HTML. It looks for issues such as:</p>
+<ul>
+<li>missing spaces after Markdown heading markers</li>
+<li>heading-level jumps</li>
+<li>generic link text</li>
+<li>missing HTML language metadata</li>
+<li>missing HTML image alt attributes</li>
+<li>tables without HTML header cells</li>
+<li>dense paragraphs and plain-language friction</li>
+</ul>
+<p>The key design choice is how GLOW feels inside Quill. Audit results
+open as readable Quill tabs. Fixing the current document opens a named
+preview tab and immediately starts a compare session against the
+original. Selection fixes apply in place to the current selection,
+paragraph, or line. That keeps GLOW close to the writing experience
+instead of making it feel like a detached compliance tool.</p>
+<h4 id="power-tools-and-cleanup">Power tools and cleanup</h4>
+<ul>
+<li><strong>Regex Helper…</strong></li>
+<li><strong>Macros</strong> submenu</li>
+<li><strong>Convert</strong> submenu with sort, reverse, deduplicate,
+trim trailing whitespace, normalize whitespace, and convert indentation
+commands</li>
+</ul>
+<p>These are especially valuable in large cleanup jobs and repetitive
+editing workflows.</p>
+<h4 id="compare-and-analysis">Compare and analysis</h4>
+<ul>
+<li><strong>Compare with File…</strong></li>
+<li><strong>Compare Open Documents</strong></li>
+<li><strong>Compare Next Difference</strong></li>
+<li><strong>Compare Previous Difference</strong></li>
+<li><strong>Difference List</strong></li>
+<li><strong>Compare Options</strong></li>
+<li><strong>Compare Summary</strong></li>
+<li><strong>Copy Current Difference</strong></li>
+<li><strong>Copy All Differences</strong></li>
+</ul>
+<p>Quill’s compare model is practical and local. It supports
+file-to-file review, multi-document review, summary generation, and
+synchronized movement through differences.</p>
+<h4 id="accessibility-and-inspection">Accessibility and inspection</h4>
+<ul>
+<li><strong>Accessibility Audit…</strong></li>
+<li><strong>Keyboard Trap Snapshot…</strong></li>
+<li><strong>Validate Contrast…</strong></li>
+<li><strong>Link Inventory…</strong></li>
+</ul>
+<p>These tools help review the editor experience itself, the current
+document’s link surface, and low-vision presentation issues.</p>
+<h4 id="system-integration-and-customization">System integration and
+customization</h4>
+<ul>
+<li><strong>Notifications…</strong></li>
+<li><strong>Check for Updates…</strong></li>
+<li><strong>Shell Integration</strong> commands</li>
+<li><strong>Profiles and Features…</strong></li>
+<li><strong>Status Bar Layout…</strong></li>
+<li><strong>Keymap Editor…</strong></li>
+<li><strong>Export Keymap…</strong></li>
+<li><strong>Import Keymap…</strong></li>
+<li><strong>Reset Keymap</strong></li>
+</ul>
+<h3 id="window">Window</h3>
+<p>The <strong>Window</strong> menu is small but useful.</p>
+<ul>
+<li><strong>Next Document</strong></li>
+<li><strong>Previous Document</strong></li>
+<li><strong>Send to System Tray</strong></li>
+</ul>
+<p>When you are juggling multiple notes, extracted files, and audit
+previews, these commands keep the workspace feeling controlled.</p>
+<h3 id="help">Help</h3>
+<p>The <strong>Help</strong> menu is where Quill becomes a guide.</p>
+<ul>
+<li><strong>Open User Guide</strong> opens this guide as an in-app
+document.</li>
+<li><strong>Open Welcome Guide</strong> opens a lighter, profile-aware
+getting-started document.</li>
+<li><strong>Open Keyboard Reference</strong> generates the current live
+shortcut reference from the active command registry.</li>
+<li><strong>What Can I Do Here?</strong> gives context-aware
+assistance.</li>
+<li><strong>Why Don’t I See a Feature?</strong> explains profile-driven
+feature visibility.</li>
+<li><strong>Feature Profiles</strong> commands let you switch profile,
+run health checks, undo the last profile change, reset to Essential, and
+run onboarding.</li>
+<li><strong>Check for Updates…</strong> verifies the signed update
+manifest.</li>
+<li><strong>About Quill</strong> shows version and publisher
+details.</li>
+</ul>
+<h2 id="writing-and-editing">Writing and Editing</h2>
+<p>Quill’s editing model is fast once you stop thinking of it as only a
+textbox.</p>
+<h3 id="everyday-editing">Everyday editing</h3>
+<p>Use the familiar commands first:</p>
+<ul>
+<li><code>Ctrl+Z</code> to undo</li>
+<li><code>Ctrl+Y</code> to redo</li>
+<li><code>Ctrl+X</code>, <code>Ctrl+C</code>, <code>Ctrl+V</code> to
+move text</li>
+<li><code>Ctrl+A</code> to select everything</li>
+</ul>
+<p>Quill adds two especially useful ideas on top of that.</p>
+<h3 id="copy-with-source">Copy With Source</h3>
+<p><code>Ctrl+Shift+C</code> copies the current selection, then appends
+a source reference that captures document context. If nothing is
+selected, Quill uses the current line. This is excellent for notes,
+review workflows, and evidence gathering.</p>
+<h3 id="extend-selection-mode-and-marks">Extend Selection Mode and
+marks</h3>
+<p><code>F8</code> toggles Extend Selection Mode. This lets you grow
+selections more deliberately. The mark ring adds an editor-like memory
+of important places in a document. Set a mark, move, then return or
+exchange point and mark when you need to re-anchor yourself.</p>
+<h3 id="links">Links</h3>
+<p><code>Ctrl+K</code> inserts a format-aware link.
+<code>Ctrl+Enter</code> follows the link under the caret. In Markdown
+and HTML, this makes citation and cross-referencing much less
+tedious.</p>
+<h2 id="search-replace-and-deep-navigation">Search, Replace, and Deep
+Navigation</h2>
+<p>Quill’s search tools are both straightforward and layered.</p>
+<h3 id="standard-search">Standard search</h3>
+<ul>
+<li><code>Ctrl+F</code> opens search.</li>
+<li><code>F3</code> finds next.</li>
+<li><code>Shift+F3</code> finds previous.</li>
+<li><code>Alt+F3</code> opens a find-all matches summary.</li>
+<li><code>Ctrl+H</code> opens Replace All.</li>
+</ul>
+<h3 id="search-modes">Search modes</h3>
+<p>Quill supports plain text, whole-word, wildcard, and
+regular-expression search. The Regex Helper explains the syntax when you
+need it. Search history is also preserved, so recurring search jobs get
+easier over time.</p>
+<h3 id="navigation-that-understands-documents">Navigation that
+understands documents</h3>
+<p>Quill is excellent for large documents because it supports:</p>
+<ul>
+<li>line and page jumps</li>
+<li>block and heading movement</li>
+<li>bracket matching</li>
+<li>structural next and previous</li>
+<li>back and forward location history</li>
+<li>outline navigation</li>
+<li>bookmarks</li>
+</ul>
+<p>When you combine this with marks and compare sessions, long-form
+review starts to feel much less fragile.</p>
+<h2 id="formatting-and-markup-work">Formatting and Markup Work</h2>
+<p>Quill understands that many users work in plain text while still
+caring deeply about exported structure.</p>
+<h3 id="markdown-and-html-awareness">Markdown and HTML awareness</h3>
+<p>Quill detects whether the current surface looks like Markdown, HTML,
+or plain text. It uses that to guide insertion helpers and enable the
+commands that make sense in context.</p>
+<h3 id="headings-and-lists">Headings and lists</h3>
+<p>The heading tools do more than insert decoration. They help you
+maintain usable structure. The list tools speed up common authoring
+patterns without forcing you into a separate composer.</p>
+<h3 id="tables-code-blocks-and-tags">Tables, code blocks, and tags</h3>
+<p>Quill includes guided insertion for tables, code blocks, HTML tags,
+and Markdown snippets. This is especially useful for users who want
+structure but do not want to hand-type every opening and closing marker
+correctly every time.</p>
+<h3 id="cleanup-and-normalization">Cleanup and normalization</h3>
+<p>The cleanup commands under <strong>Tools → Convert</strong> are ideal
+for pasted material, transcripts, exports, and migration work. Use them
+when you need to turn messy text into something more stable and
+readable.</p>
+<h2 id="tools-for-reading-review-and-inspection">Tools for Reading,
+Review, and Inspection</h2>
+<p>Quill earns trust by making difficult files readable and
+inspectable.</p>
+<h3 id="read-aloud">Read Aloud</h3>
+<p>Read Aloud uses local voices when available. You can start, pause,
+stop, and choose a voice. It is useful for proofreading by ear,
+reviewing extracted text, and staying oriented in dense material.</p>
+<h3 id="epub-navigator">EPUB Navigator</h3>
+<p>When you open an EPUB, the navigator gives you chapter-aware movement
+rather than forcing you to scroll blindly through one long
+extraction.</p>
+<h3 id="ocr-image">OCR Image</h3>
+<p>OCR is explicit and local. You choose the image, confirm the action,
+and receive progress updates. This keeps OCR useful without making it
+invisible or surprising.</p>
+<h3 id="document-intake-and-extraction-quality">Document intake and
+extraction quality</h3>
+<p>These commands are where Quill feels especially mature for
+accessibility-minded reading work. Rather than assuming every import is
+trustworthy, Quill gives you tools to ask whether the extraction is good
+enough, what may have been lost, and whether you should quote from the
+result directly.</p>
+<h2 id="glow-workflows-inside-quill">GLOW Workflows Inside Quill</h2>
+<p>Glow in Quill is about guided confidence. It is not trying to turn
+the editor into a giant compliance dashboard. It is trying to make
+accessibility-aware review and safe deterministic fixes feel
+ordinary.</p>
+<h3 id="audit-flows">Audit flows</h3>
+<p>Use document audit when you want the whole file reviewed. Use
+selection audit when you only care about the paragraph, block, or
+snippet in front of you.</p>
+<p>Audit results open as normal Quill tabs. You can read them, search
+them, compare them, or keep them open alongside the source.</p>
+<h3 id="fix-flows">Fix flows</h3>
+<p>Use selection fix for quick cleanup in place. Use document fix when
+you want Quill to generate a preview and immediately compare original
+versus fixed output.</p>
+<p>This is where the native integration matters most. GLOW does not pull
+you away from your working context. It creates another working context
+beside it.</p>
+<h3 id="what-glow-is-best-at-today">What GLOW is best at today</h3>
+<p>The first native slice is strongest with:</p>
+<ul>
+<li>plain text review</li>
+<li>Markdown cleanup</li>
+<li>HTML accessibility-aware cleanup</li>
+<li>link-text review</li>
+<li>heading spacing and heading-level sanity</li>
+<li>lightweight readability guidance</li>
+</ul>
+<p>The v1.1 roadmap expands this into findings navigation,
+export-readiness workflows, and richer extraction-aware review for PDF
+and EPUB.</p>
+<h2 id="accessibility-and-low-vision-features">Accessibility and
+Low-Vision Features</h2>
+<p>Quill is designed so accessibility is visible, not hidden.</p>
+<h3 id="region-model">Region model</h3>
+<p>Use <code>F6</code> and <code>Shift+F6</code> to move between editor
+and other major regions. Quill announces those region transitions
+consistently.</p>
+<h3 id="keyboard-trap-and-accessibility-audit">Keyboard trap and
+accessibility audit</h3>
+<p>The keyboard trap snapshot and accessibility audit commands are there
+to help verify the interface itself. This is useful both for users and
+for testers helping improve the product.</p>
+<h3 id="contrast-and-theme-behavior">Contrast and theme behavior</h3>
+<p>You can validate contrast, switch dark mode, and align with system
+behavior. This matters for users who need a predictable low-vision
+experience rather than a single visual theme.</p>
+<h3 id="status-bar-as-an-accessible-control-surface">Status bar as an
+accessible control surface</h3>
+<p>Quill’s status bar is navigable and interactive. This is a subtle but
+important design decision. It keeps useful information close while still
+making it reachable from the keyboard.</p>
+<h2 id="profiles-keyboard-packs-and-customization">Profiles, Keyboard
+Packs, and Customization</h2>
+<p>Quill is customizable, but it tries to keep customization
+coherent.</p>
+<h3 id="feature-profiles">Feature profiles</h3>
+<p>Profiles shape which feature clusters are on, quiet, or off. This
+helps Quill stay calm for new users without stripping power from
+advanced users.</p>
+<p>Use <strong>Profiles and Features…</strong> to:</p>
+<ul>
+<li>switch profiles</li>
+<li>compare profiles</li>
+<li>undo the last profile change</li>
+<li>reset to Essential</li>
+<li>import and export profile data</li>
+</ul>
+<h3 id="keyboard-packs">Keyboard packs</h3>
+<p>Quill now supports golden keyboard packs so the editor can feel
+familiar from day one. Available packs include:</p>
+<ul>
+<li>Quill Default</li>
+<li>Quill Writer</li>
+<li>Quill Navigation</li>
+<li>Quill Review</li>
+<li>Windows Notepad</li>
+<li>Notepad++</li>
+<li>VS Code</li>
+<li>Microsoft Word</li>
+</ul>
+<p>Choose a pack in <strong>Profiles and Features…</strong>. If you
+later hand-edit shortcuts or import a custom keymap, Quill automatically
+switches the pack label to <strong>Custom</strong>.</p>
+<h3 id="keymap-editor">Keymap editor</h3>
+<p>Use the keymap editor when you want to rebind a single command. Quill
+detects conflicts and warns you before reassigning a binding already in
+use.</p>
+<h3 id="status-bar-layout">Status bar layout</h3>
+<p>If the current status bar is too busy or not informative enough,
+change it. You can reorder items and choose which ones stay visible.</p>
+<h3 id="settings-you-can-change-today">Settings you can change
+today</h3>
+<p>Quill’s current settings and customization surface covers the things
+you are most likely to want to tune every day.</p>
+<ul>
+<li>theme behavior, including dark mode</li>
+<li>soft wrap</li>
+<li>recent files limit</li>
+<li>system tray mode</li>
+<li>persistent undo</li>
+<li>spell check as you type</li>
+<li>line-number visibility</li>
+<li>whether Quill starts with no document open</li>
+<li>read-aloud voice selection</li>
+<li>active feature profile</li>
+<li>active keyboard pack</li>
+<li>custom keybindings through the keymap editor</li>
+<li>status-bar order and status-bar visibility</li>
+</ul>
+<p>Some of these live in the View menu for quick toggling. Others live
+in <strong>Profiles and Features…</strong>, <strong>Status Bar
+Layout…</strong>, <strong>Keymap Editor…</strong>, and the related
+customization commands under <strong>Tools</strong>.</p>
+<h2 id="trust-recovery-sessions-and-safety">Trust, Recovery, Sessions,
+and Safety</h2>
+<p>Quill is serious about recovery and user control.</p>
+<h3 id="sessions">Sessions</h3>
+<p>Sessions let you reopen groups of documents. This is useful when a
+project naturally spans multiple notes, references, and generated
+reports.</p>
+<h3 id="autosave-and-backups">Autosave and backups</h3>
+<p>Quill autosaves at a timed interval and keeps backup snapshots. It
+avoids unnecessary duplicate autosave writes and keeps state management
+efficient.</p>
+<h3 id="recovery">Recovery</h3>
+<p>If Quill closes unexpectedly, it can offer a recovery snapshot on the
+next launch. That is not a dramatic feature. It is a humane one.</p>
+<h3 id="persistent-undo">Persistent undo</h3>
+<p>When enabled, persistent undo stores undo history for saved files
+across sessions. Quill now throttles those writes so the feature stays
+practical on large documents.</p>
+<h3 id="trusted-locations">Trusted locations</h3>
+<p>Trusted locations reduce repeated prompts when you regularly work
+from the same folders. This is especially useful in document-review and
+institutional workflows.</p>
+<h3 id="safe-mode">Safe mode</h3>
+<p>Safe mode opens Quill with optional state turned off. If you are
+troubleshooting a bad session or strange startup behavior, safe mode is
+a good first step.</p>
+<h3 id="notifications-and-updates">Notifications and updates</h3>
+<p>Quill keeps an internal notification center for update and workflow
+events. Update checks verify a signed manifest before offering a
+download.</p>
+<h2 id="working-with-different-document-types">Working with Different
+Document Types</h2>
+<p>Quill is strongest today with plain text, Markdown, HTML, EPUB, and
+extracted text workflows. It also has intake and extraction review
+features for imported material such as PDF and OCR sources.</p>
+<h3 id="plain-text">Plain text</h3>
+<p>Plain text stays plain. Quill does not force hidden formatting into
+it.</p>
+<h3 id="markdown">Markdown</h3>
+<p>Markdown gets structure-aware commands, list helpers, heading
+helpers, links, code blocks, and GLOW review.</p>
+<h3 id="html">HTML</h3>
+<p>HTML gets tag insertion, structure-aware editing help, link handling,
+and GLOW review focused on language metadata, image alt text, heading
+order, and table headers.</p>
+<h3 id="epub">EPUB</h3>
+<p>EPUB gets navigator support and chapter-oriented reading.</p>
+<h3 id="pdf-and-ocr-derived-text">PDF and OCR-derived text</h3>
+<p>PDF and OCR work are where Quill’s extraction review commands matter
+most. Treat those commands as quality checks, not optional extras.</p>
+<h2 id="help-learning-and-daily-confidence">Help, Learning, and Daily
+Confidence</h2>
+<p>Quill includes several layers of help because confidence does not
+come from memorizing everything.</p>
+<ul>
+<li><strong>Open Welcome Guide</strong> when you want a lighter
+orientation.</li>
+<li><strong>Open User Guide</strong> when you want the full map.</li>
+<li><strong>Open Keyboard Reference</strong> when you want exact current
+bindings.</li>
+<li><strong>What Can I Do Here?</strong> when you need immediate,
+contextual guidance.</li>
+<li><strong>Why Don’t I See a Feature?</strong> when a command seems to
+have disappeared.</li>
+</ul>
+<p>That last command matters more than it first appears. It turns
+feature visibility from a mystery into an explanation.</p>
+<h2 id="beta-feedback-and-bug-reporting">Beta Feedback and Bug
+Reporting</h2>
+<p>Quill is ready for serious beta use, but one public-beta readiness
+item still deserves honest attention: a secure, low-friction, no-login
+feedback path.</p>
+<h3 id="what-exists-today">What exists today</h3>
+<p>Today, Quill already has the foundations for careful support
+work:</p>
+<ul>
+<li>recovery state</li>
+<li>notifications</li>
+<li>extraction review</li>
+<li>bad-extraction package export for extraction-related issues</li>
+<li>a diagnostics bundle specification in the engineering docs</li>
+</ul>
+<h3 id="what-does-not-exist-yet">What does not exist yet</h3>
+<p>Today, Quill does <strong>not</strong> yet ship a general-purpose
+public <strong>Save Diagnostics…</strong> or <strong>Report a
+Bug…</strong> command for all users, and the repository does not define
+a support mailbox or secure feedback form endpoint.</p>
+<h3 id="best-beta-launch-recommendation">Best beta-launch
+recommendation</h3>
+<p>Before the broadest public beta push, publish one secure feedback
+route that does not require GitHub login. The best release-quality path
+is:</p>
+<ol type="1">
+<li>a BITS-controlled HTTPS feedback form</li>
+<li>optional upload of a user-reviewed diagnostics bundle</li>
+<li>a plain-language bug template with environment summary and
+reproduction steps</li>
+<li>GitHub issues as a secondary path for testers who already use
+GitHub</li>
+</ol>
+<p>Until that exists, use GitHub issues only as an optional path for
+GitHub users, and avoid presenting them as the only supported beta
+channel.</p>
+<h2 id="a-fast-shortcut-tour">A Fast Shortcut Tour</h2>
+<p>If you want a compact set of shortcuts to remember first, start
+here:</p>
+<ul>
+<li><code>Ctrl+N</code>, <code>Ctrl+O</code>, <code>Ctrl+S</code>,
+<code>Ctrl+Shift+S</code></li>
+<li><code>Ctrl+Shift+P</code> for the Command Palette</li>
+<li><code>Ctrl+F</code>, <code>F3</code>, <code>Shift+F3</code>,
+<code>Alt+F3</code></li>
+<li><code>Ctrl+G</code> and <code>Ctrl+Shift+G</code></li>
+<li><code>Ctrl+K</code> and <code>Ctrl+Enter</code></li>
+<li><code>F7</code>, <code>Alt+F7</code>, <code>Shift+F7</code></li>
+<li><code>Ctrl+Shift+W</code> for Word Count</li>
+<li><code>Ctrl+Tab</code> and <code>Ctrl+Shift+Tab</code></li>
+<li><code>F6</code> and <code>Shift+F6</code></li>
+<li><code>Alt+Z</code> for soft wrap</li>
+</ul>
+<p>Then open <strong>Help → Open Keyboard Reference</strong> and let
+Quill teach you the rest from your actual active layout.</p>
+<h2 id="closing-thought">Closing Thought</h2>
+<p>The best way to understand Quill is to use it on something real: a
+note you care about, an extracted PDF that needs trust review, an EPUB
+chapter you want to navigate, a Markdown file you want to clean up, or
+an HTML document you want to make more usable.</p>
+<p>Quill is trying to feel like a skilled guide sitting just beside the
+editor, not standing in front of it. If it succeeds, you will notice
+something simple: you spend less time wondering what the application can
+do, and more time deciding what you want to do next.</p>
+</body>
+</html>

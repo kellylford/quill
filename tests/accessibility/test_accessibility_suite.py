@@ -1,0 +1,37 @@
+from __future__ import annotations
+
+from quill.core.keymap import load_keymap
+from quill.platform.windows.sr_announce import (
+    announce,
+    clear_transcript,
+    enable_transcript_capture,
+    set_announce_handler,
+    transcript_entries,
+)
+from quill.platform.windows.sr_detect import detect_screen_reader
+
+
+def setup_function() -> None:
+    clear_transcript()
+    enable_transcript_capture(False)
+    set_announce_handler(lambda _message: None)
+
+
+def test_accessibility_announcements_are_captured_for_harnesses() -> None:
+    enable_transcript_capture(True)
+    announce("Focused editor region")
+    assert transcript_entries() == ["Focused editor region"]
+
+
+def test_accessibility_screen_reader_detection_snapshot() -> None:
+    snapshot = '"narrator.exe","321","Console","1","10,000 K"\n'
+    result = detect_screen_reader(snapshot)
+    assert result.detected is True
+    assert result.name == "Narrator"
+
+
+def test_accessibility_key_shortcuts_include_core_navigation() -> None:
+    keymap = load_keymap()
+    assert keymap["edit.find_next"] == "F3"
+    assert keymap["edit.find_previous"] == "Shift+F3"
+    assert keymap["app.command_palette"] == "Ctrl+Shift+P"

@@ -1,0 +1,93 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+import quill.core.keymap as keymap_module
+from quill.core.keymap import (
+    DEFAULT_KEYMAP,
+    KEYBOARD_PACK_DEFAULT,
+    KEYBOARD_PACKS,
+    build_keymap_for_pack,
+    export_keymap,
+    find_keymap_conflict,
+    import_keymap,
+    keyboard_pack_names,
+    keyboard_pack_preview,
+    load_keymap,
+    reset_keymap,
+    save_keymap,
+)
+
+
+def test_load_keymap_defaults(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    keymap = load_keymap()
+    assert keymap == DEFAULT_KEYMAP
+
+
+def test_load_keymap_merges_overrides(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    save_keymap({"file.save": "Ctrl+Shift+Alt+S"})
+    keymap = load_keymap()
+    assert keymap["file.save"] == "Ctrl+Shift+Alt+S"
+    assert keymap["file.open"] == DEFAULT_KEYMAP["file.open"]
+
+
+def test_import_keymap_saves_merged_defaults(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store_path = tmp_path / "keymap-store.json"
+    source_path = tmp_path / "incoming.json"
+    export_keymap(source_path, {"edit.find": "Ctrl+Alt+F"})
+    monkeypatch.setattr(keymap_module, "keymap_path", lambda: store_path)
+
+    merged = import_keymap(source_path)
+
+    assert merged["edit.find"] == "Ctrl+Alt+F"
+    saved = load_keymap()
+    assert saved["edit.find"] == "Ctrl+Alt+F"
+    assert saved["file.save"] == DEFAULT_KEYMAP["file.save"]
+
+
+def test_reset_keymap_restores_defaults(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    store_path = tmp_path / "keymap-store.json"
+    monkeypatch.setattr(keymap_module, "keymap_path", lambda: store_path)
+    save_keymap({"file.new": "Ctrl+Alt+N"})
+
+    reset = reset_keymap()
+
+    assert reset == DEFAULT_KEYMAP
+    assert load_keymap() == DEFAULT_KEYMAP
+
+
+def test_find_keymap_conflict_matches_existing_command() -> None:
+    keymap = {"file.save": "Ctrl+S", "edit.find": "Ctrl+F"}
+    conflict = find_keymap_conflict(keymap, "file.open", "Ctrl+S")
+    assert conflict == "file.save"
+
+
+def test_keyboard_pack_names_include_default() -> None:
+    names = keyboard_pack_names()
+    assert names[0] == KEYBOARD_PACK_DEFAULT
+    assert "Windows Notepad" in names
+    assert "VS Code" in names
+
+
+def test_build_keymap_for_pack_applies_overlay() -> None:
+    keymap = build_keymap_for_pack("VS Code")
+    assert keymap["file.open"] == "Ctrl+P"
+    assert keymap["format.duplicate_line"] == "Shift+Alt+Down"
+    assert keymap["file.save"] == DEFAULT_KEYMAP["file.save"]
+
+
+def test_keyboard_pack_preview_mentions_highlights() -> None:
+    preview = keyboard_pack_preview("Quill Review")
+    assert "Highlights:" in preview
+    assert "Copy With Source" in preview
+
+
+def test_keyboard_packs_are_known() -> None:
+    assert KEYBOARD_PACK_DEFAULT in KEYBOARD_PACKS
+    assert "Quill Writer" in KEYBOARD_PACKS

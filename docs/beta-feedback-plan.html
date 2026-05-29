@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Quill Beta Feedback Plan</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Quill Beta Feedback Plan</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#quill-beta-feedback-plan"
+id="toc-quill-beta-feedback-plan">Quill Beta Feedback Plan</a>
+<ul>
+<li><a href="#current-position" id="toc-current-position">Current
+Position</a></li>
+<li><a href="#launch-recommendation"
+id="toc-launch-recommendation">Launch Recommendation</a>
+<ul>
+<li><a href="#recommended-primary-path"
+id="toc-recommended-primary-path">Recommended primary path</a></li>
+<li><a href="#recommended-secondary-path"
+id="toc-recommended-secondary-path">Recommended secondary path</a></li>
+</ul></li>
+<li><a href="#ideal-user-flow" id="toc-ideal-user-flow">Ideal User
+Flow</a></li>
+<li><a href="#privacy-and-security-requirements"
+id="toc-privacy-and-security-requirements">Privacy and Security
+Requirements</a></li>
+<li><a href="#minimum-viable-fields"
+id="toc-minimum-viable-fields">Minimum Viable Fields</a></li>
+<li><a href="#launch-blocking-gap"
+id="toc-launch-blocking-gap">Launch-Blocking Gap</a></li>
+<li><a href="#v1.1-roadmap-tie-in" id="toc-v1.1-roadmap-tie-in">v1.1
+Roadmap Tie-In</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="quill-beta-feedback-plan">Quill Beta Feedback Plan</h1>
+<p>This document exists to answer one practical beta question: how
+should people report bugs, rough edges, missing features, and usability
+problems if they do not use GitHub?</p>
+<h2 id="current-position">Current Position</h2>
+<p>Quill is ready for meaningful beta use, but it does not yet ship a
+general-purpose in-app diagnostics export or a no-login report flow.</p>
+<p>Today we have:</p>
+<ul>
+<li>a diagnostics bundle specification in the engineering
+documentation</li>
+<li>recovery and notification infrastructure</li>
+<li>extraction-quality review</li>
+<li>bad-extraction package export for extraction-specific issues</li>
+<li>a repository that can accept GitHub issues from users who already
+use GitHub</li>
+</ul>
+<p>Today we do not have:</p>
+<ul>
+<li>a public support mailbox defined in this repository</li>
+<li>a BITS-hosted HTTPS feedback form</li>
+<li>an in-app <code>Save Diagnostics...</code> command for general bug
+reports</li>
+<li>an in-app <code>Report a Bug...</code> command that prepares a safe
+report package</li>
+</ul>
+<h2 id="launch-recommendation">Launch Recommendation</h2>
+<p>Do not treat GitHub login as the only feedback path for a broad
+public beta.</p>
+<p>For the public beta, Quill should offer one primary feedback path
+that does not require GitHub login and one secondary path for technical
+users who already prefer GitHub.</p>
+<h3 id="recommended-primary-path">Recommended primary path</h3>
+<p>Use a BITS-controlled HTTPS feedback form.</p>
+<p>The form should:</p>
+<ul>
+<li>work without GitHub sign-in</li>
+<li>work well with screen readers and keyboard-only users</li>
+<li>support short feedback, structured bug reports, and feature
+suggestions</li>
+<li>allow optional upload of a user-reviewed diagnostics bundle</li>
+<li>show a clear privacy statement before upload</li>
+<li>return a human-readable confirmation number after submission</li>
+</ul>
+<h3 id="recommended-secondary-path">Recommended secondary path</h3>
+<p>Offer GitHub issues as an optional route for users who already use
+GitHub and want a public issue tracker.</p>
+<h2 id="ideal-user-flow">Ideal User Flow</h2>
+<ol type="1">
+<li>User chooses <code>Help -&gt; Report a Bug...</code> or visits the
+beta feedback link from the website.</li>
+<li>Quill explains what information will be included and what will never
+be included.</li>
+<li>User chooses whether to create a diagnostics bundle.</li>
+<li>Quill writes a redacted zip file locally for the user to
+review.</li>
+<li>User either attaches that bundle to the secure web form or submits
+feedback without an attachment.</li>
+<li>The system returns a confirmation number and plain-language next
+steps.</li>
+</ol>
+<h2 id="privacy-and-security-requirements">Privacy and Security
+Requirements</h2>
+<p>Any beta feedback system should follow these rules:</p>
+<ul>
+<li>never auto-send diagnostics</li>
+<li>never include document body text by default</li>
+<li>never include secrets, provider keys, or tokens</li>
+<li>strip URL query strings unless the user explicitly opts in</li>
+<li>hash file paths by default unless the user explicitly opts in to
+plain paths</li>
+<li>describe the upload destination before any submission</li>
+<li>support cancellation before upload begins</li>
+</ul>
+<h2 id="minimum-viable-fields">Minimum Viable Fields</h2>
+<p>The secure form should ask for:</p>
+<ul>
+<li>name or nickname</li>
+<li>email address only if follow-up is desired</li>
+<li>Quill version</li>
+<li>Windows version</li>
+<li>short summary</li>
+<li>what happened</li>
+<li>what the user expected to happen</li>
+<li>exact steps to reproduce if known</li>
+<li>whether the issue blocks work</li>
+<li>optional diagnostics upload</li>
+</ul>
+<h2 id="launch-blocking-gap">Launch-Blocking Gap</h2>
+<p>Before the broadest beta push, one of these needs to exist:</p>
+<ul>
+<li>a secure BITS-hosted feedback form</li>
+<li>a BITS support mailbox that is published clearly in the application
+and docs</li>
+<li>a comparable no-login support intake channel with attachment
+support</li>
+</ul>
+<p>Without one of those, the beta can still proceed for invited testers,
+but the public story is weaker and less inclusive than it should be.</p>
+<h2 id="v1.1-roadmap-tie-in">v1.1 Roadmap Tie-In</h2>
+<p>The v1.1 roadmap should include:</p>
+<ul>
+<li><code>Help -&gt; Save Diagnostics...</code></li>
+<li><code>Help -&gt; Report a Bug...</code></li>
+<li>redacted diagnostics bundle generation</li>
+<li>no-login secure beta feedback intake</li>
+<li>user-facing documentation for how to report bugs and how diagnostics
+are handled</li>
+</ul>
+</body>
+</html>

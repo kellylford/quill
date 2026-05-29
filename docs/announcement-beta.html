@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Announcing Quill Beta</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Announcing Quill Beta</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#announcing-quill-beta"
+id="toc-announcing-quill-beta">Announcing Quill Beta</a>
+<ul>
+<li><a href="#a-screen-reader-first-writing-environment-for-windows"
+id="toc-a-screen-reader-first-writing-environment-for-windows">A
+screen-reader-first writing environment for Windows</a></li>
+<li><a href="#what-makes-quill-special"
+id="toc-what-makes-quill-special">What makes Quill special</a></li>
+<li><a href="#the-new-glow-experience-inside-quill"
+id="toc-the-new-glow-experience-inside-quill">The new GLOW experience
+inside Quill</a></li>
+<li><a href="#why-this-beta-matters" id="toc-why-this-beta-matters">Why
+this beta matters</a></li>
+<li><a href="#this-is-a-beta" id="toc-this-is-a-beta">This is a
+beta</a></li>
+<li><a href="#feedback-and-bug-reports"
+id="toc-feedback-and-bug-reports">Feedback and bug reports</a></li>
+<li><a href="#thank-you-for-trying-quill"
+id="toc-thank-you-for-trying-quill">Thank you for trying Quill</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="announcing-quill-beta">Announcing Quill Beta</h1>
+<h2 id="a-screen-reader-first-writing-environment-for-windows">A
+screen-reader-first writing environment for Windows</h2>
+<p>Quill Beta is here.</p>
+<p>Quill is a writing, reading, review, and document-intelligence
+environment for Windows built around a simple idea: powerful tools
+should feel calm, predictable, and welcoming from the keyboard. The
+editor is local-first, screen-reader-first, and designed to make serious
+text work feel steady instead of fragile.</p>
+<p>Quill is not only a place to type notes. It is a place to open and
+write plain text, Markdown, and HTML; inspect structure; compare
+revisions; navigate EPUB content; review extraction quality; run
+accessibility checks; work with spelling and thesaurus tools; use golden
+keyboard packs; and move through real documents with confidence.</p>
+<h2 id="what-makes-quill-special">What makes Quill special</h2>
+<p>Quill Beta already includes a broad set of everyday and specialist
+features:</p>
+<ul>
+<li>a keyboard-first editor shell with command palette, tabs, rich
+navigation, and an interactive status bar</li>
+<li>plain text, Markdown, and HTML workflows that stay readable and
+structured</li>
+<li>spell check, thesaurus, word count, link insertion, and source-aware
+copy</li>
+<li>heading, list, table, code block, and markup insertion tools</li>
+<li>compare workflows for file-to-file and document-to-document
+review</li>
+<li>EPUB navigation, OCR image intake, and extraction-quality
+review</li>
+<li>feature profiles that keep the interface calm without taking power
+away</li>
+<li>golden keyboard packs inspired by Windows Notepad, Notepad++, VS
+Code, Microsoft Word, and Quill-native workflows</li>
+<li>the first native GLOW workflows for deterministic audit and fix work
+inside the editor itself</li>
+<li>accessibility-focused support such as region cycling, keyboard-trap
+inspection, contrast validation, and discoverable help surfaces</li>
+<li>backups, autosave, recovery, persistent undo, trusted locations,
+notifications, and signed update checks</li>
+</ul>
+<h2 id="the-new-glow-experience-inside-quill">The new GLOW experience
+inside Quill</h2>
+<p>One of the most exciting additions in this beta is the first native
+GLOW workflow inside Quill.</p>
+<p>GLOW stands for guided layout and output workflow. In Quill Beta,
+GLOW makes accessibility-aware review feel like part of writing rather
+than a separate compliance chore. You can audit the current document,
+audit the current selection, fix the current document into a preview
+tab, compare original and fixed output, or apply deterministic fixes
+directly to the current selection.</p>
+<p>This first slice focuses on plain text, Markdown, and HTML. It
+already helps with heading spacing, heading-level jumps, generic link
+text, missing HTML language metadata, missing image alt attributes,
+dense paragraphs, and plain-language friction.</p>
+<h2 id="why-this-beta-matters">Why this beta matters</h2>
+<p>Quill is being built for people who need an editor that feels
+trustworthy.</p>
+<p>That includes:</p>
+<ul>
+<li>screen-reader users who want a native Windows experience</li>
+<li>writers and editors who work heavily in plain text, Markdown, or
+HTML</li>
+<li>accessibility-minded teams reviewing structure and readability</li>
+<li>people opening difficult or imperfect source documents and trying to
+decide whether the extracted text is good enough to trust</li>
+<li>users who want a serious editor that still teaches them what it can
+do</li>
+</ul>
+<p>This beta is not just a preview. It is the moment when Quill starts
+learning from real work.</p>
+<h2 id="this-is-a-beta">This is a beta</h2>
+<p>Quill Beta is already useful, but it is still a beta.</p>
+<p>That means:</p>
+<ul>
+<li>bugs may be found</li>
+<li>some features are deeper than others</li>
+<li>some workflows are still maturing toward the full v1.1 vision</li>
+<li>parts of the support and feedback experience still need polishing
+before the broadest public rollout</li>
+</ul>
+<p>If something feels rough, that feedback is valuable. If something
+delights you, that is valuable too. Both help shape what Quill becomes
+next.</p>
+<h2 id="feedback-and-bug-reports">Feedback and bug reports</h2>
+<p>We want the beta feedback path to be inclusive and low-friction.</p>
+<p>GitHub issues are useful for testers who already use GitHub, but they
+should not be the only way people can report problems. Before the
+broadest public beta push, Quill should have a secure no-login feedback
+route with optional diagnostics upload.</p>
+<p>Until that path is fully published, treat GitHub as the optional
+technical route rather than the only official route.</p>
+<h2 id="thank-you-for-trying-quill">Thank you for trying Quill</h2>
+<p>Trying a beta takes generosity. You are trusting unfinished software
+with real work, real attention, and real patience.</p>
+<p>Thank you for that.</p>
+<p>If Quill helps you write more confidently, review more carefully, or
+simply feel more at home in a Windows editor, then the beta is already
+doing something important. And if you help point out what still needs
+work, you are helping build the version that will be even stronger.</p>
+<p>Quill Beta is ready to be explored. Open a file, press
+<code>Ctrl+Shift+P</code>, and start.</p>
+</body>
+</html>

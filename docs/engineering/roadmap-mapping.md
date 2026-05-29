@@ -1,0 +1,103 @@
+# PRD roadmap mapping
+
+This maps implemented work to PRD release slices.
+
+## Implemented now (alpha foundations)
+
+- Application shell with menu/status/editor
+- Text and HTML open/save
+- Config/data format readers baseline (JSON/YAML/TOML/XML/CSV/TSV)
+- Notebook and SQLite read-only renderers
+- DOCX read-only text extraction path
+- EPUB/RTF/ODT baseline read-only text extraction paths
+- EPUB navigator dialog with chapter tree + preview and open-selected-chapter flow
+- Recent files
+- Settings/keymap persistence baseline
+- Keymap import/export/reset workflows (Tools menu)
+- Command palette baseline
+- Command palette fuzzy ranking with persisted frequency/recency tie-breakers
+- Command palette prefix modes (`>`, `?`, `:`, `~`) with scoped filtering
+- Find and replace-all baseline
+- Word count and go-to-line utility commands
+- Go-to-line parser supports `line,column` targeting
+- HTML tag/attribute picker and markdown tagging picker
+- Format-aware insert-link command (`Ctrl+K`)
+- Follow-link command (`Ctrl+Enter`) with cursor URL extraction
+- Find next/previous navigation (`F3` / `Shift+F3`)
+- Find-all-matches summary (`Alt+F3`)
+- Surface-aware bold/italic + heading (`Ctrl+Alt+1..6`) for Markdown/HTML documents
+- Heading-level adjust commands (`Alt+Shift+Left` / `Alt+Shift+Right`) for Markdown/HTML heading lines
+- Format text transforms (upper/lower/title/sentence/toggle case)
+- Format line operations (move up/down, duplicate, delete, join)
+- Format comment and indentation operations (toggle line/block comment, indent/outdent)
+- Dedicated format insert commands (list submenu, code block, footnote) for Markdown/HTML
+- Guided table insertion workflow (Markdown/HTML table builder)
+- Code-block insertion with optional language hints for Markdown fences and HTML `language-*` classes
+- Edit selection helpers (Select Line and Select Paragraph commands)
+- Tabbed multi-document switcher with close semantics
+- Recent-document keyboard cycling via `Ctrl+Tab` / `Ctrl+Shift+Tab`
+- Single-instance handoff IPC for second-launch file-open requests
+- Edit selection expansion commands (select block, select to line/document boundaries)
+- Extend Selection mode (`F8`) for shiftless Word-style selection growth
+- Mark ring commands (set, pop, exchange point/mark, list marks)
+- Optional system tray mode (send to tray, restore, tray exit)
+- Context menus across editor/status bar/frame with keyboard Application/Menu-key support
+- File workflow quick wins (Open from URL baseline, Save As Plain Text, Clear Recent Files)
+- File workflow commands (Save All, Reload from Disk, Restore Backup dialog)
+- File menu sessions submenu for open-document switching
+- Open from URL safety flow (host/size confirmation and cross-host redirect prompt)
+- Go To Page baseline navigation command
+- Heading and block navigation commands (Navigate menu)
+- Outline navigator command with heading jump dialog
+- Match-bracket and structural navigation commands
+- F6/Shift+F6 region cycling between primary UI regions
+- Status bar caret indicator (`Ln`, `Col`) and customizable status item order/visibility
+- Status bar insert/overwrite mode indicator (`INS` / `OVR`)
+- Full status-bar interactive cell model with keyboard activation and accessible Help/About entries
+- Trust and verification layer: document intake reports, copy-with-source, extraction quality review, and bad-extraction reports
+- Power search layer: regex/whole-word/wildcard search modes, regex helper, and previewed replace-all
+- Recent-location back/forward ring navigation
+- View-level soft-wrap toggle with persisted setting
+- Dark mode toggle in View with persisted theme state
+- Persistent find/replace query history
+- Atomic JSON persistence
+- Backup/autosave infrastructure primitives
+- Integration-test corpus baseline under `tests/integration`
+- Accessibility transcript capture hooks for test harnesses
+- Welcome guide and generated keyboard-reference document commands
+- Performance smoke suite baseline under `tests/performance`
+- Third-party notices generation and license-gate tooling script
+- Accessibility conformance report (ACR/VPAT) generation script and template
+- Screen-reader detection baseline with adaptive startup hinting
+- Region entry/exit announcement consistency for modal dialogs
+- Keyboard trap audit and tab-order snapshot command
+- Accessibility audit command and report panel
+- Link inventory and alt-text catalog tool
+- Compare-with-file diff workflow
+- DPAPI key storage baseline for provider credentials
+- Trusted locations store and untrusted file-open prompts
+- Startup crash-recovery prompt with autosave restore option
+- Signed update manifest verification and Check for Updates workflow
+- Keymap editor UI with conflict detection and capture workflow
+- Notification center persistence model with stored update/recovery entries
+- Contrast and low-vision theme validation command/report
+- Optional persistent-undo mode with on-disk undo history
+- Spell-check dialog, dictionary scopes, and next-misspelling navigation
+- As-you-type spell-check toggle with status hints
+- Accessibility-focused test suite and Windows CI workflow automation
+- Controlled-vocabulary plain-language lint hooks and CLI checker
+- Windows installer flow and portable build template
+- PDF extraction baseline with quality scoring
+- OCR bridge baseline with consent/progress UI
+
+## Next high-priority implementation targets
+
+- Multi-document session model
+- Complete file-menu/session/print set
+- Read-aloud controls with voice selection
+- Windows shell integration and high-contrast sync
+- SBOM + signed build/release provenance pipeline
+- Deferred to v1.1: AI provider abstraction, consent-gated network actions, reading-order repair, task progress/cancellation
+- Deferred to v1.1: GLOW expansion beyond the first native audit/fix slice, including findings navigation, export-readiness workflows, and extraction-aware review for PDF and EPUB.
+- Deferred to v1.1: multi-format documentation release pipeline for the full user guide, including maintained Markdown, HTML, and EPUB artifacts.
+- Deferred to v1.1: secure beta feedback intake, in-app diagnostics export, and a no-login report-a-bug path suitable for broad public testing.
