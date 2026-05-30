@@ -686,6 +686,7 @@ A dedicated menu surfacing transforms that are otherwise reachable via Tools or 
 - Indent: Indent, Outdent, Convert to Tabs, Convert to Spaces, Set Indent Width….
 - Markdown helpers: Insert Heading (levels 1–6), Insert Bullet List, Insert Numbered List, Insert Task List, Insert Table…, Insert Link…, Insert Code Block, Insert Footnote.
 - Magical tag helpers: Insert HTML Tag… (with attribute picker) and Insert Markdown Tag… (semantic snippet picker).
+- Snippet helpers: Insert Snippet… (`Ctrl+Space`) and Manage Snippets… (`Ctrl+Alt+Space`) with searchable filtering, placeholder prompts, and starter-pack onboarding.
 - Surface-aware formatting shortcuts (Markdown/HTML only): `Ctrl+B` bold, `Ctrl+I` italic, and heading levels `Ctrl+Alt+1` through `Ctrl+Alt+6`.
 - Re-flow: Wrap to Column…, Re-flow Paragraph.
 
@@ -698,6 +699,14 @@ A dedicated menu surfacing transforms that are otherwise reachable via Tools or 
 - For Link and Image, Quill asks for the target URL and composes the final markdown in one action.
 - All picker actions are mirrored in the command palette and are keybindable through the keymap system.
 - `Edit → Insert Link…` (`Ctrl+K`) uses a format-aware inserter: markdown links in Markdown docs, `<a href>` in HTML docs, and `text (url)` form in plain text.
+
+### 5.29b Snippet insertion and trigger expansion
+
+- Snippets are stored locally under `%APPDATA%\Quill\snippets\snippets.json` with atomic writes.
+- `Format → Insert Snippet…` opens the same keyboard-first searchable picker pattern used across Quill insertion flows.
+- Supported placeholders in snippet bodies: `${input:name}`, `${choice:a|b}`, `${date}`, `${time}`, `${cursor}`.
+- Trigger expansion can run while typing (for example `;meeting` plus a delimiter), and remains user-controllable via General Preferences.
+- Starter packs are installable from Preferences and snippet management so onboarding can begin with practical templates.
 
 ### 5.30 Bookmark export and import
 

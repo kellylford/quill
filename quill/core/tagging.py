@@ -34,6 +34,22 @@ HTML_TAG_CHOICES = [
     "code",
     "pre",
     "blockquote",
+    "form",
+    "label",
+    "input",
+    "textarea",
+    "select",
+    "option",
+    "button",
+    "fieldset",
+    "legend",
+    "datalist",
+    "optgroup",
+    "output",
+    "progress",
+    "meter",
+    "details",
+    "summary",
 ]
 
 MARKDOWN_TAG_CHOICES = [
@@ -44,6 +60,9 @@ MARKDOWN_TAG_CHOICES = [
     "Heading 1",
     "Heading 2",
     "Heading 3",
+    "Heading 4",
+    "Heading 5",
+    "Heading 6",
     "Bullet List",
     "Numbered List",
     "Task List",
@@ -53,6 +72,40 @@ MARKDOWN_TAG_CHOICES = [
     "Table",
     "Footnote",
 ]
+
+_HTML_SEARCH_ALIASES: dict[str, tuple[str, ...]] = {
+    "input": ("text", "textbox", "field", "radio", "checkbox", "email", "password"),
+    "button": ("click", "submit", "reset", "action"),
+    "select": ("dropdown", "combo", "pick"),
+    "option": ("choice", "item", "dropdown"),
+    "textarea": ("multiline", "text area", "notes"),
+    "label": ("caption", "form", "field"),
+    "form": ("fields", "controls", "submit"),
+    "fieldset": ("group", "form"),
+    "legend": ("group title", "form"),
+    "datalist": ("autocomplete", "suggestions"),
+    "optgroup": ("option group", "group"),
+    "output": ("result", "computed"),
+    "progress": ("meter", "completion"),
+    "meter": ("gauge", "level"),
+    "details": ("collapsible", "accordion"),
+    "summary": ("collapsible", "accordion", "title"),
+}
+
+_MARKDOWN_SEARCH_ALIASES: dict[str, tuple[str, ...]] = {
+    "Heading 1": ("h1", "title"),
+    "Heading 2": ("h2",),
+    "Heading 3": ("h3",),
+    "Heading 4": ("h4",),
+    "Heading 5": ("h5",),
+    "Heading 6": ("h6",),
+    "Bullet List": ("list", "unordered"),
+    "Numbered List": ("list", "ordered"),
+    "Task List": ("checklist", "todo"),
+    "Inline Code": ("code", "snippet"),
+    "Code Block": ("code", "fenced"),
+    "Footnote": ("note", "citation"),
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,6 +128,37 @@ def parse_attribute_pairs(raw: str) -> dict[str, str]:
             continue
         attributes[part] = ""
     return attributes
+
+
+def _rank_choices(
+    choices: list[str],
+    query: str,
+    aliases: dict[str, tuple[str, ...]],
+) -> list[str]:
+    normalized = query.strip().lower()
+    if not normalized:
+        return list(choices)
+    tokens = [token for token in normalized.split() if token]
+    scored: list[tuple[tuple[int, int, str], str]] = []
+    for choice in choices:
+        choice_lower = choice.lower()
+        haystack = " ".join((choice_lower, *aliases.get(choice, ())))
+        exact_prefix_bonus = 0 if choice_lower.startswith(normalized) else 1
+        missing = sum(1 for token in tokens if token not in haystack)
+        if missing == len(tokens):
+            continue
+        token_miss = sum(1 for token in tokens if token not in choice_lower)
+        scored.append(((missing, token_miss, exact_prefix_bonus), choice))
+    scored.sort(key=lambda item: (item[0], item[1]))
+    return [choice for _score, choice in scored]
+
+
+def search_html_tag_choices(query: str) -> list[str]:
+    return _rank_choices(HTML_TAG_CHOICES, query, _HTML_SEARCH_ALIASES)
+
+
+def search_markdown_tag_choices(query: str) -> list[str]:
+    return _rank_choices(MARKDOWN_TAG_CHOICES, query, _MARKDOWN_SEARCH_ALIASES)
 
 
 def build_html_insertion(

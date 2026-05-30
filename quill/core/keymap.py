@@ -75,6 +75,8 @@ DEFAULT_KEYMAP: dict[str, str] = {
     "format.increase_heading_level": "Alt+Shift+Right",
     "format.insert_html_tag": "Ctrl+Alt+H",
     "format.insert_markdown_tag": "Ctrl+Alt+M",
+    "format.insert_snippet": "Ctrl+Space",
+    "format.manage_snippets": "Ctrl+Alt+Space",
 }
 
 KEYBOARD_PACK_DEFAULT = "Quill Default"
@@ -112,6 +114,8 @@ _PACK_LABELS: dict[str, str] = {
     "format.move_line_down": "Move Line Down",
     "format.move_line_up": "Move Line Up",
     "format.outdent": "Outdent",
+    "format.insert_snippet": "Insert Snippet",
+    "format.manage_snippets": "Manage Snippets",
     "format.toggle_line_comment": "Toggle Line Comment",
     "format.upper_case": "Upper Case",
     "navigate.back_location": "Back",

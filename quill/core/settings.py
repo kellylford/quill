@@ -92,6 +92,7 @@ class Settings:
     tray_enabled: bool = False
     persistent_undo: bool = False
     spellcheck_as_you_type: bool = False
+    snippet_trigger_expansion: bool = True
     title_bar_path_mode: str = "name"
     dirty_title_style: str = "text"
     start_with_no_document_open: bool = False
@@ -114,6 +115,7 @@ class Settings:
         tray_enabled = bool(data.get("tray_enabled", False))
         persistent_undo = bool(data.get("persistent_undo", False))
         spellcheck_as_you_type = bool(data.get("spellcheck_as_you_type", False))
+        snippet_trigger_expansion = bool(data.get("snippet_trigger_expansion", True))
         title_bar_path_mode = str(data.get("title_bar_path_mode", "name"))
         if title_bar_path_mode not in {"name", "full_path"}:
             title_bar_path_mode = "name"
@@ -150,6 +152,7 @@ class Settings:
             tray_enabled=tray_enabled,
             persistent_undo=persistent_undo,
             spellcheck_as_you_type=spellcheck_as_you_type,
+            snippet_trigger_expansion=snippet_trigger_expansion,
             title_bar_path_mode=title_bar_path_mode,
             dirty_title_style=dirty_title_style,
             start_with_no_document_open=start_with_no_document_open,

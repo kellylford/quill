@@ -144,6 +144,21 @@ from quill.core.sessions import (
     save_session as save_session_file,
 )
 from quill.core.settings import STATUS_BAR_ITEMS, Settings, load_settings, save_settings
+from quill.core.snippets import (
+    ExpansionResult as SnippetExpansionResult,
+)
+from quill.core.snippets import (
+    Snippet,
+    SnippetLibrary,
+    extract_placeholders,
+    find_snippet_by_trigger,
+    load_snippet_library,
+    merge_starter_pack,
+    render_snippet,
+    save_snippet_library,
+    search_snippets,
+    starter_pack_names,
+)
 from quill.core.spellcheck import (
     Misspelling,
     add_word_to_scope,
@@ -178,6 +193,8 @@ from quill.core.tagging import (
     build_markdown_insertion,
     build_markdown_table,
     parse_attribute_pairs,
+    search_html_tag_choices,
+    search_markdown_tag_choices,
 )
 from quill.core.transforms import to_lower, to_sentence_case, to_title, to_toggle_case, to_upper
 from quill.core.trust import is_trusted_location, load_trusted_locations, save_trusted_locations
@@ -358,6 +375,7 @@ class MainFrame:
         self._last_search_options = SearchOptions()
         self._last_match: tuple[int, int] | None = None
         self._search_history = [] if safe_mode else load_search_history()
+        self._searchable_picker_queries: dict[str, str] = {}
         self._notifications = [] if safe_mode else load_notifications()
         self._mark_ring = MarkRing()
         self._location_ring = LocationRing()
@@ -393,6 +411,10 @@ class MainFrame:
         self._insert_key_down = False
         self._print_data = wx.PrintData()
         self._page_setup_data = wx.PageSetupDialogData(self._print_data)
+        self._snippet_library = (
+            load_snippet_library() if not safe_mode else SnippetLibrary(version=1, snippets=[])
+        )
+        self._snippet_expansion_guard = False
         self.commands = CommandRegistry()
         self.commands.set_run_listener(self._on_command_run)
         self._recent_menu_ids: dict[int, Path] = {}
@@ -1330,6 +1352,18 @@ class MainFrame:
             self._binding_for("format.insert_markdown_tag"),
         )
         self.commands.register(
+            "format.insert_snippet",
+            "Insert Snippet...",
+            self.insert_snippet,
+            self._binding_for("format.insert_snippet"),
+        )
+        self.commands.register(
+            "format.manage_snippets",
+            "Manage Snippets...",
+            self.manage_snippets,
+            self._binding_for("format.manage_snippets"),
+        )
+        self.commands.register(
             "format.bold",
             "Bold",
             self.format_bold,
@@ -1729,6 +1763,8 @@ class MainFrame:
             self._menu_label("Pre&ferences...", "app.preferences"),
         )
         menu_bar.Append(edit_menu, "&Edit")
+        insert_menu = wx.Menu()
+        menu_bar.Append(insert_menu, "&Insert")
 
         search_menu = wx.Menu()
         search_menu.Append(self._id_find, self._menu_label("&Find...", "edit.find"))
@@ -1749,8 +1785,6 @@ class MainFrame:
             self._id_find_all_matches,
             self._menu_label("Find &All Matches", "edit.find_all_matches"),
         )
-        menu_bar.Append(search_menu, "&Search")
-
         self._id_send_to_tray = wx.NewIdRef()
         self._id_toggle_tray_mode = wx.NewIdRef()
         self._id_toggle_soft_wrap = wx.NewIdRef()
@@ -1827,6 +1861,7 @@ class MainFrame:
             self.settings.start_with_no_document_open,
         )
         menu_bar.Append(view_menu, "&View")
+        menu_bar.Append(search_menu, "&Search")
 
         navigate_menu = wx.Menu()
         self._id_go_to_line = wx.NewIdRef()
@@ -1917,6 +1952,8 @@ class MainFrame:
         )
         self._id_insert_html_tag = wx.NewIdRef()
         self._id_insert_markdown_tag = wx.NewIdRef()
+        self._id_insert_snippet = wx.NewIdRef()
+        self._id_manage_snippets = wx.NewIdRef()
         self._id_format_bold = wx.NewIdRef()
         self._id_format_italic = wx.NewIdRef()
         self._id_heading_1 = wx.NewIdRef()
@@ -2037,7 +2074,12 @@ class MainFrame:
                 "format.increase_heading_level",
             ),
         )
-        format_menu.AppendSubMenu(heading_menu, "Insert &Heading")
+        insert_menu.Append(
+            self._id_insert_link,
+            self._menu_label("Insert &Link...", "edit.insert_link"),
+        )
+        insert_menu.AppendSeparator()
+        insert_menu.AppendSubMenu(heading_menu, "&Heading")
         list_menu = wx.Menu()
         list_menu.Append(
             self._id_insert_bullet_list,
@@ -2051,27 +2093,35 @@ class MainFrame:
             self._id_insert_task_list,
             self._menu_label("&Task", "format.insert_task_list"),
         )
-        format_menu.AppendSubMenu(list_menu, "Insert &List")
-        format_menu.Append(
+        insert_menu.AppendSubMenu(list_menu, "&List")
+        insert_menu.Append(
             self._id_insert_code_block,
             self._menu_label("Insert Code &Block", "format.insert_code_block"),
         )
-        format_menu.Append(
+        insert_menu.Append(
             self._id_insert_footnote,
             self._menu_label("Insert &Footnote", "format.insert_footnote"),
         )
-        format_menu.Append(
+        insert_menu.Append(
             self._id_insert_table,
             self._menu_label("Insert &Table...", "format.insert_table"),
         )
-        format_menu.AppendSeparator()
-        format_menu.Append(
+        insert_menu.AppendSeparator()
+        insert_menu.Append(
             self._id_insert_html_tag,
             self._menu_label("Insert &HTML Tag...", "format.insert_html_tag"),
         )
-        format_menu.Append(
+        insert_menu.Append(
             self._id_insert_markdown_tag,
             self._menu_label("Insert &Markdown Tag...", "format.insert_markdown_tag"),
+        )
+        insert_menu.Append(
+            self._id_insert_snippet,
+            self._menu_label("Insert S&nippet...", "format.insert_snippet"),
+        )
+        insert_menu.Append(
+            self._id_manage_snippets,
+            self._menu_label("Manage Snippets...", "format.manage_snippets"),
         )
         self._id_next_document = wx.NewIdRef()
         self._id_previous_document = wx.NewIdRef()
@@ -2867,6 +2917,16 @@ class MainFrame:
             lambda _e: self.insert_markdown_tag(),
             id=self._id_insert_markdown_tag,
         )
+        self.frame.Bind(
+            wx.EVT_MENU,
+            lambda _e: self.insert_snippet(),
+            id=self._id_insert_snippet,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
+            lambda _e: self.manage_snippets(),
+            id=self._id_manage_snippets,
+        )
         self.frame.Bind(wx.EVT_MENU, lambda _e: self.show_word_count(), id=self._id_word_count)
         self.frame.Bind(
             wx.EVT_MENU,
@@ -3281,6 +3341,8 @@ class MainFrame:
             "format.delete_line": self._id_delete_line,
             "format.insert_html_tag": self._id_insert_html_tag,
             "format.insert_markdown_tag": self._id_insert_markdown_tag,
+            "format.insert_snippet": self._id_insert_snippet,
+            "format.manage_snippets": self._id_manage_snippets,
         }
 
     def _on_command_run(self, command_id: str) -> None:
@@ -3458,6 +3520,12 @@ class MainFrame:
         self.frame.RequestUserAttention()
 
     def _on_text_changed(self, _event: object) -> None:
+        if (
+            not self._snippet_expansion_guard
+            and self.settings.snippet_trigger_expansion
+            and self._expand_snippet_trigger_if_match()
+        ):
+            return
         self.document.set_text(self.editor.GetValue())
         if not self._suspend_persistent_undo:
             self._record_persistent_undo_state(self.document.text)
@@ -3467,6 +3535,56 @@ class MainFrame:
         self._refresh_title()
         self._refresh_contextual_menu_items()
         self._set_status("Modified")
+
+    def _expand_snippet_trigger_if_match(self) -> bool:
+        if self.editor.GetSelection()[0] != self.editor.GetSelection()[1]:
+            return False
+        text = self.editor.GetValue()
+        caret = self.editor.GetInsertionPoint()
+        if caret <= 0 or caret > len(text):
+            return False
+        delimiter = text[caret - 1]
+        if delimiter not in {" ", "\n", "\t", ".", ",", ";", ":", "!", "?", ")", "]", "}"}:
+            return False
+        token_end = caret - 1
+        token_start = token_end
+        while token_start > 0 and not text[token_start - 1].isspace():
+            token_start -= 1
+        token = text[token_start:token_end]
+        if not token.startswith(";") or len(token) < 2:
+            return False
+        snippet = find_snippet_by_trigger(self._snippet_library.snippets, token)
+        if snippet is None:
+            return False
+        rendered = self._render_snippet_with_prompts(snippet)
+        if rendered is None:
+            return False
+        before = text[:token_start]
+        after = text[token_end:]
+        has_cursor_marker = "${cursor}" in snippet.body
+        new_text = before + rendered.text + after
+        new_caret = token_start + rendered.cursor
+        if not has_cursor_marker:
+            new_caret += 1
+        if new_caret < 0:
+            new_caret = 0
+        if new_caret > len(new_text):
+            new_caret = len(new_text)
+        self._snippet_expansion_guard = True
+        try:
+            self.editor.ChangeValue(new_text)
+            self.editor.SetInsertionPoint(new_caret)
+            self.editor.SetSelection(new_caret, new_caret)
+        finally:
+            self._snippet_expansion_guard = False
+        self.document.set_text(new_text)
+        if not self._suspend_persistent_undo:
+            self._record_persistent_undo_state(new_text)
+        self._maybe_autosave()
+        self._refresh_title()
+        self._refresh_contextual_menu_items()
+        self._set_status(f'Expanded snippet trigger "{snippet.trigger}".')
+        return True
 
     def _on_editor_caret_activity(self, event: object) -> None:
         self._refresh_statusbar()
@@ -5812,9 +5930,11 @@ class MainFrame:
     def open_preferences(self) -> None:
         wx = self._wx
         options: list[tuple[str, Callable[[], None]]] = [
+            ("General", self.open_general_preferences),
             ("Profiles and Features", self.open_profiles_and_features_settings),
             ("Status Bar Layout", self.open_status_bar_settings),
             ("Keymap Editor", self.open_keymap_editor),
+            ("Install Starter Snippet Packs", self.install_starter_snippet_packs),
         ]
         with wx.SingleChoiceDialog(
             self.frame,
@@ -5832,6 +5952,142 @@ class MainFrame:
             return
         _label, handler = options[selected]
         handler()
+
+    def open_general_preferences(self) -> None:
+        wx = self._wx
+        with wx.Dialog(self.frame, title="General Preferences") as dialog:
+            panel = wx.Panel(dialog)
+            root = wx.BoxSizer(wx.VERTICAL)
+            panel_sizer = wx.BoxSizer(wx.VERTICAL)
+
+            def _add_choice_row(label: str, control) -> None:
+                row = wx.BoxSizer(wx.HORIZONTAL)
+                row.Add(wx.StaticText(panel, label=label), 0, wx.ALIGN_CENTER_VERTICAL)
+                row.AddSpacer(8)
+                row.Add(control, 1, wx.EXPAND)
+                panel_sizer.Add(row, 0, wx.EXPAND | wx.ALL, 8)
+
+            theme_choice = wx.Choice(panel, choices=["System", "Light", "Dark"])
+            theme_choice.SetStringSelection(self.settings.theme.capitalize())
+            _add_choice_row("Theme", theme_choice)
+
+            title_path_choice = wx.Choice(panel, choices=["File name only", "Full path"])
+            title_path_choice.SetSelection(
+                1 if getattr(self.settings, "title_bar_path_mode", "name") == "full_path" else 0
+            )
+            _add_choice_row("Title bar path", title_path_choice)
+
+            dirty_style_choice = wx.Choice(panel, choices=["Text", "Asterisk", "Asterisk + text"])
+            dirty_style_choice.SetSelection(
+                {"text": 0, "asterisk": 1, "asterisk_text": 2}.get(
+                    self.settings.dirty_title_style,
+                    0,
+                )
+            )
+            _add_choice_row("Dirty title style", dirty_style_choice)
+
+            tray_mode = wx.CheckBox(panel, label="Enable system tray mode")
+            tray_mode.SetValue(self.settings.tray_enabled)
+            panel_sizer.Add(tray_mode, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            soft_wrap = wx.CheckBox(panel, label="Enable soft wrap")
+            soft_wrap.SetValue(self.settings.soft_wrap)
+            panel_sizer.Add(soft_wrap, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            wrap_find = wx.CheckBox(panel, label="Wrap find searches")
+            wrap_find.SetValue(self.settings.wrap_find)
+            panel_sizer.Add(wrap_find, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            auto_updates = wx.CheckBox(panel, label="Check for updates on startup")
+            auto_updates.SetValue(self.settings.auto_check_updates)
+            panel_sizer.Add(auto_updates, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            persistent_undo = wx.CheckBox(panel, label="Enable persistent undo")
+            persistent_undo.SetValue(self.settings.persistent_undo)
+            panel_sizer.Add(persistent_undo, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            spellcheck = wx.CheckBox(panel, label="Spell check as you type")
+            spellcheck.SetValue(self.settings.spellcheck_as_you_type)
+            panel_sizer.Add(spellcheck, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            snippet_expansion = wx.CheckBox(
+                panel,
+                label="Expand snippet triggers while typing",
+            )
+            snippet_expansion.SetValue(self.settings.snippet_trigger_expansion)
+            panel_sizer.Add(snippet_expansion, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            start_empty = wx.CheckBox(panel, label="Start with no document open")
+            start_empty.SetValue(self.settings.start_with_no_document_open)
+            panel_sizer.Add(start_empty, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            buttons = dialog.CreateButtonSizer(wx.OK | wx.CANCEL)
+            panel.SetSizer(panel_sizer)
+            root.Add(panel, 1, wx.EXPAND | wx.ALL, 8)
+            if buttons is not None:
+                root.Add(buttons, 0, wx.EXPAND | wx.ALL, 8)
+            dialog.SetSizerAndFit(root)
+
+            if self._show_modal_dialog(dialog, "General Preferences") != wx.ID_OK:
+                self._set_status("Preferences cancelled")
+                return
+
+            values: dict[str, object] = {
+                "theme": (theme_choice.GetStringSelection() or "System").lower(),
+                "tray_enabled": bool(tray_mode.GetValue()),
+                "soft_wrap": bool(soft_wrap.GetValue()),
+                "wrap_find": bool(wrap_find.GetValue()),
+                "title_bar_path_mode": (
+                    "full_path" if title_path_choice.GetSelection() == 1 else "name"
+                ),
+                "auto_check_updates": bool(auto_updates.GetValue()),
+                "persistent_undo": bool(persistent_undo.GetValue()),
+                "spellcheck_as_you_type": bool(spellcheck.GetValue()),
+                "snippet_trigger_expansion": bool(snippet_expansion.GetValue()),
+                "start_with_no_document_open": bool(start_empty.GetValue()),
+                "dirty_title_style": {
+                    0: "text",
+                    1: "asterisk",
+                    2: "asterisk_text",
+                }.get(dirty_style_choice.GetSelection(), "text"),
+            }
+        theme = str(values.get("theme", self.settings.theme))
+        self.set_theme(theme)
+        self.settings.tray_enabled = bool(values.get("tray_enabled", self.settings.tray_enabled))
+        self.settings.soft_wrap = bool(values.get("soft_wrap", self.settings.soft_wrap))
+        self.settings.wrap_find = bool(values.get("wrap_find", self.settings.wrap_find))
+        self.settings.title_bar_path_mode = str(
+            values.get("title_bar_path_mode", self.settings.title_bar_path_mode)
+        )
+        self.settings.auto_check_updates = bool(
+            values.get("auto_check_updates", self.settings.auto_check_updates)
+        )
+        self.settings.persistent_undo = bool(
+            values.get("persistent_undo", self.settings.persistent_undo)
+        )
+        spellcheck_enabled = bool(
+            values.get("spellcheck_as_you_type", self.settings.spellcheck_as_you_type)
+        )
+        self._set_spellcheck_mode(spellcheck_enabled)
+        self.settings.snippet_trigger_expansion = bool(
+            values.get("snippet_trigger_expansion", self.settings.snippet_trigger_expansion)
+        )
+        self._clear_navigation_issue_state()
+        self.settings.start_with_no_document_open = bool(
+            values.get(
+                "start_with_no_document_open",
+                self.settings.start_with_no_document_open,
+            )
+        )
+        self.settings.dirty_title_style = str(
+            values.get("dirty_title_style", self.settings.dirty_title_style)
+        )
+        save_settings(self.settings)
+        self._apply_soft_wrap_setting()
+        self._apply_dirty_title_style_setting()
+        self._refresh_title()
+        self._refresh_view_menu_checks()
+        self._set_status("Updated general preferences")
 
     def _apply_announcement_trace_setting(self) -> None:
         trace_enabled = bool(self.settings.announcement_trace_enabled)
@@ -6782,7 +7038,35 @@ class MainFrame:
                 f"Summary: {payload['summary']}\n\n{payload['body']}\n\nDestination:\n{issue_url}"
             )
 
+        def confirm_preflight() -> bool:
+            include_diag = include_diagnostics.GetValue()
+            include_plain_paths = include_paths.GetValue() if include_diag else False
+            lines = [
+                "You are about to prepare this report with:",
+                "",
+                f"- Diagnostics bundle: {'Yes' if include_diag else 'No'}",
+                (
+                    f"- Plain file paths in diagnostics: "
+                    f"{'Yes' if include_plain_paths else 'No'}"
+                    if include_diag
+                    else "- Plain file paths in diagnostics: N/A (diagnostics disabled)"
+                ),
+                "- Report summary and details shown in preview",
+                "",
+                "Continue?",
+            ]
+            with wx.MessageDialog(
+                dialog,
+                "\n".join(lines),
+                "Report a Bug preflight",
+                style=wx.OK | wx.CANCEL | wx.ICON_QUESTION,
+            ) as preflight:
+                return self._show_modal_dialog(preflight, "Report a Bug Preflight") == wx.ID_OK
+
         def submit_report() -> None:
+            if not confirm_preflight():
+                validation_text.SetLabel("Report submission cancelled from preflight summary.")
+                return
             diagnostics_path: Path | None = None
             if include_diagnostics.GetValue():
                 try:
@@ -9836,21 +10120,126 @@ class MainFrame:
         self.editor.SetSelection(new_cursor, new_cursor)
         self._set_status(status)
 
+    def _choose_searchable_option(
+        self,
+        *,
+        title: str,
+        prompt: str,
+        dialog_label: str,
+        initial_choices: list[str],
+        search_callback: Callable[[str], list[str]],
+        empty_search_examples: tuple[str, ...] = (),
+    ) -> str | None:
+        wx = self._wx
+        with wx.Dialog(
+            self.frame,
+            title=title,
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+        ) as dialog:
+            dialog.SetSize((560, 420))
+            root = wx.BoxSizer(wx.VERTICAL)
+
+            search = wx.SearchCtrl(dialog, style=wx.TE_PROCESS_ENTER)
+            search.ShowSearchButton(True)
+            search.SetDescriptiveText(prompt)
+            root.Add(search, 0, wx.EXPAND | wx.ALL, 8)
+
+            status = wx.StaticText(dialog, label="")
+            root.Add(status, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            results = wx.ListBox(dialog)
+            root.Add(results, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            buttons = dialog.CreateButtonSizer(wx.OK | wx.CANCEL)
+            if buttons is not None:
+                root.Add(buttons, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+            dialog.SetSizer(root)
+
+            last_query = self._searchable_picker_queries.get(dialog_label, "")
+            if last_query:
+                search.SetValue(last_query)
+
+            filtered = list(initial_choices)
+
+            def _refresh() -> None:
+                nonlocal filtered
+                filtered = list(search_callback(search.GetValue()))
+                results.Set(filtered)
+                if filtered:
+                    results.SetSelection(0)
+                    status.SetLabel(f"{len(filtered)} match(es). Top match: {filtered[0]}")
+                else:
+                    if empty_search_examples:
+                        examples = ", ".join(empty_search_examples)
+                        status.SetLabel(f"No matching options. Try: {examples}")
+                    else:
+                        status.SetLabel("No matching options")
+
+            def _announce_selected() -> None:
+                selected = results.GetSelection()
+                if selected == wx.NOT_FOUND:
+                    return
+                if selected < 0 or selected >= len(filtered):
+                    return
+                status.SetLabel(f"Selected: {filtered[selected]}")
+
+            def _accept(_event: object) -> None:
+                if results.GetCount() == 0:
+                    return
+                dialog.EndModal(wx.ID_OK)
+
+            def _on_char_hook(event: object) -> None:
+                key_code = event.GetKeyCode()
+                if key_code == wx.WXK_ESCAPE:
+                    dialog.EndModal(wx.ID_CANCEL)
+                    return
+                if key_code in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+                    _accept(event)
+                    return
+                if key_code == wx.WXK_DOWN and results.GetCount() > 0:
+                    results.SetSelection(0)
+                    results.SetFocus()
+                    _announce_selected()
+                    return
+                if key_code == wx.WXK_UP and results.GetCount() > 0:
+                    results.SetSelection(results.GetCount() - 1)
+                    results.SetFocus()
+                    _announce_selected()
+                    return
+                event.Skip()
+
+            search.Bind(wx.EVT_TEXT, lambda _event: _refresh())
+            search.Bind(wx.EVT_TEXT_ENTER, _accept)
+            results.Bind(wx.EVT_LISTBOX, lambda _event: _announce_selected())
+            results.Bind(wx.EVT_LISTBOX_DCLICK, _accept)
+            dialog.Bind(wx.EVT_CHAR_HOOK, _on_char_hook)
+            _refresh()
+
+            result = self._show_modal_dialog(dialog, dialog_label)
+            self._searchable_picker_queries[dialog_label] = search.GetValue().strip()
+            if result != wx.ID_OK:
+                return None
+            selected = results.GetSelection()
+            if selected == wx.NOT_FOUND or selected < 0 or selected >= len(filtered):
+                return None
+            return filtered[selected]
+
     def insert_html_tag(self) -> None:
         if not self._feature_enabled("core.format"):
             self._set_status("HTML tag tools are unavailable in this profile")
             return
-        wx = self._wx
-        with wx.SingleChoiceDialog(
-            self.frame,
-            "Choose an HTML tag:",
-            "Insert HTML Tag",
-            choices=HTML_TAG_CHOICES,
-        ) as tag_dialog:
-            if self._show_modal_dialog(tag_dialog, "Insert HTML Tag") != wx.ID_OK:
-                return
-            tag = tag_dialog.GetStringSelection()
+        tag = self._choose_searchable_option(
+            title="Insert HTML Tag",
+            prompt="Type to filter tags (for example: text, radio, button)",
+            dialog_label="Insert HTML Tag",
+            initial_choices=HTML_TAG_CHOICES,
+            search_callback=search_html_tag_choices,
+            empty_search_examples=("text", "radio", "button"),
+        )
+        if not tag:
+            return
 
+        wx = self._wx
         with wx.TextEntryDialog(
             self.frame,
             "Optional attributes (example: class=note; id=main; aria-label=Summary):",
@@ -9871,17 +10260,18 @@ class MainFrame:
         if not self._feature_enabled("core.format"):
             self._set_status("Markdown tag tools are unavailable in this profile")
             return
-        wx = self._wx
-        with wx.SingleChoiceDialog(
-            self.frame,
-            "Choose a markdown tag/snippet:",
-            "Insert Markdown Tag",
-            choices=MARKDOWN_TAG_CHOICES,
-        ) as kind_dialog:
-            if self._show_modal_dialog(kind_dialog, "Insert Markdown Tag") != wx.ID_OK:
-                return
-            kind = kind_dialog.GetStringSelection()
+        kind = self._choose_searchable_option(
+            title="Insert Markdown Tag",
+            prompt="Type to filter markdown tags/snippets",
+            dialog_label="Insert Markdown Tag",
+            initial_choices=MARKDOWN_TAG_CHOICES,
+            search_callback=search_markdown_tag_choices,
+            empty_search_examples=("heading", "link", "image"),
+        )
+        if not kind:
+            return
 
+        wx = self._wx
         link_target = ""
         if kind in {"Link", "Image"}:
             with wx.TextEntryDialog(
@@ -9898,6 +10288,306 @@ class MainFrame:
         result = build_markdown_insertion(kind, selected_text, link_target=link_target)
         self._apply_insertion_result(result)
         self._set_status(f"Inserted markdown {kind.lower()}")
+
+    def _snippet_picker_label(self, snippet: Snippet) -> str:
+        if snippet.description:
+            return f"{snippet.name} ({snippet.trigger}) — {snippet.description}"
+        return f"{snippet.name} ({snippet.trigger})"
+
+    def _save_snippets(self) -> None:
+        if self._safe_mode:
+            return
+        save_snippet_library(self._snippet_library)
+
+    def _prompt_for_snippet(self, *, initial_query: str = "") -> Snippet | None:
+        snippets = self._snippet_library.snippets
+        if not snippets:
+            return None
+        by_label = {self._snippet_picker_label(snippet): snippet for snippet in snippets}
+        initial_choices = [
+            self._snippet_picker_label(snippet)
+            for snippet in search_snippets(snippets, "")
+        ]
+        choice = self._choose_searchable_option(
+            title="Insert Snippet",
+            prompt="Type to filter snippets by name, trigger, or text",
+            dialog_label="Insert Snippet",
+            initial_choices=initial_choices,
+            search_callback=lambda query: [
+                self._snippet_picker_label(snippet)
+                for snippet in search_snippets(snippets, query)
+            ],
+            empty_search_examples=("email", "bug", ";meeting"),
+        )
+        if not choice:
+            return None
+        return by_label.get(choice)
+
+    def _render_snippet_with_prompts(self, snippet: Snippet) -> SnippetExpansionResult | None:
+        wx = self._wx
+        values: dict[str, str] = {}
+        for placeholder in extract_placeholders(snippet.body):
+            if placeholder.kind in {"cursor", "date", "time"}:
+                continue
+            if placeholder.kind == "choice":
+                with wx.SingleChoiceDialog(
+                    self.frame,
+                    f"Choose a value for {placeholder.name}:",
+                    f"Snippet: {snippet.name}",
+                    choices=placeholder.options,
+                ) as dialog:
+                    if self._show_modal_dialog(dialog, f"Snippet: {snippet.name}") != wx.ID_OK:
+                        return None
+                    selected = dialog.GetSelection()
+                if selected == wx.NOT_FOUND:
+                    return None
+                values[placeholder.token] = placeholder.options[selected]
+                continue
+            with wx.TextEntryDialog(
+                self.frame,
+                f"Value for {placeholder.name}:",
+                f"Snippet: {snippet.name}",
+                value="",
+            ) as dialog:
+                if self._show_modal_dialog(dialog, f"Snippet: {snippet.name}") != wx.ID_OK:
+                    return None
+                values[placeholder.token] = dialog.GetValue()
+        return render_snippet(snippet.body, values)
+
+    def insert_snippet(self) -> None:
+        snippet = self._prompt_for_snippet()
+        if snippet is None:
+            self._set_status("No snippets available. Open Manage Snippets to add one.")
+            return
+        rendered = self._render_snippet_with_prompts(snippet)
+        if rendered is None:
+            self._set_status("Snippet insertion cancelled")
+            return
+        self._apply_insertion_result(
+            InsertionResult(inserted_text=rendered.text, caret_offset=rendered.cursor)
+        )
+        self._set_status(f'Inserted snippet "{snippet.name}".')
+
+    def _prompt_snippet_editor(self, existing: Snippet | None = None) -> Snippet | None:
+        wx = self._wx
+        name = existing.name if existing is not None else ""
+        trigger = existing.trigger if existing is not None else ";"
+        description = existing.description if existing is not None else ""
+        body = existing.body if existing is not None else "${cursor}"
+        with wx.TextEntryDialog(
+            self.frame,
+            "Snippet name:",
+            "Edit Snippet" if existing is not None else "New Snippet",
+            value=name,
+        ) as name_dialog:
+            if self._show_modal_dialog(name_dialog, "Snippet Name") != wx.ID_OK:
+                return None
+            name = name_dialog.GetValue().strip()
+        if not name:
+            self._set_status("Snippet name is required")
+            return None
+        with wx.TextEntryDialog(
+            self.frame,
+            "Trigger text (example: ;meeting):",
+            "Snippet Trigger",
+            value=trigger,
+        ) as trigger_dialog:
+            if self._show_modal_dialog(trigger_dialog, "Snippet Trigger") != wx.ID_OK:
+                return None
+            trigger = trigger_dialog.GetValue().strip()
+        if not trigger:
+            self._set_status("Snippet trigger is required")
+            return None
+        with wx.TextEntryDialog(
+            self.frame,
+            "Optional description:",
+            "Snippet Description",
+            value=description,
+        ) as description_dialog:
+            if self._show_modal_dialog(description_dialog, "Snippet Description") != wx.ID_OK:
+                return None
+            description = description_dialog.GetValue().strip()
+        with wx.TextEntryDialog(
+            self.frame,
+            "Snippet body (supports ${input:name}, ${choice:a|b}, ${date}, ${time}, ${cursor}):",
+            "Snippet Body",
+            value=body,
+            style=wx.OK | wx.CANCEL | wx.TE_MULTILINE,
+        ) as body_dialog:
+            if self._show_modal_dialog(body_dialog, "Snippet Body") != wx.ID_OK:
+                return None
+            body = body_dialog.GetValue()
+        if not body:
+            self._set_status("Snippet body is required")
+            return None
+        if existing is not None:
+            snippet_id = existing.id
+        else:
+            snippet_id = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+        if not snippet_id:
+            snippet_id = f"snippet-{int(time.time())}"
+        return Snippet(
+            id=snippet_id,
+            name=name,
+            trigger=trigger,
+            body=body,
+            description=description,
+            tags=list(existing.tags or []) if existing is not None else [],
+            enabled=True if existing is None else existing.enabled,
+            source=existing.source if existing is not None else "user",
+        )
+
+    def install_starter_snippet_packs(self) -> None:
+        wx = self._wx
+        packs = starter_pack_names()
+        with wx.MultiChoiceDialog(
+            self.frame,
+            "Choose starter snippet packs to install:",
+            "Install Starter Snippet Packs",
+            choices=packs,
+        ) as dialog:
+            if self._show_modal_dialog(dialog, "Install Starter Snippet Packs") != wx.ID_OK:
+                self._set_status("Starter snippet pack installation cancelled")
+                return
+            selections = dialog.GetSelections()
+        if not selections:
+            self._set_status("No starter snippet packs selected")
+            return
+        before = len(self._snippet_library.snippets)
+        library = self._snippet_library
+        for index in selections:
+            if 0 <= index < len(packs):
+                library = merge_starter_pack(library, packs[index])
+        self._snippet_library = library
+        self._save_snippets()
+        added = max(0, len(library.snippets) - before)
+        self._set_status(f"Installed {added} snippet(s) from starter packs.")
+
+    def manage_snippets(self) -> None:
+        wx = self._wx
+        with wx.SingleChoiceDialog(
+            self.frame,
+            "Choose a snippet action:",
+            "Manage Snippets",
+            choices=[
+                "Create snippet",
+                "Edit snippet",
+                "Delete snippet",
+                "Import snippet library",
+                "Export snippet library",
+                "Install starter snippet packs",
+            ],
+        ) as action_dialog:
+            action_dialog.SetSelection(0)
+            if self._show_modal_dialog(action_dialog, "Manage Snippets") != wx.ID_OK:
+                self._set_status("Manage snippets cancelled")
+                return
+            action = action_dialog.GetSelection()
+        if action == 5:
+            self.install_starter_snippet_packs()
+            return
+        if action == 3:
+            with wx.FileDialog(
+                self.frame,
+                "Import snippet library",
+                wildcard="JSON files (*.json)|*.json|All files (*.*)|*.*",
+                style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+            ) as dialog:
+                if self._show_modal_dialog(dialog, "Import snippet library") != wx.ID_OK:
+                    self._set_status("Snippet import cancelled")
+                    return
+                source = Path(dialog.GetPath())
+            incoming = load_snippet_library(source)
+            if not incoming.snippets:
+                self._set_status("No snippets found in selected file")
+                return
+            by_id = {snippet.id: snippet for snippet in self._snippet_library.snippets}
+            for snippet in incoming.snippets:
+                by_id[snippet.id] = snippet
+            self._snippet_library = SnippetLibrary(
+                version=self._snippet_library.version,
+                snippets=sorted(by_id.values(), key=lambda item: item.name.lower()),
+            )
+            self._save_snippets()
+            self._set_status(f"Imported {len(incoming.snippets)} snippet(s).")
+            return
+        if action == 4:
+            with wx.FileDialog(
+                self.frame,
+                "Export snippet library",
+                wildcard="JSON files (*.json)|*.json|All files (*.*)|*.*",
+                style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+            ) as dialog:
+                if self._show_modal_dialog(dialog, "Export snippet library") != wx.ID_OK:
+                    self._set_status("Snippet export cancelled")
+                    return
+                destination = Path(dialog.GetPath())
+            save_snippet_library(self._snippet_library, destination)
+            self._set_status(f"Exported snippets to {destination.name}.")
+            return
+        if action == 0:
+            created = self._prompt_snippet_editor()
+            if created is None:
+                self._set_status("Snippet creation cancelled")
+                return
+            if any(item.id == created.id for item in self._snippet_library.snippets):
+                self._set_status("A snippet with that name already exists")
+                return
+            self._snippet_library.snippets.append(created)
+            self._snippet_library.snippets.sort(key=lambda item: item.name.lower())
+            self._save_snippets()
+            self._set_status(f'Snippet "{created.name}" created.')
+            return
+        snippets = sorted(self._snippet_library.snippets, key=lambda item: item.name.lower())
+        if not snippets:
+            self._set_status("No snippets available")
+            return
+        labels = [self._snippet_picker_label(snippet) for snippet in snippets]
+        with wx.SingleChoiceDialog(
+            self.frame,
+            "Choose a snippet:",
+            "Manage Snippets",
+            choices=labels,
+        ) as choose_dialog:
+            if self._show_modal_dialog(choose_dialog, "Manage Snippets") != wx.ID_OK:
+                self._set_status("Manage snippets cancelled")
+                return
+            selected = choose_dialog.GetSelection()
+        if selected == wx.NOT_FOUND or selected < 0 or selected >= len(snippets):
+            self._set_status("Manage snippets cancelled")
+            return
+        snippet = snippets[selected]
+        if action == 2:
+            confirm = self._show_message_box(
+                f'Delete snippet "{snippet.name}"?',
+                "Delete Snippet",
+                wx.YES_NO | wx.ICON_WARNING,
+            )
+            if confirm != wx.YES:
+                self._set_status("Snippet delete cancelled")
+                return
+            self._snippet_library.snippets = [
+                item for item in self._snippet_library.snippets if item.id != snippet.id
+            ]
+            self._save_snippets()
+            self._set_status(f'Snippet "{snippet.name}" deleted.')
+            return
+        if action != 1:
+            self._set_status("Manage snippets cancelled")
+            return
+        edited = self._prompt_snippet_editor(snippet)
+        if edited is None:
+            self._set_status("Snippet edit cancelled")
+            return
+        updated: list[Snippet] = []
+        for item in self._snippet_library.snippets:
+            if item.id == snippet.id:
+                updated.append(edited)
+            else:
+                updated.append(item)
+        self._snippet_library.snippets = updated
+        self._save_snippets()
+        self._set_status(f'Snippet "{edited.name}" saved.')
 
     def _apply_insertion_result(self, result: InsertionResult) -> None:
         start, end = self.editor.GetSelection()

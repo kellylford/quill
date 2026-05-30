@@ -86,6 +86,11 @@ def test_previous_misspelling_shortcut_is_available() -> None:
     assert DEFAULT_KEYMAP["tools.previous_misspelling"] == "Shift+Alt+F7"
 
 
+def test_snippet_shortcuts_are_available() -> None:
+    assert DEFAULT_KEYMAP["format.insert_snippet"] == "Ctrl+Space"
+    assert DEFAULT_KEYMAP["format.manage_snippets"] == "Ctrl+Alt+Space"
+
+
 def test_keyboard_pack_preview_mentions_highlights() -> None:
     preview = keyboard_pack_preview("Quill Review")
     assert "Highlights:" in preview

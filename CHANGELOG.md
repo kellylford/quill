@@ -1,5 +1,11 @@
 # Changelog
 
+## QUILL Brand Identity
+
+**QUILL** stands for **Quality, Usable, Inclusive, Lightweight, Literate**.
+
+**QUILL: A quality, usable, inclusive, lightweight, and literate editor built for everyone who writes, codes, learns, and creates.**
+
 ## Quill 0.1.1 Beta
 
 Quill 0.1.1 Beta advances the 0.1 baseline with update-path hardening, status-bar parity completion, menu/discoverability polish, and documentation alignment.
@@ -13,6 +19,7 @@ Quill 0.1.1 Beta advances the 0.1 baseline with update-path hardening, status-ba
 - Clarified naming and discoverability around **Workspace Snapshots**, **Recent Marks (Ring)**, and status-bar terminology.
 - Expanded regression coverage for search/extend-selection and no-selection transform behavior.
 - Added About-dialog acknowledgments for contributors and beta testers.
+- Added a full snippets workflow: searchable insert (`Ctrl+Space`), manage (`Ctrl+Alt+Space`), placeholder prompts, trigger expansion, and starter packs.
 - Regenerated the signed update feed for `0.1.1`.
 
 ## Quill 0.1.0 Beta

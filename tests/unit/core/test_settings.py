@@ -42,6 +42,7 @@ def test_settings_round_trip(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
     assert loaded.tray_enabled is True
     assert loaded.persistent_undo is True
     assert loaded.spellcheck_as_you_type is True
+    assert loaded.snippet_trigger_expansion is True
     assert loaded.title_bar_path_mode == "full_path"
     assert loaded.dirty_title_style == "asterisk_text"
     assert loaded.announcement_backend == "prism"
@@ -110,3 +111,12 @@ def test_settings_normalize_announcement_backend(
 
     assert loaded.announcement_backend == "auto"
     assert loaded.announcement_trace_enabled is True
+
+
+def test_settings_defaults_snippet_trigger_expansion_to_true(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    (tmp_path / "settings.json").write_text("{}", encoding="utf-8")
+    loaded = load_settings()
+    assert loaded.snippet_trigger_expansion is True

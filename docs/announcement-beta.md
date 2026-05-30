@@ -1,5 +1,9 @@
 # Announcing Quill Beta
 
+**QUILL** stands for **Quality, Usable, Inclusive, Lightweight, Literate**.
+
+**QUILL: A quality, usable, inclusive, lightweight, and literate editor built for everyone who writes, codes, learns, and creates.**
+
 ## A screen-reader-first writing environment for Windows
 
 Quill Beta is here.
@@ -24,6 +28,7 @@ Quill Beta already includes a broad set of everyday and specialist features:
 - plain text, Markdown, HTML, and RTF workflows that stay readable and structured
 - spell check, thesaurus, word count, link insertion, and source-aware copy
 - heading, list, table, code block, and markup insertion tools
+- a new snippet system with searchable insertion (`Ctrl+Space`), management (`Ctrl+Alt+Space`), and starter packs
 - compare workflows for file-to-file and document-to-document review
 - EPUB navigation, OCR image intake, and extraction-quality review
 - feature profiles that keep the interface calm without taking power away
@@ -32,6 +37,8 @@ Quill Beta already includes a broad set of everyday and specialist features:
 - external tool onboarding with wizard-like guidance for Pandoc and other optional format helpers
 - accessibility-focused support such as region cycling, keyboard-trap inspection, contrast validation, and discoverable help surfaces
 - backups, autosave, recovery, persistent undo, trusted locations, notifications, diagnostics export, and signed update checks
+
+Snippets are local-first and accessibility-first: they support placeholder prompts, cursor anchors, and optional trigger expansion while typing so repeated writing patterns can be reused without leaving the editor.
 
 ## The new GLOW experience inside Quill
 

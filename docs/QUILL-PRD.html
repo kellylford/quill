@@ -1971,6 +1971,9 @@ Insert Numbered List, Insert Task List, Insert Table…, Insert Link…,
 Insert Code Block, Insert Footnote.</li>
 <li>Magical tag helpers: Insert HTML Tag… (with attribute picker) and
 Insert Markdown Tag… (semantic snippet picker).</li>
+<li>Snippet helpers: Insert Snippet… (<code>Ctrl+Space</code>) and
+Manage Snippets… (<code>Ctrl+Alt+Space</code>) with searchable
+filtering, placeholder prompts, and starter-pack onboarding.</li>
 <li>Surface-aware formatting shortcuts (Markdown/HTML only):
 <code>Ctrl+B</code> bold, <code>Ctrl+I</code> italic, and heading levels
 <code>Ctrl+Alt+1</code> through <code>Ctrl+Alt+6</code>.</li>
@@ -2004,6 +2007,23 @@ keybindable through the keymap system.</li>
 format-aware inserter: markdown links in Markdown docs,
 <code>&lt;a href&gt;</code> in HTML docs, and <code>text (url)</code>
 form in plain text.</li>
+</ul>
+<h3 id="529b-snippet-insertion-and-trigger-expansion">5.29b Snippet
+insertion and trigger expansion</h3>
+<ul>
+<li>Snippets are stored locally under
+<code>%APPDATA%\Quill\snippets\snippets.json</code> with atomic
+writes.</li>
+<li><code>Format → Insert Snippet…</code> opens the same keyboard-first
+searchable picker pattern used across Quill insertion flows.</li>
+<li>Supported placeholders in snippet bodies:
+<code>${input:name}</code>, <code>${choice:a|b}</code>,
+<code>${date}</code>, <code>${time}</code>, <code>${cursor}</code>.</li>
+<li>Trigger expansion can run while typing (for example
+<code>;meeting</code> plus a delimiter), and remains user-controllable
+via General Preferences.</li>
+<li>Starter packs are installable from Preferences and snippet
+management so onboarding can begin with practical templates.</li>
 </ul>
 <h3 id="530-bookmark-export-and-import">5.30 Bookmark export and
 import</h3>

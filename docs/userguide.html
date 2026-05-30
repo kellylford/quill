@@ -173,6 +173,11 @@
 </head>
 <body>
 <h1 id="quill-user-guide">Quill User Guide</h1>
+<p><strong>QUILL</strong> stands for <strong>Quality, Usable, Inclusive,
+Lightweight, Literate</strong>.</p>
+<p><strong>QUILL: A quality, usable, inclusive, lightweight, and
+literate editor built for everyone who writes, codes, learns, and
+creates.</strong></p>
 <p>Quill is a screen-reader-first writing and reading environment for
 Windows. It is designed to feel calm, predictable, deeply
 keyboard-friendly, and respectful of your focus. It is also ambitious.
@@ -523,10 +528,37 @@ markup-aware editing.</p>
 <li>Insert table</li>
 <li>Insert HTML tag</li>
 <li>Insert Markdown tag</li>
+<li>Insert snippet (<code>Ctrl+Space</code>)</li>
+<li>Manage snippets (<code>Ctrl+Alt+Space</code>)</li>
 </ul>
 <p>Quill treats Markdown and HTML as working surfaces, not
 special-purpose export formats. This menu is where that philosophy
 becomes practical.</p>
+<h3 id="snippets">Snippets</h3>
+<p>Quill 0.1.1 adds a full snippet flow designed for keyboard and
+screen-reader users:</p>
+<ol type="1">
+<li>Press <code>Ctrl+Space</code> to open <strong>Insert
+Snippet</strong>.</li>
+<li>Type part of a name, trigger, tag, or body text to filter.</li>
+<li>Use arrow keys to choose a snippet and press Enter to insert.</li>
+<li>If the snippet includes placeholders (<code>${input:name}</code>,
+<code>${choice:a|b}</code>, <code>${date}</code>, <code>${time}</code>,
+<code>${cursor}</code>), Quill prompts in sequence and places the caret
+at <code>${cursor}</code>.</li>
+</ol>
+<p>For setup and maintenance:</p>
+<ul>
+<li>Press <code>Ctrl+Alt+Space</code> for <strong>Manage
+Snippets</strong> (create, edit, delete, import, export, and starter
+packs).</li>
+<li>Open <strong>Preferences -&gt; Install Starter Snippet
+Packs</strong> to install sample libraries for daily writing, developer
+flow, and support/accessibility notes.</li>
+<li>In <strong>General Preferences</strong>, toggle <strong>Expand
+snippet triggers while typing</strong> to enable or disable trigger
+expansion.</li>
+</ul>
 <h3 id="tools">Tools</h3>
 <p>The <strong>Tools</strong> menu is Quill's workshop. It contains
 high-value actions that are not best understood as raw editing.</p>

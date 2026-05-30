@@ -1,5 +1,9 @@
 # Quill User Guide
 
+**QUILL** stands for **Quality, Usable, Inclusive, Lightweight, Literate**.
+
+**QUILL: A quality, usable, inclusive, lightweight, and literate editor built for everyone who writes, codes, learns, and creates.**
+
 Quill is a screen-reader-first writing and reading environment for Windows. It is designed to feel calm, predictable, deeply keyboard-friendly, and respectful of your focus. It is also ambitious. Quill is not only a place to write plain text. It is a place to open difficult documents, inspect structure, navigate long material, compare revisions, prepare content for Markdown or HTML, and work with accessibility and extraction issues without leaving the editor.
 
 This guide is aligned to Quill 0.1.1 Beta, built by Blind Information Technology Solutions (BITS) together with Community Access.
@@ -282,8 +286,25 @@ Inline and structural formatting:
 - Insert table
 - Insert HTML tag
 - Insert Markdown tag
+- Insert snippet (`Ctrl+Space`)
+- Manage snippets (`Ctrl+Alt+Space`)
 
 Quill treats Markdown and HTML as working surfaces, not special-purpose export formats. This menu is where that philosophy becomes practical.
+
+### Snippets
+
+Quill 0.1.1 adds a full snippet flow designed for keyboard and screen-reader users:
+
+1. Press `Ctrl+Space` to open **Insert Snippet**.
+2. Type part of a name, trigger, tag, or body text to filter.
+3. Use arrow keys to choose a snippet and press Enter to insert.
+4. If the snippet includes placeholders (`${input:name}`, `${choice:a|b}`, `${date}`, `${time}`, `${cursor}`), Quill prompts in sequence and places the caret at `${cursor}`.
+
+For setup and maintenance:
+
+- Press `Ctrl+Alt+Space` for **Manage Snippets** (create, edit, delete, import, export, and starter packs).
+- Open **Preferences -> Install Starter Snippet Packs** to install sample libraries for daily writing, developer flow, and support/accessibility notes.
+- In **General Preferences**, toggle **Expand snippet triggers while typing** to enable or disable trigger expansion.
 
 ### Tools
 

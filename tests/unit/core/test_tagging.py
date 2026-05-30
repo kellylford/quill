@@ -1,4 +1,6 @@
 from quill.core.tagging import (
+    HTML_TAG_CHOICES,
+    MARKDOWN_TAG_CHOICES,
     build_html_code_block,
     build_html_insertion,
     build_html_table,
@@ -6,6 +8,8 @@ from quill.core.tagging import (
     build_markdown_insertion,
     build_markdown_table,
     parse_attribute_pairs,
+    search_html_tag_choices,
+    search_markdown_tag_choices,
 )
 
 
@@ -68,3 +72,30 @@ def test_build_markdown_italic_without_selection_inserts_pair() -> None:
     result = build_markdown_insertion("Italic", "")
     assert result.inserted_text == "**"
     assert result.caret_offset == 1
+
+
+def test_markdown_choices_include_heading_levels_four_to_six() -> None:
+    assert "Heading 4" in MARKDOWN_TAG_CHOICES
+    assert "Heading 5" in MARKDOWN_TAG_CHOICES
+    assert "Heading 6" in MARKDOWN_TAG_CHOICES
+
+
+def test_html_choices_include_form_controls() -> None:
+    for tag in ("form", "label", "input", "textarea", "select", "option", "button"):
+        assert tag in HTML_TAG_CHOICES
+
+
+def test_search_html_choices_matches_radio_to_input() -> None:
+    results = search_html_tag_choices("radio")
+    assert results
+    assert results[0] == "input"
+
+
+def test_search_markdown_choices_matches_heading_six() -> None:
+    results = search_markdown_tag_choices("h6")
+    assert "Heading 6" in results
+
+
+def test_build_markdown_heading_six_without_selection() -> None:
+    result = build_markdown_insertion("Heading 6", "")
+    assert result.inserted_text == "###### "
