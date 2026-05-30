@@ -7,12 +7,13 @@ semantic, screen-reader-friendly document:
 
   * an ARIA live region (``role="log" aria-live="polite"``) so new messages are
     announced automatically,
-  * each message as an ``<article>`` with a heading (speaker) for heading
-    navigation,
-  * ``lang``, viewport, readable + high-contrast/forced-colors CSS,
-  * messages appended via script so the live region fires (not a full reload).
+  * an assertive ``role="status"`` region used to announce transient state
+    ("Quill is responding…"),
+  * each message as an ``<article>`` with a heading (speaker) for heading nav,
+  * ``lang``, viewport, readable + high-contrast/forced-colors CSS.
 
-Markdown is rendered with Quill's existing renderer.
+The first message can be baked straight into the page so there is no visible
+"empty then rendered" flash on open.
 """
 from __future__ import annotations
 
@@ -21,7 +22,7 @@ import json
 
 
 class AccessibleWebView:
-    def __init__(self, parent: object, title: str = "Conversation") -> None:
+    def __init__(self, parent: object, title: str = "Conversation", intro: tuple | None = None) -> None:
         import wx
         import wx.html2 as webview
 
@@ -31,15 +32,27 @@ class AccessibleWebView:
         self._title = title
         self._ready = False
         self._pending: list[str] = []
+        intro_html = ""
+        if intro is not None:
+            intro_html = self._article_html(intro[0], intro[1])
         self.view.Bind(webview.EVT_WEBVIEW_LOADED, self._on_loaded)
-        self.view.SetPage(self._skeleton(), "")
+        self.view.SetPage(self._skeleton(intro_html), "")
 
-    # The control to place in a sizer.
     @property
     def control(self):
         return self.view
 
-    def _skeleton(self) -> str:
+    def _article_html(self, speaker: str, markdown_text: str) -> str:
+        from quill.core.browser_preview import _render_markdown
+
+        body = _render_markdown(markdown_text or "")
+        css_class = "you" if speaker.lower().startswith("you") else "quill"
+        return (
+            f'<article class="{css_class}" aria-label="{html.escape(speaker)} message">'
+            f"<h2>{html.escape(speaker)}</h2>{body}</article>"
+        )
+
+    def _skeleton(self, intro_html: str = "") -> str:
         return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -61,13 +74,15 @@ class AccessibleWebView:
   code {{ font-family: ui-monospace, monospace; }}
   a {{ color: LinkText; }}
   :focus {{ outline: 2px solid Highlight; outline-offset: 2px; }}
-  @media (forced-colors: active) {{
-    article {{ border: 1px solid CanvasText; }}
-  }}
+  .visually-hidden {{ position: absolute; width: 1px; height: 1px; overflow: hidden;
+                      clip: rect(0 0 0 0); white-space: nowrap; }}
+  @media (forced-colors: active) {{ article {{ border: 1px solid CanvasText; }} }}
 </style>
 </head>
 <body>
+<div id="status" role="status" aria-live="assertive" class="visually-hidden"></div>
 <main id="log" role="log" aria-live="polite" aria-label="{html.escape(self._title)}" tabindex="0">
+{intro_html}
 </main>
 </body>
 </html>"""
@@ -79,28 +94,30 @@ class AccessibleWebView:
             self._inject(article)
 
     def append_message(self, speaker: str, markdown_text: str) -> None:
-        from quill.core.browser_preview import _render_markdown
-
-        body = _render_markdown(markdown_text or "")
-        css_class = "you" if speaker.lower().startswith("you") else "quill"
-        article = (
-            f'<article class="{css_class}" aria-label="{html.escape(speaker)} message">'
-            f"<h2>{html.escape(speaker)}</h2>{body}</article>"
-        )
+        article = self._article_html(speaker, markdown_text)
         if self._ready:
             self._inject(article)
         else:
             self._pending.append(article)
 
+    def set_status(self, text: str) -> None:
+        """Update the assertive status region (announced by screen readers)."""
+        if not self._ready:
+            return
+        payload = json.dumps(text)
+        self._run(f"var s=document.getElementById('status'); if(s){{s.textContent={payload};}}")
+
     def _inject(self, article_html: str) -> None:
         payload = json.dumps(article_html)
-        script = (
+        self._run(
             "var log=document.getElementById('log');"
             "var tmp=document.createElement('div');"
             f"tmp.innerHTML={payload};"
             "while(tmp.firstChild){log.appendChild(tmp.firstChild);}"
             "window.scrollTo(0, document.body.scrollHeight);"
         )
+
+    def _run(self, script: str) -> None:
         try:
             self.view.RunScript(script)
         except Exception:  # noqa: BLE001

@@ -53,7 +53,7 @@ class AskQuillChatDialog:
         self.dialog = wx.Dialog(
             parent, title="Ask Quill", style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER
         )
-        self.dialog.SetSize((720, 640))
+        self.dialog.SetSize((760, 760))
         outer = wx.BoxSizer(wx.VERTICAL)
 
         outer.Add(wx.StaticText(self.dialog, label="Conversation"), 0, wx.LEFT | wx.RIGHT | wx.TOP, 14)
@@ -66,7 +66,11 @@ class AskQuillChatDialog:
         try:
             from quill.ui.accessible_webview import AccessibleWebView
 
-            self._webview = AccessibleWebView(self.dialog, title="Conversation")
+            self._webview = AccessibleWebView(
+                self.dialog,
+                title="Conversation",
+                intro=("Quill", "Hi! Ask me to write, edit, or run something in your document."),
+            )
             transcript = self._webview.control
         except Exception:  # noqa: BLE001
             self._webview = None
@@ -128,7 +132,8 @@ class AskQuillChatDialog:
         if not available:
             self._append("Quill", f"On-device AI is unavailable: {reason}")
             self._set_busy(True)
-        else:
+        elif self._webview is None:
+            # WebView bakes the greeting into the page (no flash); list box needs it added.
             self._append("Quill", "Hi! Ask me to write, edit, or run something in your document.")
 
     def _on_char_hook(self, event: object) -> None:
@@ -166,6 +171,8 @@ class AskQuillChatDialog:
         self._append("You", message)
         self.input.SetValue("")
         self._set_busy(True)
+        if self._webview is not None:
+            self._webview.set_status("Quill is responding")
         self._announce("Working")
         document = self._get_document()
 
@@ -223,6 +230,8 @@ class AskQuillChatDialog:
             self._append("Quill", text or "(no response)")
         self.copy_button.Enable(bool(self._last_response))
         self._set_busy(False)
+        if self._webview is not None:
+            self._webview.set_status("Quill responded")
         if self._pending:
             self._announce("Quill is proposing a change. Approve or discard.")
             self.approve_button.SetFocus()
