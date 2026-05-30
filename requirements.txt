@@ -1,0 +1,14 @@
+# Quill runtime dependencies — install with: pip install -r requirements.txt
+# (mirrors the optional-dependencies in pyproject.toml)
+
+# UI
+wxPython>=4.2.2
+pyttsx3>=2.99
+
+# Spell check (optional)
+pyenchant>=3.2
+
+# On-device AI for the Ask Quill chat.
+# Windows/Linux use llama.cpp (CPU, GGUF) — also download a GGUF model
+# (e.g. Phi-4-mini Q4) into <app data>/models or set QUILL_LLAMA_MODEL.
+llama-cpp-python>=0.3
