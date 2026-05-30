@@ -5503,7 +5503,8 @@ is post-v2 at earliest. The <code>core/</code> layer has no
 <em>committed</em>.</li>
 <li><strong>Voice input / dictation.</strong> Use Windows dictation; Quill does
 not reinvent the mic/STT stack. An opt-in Hey QUILL command layer may sit on
-top of dictation and dispatch existing Quill commands.</li>
+top of dictation and dispatch existing Quill commands, but it stays silent and
+only listens while dictation is active.</li>
 <li><strong>AI authoring assistant.</strong> The current build exposes a
 local Writing Assistant shell, prompt presets, AI connection preferences,
 and a sandboxed Python tool. The full CPU model backend for autocomplete,

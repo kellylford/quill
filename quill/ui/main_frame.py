@@ -10212,7 +10212,6 @@ class MainFrame:
         self._refresh_title()
         self._refresh_contextual_menu_items()
         self._set_status(f'Hey QUILL: {command.title}')
-        self.announce(f'Hey QUILL: {command.title}')
         command.handler()
         self._voice_command_baseline_text = self.editor.GetValue()
 
@@ -10232,7 +10231,6 @@ class MainFrame:
     def _on_dictation_error(self, error_msg: str) -> None:
         self._cancel_voice_command_scan()
         self._voice_command_baseline_text = ""
-        self.announce(f"Windows dictation error: {error_msg}")
         self._set_status("Windows dictation error")
 
     def install_shell_integration(self) -> None:
