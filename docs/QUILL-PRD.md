@@ -7,7 +7,7 @@ Owner: Blind Information Technology Solutions (BITS) and Community Access
 Target platform: Windows 10 and Windows 11
 Target screen readers: NVDA (primary), JAWS, Narrator
 UI framework: wxPython (wxWidgets 3.2 or newer)
-Language: Python 3.11 or newer
+Language: Python 3.12 or newer
 
 ---
 
