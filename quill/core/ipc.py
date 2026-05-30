@@ -12,25 +12,63 @@ def try_claim_primary_instance() -> bool:
     lock_path = _lock_file_path()
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     if lock_path.exists():
-        pid = _read_pid(lock_path)
-        if pid is not None and _pid_is_running(pid):
-            if not _pid_lock_is_stale(pid, lock_path):
-                return False
+        # Only honor a lock that belongs to a still-running instance of *this*
+        # app (PID alive AND same process identity). Anything else — a dead PID,
+        # a reused PID, or a corrupt lock — is stale, so reclaim it. This makes
+        # the single-instance guard self-heal after an unclean exit/crash.
+        info = _read_lock(lock_path)
+        if info is not None and _lock_belongs_to_live_instance(info):
+            return False
         lock_path.unlink(missing_ok=True)
     try:
         fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     except FileExistsError:
         return False
     with os.fdopen(fd, "w", encoding="utf-8") as handle:
-        handle.write(str(os.getpid()))
+        handle.write(_lock_payload())
     return True
 
 
 def release_primary_instance() -> None:
     lock_path = _lock_file_path()
-    pid = _read_pid(lock_path)
-    if pid == os.getpid():
+    info = _read_lock(lock_path)
+    if info is not None and info.get("pid") == os.getpid():
         lock_path.unlink(missing_ok=True)
+
+
+def _lock_payload() -> str:
+    return json.dumps({"pid": os.getpid(), "created": _pid_creation_time(os.getpid())})
+
+
+def _read_lock(lock_path: Path) -> dict | None:
+    try:
+        raw = lock_path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        try:  # backward compatibility: older locks held a bare PID
+            return {"pid": int(raw), "created": None}
+        except ValueError:
+            return None
+    if isinstance(data, dict) and isinstance(data.get("pid"), int):
+        return data
+    return None
+
+
+def _lock_belongs_to_live_instance(info: dict) -> bool:
+    pid = info.get("pid")
+    if not isinstance(pid, int) or not _pid_is_running(pid):
+        return False  # dead PID -> stale, reclaim
+    created = info.get("created")
+    actual = _pid_creation_time(pid)
+    if created is not None and actual is not None:
+        # Reused PID if the running process didn't start when we recorded it.
+        return abs(actual - created) < 2.0
+    return True  # no identity info (e.g. non-Windows): alive is enough
 
 
 def enqueue_open_request(path: Path | None) -> None:
