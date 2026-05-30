@@ -5501,8 +5501,9 @@ chosen cloud-drive folder.</li>
 is post-v2 at earliest. The <code>core/</code> layer has no
 <code>wx</code> so it remains <em>possible</em>, not
 <em>committed</em>.</li>
-<li><strong>Voice input / dictation.</strong> Use Windows dictation;
-Quill does not reinvent it.</li>
+<li><strong>Voice input / dictation.</strong> Use Windows dictation; Quill does
+not reinvent the mic/STT stack. An opt-in Hey QUILL command layer may sit on
+top of dictation and dispatch existing Quill commands.</li>
 <li><strong>AI authoring assistant.</strong> The current build exposes a
 local Writing Assistant shell, prompt presets, AI connection preferences,
 and a sandboxed Python tool. The full CPU model backend for autocomplete,

@@ -3096,7 +3096,7 @@ Quill is opinionated about what it is *not*. The following are intentionally and
 - **Real-time collaborative editing.** Not in v1.x. The architecture does not preclude it; we are not committing to it.
 - **Cloud-sync of documents.** Sync is for keymap and settings only (8.8). Document storage stays on the user's machine and chosen cloud-drive folder.
 - **Mobile, web, macOS, or Linux ports.** Cross-platform is post-v2 at earliest. The `core/` layer has no `wx` so it remains *possible*, not *committed*.
-- **Voice input / dictation.** Use Windows dictation; Quill does not reinvent it.
+- **Voice input / dictation.** Use Windows dictation; Quill does not reinvent the mic/STT stack. An opt-in Hey QUILL command layer may sit on top of dictation and dispatch existing Quill commands.
 - **AI authoring assistant.** The current build exposes a local Writing Assistant shell, prompt presets, AI connection preferences, and a sandboxed Python tool. The full CPU model backend for autocomplete, rewriting, and "continue my thought" remains future work.
 - **Project workspaces and Find in Folder.** Deferred to v1.2 (see 17.2).
 - **Embedded media playback inside documents.** Out of scope for the editor.

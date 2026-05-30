@@ -355,9 +355,11 @@ These help you stay inside the editor instead of breaking flow for small writing
 #### Read aloud and integrations
 
 - **Read Aloud** submenu for start or pause, stop, and voice selection
+- **Dictation** submenu for Windows dictation, plus an opt-in **Hey QUILL Commands** toggle that lets dictation phrases trigger Quill commands instead of inserting text.
 - **Integrations** submenu with **OCR Image...** and shell integration commands.
 
 Read Aloud is particularly useful for proofreading by ear. OCR Image handles image-to-text work with an explicit consent and progress flow.
+Dictation uses Windows' own speech input. When Hey QUILL Commands is enabled, you can say a command after the wake phrase and Quill will run the matching action.
 
 #### Document intake and extraction review
 

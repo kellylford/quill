@@ -163,6 +163,16 @@ from quill.core.read_aloud import (
     ReadAloudUnavailableError,
     list_voices,
 )
+from quill.core.dictation import (
+    DictationController,
+    DictationSettings,
+    DictationUnavailableError,
+)
+from quill.core.voice_commands import (
+    build_voice_command_aliases,
+    resolve_voice_command,
+    split_text_delta,
+)
 from quill.core.recent import add_recent_file, clear_recent_files, load_recent_files
 from quill.core.recovery import (
     begin_session,
@@ -590,6 +600,11 @@ class MainFrame:
         self._announcement_engine = AnnouncementEngine(self.settings.announcement_backend)
         self._announcement_error_reported = ""
         self._read_aloud = ReadAloudController()
+        self._dictation = DictationController()
+        self._voice_command_scan_timer: threading.Timer | None = None
+        self._voice_command_baseline_text = ""
+        self._voice_command_aliases: dict[str, str] = {}
+        self._voice_command_guard = False
         self._overwrite_mode = False
         self._insert_key_down = False
         self._print_data = wx.PrintData()
@@ -637,6 +652,7 @@ class MainFrame:
         self._apply_theme(self.settings.theme)
 
         self._build_commands()
+        self._refresh_voice_command_aliases()
         self._build_menu()
         self._refresh_sessions_menu()
         self._apply_accelerators()
@@ -1121,6 +1137,20 @@ class MainFrame:
             "Toggle Announcement Trace Capture",
             self.toggle_announcement_trace_capture,
             None,
+        )
+        self.commands.register(
+            "tools.dictation_toggle",
+            "Dictation",
+            self.toggle_dictation,
+            self._binding_for("tools.dictation_toggle"),
+            feature_id="core.dictation",
+        )
+        self.commands.register(
+            "tools.dictation_voice_commands_toggle",
+            "Hey QUILL Commands",
+            self.toggle_dictation_voice_commands,
+            None,
+            feature_id="core.voice_commands",
         )
         self.commands.register(
             "tools.document_intake_report",
@@ -2505,6 +2535,8 @@ class MainFrame:
         self._id_announcement_backend_prism = wx.NewIdRef()
         self._id_announcement_backend_status_only = wx.NewIdRef()
         self._id_toggle_announcement_trace = wx.NewIdRef()
+        self._id_dictation = wx.NewIdRef()
+        self._id_dictation_voice_commands = wx.NewIdRef()
         self._id_document_intake_report = wx.NewIdRef()
         self._id_review_extraction_quality = wx.NewIdRef()
         self._id_report_bad_extraction = wx.NewIdRef()
@@ -2653,6 +2685,19 @@ class MainFrame:
             self.settings.announcement_trace_enabled,
         )
         tools_menu.AppendSubMenu(read_aloud_menu, "Read &Aloud")
+
+        dictation_menu = wx.Menu()
+        dictation_menu.Append(
+            self._id_dictation,
+            self._menu_label("&Dictation", "tools.dictation_toggle"),
+            "Press to start dictation, press again to stop and insert",
+        )
+        dictation_menu.AppendCheckItem(
+            self._id_dictation_voice_commands,
+            self._menu_label("&Hey QUILL Commands", "tools.dictation_voice_commands_toggle"),
+        )
+        dictation_menu.Check(self._id_dictation_voice_commands, self.settings.voice_commands_enabled)
+        tools_menu.AppendSubMenu(dictation_menu, "D&ictation")
 
         integrations_menu = wx.Menu()
         integrations_menu.Append(
@@ -3489,6 +3534,16 @@ class MainFrame:
         )
         self.frame.Bind(
             wx.EVT_MENU,
+            lambda _e: self.toggle_dictation(),
+            id=self._id_dictation,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
+            lambda _e: self.toggle_dictation_voice_commands(),
+            id=self._id_dictation_voice_commands,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
             lambda _e: self.show_document_intake_report(),
             id=self._id_document_intake_report,
         )
@@ -4116,6 +4171,8 @@ class MainFrame:
         self.frame.RequestUserAttention()
 
     def _on_text_changed(self, _event: object) -> None:
+        if self._voice_command_guard:
+            return
         if (
             not self._snippet_expansion_guard
             and self.settings.snippet_trigger_expansion
@@ -4127,6 +4184,8 @@ class MainFrame:
             self._record_persistent_undo_state(self.document.text)
         if self.settings.spellcheck_as_you_type:
             self._announce_spellcheck_hint()
+        if self._dictation.state == "listening" and self.settings.voice_commands_enabled:
+            self._schedule_voice_command_scan()
         self._refresh_intellisense_popup()
         self._refresh_browser_preview()
         self._maybe_autosave()
@@ -4262,6 +4321,9 @@ class MainFrame:
                 self.format_outdent()
             else:
                 self.format_indent()
+            return
+        if hasattr(self, '_dictation') and self._dictation.state == "listening" and event.GetKeyCode() == wx.WXK_ESCAPE:
+            self.toggle_dictation()
             return
         if self._extend_selection_mode and event.GetKeyCode() == wx.WXK_ESCAPE:
             caret = self.editor.GetInsertionPoint()
@@ -5005,8 +5067,13 @@ class MainFrame:
         root.Add(buttons, 0, wx.ALL | wx.EXPAND, 8)
         panel.SetSizer(root)
 
+        restore_button.Bind(wx.EVT_BUTTON, lambda _e: dialog.EndModal(wx.ID_YES))
         open_logs_button.Bind(wx.EVT_BUTTON, lambda _e: dialog.EndModal(wx.ID_APPLY))
         save_diagnostics_button.Bind(wx.EVT_BUTTON, lambda _e: dialog.EndModal(wx.ID_SAVE))
+        skip_button.Bind(wx.EVT_BUTTON, lambda _e: dialog.EndModal(wx.ID_NO))
+        dialog.SetDefaultItem(restore_button)
+        dialog.SetEscapeId(wx.ID_NO)
+        restore_button.SetFocus()
 
         while True:
             result = self._show_modal_dialog(dialog, "Crash Recovery")
@@ -6088,10 +6155,10 @@ class MainFrame:
                 "Open text file",
                 wildcard=(
                     "Supported files (*.txt;*.md;*.html;*.htm;*.xhtml;*.json;*.yaml;*.yml;"
-                    "*.toml;*.xml;*.csv;*.tsv;*.ipynb;*.sqlite;*.db;*.docx;*.epub;*.pdf;*.odt;*.rtf;*.pptx)|"
+                    "*.toml;*.xml;*.csv;*.tsv;*.ipynb;*.sqlite;*.db;*.docx;*.epub;*.pages;*.pdf;*.odt;*.rtf;*.pptx)|"
                     "*.txt;*.md;*.html;"
                     "*.htm;*.xhtml;*.json;*.yaml;*.yml;*.toml;*.xml;*.csv;*.tsv;"
-                    "*.ipynb;*.sqlite;*.db;*.docx;*.epub;*.pdf;*.odt;*.rtf;*.pptx|All files (*.*)|*.*"
+                    "*.ipynb;*.sqlite;*.db;*.docx;*.epub;*.pages;*.pdf;*.odt;*.rtf;*.pptx|All files (*.*)|*.*"
                 ),
                 style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
             ) as dialog:
@@ -6129,6 +6196,7 @@ class MainFrame:
             ".db",
             ".docx",
             ".epub",
+            ".pages",
             ".pdf",
             ".odt",
             ".rtf",
@@ -7409,6 +7477,7 @@ class MainFrame:
     def _reload_shortcuts_from_keymap(self) -> None:
         self.commands = CommandRegistry()
         self._build_commands()
+        self._refresh_voice_command_aliases()
         self._build_menu()
         self._apply_accelerators()
         self._reload_global_hotkeys()
@@ -10019,6 +10088,152 @@ class MainFrame:
             self._set_status("Read aloud paused")
         else:
             self._set_status("Read aloud finished")
+
+    def toggle_dictation(self) -> None:
+        wx = self._wx
+        state = self._dictation.state
+        if state == "listening":
+            self._cancel_voice_command_scan()
+            self._voice_command_baseline_text = ""
+            self._dictation.stop()
+            self._set_status("Windows dictation stopped")
+            return
+
+        self.editor.SetFocus()
+        self._voice_command_baseline_text = self.editor.GetValue()
+        try:
+            self._dictation.start(DictationSettings())
+        except DictationUnavailableError:
+            self._show_message_box(
+                "Windows dictation is unavailable on this system.",
+                "Dictation",
+                wx.ICON_INFORMATION | wx.OK,
+            )
+            self._voice_command_baseline_text = ""
+            return
+        if self.settings.voice_commands_enabled:
+            self._set_status(
+                'Windows dictation started. Say "Hey QUILL" plus a command to trigger Quill.'
+            )
+        else:
+            self._set_status("Windows dictation started. Speak into the editor.")
+
+    def toggle_dictation_voice_commands(self) -> None:
+        self.settings.voice_commands_enabled = not self.settings.voice_commands_enabled
+        save_settings(self.settings)
+        item = self.frame.GetMenuBar().FindItemById(self._id_dictation_voice_commands)
+        if item is not None:
+            item.Check(self.settings.voice_commands_enabled)
+        if self.settings.voice_commands_enabled and self._dictation.state == "listening":
+            self._voice_command_baseline_text = self.editor.GetValue()
+            self._schedule_voice_command_scan()
+            self._set_status('Hey QUILL commands enabled. Say "Hey QUILL" plus a command.')
+        elif self.settings.voice_commands_enabled:
+            self._set_status('Hey QUILL commands enabled. Start dictation to use them.')
+        else:
+            self._cancel_voice_command_scan()
+            self._voice_command_baseline_text = ""
+            self._set_status("Hey QUILL commands disabled")
+
+    def _refresh_voice_command_aliases(self) -> None:
+        self._voice_command_aliases = build_voice_command_aliases(
+            self.commands.list(),
+            {
+                "new document": "file.new",
+                "open document": "file.open",
+                "open file": "file.open",
+                "save document": "file.save",
+                "save as": "file.save_as",
+                "close document": "file.close_document",
+                "close file": "file.close_document",
+                "command palette": "app.command_palette",
+                "read aloud": "tools.read_aloud",
+                "stop read aloud": "tools.read_aloud_stop",
+                "dictation": "tools.dictation_toggle",
+                "toggle dictation": "tools.dictation_toggle",
+                "hey quill commands": "tools.dictation_voice_commands_toggle",
+                "voice commands": "tools.dictation_voice_commands_toggle",
+            },
+        )
+
+    def _cancel_voice_command_scan(self) -> None:
+        timer = self._voice_command_scan_timer
+        if timer is not None:
+            timer.cancel()
+        self._voice_command_scan_timer = None
+
+    def _schedule_voice_command_scan(self) -> None:
+        if not self.settings.voice_commands_enabled or self._dictation.state != "listening":
+            return
+        self._cancel_voice_command_scan()
+
+        def run() -> None:
+            self._wx.CallAfter(self._process_voice_command_transcript)
+
+        timer = threading.Timer(1.2, run)
+        timer.daemon = True
+        self._voice_command_scan_timer = timer
+        timer.start()
+
+    def _process_voice_command_transcript(self) -> None:
+        self._voice_command_scan_timer = None
+        if self._voice_command_guard:
+            return
+        if not self.settings.voice_commands_enabled or self._dictation.state != "listening":
+            return
+        baseline = self._voice_command_baseline_text
+        current_text = self.editor.GetValue()
+        if not baseline or current_text == baseline:
+            return
+        _prefix, inserted, _suffix = split_text_delta(baseline, current_text)
+        if not inserted.strip():
+            return
+        match = resolve_voice_command(inserted, self._voice_command_aliases)
+        if match is None:
+            self._voice_command_baseline_text = current_text
+            return
+        command = self.commands.get(match.command_id)
+        if command is None or not self._feature_enabled(command.feature_id):
+            self._voice_command_baseline_text = current_text
+            self._set_status("Hey QUILL command is unavailable in this profile")
+            return
+        self._voice_command_guard = True
+        try:
+            self._replace_document_text(baseline)
+            self.document.set_text(baseline)
+            if not self._suspend_persistent_undo:
+                self._record_persistent_undo_state(baseline)
+            self.editor.SetInsertionPoint(len(baseline))
+            self.editor.SetSelection(len(baseline), len(baseline))
+            self._refresh_browser_preview()
+            self._maybe_autosave()
+        finally:
+            self._voice_command_guard = False
+        self._refresh_title()
+        self._refresh_contextual_menu_items()
+        self._set_status(f'Hey QUILL: {command.title}')
+        self.announce(f'Hey QUILL: {command.title}')
+        command.handler()
+        self._voice_command_baseline_text = self.editor.GetValue()
+
+    def _on_dictation_state_change(self, state: str) -> None:
+        if state == "listening":
+            if self.settings.voice_commands_enabled:
+                self._set_status(
+                    'Windows dictation started. Say "Hey QUILL" plus a command to trigger Quill.'
+                )
+            else:
+                self._set_status("Windows dictation started. Speak into the editor.")
+        else:
+            self._cancel_voice_command_scan()
+            self._voice_command_baseline_text = ""
+            self._set_status("Windows dictation stopped")
+
+    def _on_dictation_error(self, error_msg: str) -> None:
+        self._cancel_voice_command_scan()
+        self._voice_command_baseline_text = ""
+        self.announce(f"Windows dictation error: {error_msg}")
+        self._set_status("Windows dictation error")
 
     def install_shell_integration(self) -> None:
         wx = self._wx

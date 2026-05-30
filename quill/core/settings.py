@@ -104,6 +104,11 @@ class Settings:
     announcement_trace_enabled: bool = False
     assistant_enabled: bool = False
     assistant_prompt_style: str = "balanced"
+    dictation_engine: str = "vosk"
+    dictation_language: str = "en-US"
+    dictation_model: str = "base"
+    dictation_device_index: int = -1
+    voice_commands_enabled: bool = False
     status_bar_order: list[str] = field(default_factory=_default_status_bar_order)
     status_bar_hidden: list[str] = field(default_factory=_default_status_bar_hidden)
 
@@ -140,6 +145,15 @@ class Settings:
         assistant_prompt_style = str(data.get("assistant_prompt_style", "balanced")).strip().lower()
         if assistant_prompt_style not in {"balanced", "concise", "gentle", "technical"}:
             assistant_prompt_style = "balanced"
+        dictation_engine = str(data.get("dictation_engine", "vosk")).strip().lower()
+        if dictation_engine not in {"vosk", "whisper"}:
+            dictation_engine = "vosk"
+        dictation_language = str(data.get("dictation_language", "en-US")).strip() or "en-US"
+        dictation_model = str(data.get("dictation_model", "base")).strip() or "base"
+        dictation_device_index = int(data.get("dictation_device_index", -1))
+        if dictation_device_index < -1:
+            dictation_device_index = -1
+        voice_commands_enabled = bool(data.get("voice_commands_enabled", False))
         status_bar_order = _normalize_status_bar_order(data.get("status_bar_order"))
         status_bar_hidden = _normalize_status_bar_hidden(
             data.get("status_bar_hidden"), status_bar_order
@@ -176,6 +190,11 @@ class Settings:
             announcement_trace_enabled=announcement_trace_enabled,
             assistant_enabled=assistant_enabled,
             assistant_prompt_style=assistant_prompt_style,
+            dictation_engine=dictation_engine,
+            dictation_language=dictation_language,
+            dictation_model=dictation_model,
+            dictation_device_index=dictation_device_index,
+            voice_commands_enabled=voice_commands_enabled,
             status_bar_order=status_bar_order,
             status_bar_hidden=status_bar_hidden,
         )
