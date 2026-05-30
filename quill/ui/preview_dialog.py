@@ -47,6 +47,7 @@ def _preview_page(
     *,
     start_anchor: str | None = None,
     escape_bridge: bool = False,
+    return_bridge: bool = False,
 ) -> str:
     t = html.escape(title)
     scripts = []
@@ -56,6 +57,15 @@ def _preview_page(
             "if(e.key==='Escape'){e.preventDefault();"
             "if(window.quill&&window.quill.postMessage){"
             "window.quill.postMessage(JSON.stringify({type:'close'}));}}});"
+        )
+    if return_bridge:
+        # Escape or F6 hands focus back to the editor (the native control eats
+        # these, so we bridge them out to Python).
+        scripts.append(
+            "document.addEventListener('keydown', function(e){"
+            "if(e.key==='Escape'||e.key==='F6'){e.preventDefault();"
+            "if(window.quill&&window.quill.postMessage){"
+            "window.quill.postMessage(JSON.stringify({type:'return'}));}}});"
         )
     if start_anchor:
         scripts.append(
@@ -171,7 +181,7 @@ class SidePreview:
     Falls back to a read-only text control where no WebView backend exists.
     """
 
-    def __init__(self, parent: object, title: str = "Preview") -> None:
+    def __init__(self, parent: object, title: str = "Preview", on_return=None) -> None:
         import wx
 
         self._wx = wx
@@ -179,19 +189,35 @@ class SidePreview:
         self._fallback = None
         self._ready = False
         self._pending: str | None = None
+        self._on_return = on_return
         try:
             import wx.html2 as webview
 
             self.view = webview.WebView.New(parent)
             self.view.SetName(title)
+            try:
+                self.view.AddScriptMessageHandler("quill")
+                self.view.Bind(
+                    webview.EVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED, self._on_script_message
+                )
+            except Exception:  # noqa: BLE001
+                pass
             self.view.Bind(webview.EVT_WEBVIEW_LOADED, self._on_loaded)
-            self.view.SetPage(_preview_page(title, ""), "")
+            self.view.SetPage(_preview_page(title, "", return_bridge=True), "")
         except Exception:  # noqa: BLE001
             self.view = None
             self._fallback = wx.TextCtrl(
                 parent, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_RICH2
             )
             self._fallback.SetName(title)
+
+    def _on_script_message(self, event: object) -> None:
+        try:
+            data = json.loads(event.GetString())
+        except Exception:  # noqa: BLE001
+            return
+        if data.get("type") == "return" and self._on_return is not None:
+            self._on_return()
 
     @property
     def control(self):
