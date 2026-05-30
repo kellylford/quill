@@ -37,7 +37,6 @@ class AskQuillChatDialog:
         announce=None,
     ) -> None:
         import wx
-        from wx.lib.scrolledpanel import ScrolledPanel
 
         self._wx = wx
         self._assistant = assistant
@@ -58,14 +57,11 @@ class AskQuillChatDialog:
         outer = wx.BoxSizer(wx.VERTICAL)
 
         outer.Add(wx.StaticText(self.dialog, label="Conversation"), 0, wx.LEFT | wx.RIGHT | wx.TOP, 14)
-        # Scrollable message list — one row per message.
-        self.messages = ScrolledPanel(self.dialog, style=wx.BORDER_SIMPLE | wx.VSCROLL)
+        # Message list — one item per message; a real list box so screen readers
+        # announce it as a list and arrow through each message cleanly.
+        self.messages = wx.ListBox(self.dialog, style=wx.LB_SINGLE | wx.LB_NEEDED_SB)
         self.messages.SetName("Conversation")
-        self.messages_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.messages.SetSizer(self.messages_sizer)
-        self.messages.SetupScrolling(scroll_x=False)
-        self._you_bg = wx.Colour(232, 240, 254)
-        self._quill_bg = wx.Colour(238, 238, 238)
+        self._full_messages: list[str] = []
         outer.Add(self.messages, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 14)
 
         outer.Add(wx.StaticText(self.dialog, label="Suggestions"), 0, wx.LEFT | wx.RIGHT | wx.TOP, 14)
@@ -132,21 +128,16 @@ class AskQuillChatDialog:
         event.Skip()
 
     def _append(self, speaker: str, text: str) -> None:
-        wx = self._wx
-        row = wx.Panel(self.messages)
-        row.SetBackgroundColour(self._you_bg if speaker == "You" else self._quill_bg)
-        row_sizer = wx.BoxSizer(wx.VERTICAL)
-        label = wx.StaticText(row, label=f"{speaker}: {text}")
-        width = max(self.messages.GetClientSize().width - 50, 420)
-        label.Wrap(width)
-        # One combined element per message → VoiceOver reads it as a single item.
-        row.SetName(f"{speaker} message")
-        row_sizer.Add(label, 0, wx.ALL, 8)
-        row.SetSizer(row_sizer)
-        self.messages_sizer.Add(row, 0, wx.EXPAND | wx.ALL, 5)
-        self.messages.Layout()
-        self.messages.SetupScrolling(scroll_x=False, scrollToTop=False)
-        self.messages.ScrollChildIntoView(row)
+        # Each message is one list-box item ("You: ..." / "Quill: ..."). Newlines
+        # are flattened so it stays one item; the screen reader reads the whole
+        # item, and Copy Last Response copies the full text.
+        self._full_messages.append(text)
+        display = f"{speaker}: {' '.join(text.splitlines())}"
+        index = self.messages.GetCount()
+        self.messages.Append(display)
+        self.messages.SetSelection(index)
+        if hasattr(self.messages, "EnsureVisible"):
+            self.messages.EnsureVisible(index)
 
     def _set_busy(self, busy: bool) -> None:
         self.send_button.Enable(not busy)
