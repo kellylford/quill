@@ -11863,7 +11863,14 @@ class MainFrame:
         splitter = getattr(tab, "splitter", None)
         if splitter is None or not splitter.IsSplit():
             return
-        self._update_side_preview(tab)
+        # Debounce: refresh shortly after typing pauses so each keystroke stays
+        # snappy (re-rendering on every character can stutter the editor).
+        timer = getattr(self, "_side_preview_timer", None)
+        if timer is not None and timer.IsRunning():
+            timer.Stop()
+        self._side_preview_timer = self._wx.CallLater(
+            250, self._update_side_preview, tab
+        )
 
     def _update_side_preview(self, tab) -> None:
         text = tab.editor.GetValue()
