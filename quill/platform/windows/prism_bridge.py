@@ -11,6 +11,21 @@ except ImportError:  # pragma: no cover - optional runtime dependency
 
 _VALID_BACKENDS = {"auto", "prism", "status_only"}
 
+_sr_active_cache: bool | None = None
+
+
+def _screen_reader_active() -> bool:
+    """Cached check for a running screen reader (so 'auto' TTS doesn't double-talk)."""
+    global _sr_active_cache
+    if _sr_active_cache is None:
+        try:
+            from quill.platform.windows.sr_detect import detect_screen_reader
+
+            _sr_active_cache = bool(detect_screen_reader().detected)
+        except Exception:  # noqa: BLE001
+            _sr_active_cache = False
+    return _sr_active_cache
+
 
 def normalize_backend_name(value: str | None) -> str:
     raw = (value or "").strip().lower()
@@ -82,7 +97,14 @@ class AnnouncementEngine:
 
     def announce(self, message: str) -> str | None:
         if self._runtime_backend is None:
-            if self._state.requested_backend == "auto" and pyttsx3 is not None:
+            # Only speak via system TTS when NO screen reader is running —
+            # otherwise it talks over Narrator/NVDA/JAWS (the screen reader
+            # already reads the UI through the accessibility API).
+            if (
+                self._state.requested_backend == "auto"
+                and pyttsx3 is not None
+                and not _screen_reader_active()
+            ):
                 try:
                     engine = pyttsx3.init()
                     try:

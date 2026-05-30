@@ -2802,7 +2802,7 @@ class MainFrame:
             self._id_run_python,
             self._menu_label("&Run Python...", "tools.run_python"),
         )
-        authoring_menu.AppendSubMenu(ai_menu, "&AI")
+        menu_bar.Append(ai_menu, "A&I")
         glow_menu = wx.Menu()
         glow_menu.Append(
             self._id_glow_audit_document,
