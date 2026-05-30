@@ -15,6 +15,7 @@ from xml.etree.ElementTree import Element
 
 from quill.core.document import Document
 from quill.core.epub import load_epub_book, render_epub_book
+from quill.io.pages import read_pages_document
 from quill.io.pdf import extract_pdf_text, format_pdf_document
 
 
@@ -40,6 +41,10 @@ def read_structured_document(path: Path, encoding: str = "utf-8") -> Document:
             "extracted_pages": result.extracted_pages,
             "page_scores": result.page_scores,
         }
+    elif suffix == ".pages":
+        doc = read_pages_document(path)
+        text = doc.text
+        metadata = doc.source_metadata
     elif suffix == ".odt":
         text = _format_odt(path)
         metadata = {"source_kind": "odt", "engine": "odt", "quality_score": 100}

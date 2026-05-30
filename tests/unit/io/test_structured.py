@@ -180,3 +180,26 @@ def test_read_structured_pptx_extracts_headings_lists_tables_and_notes(tmp_path:
     assert "| H1 | H2 |" in document.text
     assert "## Notes" in document.text
     assert "Speaker note line" in document.text
+
+
+def test_read_structured_pages_gracefully_handles_missing_deps(tmp_path: Path, monkeypatch) -> None:
+    """Test that Pages import shows a helpful message when dependencies are missing."""
+    target = tmp_path / "sample.pages"
+    # Create a minimal ZIP file (Pages files are ZIPs)
+    with zipfile.ZipFile(target, "w") as archive:
+        archive.writestr("Index/Document.iwa", b"fake iwa data")
+    
+    # Mock both Pages readers to fail (simulating missing deps)
+    from unittest.mock import Mock
+    from quill.io import pages
+    
+    monkeypatch.setattr(pages, "_read_pages_via_iwa", Mock(side_effect=ImportError("keynote-parser not available")))
+    monkeypatch.setattr(pages, "_read_pages_via_libreoffice", Mock(side_effect=ImportError("markitdown not available")))
+    
+    document = read_structured_document(target)
+    
+    assert "Pages import not available" in document.text
+    assert "pip install keynote-parser" in document.text
+    assert "pip install markitdown" in document.text
+    assert document.source_metadata["source_kind"] == "pages"
+    assert document.source_metadata["quality_score"] == 0

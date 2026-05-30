@@ -41,6 +41,7 @@ DEFAULT_KEYMAP: dict[str, str] = {
     "tools.thesaurus": "Shift+F7",
     "tools.read_aloud_start_pause": "Ctrl+Alt+P",
     "tools.read_aloud_stop": "Ctrl+Alt+S",
+    "tools.dictation_toggle": "Ctrl+Alt+V",
     "tools.document_intake_report": "Ctrl+Shift+I",
     "help.switch_feature_profile": "Alt+Shift+P",
     "edit.copy_with_source": "Ctrl+Shift+C",
