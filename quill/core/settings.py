@@ -75,6 +75,7 @@ class Settings:
     theme: str = "system"
     keyboard_pack: str = "Quill Default"
     soft_wrap: bool = True
+    wrap_find: bool = True
     recent_files_limit: int = 10
     tray_enabled: bool = False
     persistent_undo: bool = False
@@ -102,6 +103,7 @@ class Settings:
         theme = str(data.get("theme", "system"))
         keyboard_pack = str(data.get("keyboard_pack", "Quill Default"))
         soft_wrap = bool(data.get("soft_wrap", True))
+        wrap_find = bool(data.get("wrap_find", True))
         recent_files_limit = int(data.get("recent_files_limit", 10))
         tray_enabled = bool(data.get("tray_enabled", False))
         persistent_undo = bool(data.get("persistent_undo", False))
@@ -121,6 +123,7 @@ class Settings:
             theme=theme,
             keyboard_pack=keyboard_pack,
             soft_wrap=soft_wrap,
+            wrap_find=wrap_find,
             recent_files_limit=recent_files_limit,
             tray_enabled=tray_enabled,
             persistent_undo=persistent_undo,

@@ -592,6 +592,12 @@ class MainFrame:
             self._binding_for("view.toggle_soft_wrap"),
         )
         self.commands.register(
+            "view.toggle_find_wrap",
+            "Toggle Find Wrap",
+            self.toggle_find_wrap,
+            None,
+        )
+        self.commands.register(
             "view.toggle_dark_mode",
             "Toggle Dark Mode",
             self.toggle_dark_mode,
@@ -1669,6 +1675,7 @@ class MainFrame:
         self._id_send_to_tray = wx.NewIdRef()
         self._id_toggle_tray_mode = wx.NewIdRef()
         self._id_toggle_soft_wrap = wx.NewIdRef()
+        self._id_toggle_find_wrap = wx.NewIdRef()
         self._id_toggle_dark_mode = wx.NewIdRef()
         self._id_toggle_persistent_undo = wx.NewIdRef()
         self._id_toggle_spellcheck_as_you_type = wx.NewIdRef()
@@ -1683,6 +1690,8 @@ class MainFrame:
             self._menu_label("Toggle Soft &Wrap", "view.toggle_soft_wrap"),
         )
         view_menu.Check(self._id_toggle_soft_wrap, self.settings.soft_wrap)
+        view_menu.AppendCheckItem(self._id_toggle_find_wrap, "Wrap &Find Searches")
+        view_menu.Check(self._id_toggle_find_wrap, self.settings.wrap_find)
         view_menu.AppendCheckItem(self._id_toggle_dark_mode, "Toggle &Dark Mode")
         view_menu.Check(self._id_toggle_dark_mode, self.settings.theme == "dark")
         view_menu.AppendCheckItem(
@@ -2428,6 +2437,11 @@ class MainFrame:
         )
         self.frame.Bind(
             wx.EVT_MENU,
+            self._on_toggle_find_wrap,
+            id=self._id_toggle_find_wrap,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
             self._on_toggle_dark_mode,
             id=self._id_toggle_dark_mode,
         )
@@ -2986,6 +3000,7 @@ class MainFrame:
             "window.previous_document": self._id_previous_document,
             "view.send_to_tray": self._id_send_to_tray,
             "view.toggle_soft_wrap": self._id_toggle_soft_wrap,
+            "view.toggle_find_wrap": self._id_toggle_find_wrap,
             "app.exit": self._id_exit,
             "app.command_palette": self._id_palette,
             "app.preferences": self._id_preferences,
@@ -3777,6 +3792,10 @@ class MainFrame:
     def _on_toggle_soft_wrap(self, event: object) -> None:
         enabled = bool(event.IsChecked())
         self.toggle_soft_wrap(enabled)
+
+    def _on_toggle_find_wrap(self, event: object) -> None:
+        enabled = bool(event.IsChecked())
+        self.toggle_find_wrap(enabled)
 
     def _on_toggle_dark_mode(self, event: object) -> None:
         enabled = bool(event.IsChecked())
@@ -4759,6 +4778,12 @@ class MainFrame:
         self.settings.soft_wrap = next_state
         self._apply_soft_wrap(next_state)
         self._set_status("Soft wrap on" if next_state else "Soft wrap off")
+
+    def toggle_find_wrap(self, enabled: bool | None = None) -> None:
+        next_state = (not self.settings.wrap_find) if enabled is None else enabled
+        self.settings.wrap_find = next_state
+        save_settings(self.settings)
+        self._set_status("Find wrap on" if next_state else "Find wrap off")
 
     def toggle_dark_mode(self, enabled: bool | None = None) -> None:
         current = self.settings.theme == "dark"
@@ -7759,16 +7784,25 @@ class MainFrame:
             return
 
         cursor = self.editor.GetInsertionPoint()
-        start, end = matches[0]
+        chosen: tuple[int, int] | None = None
         for current_start, current_end in matches:
             if current_start >= cursor:
-                start, end = current_start, current_end
+                chosen = (current_start, current_end)
                 break
+        wrapped = False
+        if chosen is None and self.settings.wrap_find:
+            chosen = matches[0]
+            wrapped = True
+        if chosen is None:
+            self._set_status("No matches found from the current position")
+            return
+        start, end = chosen
         self.editor.SetFocus()
         self.editor.SetSelection(start, end)
         self.editor.SetInsertionPoint(end)
-        self._last_match = (start, end)
-        self._set_status(f"Found at position {start + 1}")
+        self._last_match = chosen
+        wrap_suffix = " (wrapped)" if wrapped else ""
+        self._set_status(f"Found at position {start + 1}{wrap_suffix}")
 
     def find_next(self) -> None:
         self._find_relative(reverse=False)
@@ -7804,7 +7838,7 @@ class MainFrame:
                 if end <= cursor:
                     chosen = (start, end)
                     break
-            if chosen is None:
+            if chosen is None and self.settings.wrap_find:
                 chosen = matches[-1]
                 wrapped = True
         else:
@@ -7812,12 +7846,12 @@ class MainFrame:
                 if start >= cursor:
                     chosen = (start, end)
                     break
-            if chosen is None:
+            if chosen is None and self.settings.wrap_find:
                 chosen = matches[0]
                 wrapped = True
 
         if chosen is None:
-            self._set_status("No matches found")
+            self._set_status("No matches found from the current position")
             return
 
         start, end = chosen

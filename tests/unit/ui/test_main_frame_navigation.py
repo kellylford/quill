@@ -9,6 +9,7 @@ from quill.core.document import Document
 from quill.core.epub import EpubBook, EpubChapter, EpubHeading
 from quill.core.features import FEATURE_DEFINITIONS, feature_for_command
 from quill.core.locations import LocationRing
+from quill.core.search import SearchOptions
 from quill.core.spellcheck import Misspelling
 from quill.ui.main_frame import MainFrame
 
@@ -171,6 +172,7 @@ def _build_frame(text: str, insertion_point: int = 0) -> MainFrame:
         (),
         {
             "persistent_undo": False,
+            "wrap_find": True,
             "status_bar_order": ["message", "line_column", "mode", "selection", "file_path"],
             "status_bar_hidden": ["selection"],
         },
@@ -206,6 +208,7 @@ def test_persistent_undo_steps_across_history() -> None:
         (),
         {
             "persistent_undo": True,
+            "wrap_find": True,
             "status_bar_order": ["message", "line_column", "mode", "selection", "file_path"],
             "status_bar_hidden": ["selection"],
         },
@@ -441,6 +444,29 @@ def test_open_misspelling_list_jumps_to_selected_occurrence(
 
     assert frame.editor.GetInsertionPoint() == 6
     assert frame.editor.selection == (6, 10)
+
+
+def test_find_next_does_not_wrap_when_setting_disabled() -> None:
+    frame = _build_frame("alpha beta alpha", insertion_point=len("alpha beta alpha"))
+    frame._last_find_query = "alpha"
+    frame._last_search_options = SearchOptions()
+    frame.settings.wrap_find = False
+
+    frame.find_next()
+
+    assert frame._status_message == "No matches found from the current position"
+
+
+def test_find_next_wraps_when_setting_enabled() -> None:
+    frame = _build_frame("alpha beta alpha", insertion_point=len("alpha beta alpha"))
+    frame._last_find_query = "alpha"
+    frame._last_search_options = SearchOptions()
+    frame.settings.wrap_find = True
+
+    frame.find_next()
+
+    assert frame.editor.selection == (0, 5)
+    assert frame._status_message.endswith("(wrapped)")
 
 
 def test_save_all_files_calls_save_file() -> None:

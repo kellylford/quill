@@ -14,6 +14,7 @@ def test_settings_round_trip(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
             theme="dark",
             keyboard_pack="VS Code",
             soft_wrap=False,
+            wrap_find=False,
             recent_files_limit=7,
             tray_enabled=True,
             persistent_undo=True,
@@ -26,6 +27,7 @@ def test_settings_round_trip(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
     assert loaded.theme == "dark"
     assert loaded.keyboard_pack == "VS Code"
     assert loaded.soft_wrap is False
+    assert loaded.wrap_find is False
     assert loaded.recent_files_limit == 7
     assert loaded.tray_enabled is True
     assert loaded.persistent_undo is True
