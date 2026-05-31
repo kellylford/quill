@@ -42,8 +42,12 @@ REM nothing to mis-parse. Reinstalls only after a real change (e.g. a git pull).
 REM Skip with QUILL_NO_AUTO_DEPS=1.
 if exist "%ROOT%scripts\_autodeps.py" "%PYTHON_EXE%" "%ROOT%scripts\_autodeps.py" "%ROOT%"
 
+REM --new-window forces Quill to open its own window instead of forwarding to a
+REM single-instance "primary". A leftover instance.lock from a force-killed run
+REM could otherwise make this exit silently with no window. The dev launcher
+REM should always actually open Quill.
 pushd "%ROOT%"
-"%PYTHON_EXE%" -m quill %*
+"%PYTHON_EXE%" -m quill --new-window %*
 set "EXIT_CODE=%ERRORLEVEL%"
 popd
 exit /b %EXIT_CODE%

@@ -44,4 +44,7 @@ fi
 [ -f "$ROOT/scripts/_autodeps.py" ] && "$PYTHON_EXE" "$ROOT/scripts/_autodeps.py" "$ROOT" || true
 
 cd "$ROOT"
-exec "$PYTHON_EXE" -m quill "$@"
+# --new-window forces Quill to open its own window instead of forwarding to a
+# single-instance "primary". A leftover instance.lock from a force-killed run
+# could otherwise make this exit silently with no window.
+exec "$PYTHON_EXE" -m quill --new-window "$@"
