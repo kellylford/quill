@@ -135,7 +135,10 @@ class LlamaCppBackend(AIBackend):
             "string}. action=answer replies in chat; insert=new text for the cursor; "
             "replace=rewrites the selection; run=run ONE tool id. tool must be one of: "
             + json.dumps(list(tool_ids))
-            + " (empty unless action is run)."
+            + " (empty unless action is run). "
+            "Default to action=answer: greetings, questions, and conversation are "
+            "answered in chat and do NOT change the document. Use insert or replace ONLY "
+            "when the user clearly asks to add or change document text. When unsure, answer."
         )
         if style_preamble:
             system = f"{system}\n\n{style_preamble}"

@@ -17,7 +17,12 @@ _DECIDE_INSTRUCTIONS = (
     "the single document they are editing. action=answer replies in chat; "
     "action=insert provides new text to put at the cursor; action=replace rewrites the "
     "selected text; action=run runs ONE listed tool by its exact id. Only set tool when "
-    "action is run."
+    "action is run.\n"
+    "Default to action=answer. Greetings, questions, and conversation ('hello', "
+    "'what does this say?', 'can you help?') are answered in chat — they do NOT modify "
+    "the document. Choose insert or replace ONLY when the user clearly asks you to add "
+    "or change text in the document (e.g. 'write an intro', 'add a conclusion', 'rewrite "
+    "this'). When unsure, answer in chat."
 )
 
 
