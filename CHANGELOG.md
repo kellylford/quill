@@ -6,6 +6,14 @@
 
 **QUILL: A quality, usable, inclusive, lightweight, and literate editor built for everyone who writes, codes, learns, and creates.**
 
+## Cross-platform support and on-device AI
+
+- **macOS support.** Quill now runs on macOS as well as Windows from one codebase. Announcements route to VoiceOver (never speaking over it); release Mac builds are code-signed with a Developer ID certificate and notarized by Apple.
+- **Ask Quill chat.** An on-device AI chat rendered as a fully accessible WebView document — heading-navigable turns, announced replies, an in-page message box, and Escape to close. Verified in NVDA, JAWS, and VoiceOver.
+- **On-device AI, no cloud required.** Apple Foundation Models on macOS; llama.cpp (CPU, GGUF) on Windows/Linux; optional Ollama (local/cloud) or a custom endpoint. The assistant answers in chat by default and never edits a document without approval.
+- **Train Writing Style** conditions the assistant on your own writing.
+- **Accessible WebView library.** The chat, preview, About box, and update/consent dialogs are built on the open-source `wx-accessible-webview` library (extracted from Quill).
+
 ## Quill 0.1.5 Beta
 
 Quill 0.1.5 Beta focuses on safe rollout surfaces for BITS Whisperer, clearer preference parity, and more accessible status monitoring without changing core editor behavior.

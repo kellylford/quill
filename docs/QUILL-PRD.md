@@ -2617,6 +2617,8 @@ Quill targets the following standards in full at v1.0 release:
 - **ARIA 1.2 / WAI-ARIA Authoring Practices** patterns are honoured wherever Quill exposes ARIA-equivalent semantics through MSAA/UIA (combobox patterns for the palette, treeview patterns for the Outline Navigator, listbox patterns for issue panels).
 - **Microsoft's Accessibility Insights for Windows** baseline (every CI build is run through Accessibility Insights and must produce zero errors and zero warnings on covered axes).
 
+**Screen-reader coverage across platforms.** On Windows, Quill targets **NVDA (primary), JAWS, and Narrator**; on **macOS** it targets **VoiceOver**. Quill routes its own announcements to the active platform screen reader and never speaks over it (on macOS it defers to VoiceOver rather than falling back to a separate speech engine). Embedded web content -- the Ask Quill chat, the Markdown/HTML preview, the About box, and the update/consent dialogs -- is driven through semantic HTML/ARIA so it reads as a real web document under NVDA, JAWS, and VoiceOver alike (see the accessible-WebView approach in section 10).
+
 ### 9.2 Conformance posture statement (will appear in the ACR)
 
 > Quill 1.0 **supports** WCAG 2.2 Level A and Level AA across all functionality intended for end users. It **partially supports** Level AAA criteria 1.4.6 (Contrast Enhanced) and 2.4.10 (Section Headings). Quill does not include audio-only or video-only media; criteria specific to such media are **not applicable**.

@@ -5017,6 +5017,16 @@ Outline Navigator, listbox patterns for issue panels).</li>
 baseline (every CI build is run through Accessibility Insights and must
 produce zero errors and zero warnings on covered axes).</li>
 </ul>
+<p><strong>Screen-reader coverage across platforms.</strong> On Windows,
+Quill targets <strong>NVDA (primary), JAWS, and Narrator</strong>; on
+<strong>macOS</strong> it targets <strong>VoiceOver</strong>. Quill
+routes its own announcements to the active platform screen reader and
+never speaks over it (on macOS it defers to VoiceOver rather than
+falling back to a separate speech engine). Embedded web content -- the
+Ask Quill chat, the Markdown/HTML preview, the About box, and the
+update/consent dialogs -- is driven through semantic HTML/ARIA so it
+reads as a real web document under NVDA, JAWS, and VoiceOver alike (see
+the accessible-WebView approach in section 10).</p>
 <h3 id="92-conformance-posture-statement-will-appear-in-the-acr">9.2
 Conformance posture statement (will appear in the ACR)</h3>
 <blockquote>

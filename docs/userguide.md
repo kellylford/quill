@@ -26,6 +26,7 @@ Quill is also in beta. Expect polish, depth, and real daily utility. Also expect
 - [Tools for Reading, Review, and Inspection](#tools-for-reading-review-and-inspection)
 - [GLOW Workflows Inside Quill](#glow-workflows-inside-quill)
 - [Accessibility and Low-Vision Features](#accessibility-and-low-vision-features)
+- [Quill on macOS](#quill-on-macos)
 - [Profiles, Keyboard Packs, and Customization](#profiles-keyboard-packs-and-customization)
 - [Trust, Recovery, Sessions, and Safety](#trust-recovery-sessions-and-safety)
 - [Working with Different Document Types](#working-with-different-document-types)
@@ -415,10 +416,17 @@ Setup:
 2. Put a `.gguf` model in `%APPDATA%\\Quill\\models\\` (Windows) or set `QUILL_LLAMA_MODEL` to a full path.
 3. Open `AI -> Ask Quill Chat...` and send a prompt.
 
+Accessibility:
+
+- The whole conversation renders as an accessible WebView document: each turn is a heading (speaker) you can jump between, new replies are announced automatically, and the message box lives inside the page. Press `Escape` to close the chat. Verified in NVDA, JAWS, and VoiceOver.
+- You can also connect optional providers (Ollama local/cloud, or a custom endpoint) instead of the on-device model.
+
 Behavior notes:
 
-- Proposed actions use an explicit `Approve` or `Discard` step.
+- The assistant answers in chat by default; greetings and questions are never turned into document edits.
+- Proposed actions (insert, replace, run a command) use an explicit `Approve` or `Discard` step before anything changes your document.
 - If model/runtime is unavailable, Quill reports this clearly and does not apply destructive changes.
+- **Train Writing Style** (`AI -> Train Writing Style...`) lets you teach the assistant your own writing style from samples or the current document.
 
 ### Writing Assistant and AI Hub setup
 
@@ -769,6 +777,16 @@ You can validate contrast, switch dark mode, and align with system behavior. Thi
 ### Status bar as an accessible control surface
 
 Quill's status bar is navigable and interactive. This is a subtle but important design decision. It keeps useful information close while still making it reachable from the keyboard.
+
+## Quill on macOS
+
+Quill runs on **macOS** as well as Windows, from one codebase, with feature parity as the goal.
+
+- **VoiceOver-first.** On macOS, Quill routes its announcements to **VoiceOver** and never speaks over it. Headings, regions, and result messages behave the way they do on Windows with NVDA/JAWS.
+- **On-device AI.** Ask Quill uses **Apple Foundation Models** (Apple Intelligence) on a supported Mac — no model download and no cloud. The on-device GGUF/llama.cpp picker is hidden on macOS because Apple's model is used instead; you can still connect Ollama or a cloud endpoint if you prefer.
+- **Standard Mac behaviors.** Preferences and About use the standard macOS menu locations (`Quill -> Settings`, `Quill -> About Quill`).
+- **Signed and notarized.** Release Mac builds are code-signed with a Developer ID certificate and notarized by Apple, so Gatekeeper opens them without warnings. The app ships as a `.app` (and disk image).
+- **The accessible WebView** that powers the chat, the Markdown/HTML preview, the About box, and the update dialogs reads correctly under VoiceOver, just as it does under NVDA and JAWS on Windows.
 
 ## Profiles, Keyboard Packs, and Customization
 
