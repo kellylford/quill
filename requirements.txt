@@ -14,7 +14,7 @@ certifi>=2024.2.2
 prismatoid>=0.16; sys_platform == "win32"
 
 # Spell check (optional)
-pyenchant>=3.2
+pyenchant>=3.3.0
 
 # On-device AI for the Ask Quill chat.
 # Windows/Linux use llama.cpp (CPU, GGUF) — also download a GGUF model
