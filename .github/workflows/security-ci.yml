@@ -40,14 +40,16 @@ jobs:
 
   secret-scan:
     runs-on: ubuntu-latest
+    env:
+      GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
     steps:
       - uses: actions/checkout@v6
       - name: Run gitleaks scan
-        if: ${{ secrets.GITLEAKS_LICENSE != '' }}
+        if: ${{ env.GITLEAKS_LICENSE != '' }}
         # gitleaks org scanning requires a license key in this repo.
         uses: gitleaks/gitleaks-action@v2
         env:
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+          GITLEAKS_LICENSE: ${{ env.GITLEAKS_LICENSE }}
       - name: Skip gitleaks when license is unavailable
-        if: ${{ secrets.GITLEAKS_LICENSE == '' }}
+        if: ${{ env.GITLEAKS_LICENSE == '' }}
         run: echo "Skipping gitleaks scan because GITLEAKS_LICENSE is not configured."
