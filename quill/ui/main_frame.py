@@ -8140,71 +8140,81 @@ class MainFrame:
         "Each project is owned by its respective authors and used under its own license."
     )
 
+    def _about_markdown(self) -> str:
+        def md_links(links: tuple[tuple[str, str], ...]) -> str:
+            return "\n".join(f"- [{name}]({url})" for name, url in links)
+
+        # Reuse the acknowledgments text as a markdown list.
+        acks = "\n".join(
+            (f"- {line[2:]}" if line.startswith("• ") else line)
+            for line in self._ABOUT_ACKNOWLEDGMENTS.splitlines()
+        )
+        return (
+            f"# Quill 0.1 Beta\n\n"
+            f"Version {__version__}\n\n"
+            "Quill 0.1 Beta is a screen-reader-first writing and document environment "
+            "for Windows and Mac from Blind Information Technology Solutions (BITS) "
+            "and Community Access.\n\n"
+            "With sincere thanks to our contributors and beta testers: "
+            "Techopolis, Taylor Arndt, Michael Doise, Kayla Bentas, "
+            "Shane Popplestone, and Becky Knobb.\n\n"
+            "## Links\n\n" + md_links(self._ABOUT_LINKS) + "\n\n"
+            "## On GitHub\n\n" + md_links(self._ABOUT_GITHUB_LINKS) + "\n\n"
+            "## Open-source acknowledgments\n\n" + acks + "\n\n"
+            "Copyright (c) Blind Information Technology Solutions (BITS) and Community Access"
+        )
+
     def show_about_quill(self) -> None:
-        # Custom accessible dialog (the native AboutBox can't host multiple
-        # clickable links or an acknowledgments section).
+        # Render the About content (with all links) as HTML in a WebView, reusing
+        # the document-preview pipeline. Links open in the system browser.
         wx = self._wx
+        import wx.html2 as webview
+
+        from quill.core.browser_preview import render_preview_body
+        from quill.ui.preview_dialog import _preview_page
+
+        body = render_preview_body(self._about_markdown(), "markdown")
+        page = _preview_page("About Quill", body, escape_bridge=True)
+
         dialog = wx.Dialog(
             self.frame, title="About Quill",
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
         dialog.SetName("About Quill")
-        wrap = 540
+        dialog.SetSize((640, 680))
         outer = wx.BoxSizer(wx.VERTICAL)
 
-        def add_text(text: str, *, bold: bool = False) -> None:
-            label = wx.StaticText(dialog, label=text)
-            if bold:
-                font = label.GetFont()
-                font.MakeBold()
-                label.SetFont(font)
-            label.Wrap(wrap)
-            outer.Add(label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 14)
+        view = webview.WebView.New(dialog)
+        view.SetName("About Quill")
+        try:
+            view.AddScriptMessageHandler("quill")
+            view.Bind(
+                webview.EVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED,
+                lambda _e: dialog.EndModal(wx.ID_CLOSE),
+            )
+        except Exception:  # noqa: BLE001
+            pass
 
-        add_text(f"Quill 0.1 Beta (version {__version__})", bold=True)
-        add_text(
-            "Quill 0.1 Beta is a screen-reader-first writing and document environment "
-            "for Windows and Mac from Blind Information Technology Solutions (BITS) "
-            "and Community Access."
-        )
-        add_text(
-            "With sincere thanks to our contributors and beta testers: "
-            "Techopolis, Taylor Arndt, Michael Doise, Kayla Bentas, "
-            "Shane Popplestone, and Becky Knobb."
-        )
+        def _on_nav(event: object) -> None:
+            url = event.GetURL() or ""
+            if url.startswith(("http://", "https://")):
+                # Open external links in the browser, not inside the dialog.
+                event.Veto()
+                import webbrowser
 
-        def add_links(heading: str, links: tuple[tuple[str, str], ...]) -> None:
-            add_text(heading, bold=True)
-            for name, url in links:
-                link = wx.adv.HyperlinkCtrl(dialog, label=name, url=url)
-                link.SetName(name)
-                outer.Add(link, 0, wx.LEFT | wx.RIGHT | wx.TOP, 14)
+                webbrowser.open(url)
 
-        add_links("Links", self._ABOUT_LINKS)
-        add_links("On GitHub", self._ABOUT_GITHUB_LINKS)
-
-        add_text("Open-source acknowledgments", bold=True)
-        acks = wx.TextCtrl(
-            dialog,
-            value=self._ABOUT_ACKNOWLEDGMENTS,
-            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_DONTWRAP,
-        )
-        acks.SetName("Open-source acknowledgments")
-        acks.SetMinSize((wrap, 180))
-        outer.Add(acks, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 14)
-
-        add_text(
-            "Copyright (c) Blind Information Technology Solutions (BITS) and Community Access"
-        )
+        view.Bind(webview.EVT_WEBVIEW_NAVIGATING, _on_nav)
+        view.SetPage(page, "")
+        outer.Add(view, 1, wx.EXPAND)
 
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         buttons.AddStretchSpacer()
         close = wx.Button(dialog, wx.ID_CLOSE, label="Close")
-        close.SetDefault()
         buttons.Add(close, 0)
-        outer.Add(buttons, 0, wx.EXPAND | wx.ALL, 14)
+        outer.Add(buttons, 0, wx.EXPAND | wx.ALL, 10)
 
-        dialog.SetSizerAndFit(outer)
+        dialog.SetSizer(outer)
         close.Bind(wx.EVT_BUTTON, lambda _e: dialog.EndModal(wx.ID_CLOSE))
         dialog.Bind(
             wx.EVT_CHAR_HOOK,
@@ -8213,7 +8223,7 @@ class MainFrame:
             else e.Skip(),
         )
         dialog.CentreOnParent()
-        self._wx.CallAfter(close.SetFocus)
+        self._wx.CallAfter(view.SetFocus)
         try:
             dialog.ShowModal()
         finally:
