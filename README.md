@@ -29,6 +29,10 @@ Highlights in 0.1.2 include:
 - Word open-mode choice with remembered default, including a structured Word view and normal text editing mode.
 - Expanded structured intake for `.doc`/`.docx`, `.ppt`/`.pptx`, `.xlsx`/`.xls`, `.pages`, and low-confidence PDF fallback via MarkItDown when available.
 - Writing Assistant shell with prompt presets, generated tool suggestions, and a sandboxed Python runner.
+- AI Connection workflow from both Preferences and the AI menu, with provider-aware host defaults.
+- Verify Connection, List Models, and Recommend Model actions in AI Connection settings.
+- AI menu status line with plain-language detail (`Ready` or `Needs attention`) and immediate accessible feedback.
+- Optional Ollama cloud key mode over HTTPS (no local Ollama required for cloud endpoint access).
 - Browser Preview with `Ctrl+Shift+V` and a selectable preview browser.
 - Heading styling tools to apply font family, size, and alignment to current-level or all headings in Markdown/HTML.
 - Heading Organizer (`Ctrl+Alt+Shift+H`) with keyboard-driven heading level changes, section reordering, and accessibility validation.
@@ -36,6 +40,14 @@ Highlights in 0.1.2 include:
 - Unified diagnostics-backed support flow under **Help -> Report a Bug**.
 - Menu IA refinement, including **Insert** before **View** and **Search** after **View**.
 - Documentation refresh with regenerated Markdown/HTML/EPUB artifacts.
+
+AI quick start:
+
+1. Open `AI -> AI Connection...`.
+2. Choose provider (`Ollama (local)`, `Ollama Cloud (API key)`, or `Custom HTTP`).
+3. Enter host/model/key as needed.
+4. Save settings; Quill auto-verifies and updates the AI status line.
+5. Use **List Models** to choose a provider-returned model.
 
 Snippet workflow quick start:
 

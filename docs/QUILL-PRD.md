@@ -155,7 +155,7 @@ Cells shipped in v1.0, in left-to-right order:
 | **Spell check** | `Spell check on` / `Spell check off`. When errors exist: `3 errors` | Toggles as-you-type spell check | Run spell check, Jump to next misspelling, Reset learning |
 | **Read aloud** | `Read aloud: ready` or `Read aloud: speaking` | Toggles read-aloud playback | Voice…, Speed…, Read selection, Read document |
 | **Accessibility audit** | `Audit: clean` or `Audit: 2 warnings` (only after a manual or auto audit) | Opens the Issues panel | Run audit, Configure rules, Ignore for this document |
-| **AI status** | `AI: off` or `AI: ready (OpenAI)` | Opens AI provider settings | Cancel current task, Switch provider, View last response |
+| **AI status** | `AI: Ready` / `AI: Needs attention` / `AI: Not checked`, with a short detail line | Opens AI provider settings | Verify connection, Switch provider, View last response |
 | **Background tasks** | `Idle` or `Extracting PDF, 42%` | Opens a small Tasks dialog listing in-flight operations with Cancel | Cancel all, Show task log |
 | **Notifications** | `No new messages` or `2 messages` | Opens the Notifications dialog (release notes, available updates, backup recovery offers) | Dismiss all, Open Notifications |
 | **Quill** (rightmost) | `Quill 1.0` | Opens About | Check for Updates, Release Notes |
@@ -3088,7 +3088,7 @@ The organising principle is simple: **v1.0 ships only Confidence A. Confidence B
 - **Linked-notes / wikilink editor (Obsidian-style).** Backlog.
 - **Per-file-class backup retention policy.** v1.0 ships a single global retention rule (5.13). v1.1 introduces per-format-class defaults (e.g. 100 backups for source code, 25 for long-form documents) once we have telemetry on user save patterns.
 - **Single-line compose box mode.** A small, screen-reader-optimised composer dialog whose Enter sends back to the main editor at the cursor. Useful for slow-speech users; needs user testing to confirm it is worth the surface area. Backlog for v1.1.
-- **Full model-driven AI assistant runtime.** Quill now ships a local Writing Assistant shell, prompt presets, generated tool catalog, assistant onboarding, AI connection preferences, and sandboxed Python runner; local Ollama can run without keys, while optional authenticated endpoint keys are stored via DPAPI. The CPU model backend and model download manager remain future work.
+- **Advanced model lifecycle in core app flow.** Quill now ships a local Writing Assistant shell, prompt presets, generated tool catalog, assistant onboarding, AI connection preferences, connection verification/model discovery actions, AI menu status-detail feedback, and sandboxed Python runner. Broader built-in model catalog lifecycle and background prefetch policy remain future work.
 
 ### 17.4 Explicitly out of scope for Quill (any version unless re-evaluated)
 
@@ -3099,7 +3099,7 @@ Quill is opinionated about what it is *not*. The following are intentionally and
 - **Cloud-sync of documents.** Sync is for keymap and settings only (8.8). Document storage stays on the user's machine and chosen cloud-drive folder.
 - **Mobile, web, macOS, or Linux ports.** Cross-platform is post-v2 at earliest. The `core/` layer has no `wx` so it remains *possible*, not *committed*.
 - **Voice input / dictation.** Use Windows dictation; Quill does not reinvent the mic/STT stack. An opt-in Hey QUILL command layer may sit on top of dictation and dispatch existing Quill commands, but it stays silent and only listens while dictation is active.
-- **AI authoring assistant.** The current build exposes a local Writing Assistant shell, prompt presets, AI connection preferences, and a sandboxed Python tool. The full CPU model backend for autocomplete, rewriting, and "continue my thought" remains future work.
+- **AI authoring assistant.** The current build exposes a local Writing Assistant shell, prompt presets, AI connection preferences, provider verification/model discovery, status-detail accessibility announcements, and a sandboxed Python tool. Longer-horizon autocomplete policy tuning and richer model-catalog management remain future work.
 - **Project workspaces and Find in Folder.** Deferred to v1.2 (see 17.2).
 - **Embedded media playback inside documents.** Out of scope for the editor.
 - **PDF form filling and signing.** Out of scope.

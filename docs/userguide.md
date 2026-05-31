@@ -348,7 +348,18 @@ Browser Preview opens the current document in your chosen browser, defaulting to
 
 The Writing Assistant shell ranks Quill commands from your prompt, offers preset prompts for rewrite/summarize/continue/grammar flows, and Run Python executes a sandboxed transform against the current document text and selection.
 
-Use **Preferences -> AI Connection** to set provider, host, and model. Local Ollama use usually needs no key; if you add one for an authenticated endpoint, Quill stores it with Windows DPAPI.
+Use **AI -> AI Connection...** or **Preferences -> AI Connection** to set provider, host, model, and optional key.
+
+AI connection flow:
+
+1. Choose provider (`Ollama (local)`, `Ollama Cloud (API key)`, or `Custom HTTP`).
+2. Confirm host URL and model.
+3. Enter key only when your endpoint requires authentication.
+4. Use **Verify Connection** to test endpoint and credentials.
+5. Use **List Models** to fetch available models and select one.
+6. Save settings. Quill auto-runs verification and updates the AI status line in the AI menu.
+
+Quill stores optional keys with Windows DPAPI and announces the verification result in plain language for immediate screen-reader feedback.
 
 These help you stay inside the editor instead of breaking flow for small writing chores.
 

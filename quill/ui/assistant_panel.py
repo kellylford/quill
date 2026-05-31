@@ -22,6 +22,19 @@ SUGGESTED_PROMPTS: tuple[str, ...] = (
 )
 
 
+def classify_assistant_error(error: str) -> tuple[str, bool]:
+    """Return a user-facing error message and whether chat input should be disabled."""
+    text = (error or "").strip()
+    lowered = text.lower()
+    if "failed to load native code" in lowered or "0xc000001d" in lowered:
+        return (
+            "On-device AI could not start on this CPU (Windows error 0xc000001d). "
+            "Install a CPU-compatible llama-cpp-python build, or turn AI off from the AI menu.",
+            True,
+        )
+    return (f"Error: {text}", False)
+
+
 class AskQuillChatDialog:
     def __init__(
         self,
@@ -157,6 +170,14 @@ class AskQuillChatDialog:
         if hasattr(self.messages, "EnsureVisible"):
             self.messages.EnsureVisible(index)
 
+    def _announce_incoming(self, text: str, *, prefix: str = "Quill says") -> None:
+        compact = " ".join((text or "").split())
+        if not compact:
+            return
+        if len(compact) > 140:
+            compact = compact[:137].rstrip() + "..."
+        self._announce(f"{prefix}: {compact}")
+
     def _set_busy(self, busy: bool) -> None:
         self.send_button.Enable(not busy)
         self.input.Enable(not busy)
@@ -213,21 +234,34 @@ class AskQuillChatDialog:
     def _apply(self, action: str, text: str, tool: str, error: str) -> None:
         # Nothing touches the document automatically — propose, then await approval.
         if action == "error":
-            self._append("Quill", f"Error: {error}")
+            message, disable_chat = classify_assistant_error(error)
+            self._append("Quill", message)
+            self._announce_incoming(message, prefix="Quill error")
+            if disable_chat:
+                self._set_busy(True)
+                if self._webview is not None:
+                    self._webview.set_status("Quill is unavailable")
+                self._announce("On-device AI unavailable")
+                return
         elif action == "run" and tool:
             title = self._tool_titles.get(tool, tool)
             self._pending = ("run", "", tool)
-            self._append("Quill", f"I'd like to run: {title}. Approve to run it.")
+            proposal = f"I'd like to run: {title}. Approve to run it."
+            self._append("Quill", proposal)
+            self._announce_incoming(proposal, prefix="Quill proposal")
             self._show_approval(True, f"Run “{title}”?")
         elif action in ("insert", "replace") and text:
             self._last_response = text
             self._pending = (action, text, "")
             verb = "insert this at the cursor" if action == "insert" else "replace the selection with this"
-            self._append("Quill", f"I'd like to {verb} (approve to apply):\n{text}")
+            proposal = f"I'd like to {verb} (approve to apply):\n{text}"
+            self._append("Quill", proposal)
+            self._announce_incoming(text, prefix="Quill proposal")
             self._show_approval(True, "Apply this to the document?")
         else:
             self._last_response = text
             self._append("Quill", text or "(no response)")
+            self._announce_incoming(text or "No response")
         self.copy_button.Enable(bool(self._last_response))
         self._set_busy(False)
         if self._webview is not None:

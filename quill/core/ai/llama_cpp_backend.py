@@ -21,6 +21,22 @@ _N_CTX = 4096
 _MAX_TOKENS = 1024
 
 
+def _format_native_load_error(exc: OSError) -> str:
+    error_code = getattr(exc, "winerror", None)
+    if not isinstance(error_code, int):
+        error_code = getattr(exc, "errno", None)
+    if isinstance(error_code, int):
+        code = error_code & 0xFFFFFFFF
+        return (
+            "llama-cpp-python failed to load native code on this machine "
+            f"(Windows error 0x{code:08x}). Install a CPU-compatible build or disable AI."
+        )
+    return (
+        "llama-cpp-python failed to load native code on this machine. "
+        "Install a CPU-compatible build or disable AI."
+    )
+
+
 class LlamaCppBackend(AIBackend):
     name = "llama.cpp (local CPU)"
 
@@ -32,12 +48,18 @@ class LlamaCppBackend(AIBackend):
 
     def _load(self):
         if self._llm is None:
-            from llama_cpp import Llama  # type: ignore[import-not-found]
+            try:
+                from llama_cpp import Llama  # type: ignore[import-not-found]
+            except OSError as exc:
+                raise RuntimeError(_format_native_load_error(exc)) from exc
 
             # Resolve (and download the RAM-appropriate model the first time).
             path = self._model_path or ensure_model(self._progress)
             self._model_path = path
-            self._llm = Llama(model_path=path, n_ctx=self._n_ctx, verbose=False)
+            try:
+                self._llm = Llama(model_path=path, n_ctx=self._n_ctx, verbose=False)
+            except OSError as exc:
+                raise RuntimeError(_format_native_load_error(exc)) from exc
         return self._llm
 
     def is_available(self) -> tuple[bool, str | None]:
@@ -45,6 +67,8 @@ class LlamaCppBackend(AIBackend):
             import llama_cpp  # noqa: F401
         except ImportError:
             return False, "llama-cpp-python is not installed (pip install llama-cpp-python)"
+        except OSError as exc:
+            return False, _format_native_load_error(exc)
         # A model is auto-downloaded (RAM-tiered) on first use if none is present.
         return True, None
 
@@ -97,7 +121,10 @@ class LlamaCppBackend(AIBackend):
                 raw = self._complete(
                     [
                         {"role": "system", "content": system},
-                        {"role": "user", "content": f"Request: {user_message}\n\nDocument:\n{context}"},
+                        {
+                            "role": "user",
+                            "content": f"Request: {user_message}\n\nDocument:\n{context}",
+                        },
                     ],
                     response_format={"type": "json_object"},
                 )

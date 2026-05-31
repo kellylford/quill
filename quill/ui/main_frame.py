@@ -929,6 +929,12 @@ class MainFrame:
             None,
         )
         self.commands.register(
+            "tools.ai_connection",
+            "AI Connection",
+            self.open_ai_preferences,
+            None,
+        )
+        self.commands.register(
             "tools.ai_rewrite_selection",
             "Rewrite Selection",
             self.open_ai_rewrite_selection,
@@ -2583,7 +2589,10 @@ class MainFrame:
         self._id_ai_assistant = wx.NewIdRef()
         self._id_ask_quill_chat = wx.NewIdRef()
         self._id_ai_enabled = wx.NewIdRef()
+        self._id_ai_status_badge = wx.NewIdRef()
+        self._id_ai_status_detail = wx.NewIdRef()
         self._id_ai_model = wx.NewIdRef()
+        self._id_ai_connection = wx.NewIdRef()
         self._id_ai_rewrite_selection = wx.NewIdRef()
         self._id_ai_summarize_selection = wx.NewIdRef()
         self._id_ai_continue_writing = wx.NewIdRef()
@@ -2786,6 +2795,10 @@ class MainFrame:
         ai_menu.AppendCheckItem(self._id_ai_enabled, "Use Artificial &Intelligence")
         ai_menu.Check(self._id_ai_enabled, load_ai_enabled())
         ai_menu.AppendSeparator()
+        ai_menu.Append(self._id_ai_status_badge, "AI Status: Not checked")
+        ai_menu.Enable(self._id_ai_status_badge, False)
+        ai_menu.Append(self._id_ai_status_detail, "AI Detail: Open AI Connection to verify settings")
+        ai_menu.Enable(self._id_ai_status_detail, False)
         ai_menu.Append(
             self._id_ask_quill_chat,
             self._menu_label("Ask Quill &Chat...", "tools.ask_quill_chat"),
@@ -2793,6 +2806,10 @@ class MainFrame:
         ai_menu.Append(
             self._id_ai_model,
             self._menu_label("AI &Model...", "tools.ai_model"),
+        )
+        ai_menu.Append(
+            self._id_ai_connection,
+            self._menu_label("AI &Connection...", "tools.ai_connection"),
         )
         ai_menu.Append(
             self._id_ai_assistant,
@@ -3108,11 +3125,26 @@ class MainFrame:
             lambda _e: self.open_ask_quill_chat(),
             id=self._id_ask_quill_chat,
         )
+        self.frame.Bind(
+            wx.EVT_MENU,
+            lambda _e: self._set_status("AI status is informational."),
+            id=self._id_ai_status_badge,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
+            lambda _e: self._set_status("AI connection detail is informational."),
+            id=self._id_ai_status_detail,
+        )
         self.frame.Bind(wx.EVT_MENU, self._on_toggle_ai_enabled, id=self._id_ai_enabled)
         self.frame.Bind(
             wx.EVT_MENU,
             lambda _e: self.open_ai_model_settings(),
             id=self._id_ai_model,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
+            lambda _e: self.open_ai_preferences(),
+            id=self._id_ai_connection,
         )
         self.frame.Bind(
             wx.EVT_MENU,
@@ -3134,6 +3166,7 @@ class MainFrame:
             lambda _e: self.open_ai_fix_grammar(),
             id=self._id_ai_fix_grammar,
         )
+        self._set_ai_menu_status_badge(None, "Not checked")
         self.frame.Bind(wx.EVT_MENU, lambda _e: self.send_to_tray(), id=self._id_send_to_tray)
         self.frame.Bind(
             wx.EVT_MENU,
@@ -3894,6 +3927,7 @@ class MainFrame:
             "tools.ai_assistant": self._id_ai_assistant,
             "tools.ask_quill_chat": self._id_ask_quill_chat,
             "tools.ai_model": self._id_ai_model,
+            "tools.ai_connection": self._id_ai_connection,
             "tools.ai_rewrite_selection": self._id_ai_rewrite_selection,
             "tools.ai_summarize_selection": self._id_ai_summarize_selection,
             "tools.ai_continue_writing": self._id_ai_continue_writing,
@@ -7367,9 +7401,65 @@ class MainFrame:
     def open_ai_preferences(self) -> None:
         dialog = AssistantConnectionDialog(self.frame)
         if dialog.show_modal():
-            self._set_status("Updated AI connection settings")
+            self._set_ai_menu_status_badge(
+                dialog.last_verification_ok,
+                dialog.last_verification_message,
+            )
+            detail = self._compact_ai_status_detail(
+                self._plain_language_ai_status_detail(dialog.last_verification_message)
+            )
+            if dialog.last_verification_ok:
+                self._set_status(f"Updated AI connection settings. Ready. {detail}")
+            else:
+                self._set_status(
+                    f"Updated AI connection settings. Needs attention. {detail}"
+                )
         else:
             self._set_status("AI connection settings cancelled")
+
+    def _set_ai_menu_status_badge(self, ready: bool | None, detail: str) -> None:
+        if ready is True:
+            label = "AI Status: Ready"
+        elif ready is False:
+            label = "AI Status: Needs attention"
+        else:
+            label = "AI Status: Not checked"
+
+        menu_bar = self.frame.GetMenuBar()
+        if menu_bar is None:
+            return
+        item = menu_bar.FindItemById(self._id_ai_status_badge)
+        if item is not None:
+            item.SetItemLabel(label)
+            item.SetHelp(detail)
+        detail_item = menu_bar.FindItemById(self._id_ai_status_detail)
+        if detail_item is not None:
+            compact = self._compact_ai_status_detail(detail, max_length=72)
+            detail_item.SetItemLabel(f"AI Detail: {compact}")
+            detail_item.SetHelp(detail)
+
+    def _compact_ai_status_detail(self, detail: str, *, max_length: int = 96) -> str:
+        compact = " ".join((detail or "Not checked").split())
+        if len(compact) <= max_length:
+            return compact
+        return compact[: max_length - 3].rstrip() + "..."
+
+    def _plain_language_ai_status_detail(self, detail: str) -> str:
+        text = (detail or "").strip()
+        lowered = text.lower()
+        if not text:
+            return "AI connection has not been checked yet."
+        if "authentication failed" in lowered or "401" in lowered or "403" in lowered:
+            return "Authentication failed. Check your API key and try again."
+        if "timed out" in lowered:
+            return "Connection timed out. Check your internet or host URL and try again."
+        if "could not reach" in lowered or "failed to reach" in lowered:
+            return "Could not reach the AI endpoint. Check the host URL and network connection."
+        if "no models" in lowered:
+            return "Connected, but no models were returned by the endpoint."
+        if "verified" in lowered:
+            return "Connection verified successfully."
+        return text
 
     def _apply_announcement_trace_setting(self) -> None:
         trace_enabled = bool(self.settings.announcement_trace_enabled)

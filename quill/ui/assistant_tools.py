@@ -10,10 +10,14 @@ from quill.core.assistant import (
 )
 from quill.core.assistant_ai import (
     AssistantConnectionSettings,
+    default_host_for_provider,
     load_assistant_api_key,
     load_assistant_connection_settings,
+    list_assistant_models,
+    recommended_models_for_provider,
     save_assistant_api_key,
     save_assistant_connection_settings,
+    verify_assistant_connection,
 )
 from quill.core.commands import CommandRegistry
 from quill.core.features import FeatureManager
@@ -417,6 +421,13 @@ class WritingAssistantDialog:
 
 
 class AssistantConnectionDialog:
+    _PROVIDER_CHOICES: tuple[tuple[str, str], ...] = (
+        ("off", "Off"),
+        ("ollama", "Ollama (local)"),
+        ("ollama_cloud", "Ollama Cloud (API key)"),
+        ("custom", "Custom HTTP"),
+    )
+
     def __init__(self, parent: object) -> None:
         import wx
 
@@ -430,6 +441,8 @@ class AssistantConnectionDialog:
 
         self._settings = load_assistant_connection_settings()
         self._api_key = load_assistant_api_key()
+        self.last_verification_ok: bool | None = None
+        self.last_verification_message: str = "Not checked"
 
         root = wx.BoxSizer(wx.VERTICAL)
         root.Add(
@@ -450,11 +463,9 @@ class AssistantConnectionDialog:
 
         self.provider = wx.Choice(
             panel,
-            choices=["Off", "Ollama (local)", "Custom HTTP"],
+            choices=[label for _value, label in self._PROVIDER_CHOICES],
         )
-        self.provider.SetSelection(
-            {"off": 0, "ollama": 1, "custom": 2}.get(self._settings.provider, 1)
-        )
+        self.provider.SetSelection(self._provider_choice_index(self._settings.provider))
         panel_sizer.Add(
             wx.StaticText(panel, label="Provider"),
             0,
@@ -464,7 +475,7 @@ class AssistantConnectionDialog:
         panel_sizer.Add(self.provider, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
         self.host = wx.TextCtrl(panel)
-        self.host.SetValue(self._settings.host)
+        self.host.SetValue(self._settings.host or default_host_for_provider(self._settings.provider))
         panel_sizer.Add(wx.StaticText(panel, label="Host URL"), 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
         panel_sizer.Add(self.host, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
@@ -486,6 +497,21 @@ class AssistantConnectionDialog:
         )
         panel_sizer.Add(self.api_key, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
+        actions = wx.BoxSizer(wx.HORIZONTAL)
+        self.verify_button = wx.Button(panel, label="Verify Connection")
+        self.list_models_button = wx.Button(panel, label="List Models")
+        self.recommend_button = wx.Button(panel, label="Recommend Model")
+        actions.Add(self.verify_button, 0, wx.RIGHT, 8)
+        actions.Add(self.list_models_button, 0, wx.RIGHT, 8)
+        actions.Add(self.recommend_button, 0)
+        panel_sizer.Add(actions, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+        self.connection_status = wx.StaticText(
+            panel,
+            label="Tip: Verify Connection to confirm host/key and List Models to choose available models.",
+        )
+        panel_sizer.Add(self.connection_status, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
         panel.SetSizer(panel_sizer)
         root.Add(panel, 1, wx.EXPAND | wx.ALL, 8)
 
@@ -493,22 +519,101 @@ class AssistantConnectionDialog:
         if buttons is not None:
             root.Add(buttons, 0, wx.EXPAND | wx.ALL, 8)
         self.dialog.SetSizerAndFit(root)
+        self.provider.Bind(wx.EVT_CHOICE, self._on_provider_changed)
+        self.verify_button.Bind(wx.EVT_BUTTON, self._on_verify_connection)
+        self.list_models_button.Bind(wx.EVT_BUTTON, self._on_list_models)
+        self.recommend_button.Bind(wx.EVT_BUTTON, self._on_recommend_model)
+        self._on_provider_changed(None)
+
+    def _provider_choice_index(self, provider: str) -> int:
+        normalized = provider.strip().lower()
+        for index, (value, _label) in enumerate(self._PROVIDER_CHOICES):
+            if value == normalized:
+                return index
+        return 1
+
+    def _provider_value(self) -> str:
+        selection = self.provider.GetSelection()
+        if selection < 0 or selection >= len(self._PROVIDER_CHOICES):
+            return "ollama"
+        return self._PROVIDER_CHOICES[selection][0]
+
+    def _current_settings(self) -> AssistantConnectionSettings:
+        provider = self._provider_value()
+        fallback_host = default_host_for_provider(provider)
+        return AssistantConnectionSettings(
+            provider=provider,
+            host=self.host.GetValue().strip() or fallback_host,
+            model=self.model.GetValue().strip() or "llama3.1",
+        )
+
+    def _on_provider_changed(self, _event: object | None) -> None:
+        provider = self._provider_value()
+        host_value = self.host.GetValue().strip()
+        local_default = default_host_for_provider("ollama")
+        cloud_default = default_host_for_provider("ollama_cloud")
+        if not host_value or host_value in {local_default, cloud_default}:
+            self.host.SetValue(default_host_for_provider(provider))
+
+    def _on_verify_connection(self, _event: object) -> None:
+        settings = self._current_settings()
+        ok, message = verify_assistant_connection(settings, self.api_key.GetValue())
+        self.connection_status.SetLabel(message)
+        icon = self._wx.ICON_INFORMATION if ok else self._wx.ICON_WARNING
+        self._wx.MessageBox(message, "AI Connection Check", icon | self._wx.OK)
+
+    def _on_list_models(self, _event: object) -> None:
+        settings = self._current_settings()
+        models, error = list_assistant_models(settings, self.api_key.GetValue())
+        if error is not None:
+            self.connection_status.SetLabel(error)
+            self._wx.MessageBox(error, "Model Discovery", self._wx.ICON_WARNING | self._wx.OK)
+            return
+        if not models:
+            message = "Connection succeeded, but the endpoint returned no models."
+            self.connection_status.SetLabel(message)
+            self._wx.MessageBox(message, "Model Discovery", self._wx.ICON_INFORMATION | self._wx.OK)
+            return
+
+        picker = self._wx.SingleChoiceDialog(
+            self.dialog,
+            "Select a model for QUILL:",
+            "Available Models",
+            models,
+        )
+        try:
+            if picker.ShowModal() != self._wx.ID_OK:
+                return
+            selected = picker.GetStringSelection().strip()
+        finally:
+            picker.Destroy()
+        if selected:
+            self.model.SetValue(selected)
+            self.connection_status.SetLabel(f"Selected model: {selected}")
+
+    def _on_recommend_model(self, _event: object) -> None:
+        settings = self._current_settings()
+        recommendations = recommended_models_for_provider(settings.provider)
+        if not recommendations:
+            self.connection_status.SetLabel("No model recommendations available.")
+            return
+        choice = recommendations[0]
+        self.model.SetValue(choice)
+        self.connection_status.SetLabel(f"Recommended model selected: {choice}")
 
     def show_modal(self) -> bool:
         self.dialog.CentreOnParent()
         try:
             if self.dialog.ShowModal() != self._wx.ID_OK:
                 return False
-            settings = AssistantConnectionSettings(
-                provider={"0": "off", "1": "ollama", "2": "custom"}.get(
-                    str(self.provider.GetSelection()),
-                    "ollama",
-                ),
-                host=self.host.GetValue().strip() or "http://localhost:11434",
-                model=self.model.GetValue().strip() or "llama3.1",
-            )
+            settings = self._current_settings()
+            api_key = self.api_key.GetValue()
             save_assistant_connection_settings(settings)
-            save_assistant_api_key(self.api_key.GetValue())
+            save_assistant_api_key(api_key)
+            ok, message = verify_assistant_connection(settings, api_key)
+            self.last_verification_ok = ok
+            self.last_verification_message = message
+            self.connection_status.SetLabel(message)
             return True
         finally:
             self.dialog.Destroy()

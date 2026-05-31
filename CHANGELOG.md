@@ -20,6 +20,12 @@ Quill 0.1.2 Beta expands Quill's writing flow with prediction, snippets, browser
 - Added a sandboxed **Run Python** transform tool for document/selection automation.
 - Added first-run **Writing Assistant onboarding** plus **Preferences -> AI Connection** for provider, host, and model setup.
 - Added secure optional API-key storage for AI endpoints using **Windows DPAPI**.
+- Added AI provider support for **Ollama Cloud (API key)** and improved custom-endpoint handling.
+- Added **Verify Connection**, **List Models**, and **Recommend Model** actions in AI connection settings.
+- Added automatic AI-connection verification on save and an AI-menu status flow with **Ready / Needs attention / Not checked**.
+- Added an AI-menu detail line with short verification reason text.
+- Improved screen-reader behavior by announcing plain-language AI verification outcomes immediately.
+- Improved Ask Quill chat accessibility by announcing incoming responses/proposals/errors as they arrive.
 - Updated Windows packaging to stage an assistant setup guide and expose an optional `aiassistant` installer component.
 - Added custom profile management with opt-in inheritance from a parent built-in profile or an explicit bare-bones start.
 - Added profile quick picker hotkey **Alt+Shift+P** (`help.switch_feature_profile`).
