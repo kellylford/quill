@@ -117,8 +117,37 @@ Filename: "{app}\python\pythonw.exe"; Parameters: "-m quill"; Description: "Laun
 Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: postinstall nowait skipifsilent unchecked; Check: not FileExists(ExpandConstant('{app}\python\pythonw.exe'))
 
 [UninstallDelete]
-; Leave user data (in %APPDATA%\Quill) intact on uninstall so
-; accidental reinstalls do not lose autosaves, settings,
-; dictionaries, or backups.
+; Always remove install-dir build junk. Whether to also remove the
+; user's data in %APPDATA%\Quill is decided by an explicit prompt in
+; [Code] below -- we never silently keep or wipe it.
 Type: filesandordirs; Name: "{app}\__pycache__"
 Type: filesandordirs; Name: "{app}\python\__pycache__"
+
+[Code]
+// Ask, on uninstall, whether to also remove personal data instead of
+// assuming. 'Yes' wipes %APPDATA%\Quill (settings, dictionaries,
+// autosaves, backups, onboarding/first-run flags, and the IPC lock) so a
+// later reinstall is a clean first run. 'No' keeps everything for a
+// future reinstall. MsgBox is a native dialog, so it is screen-reader
+// accessible.
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  DataDir: String;
+begin
+  if CurUninstallStep = usUninstall then
+  begin
+    DataDir := ExpandConstant('{userappdata}\Quill');
+    if DirExists(DataDir) then
+    begin
+      if MsgBox('Also remove your Quill data?' + #13#10 + #13#10 +
+                'This deletes your settings, dictionaries, autosaves, backups,' + #13#10 +
+                'and onboarding state in:' + #13#10 + DataDir + #13#10 + #13#10 +
+                'Choose No to keep your documents and settings for a future' + #13#10 +
+                'reinstall. Choose Yes to remove everything.',
+                mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES then
+      begin
+        DelTree(DataDir, True, True, True);
+      end;
+    end;
+  end;
+end;

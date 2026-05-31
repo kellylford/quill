@@ -42,7 +42,9 @@ EMBEDDED_PYTHON_URL = (
 # the build will fail loudly rather than ship an unverified runtime.
 EMBEDDED_PYTHON_SHA256 = "a86a2e28870967745d255cc597d1e4d19ae79e65e927cdc324baa0256202231c"
 
-DECTALK_RELEASE_ZIP_URL = "https://github.com/dectalk/dectalk/releases/download/2023-10-30/vs2022.zip"
+DECTALK_RELEASE_ZIP_URL = (
+    "https://github.com/dectalk/dectalk/releases/download/2023-10-30/vs2022.zip"
+)
 
 DEFAULT_BUNDLED_DEPENDENCY_GROUPS = ("ui", "spellcheck")
 
@@ -459,15 +461,15 @@ def build_inno_setup_script(version: str) -> str:
         "",
         "[Components]",
         'Name: "aiassistant"; Description: "Install the Writing Assistant setup guide and AI connection shortcut";'
-        ' Types: full compact custom; Flags: checkablealone',
+        " Types: full compact custom; Flags: checkablealone",
         'Name: "pandoc"; Description: "Install bundled Pandoc for document conversion";'
-        ' Types: full custom; Flags: checkablealone',
+        " Types: full custom; Flags: checkablealone",
         'Name: "speechdectalk"; Description: "Install bundled DECtalk runtime";'
-        ' Types: full custom; Flags: checkablealone',
+        " Types: full custom; Flags: checkablealone",
         'Name: "speechdectalk\\voices"; Description: "DECtalk voice selection";'
-        ' Types: full custom; Flags: checkablealone',
+        " Types: full custom; Flags: checkablealone",
         'Name: "speechdectalk\\voices\\all_voices"; Description: "All DECtalk voices";'
-        ' Types: full custom; Flags: checkablealone',
+        " Types: full custom; Flags: checkablealone",
         'Name: "speechdectalk\\voices\\paul"; Description: "Paul voice"; Types: full custom; Flags: checkablealone',
         'Name: "speechdectalk\\voices\\harry"; Description: "Harry voice"; Types: full custom; Flags: checkablealone',
         'Name: "speechdectalk\\voices\\dennis"; Description: "Dennis voice"; Types: full custom; Flags: checkablealone',
@@ -478,84 +480,81 @@ def build_inno_setup_script(version: str) -> str:
         'Name: "speechdectalk\\voices\\wendy"; Description: "Wendy voice"; Types: full custom; Flags: checkablealone',
         'Name: "speechdectalk\\voices\\kit"; Description: "Kit voice"; Types: full custom; Flags: checkablealone',
         'Name: "speechkokoro"; Description: "Install bundled Kokoro voices/models";'
-        ' Types: full custom; Flags: checkablealone',
+        " Types: full custom; Flags: checkablealone",
         'Name: "speechpiper"; Description: "Install bundled Piper voices/models";'
-        ' Types: full custom; Flags: checkablealone',
+        " Types: full custom; Flags: checkablealone",
         'Name: "speechrhvoice"; Description: "Install bundled RHVoice voices/models";'
-        ' Types: full custom; Flags: checkablealone',
+        " Types: full custom; Flags: checkablealone",
         'Name: "speechmelotts"; Description: "Install bundled MeloTTS voices/models";'
-        ' Types: full custom; Flags: checkablealone',
+        " Types: full custom; Flags: checkablealone",
         'Name: "speechchatterbox"; Description: "Install bundled Chatterbox voices/models";'
-        ' Types: full custom; Flags: checkablealone',
+        " Types: full custom; Flags: checkablealone",
         'Name: "speechopenvoice"; Description: "Install bundled OpenVoice voices/models";'
-        ' Types: full custom; Flags: checkablealone',
+        " Types: full custom; Flags: checkablealone",
         "",
         "[Files]",
         'Source: "..\\portable\\*"; DestDir: "{app}";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs;'
+        " Flags: ignoreversion recursesubdirs createallsubdirs;"
         ' Excludes: "docs\\announcement-beta.md,docs\\QUILL-PRD.md,tools\\pandoc\\*,tools\\speech\\dectalk\\*,tools\\speech\\kokoro\\*,tools\\speech\\piper\\*,tools\\speech\\rhvoice\\*,tools\\speech\\melotts\\*,tools\\speech\\chatterbox\\*,tools\\speech\\openvoice\\*"',
         'Source: "..\\portable\\tools\\pandoc\\*"; DestDir: "{app}\\tools\\pandoc";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;'
-        ' Components: pandoc',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;"
+        " Components: pandoc",
         'Source: "..\\portable\\tools\\speech\\dectalk\\*"; DestDir: "{app}\\tools\\speech\\dectalk";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;'
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;"
         ' Excludes: "voices\\*"; Components: speechdectalk',
         'Source: "..\\portable\\tools\\speech\\dectalk\\voices\\*"; DestDir: "{app}\\tools\\speech\\dectalk\\voices";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\all_voices',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\all_voices",
         'Source: "..\\portable\\tools\\speech\\dectalk\\voices\\paul\\*"; DestDir: "{app}\\tools\\speech\\dectalk\\voices\\paul";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\paul; Check: not WizardIsComponentSelected(\'speechdectalk\\voices\\all_voices\')',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\paul; Check: not WizardIsComponentSelected('speechdectalk\\voices\\all_voices')",
         'Source: "..\\portable\\tools\\speech\\dectalk\\voices\\harry\\*"; DestDir: "{app}\\tools\\speech\\dectalk\\voices\\harry";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\harry; Check: not WizardIsComponentSelected(\'speechdectalk\\voices\\all_voices\')',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\harry; Check: not WizardIsComponentSelected('speechdectalk\\voices\\all_voices')",
         'Source: "..\\portable\\tools\\speech\\dectalk\\voices\\dennis\\*"; DestDir: "{app}\\tools\\speech\\dectalk\\voices\\dennis";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\dennis; Check: not WizardIsComponentSelected(\'speechdectalk\\voices\\all_voices\')',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\dennis; Check: not WizardIsComponentSelected('speechdectalk\\voices\\all_voices')",
         'Source: "..\\portable\\tools\\speech\\dectalk\\voices\\frank\\*"; DestDir: "{app}\\tools\\speech\\dectalk\\voices\\frank";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\frank; Check: not WizardIsComponentSelected(\'speechdectalk\\voices\\all_voices\')',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\frank; Check: not WizardIsComponentSelected('speechdectalk\\voices\\all_voices')",
         'Source: "..\\portable\\tools\\speech\\dectalk\\voices\\betty\\*"; DestDir: "{app}\\tools\\speech\\dectalk\\voices\\betty";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\betty; Check: not WizardIsComponentSelected(\'speechdectalk\\voices\\all_voices\')',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\betty; Check: not WizardIsComponentSelected('speechdectalk\\voices\\all_voices')",
         'Source: "..\\portable\\tools\\speech\\dectalk\\voices\\ursula\\*"; DestDir: "{app}\\tools\\speech\\dectalk\\voices\\ursula";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\ursula; Check: not WizardIsComponentSelected(\'speechdectalk\\voices\\all_voices\')',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\ursula; Check: not WizardIsComponentSelected('speechdectalk\\voices\\all_voices')",
         'Source: "..\\portable\\tools\\speech\\dectalk\\voices\\rita\\*"; DestDir: "{app}\\tools\\speech\\dectalk\\voices\\rita";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\rita; Check: not WizardIsComponentSelected(\'speechdectalk\\voices\\all_voices\')',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\rita; Check: not WizardIsComponentSelected('speechdectalk\\voices\\all_voices')",
         'Source: "..\\portable\\tools\\speech\\dectalk\\voices\\wendy\\*"; DestDir: "{app}\\tools\\speech\\dectalk\\voices\\wendy";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\wendy; Check: not WizardIsComponentSelected(\'speechdectalk\\voices\\all_voices\')',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\wendy; Check: not WizardIsComponentSelected('speechdectalk\\voices\\all_voices')",
         'Source: "..\\portable\\tools\\speech\\dectalk\\voices\\kit\\*"; DestDir: "{app}\\tools\\speech\\dectalk\\voices\\kit";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\kit; Check: not WizardIsComponentSelected(\'speechdectalk\\voices\\all_voices\')',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\\voices\\kit; Check: not WizardIsComponentSelected('speechdectalk\\voices\\all_voices')",
         'Source: "..\\portable\\tools\\speech\\kokoro\\*"; DestDir: "{app}\\tools\\speech\\kokoro";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;'
-        ' Components: speechkokoro',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;"
+        " Components: speechkokoro",
         'Source: "..\\portable\\tools\\speech\\piper\\*"; DestDir: "{app}\\tools\\speech\\piper";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;'
-        ' Components: speechpiper',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;"
+        " Components: speechpiper",
         'Source: "..\\portable\\tools\\speech\\rhvoice\\*"; DestDir: "{app}\\tools\\speech\\rhvoice";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;'
-        ' Components: speechrhvoice',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;"
+        " Components: speechrhvoice",
         'Source: "..\\portable\\tools\\speech\\melotts\\*"; DestDir: "{app}\\tools\\speech\\melotts";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;'
-        ' Components: speechmelotts',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;"
+        " Components: speechmelotts",
         'Source: "..\\portable\\tools\\speech\\chatterbox\\*"; DestDir: "{app}\\tools\\speech\\chatterbox";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;'
-        ' Components: speechchatterbox',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;"
+        " Components: speechchatterbox",
         'Source: "..\\portable\\tools\\speech\\openvoice\\*"; DestDir: "{app}\\tools\\speech\\openvoice";'
-        ' Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;'
-        ' Components: speechopenvoice',
+        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;"
+        " Components: speechopenvoice",
         "",
         "[Icons]",
         'Name: "{group}\\{#AppName}"; Filename: "{app}\\python\\pythonw.exe"; Parameters: "-m quill"; WorkingDir: "{app}"; Check: FileExists(ExpandConstant(\'{app}\\python\\pythonw.exe\'))',
         'Name: "{group}\\{#AppName}"; Filename: "{app}\\{#AppExeName}"; WorkingDir: "{app}"; Check: not FileExists(ExpandConstant(\'{app}\\python\\pythonw.exe\'))',
         'Name: "{group}\\{#AppName} README"; Filename: "{app}\\README.txt"',
-        (
-            'Name: "{group}\\{#AppName} User Guide"; '
-            'Filename: "{app}\\docs\\userguide.md"'
-        ),
+        ('Name: "{group}\\{#AppName} User Guide"; Filename: "{app}\\docs\\userguide.md"'),
         (
             'Name: "{group}\\Writing Assistant Setup"; '
             'Filename: "{app}\\docs\\userguide.md"; Components: aiassistant'
         ),
         'Name: "{group}\\Uninstall {#AppName}"; Filename: "{uninstallexe}"',
         'Name: "{autodesktop}\\{#AppName}"; Filename: "{app}\\python\\pythonw.exe"; Parameters: "-m quill";'
-        ' WorkingDir: "{app}"; Tasks: desktopicon; Check: FileExists(ExpandConstant(\'{app}\\python\\pythonw.exe\'))',
+        " WorkingDir: \"{app}\"; Tasks: desktopicon; Check: FileExists(ExpandConstant('{app}\\python\\pythonw.exe'))",
         'Name: "{autodesktop}\\{#AppName}"; Filename: "{app}\\{#AppExeName}";'
-        ' WorkingDir: "{app}"; Tasks: desktopicon; Check: not FileExists(ExpandConstant(\'{app}\\python\\pythonw.exe\'))',
+        " WorkingDir: \"{app}\"; Tasks: desktopicon; Check: not FileExists(ExpandConstant('{app}\\python\\pythonw.exe'))",
         "",
         "[Registry]",
         "; Register Quill in the OpenWithList for common text formats. We",
@@ -563,7 +562,7 @@ def build_inno_setup_script(version: str) -> str:
         # Inno uses "" as an escaped quote inside a string; we feed it via
         # Python str.format-style concatenation to keep the file readable.
         (
-            'Root: HKCU;'
+            "Root: HKCU;"
             ' Subkey: "Software\\Classes\\Applications\\{#AppExeName}\\shell\\open\\command";'
             ' ValueType: string; ValueName: "";'
             ' ValueData: """{app}\\{#AppExeName}"" ""%1""";'
@@ -589,11 +588,41 @@ def build_inno_setup_script(version: str) -> str:
         " Flags: postinstall nowait skipifsilent unchecked; Check: not FileExists(ExpandConstant('{app}\\python\\pythonw.exe'))",
         "",
         "[UninstallDelete]",
-        "; Leave user data (in %APPDATA%\\Quill) intact on uninstall so",
-        "; accidental reinstalls do not lose autosaves, settings,",
-        "; dictionaries, or backups.",
+        "; Always remove install-dir build junk. Whether to also remove the",
+        "; user's data in %APPDATA%\\Quill is decided by an explicit prompt in",
+        "; [Code] below -- we never silently keep or wipe it.",
         'Type: filesandordirs; Name: "{app}\\__pycache__"',
         'Type: filesandordirs; Name: "{app}\\python\\__pycache__"',
+        "",
+        "[Code]",
+        "// Ask, on uninstall, whether to also remove personal data instead of",
+        "// assuming. 'Yes' wipes %APPDATA%\\Quill (settings, dictionaries,",
+        "// autosaves, backups, onboarding/first-run flags, and the IPC lock) so a",
+        "// later reinstall is a clean first run. 'No' keeps everything for a",
+        "// future reinstall. MsgBox is a native dialog, so it is screen-reader",
+        "// accessible.",
+        "procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);",
+        "var",
+        "  DataDir: String;",
+        "begin",
+        "  if CurUninstallStep = usUninstall then",
+        "  begin",
+        "    DataDir := ExpandConstant('{userappdata}\\Quill');",
+        "    if DirExists(DataDir) then",
+        "    begin",
+        "      if MsgBox('Also remove your Quill data?' + #13#10 + #13#10 +",
+        "                'This deletes your settings, dictionaries, autosaves, backups,'"
+        " + #13#10 +",
+        "                'and onboarding state in:' + #13#10 + DataDir + #13#10 + #13#10 +",
+        "                'Choose No to keep your documents and settings for a future' + #13#10 +",
+        "                'reinstall. Choose Yes to remove everything.',",
+        "                mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES then",
+        "      begin",
+        "        DelTree(DataDir, True, True, True);",
+        "      end;",
+        "    end;",
+        "  end;",
+        "end;",
     ]
     return "\n".join(lines) + "\n"
 
@@ -756,9 +785,7 @@ def _stage_distribution_docs(portable_dir: Path, source_root: Path) -> list[Path
     docs_dir = portable_dir / "docs"
     docs_dir.mkdir(parents=True, exist_ok=True)
     staged: list[Path] = []
-    for relative in (
-        Path("docs") / "userguide.md",
-    ):
+    for relative in (Path("docs") / "userguide.md",):
         source = source_root / relative
         if not source.exists():
             continue
@@ -804,7 +831,9 @@ def _download_and_stage_dectalk_release(portable_dir: Path) -> Path:
     return extract_root
 
 
-def _speech_asset_manifest(portable_dir: Path, bundled_tools: list[str]) -> dict[str, dict[str, object]]:
+def _speech_asset_manifest(
+    portable_dir: Path, bundled_tools: list[str]
+) -> dict[str, dict[str, object]]:
     speech_root = portable_dir / "tools" / "speech"
     manifest: dict[str, dict[str, object]] = {}
     for engine in (

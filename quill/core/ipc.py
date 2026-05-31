@@ -4,72 +4,116 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
 
 from quill.core.paths import app_data_dir
 
+# Held open for the lifetime of the primary instance. The OS releases the
+# advisory lock automatically when this process exits for ANY reason — clean
+# quit, crash, or hard kill — so a leftover lock file can NEVER block a new
+# instance. There is no PID to go stale and nothing to "self-heal": if a
+# process is gone, its lock is gone. That is what makes the single-instance
+# guard just work no matter how the previous run ended.
+_lock_handle: object | None = None
+
 
 def try_claim_primary_instance() -> bool:
+    """Return True if this process is now the single primary instance.
+
+    Backed by an OS advisory file lock (``flock`` on POSIX, ``msvcrt.locking``
+    on Windows) held for the process lifetime — not by a PID written to disk.
+    The kernel owns the lock's lifecycle, so a stale lock file is impossible.
+    """
+    global _lock_handle
+    if _lock_handle is not None:
+        return True  # already claimed by this process; idempotent
+
     lock_path = _lock_file_path()
     lock_path.parent.mkdir(parents=True, exist_ok=True)
-    if lock_path.exists():
-        # Only honor a lock that belongs to a still-running instance of *this*
-        # app (PID alive AND same process identity). Anything else — a dead PID,
-        # a reused PID, or a corrupt lock — is stale, so reclaim it. This makes
-        # the single-instance guard self-heal after an unclean exit/crash.
-        info = _read_lock(lock_path)
-        if info is not None and _lock_belongs_to_live_instance(info):
-            return False
-        lock_path.unlink(missing_ok=True)
     try:
-        fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    except FileExistsError:
+        # O_RDWR|O_CREAT (no truncate, no append) so writes are positioned and
+        # an existing lock held by a live instance is left untouched.
+        fd = os.open(str(lock_path), os.O_RDWR | os.O_CREAT, 0o644)
+        handle = os.fdopen(fd, "r+", encoding="utf-8")
+    except OSError:
         return False
-    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+
+    if not _acquire_os_lock(handle):
+        handle.close()
+        return False  # another live instance holds the lock
+
+    # We hold the lock. Record our pid for diagnostics only — the lock, not
+    # this content, is authoritative. A write failure must never drop the claim.
+    try:
+        handle.seek(0)
         handle.write(_lock_payload())
+        handle.truncate()
+        handle.flush()
+    except OSError:
+        pass
+    _lock_handle = handle
     return True
 
 
 def release_primary_instance() -> None:
-    lock_path = _lock_file_path()
-    info = _read_lock(lock_path)
-    if info is not None and info.get("pid") == os.getpid():
-        lock_path.unlink(missing_ok=True)
+    """Release the OS lock (if held) and remove the lock file."""
+    global _lock_handle
+    handle = _lock_handle
+    _lock_handle = None
+    if handle is not None:
+        try:
+            _release_os_lock(handle)
+        finally:
+            try:
+                handle.close()
+            except OSError:
+                pass
+    _lock_file_path().unlink(missing_ok=True)
+
+
+def _acquire_os_lock(handle: object) -> bool:
+    """Take an exclusive, non-blocking lock. False if another process holds it."""
+    fileno = handle.fileno()
+    if os.name == "nt":
+        import msvcrt
+
+        try:
+            handle.seek(0)
+            msvcrt.locking(fileno, msvcrt.LK_NBLCK, 1)
+        except OSError:
+            return False
+        return True
+
+    import fcntl
+
+    try:
+        fcntl.flock(fileno, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return False
+    return True
+
+
+def _release_os_lock(handle: object) -> None:
+    fileno = handle.fileno()
+    if os.name == "nt":
+        import msvcrt
+
+        try:
+            handle.seek(0)
+            msvcrt.locking(fileno, msvcrt.LK_UNLCK, 1)
+        except OSError:
+            pass
+        return
+
+    import fcntl
+
+    try:
+        fcntl.flock(fileno, fcntl.LOCK_UN)
+    except OSError:
+        pass
 
 
 def _lock_payload() -> str:
-    return json.dumps({"pid": os.getpid(), "created": _pid_creation_time(os.getpid())})
-
-
-def _read_lock(lock_path: Path) -> dict | None:
-    try:
-        raw = lock_path.read_text(encoding="utf-8").strip()
-    except OSError:
-        return None
-    if not raw:
-        return None
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        try:  # backward compatibility: older locks held a bare PID
-            return {"pid": int(raw), "created": None}
-        except ValueError:
-            return None
-    if isinstance(data, dict) and isinstance(data.get("pid"), int):
-        return data
-    return None
-
-
-def _lock_belongs_to_live_instance(info: dict) -> bool:
-    pid = info.get("pid")
-    if not isinstance(pid, int) or not _pid_is_running(pid):
-        return False  # dead PID -> stale, reclaim
-    created = info.get("created")
-    actual = _pid_creation_time(pid)
-    if created is not None and actual is not None:
-        # Reused PID if the running process didn't start when we recorded it.
-        return abs(actual - created) < 2.0
-    return True  # no identity info (e.g. non-Windows): alive is enough
+    return json.dumps({"pid": os.getpid()})
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,82 +184,3 @@ def _lock_file_path() -> Path:
 
 def _queue_file_path() -> Path:
     return app_data_dir() / "ipc" / "open-requests.jsonl"
-
-
-def _read_pid(lock_path: Path) -> int | None:
-    if not lock_path.exists():
-        return None
-    raw = lock_path.read_text(encoding="utf-8").strip()
-    if not raw:
-        return None
-    try:
-        return int(raw)
-    except ValueError:
-        return None
-
-
-def _pid_is_running(pid: int) -> bool:
-    if pid <= 0:
-        return False
-    if os.name == "nt":
-        import ctypes
-
-        kernel32 = ctypes.windll.kernel32
-        process_query_limited_information = 0x1000
-        handle = kernel32.OpenProcess(process_query_limited_information, False, pid)
-        if not handle:
-            return False
-        kernel32.CloseHandle(handle)
-        return True
-    try:
-        os.kill(pid, 0)
-    except OSError:
-        return False
-    return True
-
-
-def _pid_lock_is_stale(pid: int, lock_path: Path) -> bool:
-    if os.name != "nt":
-        return False
-    process_started = _pid_creation_time(pid)
-    if process_started is None:
-        return False
-    lock_mtime = lock_path.stat().st_mtime
-    return process_started > lock_mtime + 2.0
-
-
-def _pid_creation_time(pid: int) -> float | None:
-    if os.name != "nt":
-        return None
-    import ctypes
-    from ctypes import wintypes
-
-    kernel32 = ctypes.windll.kernel32
-    process_query_limited_information = 0x1000
-    handle = kernel32.OpenProcess(process_query_limited_information, False, pid)
-    if not handle:
-        return None
-    creation_time = wintypes.FILETIME()
-    exit_time = wintypes.FILETIME()
-    kernel_time = wintypes.FILETIME()
-    user_time = wintypes.FILETIME()
-    try:
-        if not kernel32.GetProcessTimes(
-            handle,
-            ctypes.byref(creation_time),
-            ctypes.byref(exit_time),
-            ctypes.byref(kernel_time),
-            ctypes.byref(user_time),
-        ):
-            return None
-        return _filetime_to_timestamp(creation_time)
-    finally:
-        kernel32.CloseHandle(handle)
-
-
-def _filetime_to_timestamp(filetime: object) -> float:
-    ft = cast(Any, filetime)
-    low = int(ft.dwLowDateTime)
-    high = int(ft.dwHighDateTime)
-    value = (high << 32) | low
-    return value / 10_000_000 - 11_644_473_600
