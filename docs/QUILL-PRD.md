@@ -1663,6 +1663,215 @@ Quill ships a read-aloud feature that uses a **secondary** voice the user picks 
 - Voice, speed, pitch, volume all configurable. Three named profiles (Reading, Proofreading, Skim) save preferred values.
 - The read-aloud voice never overrides the screen reader's announcements; if a screen reader speaks something while read-aloud is active, read-aloud continues but is briefly ducked.
 
+### 5.25a Speech Experience Platform (planned before implementation)
+
+This section defines the next speech milestone as a complete user-facing platform, not a single settings dialog.
+
+Goals:
+
+- Add a first-class **Speech** submenu under the top-level **AI** menu.
+- Add two downloadable local speech engines: **Kokoro** and **Piper**.
+- Provide voice lifecycle UX end to end: discover, download, preview, set preferred, configure, remove.
+- Keep installer size lean by bundling **no voices** in core builds.
+- Preserve screen-reader-first behavior with predictable announcements, keyboard-first flows, and no surprise network actions.
+
+#### 5.25a.1 AI menu information architecture
+
+The top-level **AI** menu gains a **Speech** submenu with discoverable, keyboard-rebindable commands:
+
+- `AI -> Speech -> Open Speech Center...`
+- `AI -> Speech -> Browse Voice Library...`
+- `AI -> Speech -> Download Voices...`
+- `AI -> Speech -> Preview Current Voice`
+- `AI -> Speech -> Set Preferred Voice...`
+- `AI -> Speech -> Manage Installed Voices...`
+- `AI -> Speech -> Speech Settings...`
+
+The Speech submenu mirrors the command palette and status surfaces, with live keybinding labels exactly like other menu items.
+
+#### 5.25a.2 Engine model and no-bundle policy
+
+Supported engines for this milestone:
+
+- `windows-native` (existing SAPI/OneCore path)
+- `kokoro-local`
+- `piper-local`
+
+Policy:
+
+- No Kokoro or Piper voices are bundled in installer or portable artifacts.
+- Voice models are downloaded on demand into `%APPDATA%\Quill\speech\voices\...`.
+- Downloads require explicit user action and clear size disclosure before start.
+
+#### 5.25a.3 Voice library and download UX
+
+Speech Center includes a searchable voice catalog with filters:
+
+- engine (Windows Native, Kokoro, Piper)
+- language and region
+- gender/style tags where available
+- size band (small/medium/large)
+- installed vs not installed
+
+Each voice row exposes:
+
+- voice name and engine
+- language and locale
+- on-disk size
+- install state
+- preferred marker
+
+Download behavior:
+
+- resumable downloads with progress and remaining size
+- hash verification before activation
+- cancellation without corrupt partial state
+- failed-download recovery with retry guidance
+
+#### 5.25a.4 Voice preview and A/B comparison
+
+Users can preview voices before and after install.
+
+- Preview text field with stock sample text button
+- A/B preview mode for rapid compare between two selected voices
+- playback controls: play, stop, replay
+- optional "Preview with current speaking settings" toggle
+
+When pre-install preview audio is available from metadata, Quill may fetch a small sample clip on demand. If no preview clip exists, preview requires install and Quill states this clearly.
+
+#### 5.25a.5 Preferred voice and defaults model
+
+Users can star one voice as **Preferred** with one command.
+
+Resolution order for active voice:
+
+1. explicit per-document override (future-compatible field)
+2. explicit per-language preferred voice
+3. global preferred voice
+4. engine fallback voice
+
+Setting a voice as preferred is immediate and announced in plain language.
+
+#### 5.25a.6 Per-voice configuration and platform defaults
+
+Every installed voice has editable settings saved as a profile, and users can mark any profile as default.
+
+Per-voice settings (minimum set):
+
+- rate
+- pitch
+- volume
+- pause style and punctuation pause behavior
+- sentence/paragraph chunk size
+- output device selection
+
+Platform-aware defaults:
+
+- Windows native voices keep their own defaults
+- Kokoro and Piper voices each keep separate defaults
+- users can apply "Use as default for this engine" or "Use as global default"
+
+This gives users both broad defaults and precise per-voice control.
+
+#### 5.25a.7 Voice removal and storage hygiene
+
+Manage Installed Voices supports safe removal:
+
+- remove one voice
+- remove all voices for selected engine
+- show reclaimed disk size before confirmation
+- preserve user settings history without dangling references
+
+If the removed voice was preferred, Quill prompts for a replacement or applies deterministic fallback and announces it.
+
+#### 5.25a.8 Speech onboarding flow
+
+First-time speech onboarding starts when the user opens Speech Center with no installed downloadable voices.
+
+Flow:
+
+1. Explain available engines and that voices are optional downloads.
+2. Ask preferred language/locale.
+3. Recommend starter voices for Kokoro and Piper.
+4. Offer quick preview where possible.
+5. Download selected voices.
+6. Ask user to mark preferred voice.
+7. Offer one-click "Make these settings my default".
+
+The onboarding flow can be re-run via `Help -> Run Onboarding Again` and `AI -> Speech -> Open Speech Center...`.
+
+#### 5.25a.9 Accessibility and safety requirements
+
+- Every Speech Center control is a stock wx control with correct label, role, and state.
+- Progress updates are announced without flooding speech output.
+- No auto-downloads or silent background network actions.
+- All destructive actions (remove voice, reset defaults) require confirmation.
+- All errors are plain-language and actionable.
+
+#### 5.25a.10 Delivery phases (bold, realistic)
+
+Phase 1: Foundation
+
+- AI menu Speech submenu
+- Speech Center shell
+- installed-voice management for existing Windows native voices
+
+Phase 2: Downloadable voices
+
+- Kokoro and Piper catalog
+- download, verify, install, remove
+- preferred voice and per-engine defaults
+
+Phase 3: Advanced polish
+
+- A/B preview panel
+- storage budget manager and cleanup recommendations
+- per-language preferred voice routing
+- richer voice profile presets (Narration, Proofread, Fast skim)
+
+#### 5.25a.11 Acceptance criteria
+
+- A new user can install at least one Kokoro or Piper voice in under 3 minutes from Speech Center.
+- A user can preview at least two voices and set one preferred without opening Settings.
+- A user can remove a voice and recover disk space with clear confirmation and fallback behavior.
+- All commands are available through menu, command palette, and keybindings.
+- Installer size does not increase due to bundled voice payloads.
+
+#### 5.25a.12 DECtalk compatibility evaluation track
+
+Quill should explicitly evaluate adding DECtalk as an optional speech engine path.
+
+Why consider it:
+
+- DECtalk remains important to many long-time screen-reader and speech users.
+- It offers a distinctive speech character some users actively prefer for proofreading and navigation tasks.
+- Community-maintained projects (including modern build efforts) suggest practical integration paths worth exploration.
+
+Plan scope (evaluation first, not automatic ship):
+
+- Add `dectalk-local` as a candidate engine in Speech Center behind an experimental flag.
+- Prototype voice discovery, preview, and preferred-voice selection through the same Speech lifecycle model used for Kokoro and Piper.
+- Keep no-bundle policy: no DECtalk voice payloads included in installer or portable builds.
+
+Hard gates before general availability:
+
+- **Licensing and redistribution clarity**: legal review confirms what can be downloaded, redistributed, or user-supplied.
+- **Accessibility parity**: DECtalk path must pass the same screen-reader announcement, keyboard-only, and status reporting requirements as other engines.
+- **Stability and performance**: startup, preview, and long-form read-aloud must meet baseline responsiveness and failure-recovery standards.
+- **Configuration parity**: preferred voice, per-voice settings, per-engine defaults, and removal behavior must match other engines.
+
+User experience requirements if approved:
+
+- DECtalk appears in `AI -> Speech` as another engine option, not a separate workflow.
+- Voice install/onboarding language is plain and explicit about source, size, and any licensing constraints.
+- Users can preview and set a DECtalk voice as preferred in one flow.
+- Users can remove DECtalk voices and recover storage with deterministic fallback behavior.
+
+Positioning:
+
+- DECtalk is treated as a high-value compatibility and user-preference path.
+- It does not replace Windows native, Kokoro, or Piper; it complements them when available and compliant.
+
 ### 5.26 Number lines and strip line numbers
 
 A small tool that addresses a real recurring user request.

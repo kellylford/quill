@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import html
 import os
 import re
 import threading
@@ -154,8 +155,10 @@ from quill.core.assistant import render_assistant_prompt
 from quill.core.onboarding import (
     load_assistant_onboarding_complete,
     load_onboarding_complete,
+    load_speech_onboarding_complete,
     mark_assistant_onboarding_complete,
     mark_onboarding_complete,
+    mark_speech_onboarding_complete,
 )
 from quill.core.outline import OutlineEntry, extract_outline_entries
 from quill.core.paths import app_data_dir, ensure_app_directories
@@ -571,6 +574,7 @@ class MainFrame:
             and not load_assistant_onboarding_complete()
             and not getattr(self.settings, "assistant_enabled", False)
         )
+        self._first_run_speech_prompt = not safe_mode and not load_speech_onboarding_complete()
         if safe_mode:
             self.settings.theme = "system"
             self.settings.tray_enabled = False
@@ -616,6 +620,8 @@ class MainFrame:
         self._ipc_timer: object | None = None
         self._status_message = "Ready"
         self._background_task_count = 0
+        self._background_tasks: list[dict[str, object]] = []
+        self._background_task_sequence = 0
         self._last_intake_report = ""
         self._startup_deferred_ran = False
         self._compare_session: _CompareSession | None = None
@@ -1454,9 +1460,15 @@ class MainFrame:
             None,
         )
         self.commands.register(
+            "help.startup_wizard",
+            "Startup Wizard...",
+            self.run_startup_wizard,
+            None,
+        )
+        self.commands.register(
             "help.run_profile_onboarding",
-            "Run Profile Onboarding",
-            self.run_profile_onboarding,
+            "Startup Wizard...",
+            self.run_startup_wizard,
             None,
         )
         self.commands.register(
@@ -1523,6 +1535,18 @@ class MainFrame:
             "help.what_can_i_do_here",
             "What Can I Do Here?",
             self.show_context_help,
+            None,
+        )
+        self.commands.register(
+            "whisperer.about",
+            "About BITS Whisperer (HTML Preview)",
+            self.show_whisperer_about_page,
+            None,
+        )
+        self.commands.register(
+            "help.status_page",
+            "Status Page (HTML Preview)",
+            self.show_help_status_page,
             None,
         )
         self.commands.register(
@@ -2697,6 +2721,7 @@ class MainFrame:
         self._id_open_logs_folder = wx.NewIdRef()
         self._id_open_diagnostics_folder = wx.NewIdRef()
         self._id_context_help = wx.NewIdRef()
+        self._id_help_status_page = wx.NewIdRef()
         self._id_why_dont_i_see_feature = wx.NewIdRef()
         self._id_switch_feature_profile = wx.NewIdRef()
         self._id_feature_profile_health_check = wx.NewIdRef()
@@ -2706,6 +2731,7 @@ class MainFrame:
         self._id_keyboard_trap_snapshot = wx.NewIdRef()
         self._id_accessibility_audit = wx.NewIdRef()
         self._id_yaml_structure_editor = wx.NewIdRef()
+        self._id_whisperer_about = wx.NewIdRef()
         tools_menu = wx.Menu()
         tools_menu.Append(
             self._id_palette,
@@ -2942,6 +2968,16 @@ class MainFrame:
         )
         ai_menu.AppendSubMenu(speech_menu, "&Speech")
         menu_bar.Append(ai_menu, "A&I")
+        whisperer_menu = wx.Menu()
+        whisperer_menu.Append(
+            self._id_whisperer_about,
+            self._menu_label("&About Whisperer (HTML Preview)...", "whisperer.about"),
+        )
+        whisperer_menu.Append(
+            self._id_profile_onboarding,
+            self._menu_label("&Startup Wizard...", "help.startup_wizard"),
+        )
+        menu_bar.Append(whisperer_menu, "&BITS Whisperer")
         glow_menu = wx.Menu()
         glow_menu.Append(
             self._id_glow_audit_document,
@@ -3091,6 +3127,10 @@ class MainFrame:
             self._menu_label("&What Can I Do Here?", "help.what_can_i_do_here"),
         )
         help_menu.Append(
+            self._id_help_status_page,
+            self._menu_label("Status &Page (HTML Preview)", "help.status_page"),
+        )
+        help_menu.Append(
             self._id_why_dont_i_see_feature,
             self._menu_label("&Why Don't I See a Feature?", "help.why_dont_i_see_feature"),
         )
@@ -3099,6 +3139,10 @@ class MainFrame:
         help_menu.Append(self._id_open_user_guide, "Open User &Guide")
         help_menu.Append(self._id_open_welcome_guide, "Open &Welcome Guide")
         help_menu.Append(self._id_open_keyboard_reference, "Open Keyboard &Reference")
+        help_menu.Append(
+            self._id_profile_onboarding,
+            self._menu_label("&Startup Wizard...", "help.startup_wizard"),
+        )
         help_menu.AppendSeparator()
         help_menu.Append(
             self._id_save_diagnostics,
@@ -3120,10 +3164,6 @@ class MainFrame:
                 "Profile &Health Check...",
                 "help.feature_profile_health_check",
             ),
-        )
-        profiles_menu.Append(
-            self._id_profile_onboarding,
-            self._menu_label("&Run Profile Onboarding", "help.run_profile_onboarding"),
         )
         profiles_menu.AppendSeparator()
         profiles_menu.Append(
@@ -3193,6 +3233,11 @@ class MainFrame:
         )
         self.frame.Bind(
             wx.EVT_MENU,
+            lambda _e: self.show_help_status_page(),
+            id=self._id_help_status_page,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
             lambda _e: self.show_feature_explanation(),
             id=self._id_why_dont_i_see_feature,
         )
@@ -3218,8 +3263,13 @@ class MainFrame:
         )
         self.frame.Bind(
             wx.EVT_MENU,
-            lambda _e: self.run_profile_onboarding(),
+            lambda _e: self.run_startup_wizard(),
             id=self._id_profile_onboarding,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
+            lambda _e: self.show_whisperer_about_page(),
+            id=self._id_whisperer_about,
         )
         self.frame.Bind(
             wx.EVT_MENU,
@@ -4171,6 +4221,9 @@ class MainFrame:
             "help.report_bug": self._id_report_bug,
             "help.open_logs_folder": self._id_open_logs_folder,
             "help.open_diagnostics_folder": self._id_open_diagnostics_folder,
+            "help.status_page": self._id_help_status_page,
+            "help.startup_wizard": self._id_profile_onboarding,
+            "whisperer.about": self._id_whisperer_about,
             "tools.yaml_structure_editor": self._id_yaml_structure_editor,
             "edit.copy_with_source": self._id_copy_with_source,
             "edit.select_line": self._id_select_line,
@@ -6356,9 +6409,17 @@ class MainFrame:
         notification_category: str = "info",
     ) -> None:
         self._background_task_count = getattr(self, "_background_task_count", 0) + 1
+        task_id = self._track_background_task_start(label)
         self._set_status(f"{label} started")
 
         def progress(message: str, current: int, total: int) -> None:
+            self._wx.CallAfter(
+                self._track_background_task_progress,
+                task_id,
+                message,
+                current,
+                total,
+            )
             self._wx.CallAfter(self._set_status, f"{label}: {current}/{total} - {message}")
 
         def worker() -> None:
@@ -6371,6 +6432,7 @@ class MainFrame:
                     error,
                     None,
                     on_success,
+                    task_id,
                     notify_on_success,
                     notify_on_error,
                     notification_category,
@@ -6382,6 +6444,7 @@ class MainFrame:
                 None,
                 result,
                 on_success,
+                task_id,
                 notify_on_success,
                 notify_on_error,
                 notification_category,
@@ -6395,20 +6458,64 @@ class MainFrame:
         error: Exception | None,
         result: object,
         on_success: Callable[[object], None],
+        task_id: int,
         notify_on_success: bool,
         notify_on_error: bool,
         notification_category: str,
     ) -> None:
         self._background_task_count = max(0, getattr(self, "_background_task_count", 1) - 1)
         if error is not None:
+            self._track_background_task_finish(task_id, "failed", str(error))
             self._show_message_box(str(error), label, self._wx.ICON_ERROR | self._wx.OK)
             self._set_status(f"{label} failed")
             if notify_on_error:
                 self._record_notification(f"{label} failed: {error}", notification_category)
             return
+        self._track_background_task_finish(task_id, "completed", "Completed")
         on_success(result)
         if notify_on_success:
             self._record_notification(f"{label} completed", notification_category)
+
+    def _track_background_task_start(self, label: str) -> int:
+        self._background_task_sequence = int(getattr(self, "_background_task_sequence", 0)) + 1
+        task_id = self._background_task_sequence
+        tasks = getattr(self, "_background_tasks", [])
+        tasks.append(
+            {
+                "id": task_id,
+                "label": label,
+                "status": "running",
+                "progress": "Starting",
+                "started_at": datetime.now(UTC).isoformat(),
+                "finished_at": "",
+            }
+        )
+        self._background_tasks = tasks[-100:]
+        return task_id
+
+    def _track_background_task_progress(
+        self,
+        task_id: int,
+        message: str,
+        current: int,
+        total: int,
+    ) -> None:
+        tasks = getattr(self, "_background_tasks", [])
+        for task in reversed(tasks):
+            if int(task.get("id", -1)) != task_id:
+                continue
+            task["progress"] = f"{current}/{total} - {message}"
+            break
+
+    def _track_background_task_finish(self, task_id: int, status: str, detail: str) -> None:
+        tasks = getattr(self, "_background_tasks", [])
+        for task in reversed(tasks):
+            if int(task.get("id", -1)) != task_id:
+                continue
+            task["status"] = status
+            task["progress"] = detail
+            task["finished_at"] = datetime.now(UTC).isoformat()
+            break
 
     def _open_generated_tab(self, title: str, text: str) -> int:
         index = self._create_document_tab(
@@ -8138,6 +8245,105 @@ class MainFrame:
         )
         wx.adv.AboutBox(info)
         self._set_status("Opened About Quill")
+
+    def show_whisperer_about_page(self) -> None:
+        index = self._open_generated_tab(
+            "About BITS Whisperer",
+            self._build_whisperer_about_html(),
+        )
+        self._select_tab(index)
+        if 0 <= index < len(self._document_tabs):
+            self._show_side_preview_for(self._document_tabs[index])
+        self._set_status("Opened About BITS Whisperer")
+
+    def _build_whisperer_about_html(self) -> str:
+        roadmap_rows = [
+            (
+                "Provider and feature-flag gating",
+                "Mature feature flag service and staged rollout controls",
+                "Phase 1",
+                "Introduce opt-in experiments and safe launch toggles in Quill.",
+            ),
+            (
+                "Audio intake and watch-folder workflows",
+                "Reliable automatic job intake and background transcription flow",
+                "Phase 1",
+                "Apply to document/audio intake and asynchronous assistant pipelines.",
+            ),
+            (
+                "Rich export and transformation pipeline",
+                "Multiple output formats and conversion strategy patterns",
+                "Phase 2",
+                "Expand Quill exports and structured conversion workflows.",
+            ),
+            (
+                "Model/provider orchestration",
+                "Multi-provider manager abstraction with graceful fallback",
+                "Phase 2",
+                "Align with Quill AI + speech backends for reliability and control.",
+            ),
+            (
+                "Plugin and extension surfaces",
+                "Extensible plugin architecture for advanced integrations",
+                "Phase 3",
+                "Open controlled extension points in Quill once core stability is proven.",
+            ),
+        ]
+        roadmap_html = "".join(
+            (
+                "<tr>"
+                f"<td>{html.escape(capability)}</td>"
+                f"<td>{html.escape(from_bw)}</td>"
+                f"<td>{html.escape(phase)}</td>"
+                f"<td>{html.escape(notes)}</td>"
+                "</tr>"
+            )
+            for capability, from_bw, phase, notes in roadmap_rows
+        )
+
+        principles_rows = [
+            ("Accessibility first", "Screen-reader-first design with clear headings and keyboard flow."),
+            ("Offline-friendly", "Strong local capabilities before cloud dependencies."),
+            ("Safe rollout", "Feature flags and staged onboarding for predictable adoption."),
+            ("Transparent status", "Status pages and notifications for every async operation."),
+        ]
+        principles_html = "".join(
+            f"<tr><th scope='row'>{html.escape(name)}</th><td>{html.escape(detail)}</td></tr>"
+            for name, detail in principles_rows
+        )
+
+        return (
+            "<h1 id='whisperer-about'>BITS Whisperer and Quill</h1>"
+            "<p>The future is bright. BITS Whisperer patterns are being evaluated for selective adoption "
+            "inside Quill to improve accessibility, reliability, and creative flow.</p>"
+            "<h2 id='what-is-coming'>What Is Coming</h2>"
+            "<p>Quill will progressively absorb proven ideas from BITS Whisperer in focused phases, "
+            "while preserving Quill's writing-first experience.</p>"
+            "<h2 id='roadmap'>Integration Roadmap</h2>"
+            "<table>"
+            "<caption>Planned feature pull-through from BITS Whisperer into Quill</caption>"
+            "<thead><tr>"
+            "<th scope='col'>Capability</th>"
+            "<th scope='col'>Whisperer Source</th>"
+            "<th scope='col'>Phase</th>"
+            "<th scope='col'>Quill Plan</th>"
+            "</tr></thead>"
+            f"<tbody>{roadmap_html}</tbody>"
+            "</table>"
+            "<h2 id='experience-principles'>Experience Principles</h2>"
+            "<table>"
+            "<caption>User experience principles guiding the integration</caption>"
+            "<thead><tr><th scope='col'>Principle</th><th scope='col'>How it applies</th></tr></thead>"
+            f"<tbody>{principles_html}</tbody>"
+            "</table>"
+            "<h2 id='next-steps'>Next Steps</h2>"
+            "<ol>"
+            "<li>Use Startup Wizard to configure profile, AI, and speech foundation.</li>"
+            "<li>Use Status Page to monitor tasks, speech downloads, and feature state.</li>"
+            "<li>Iterate in small, accessible milestones with clear release notes.</li>"
+            "</ol>"
+            "<p>It all starts with a whisper that glows and writes with a magical Quill.</p>"
+        )
 
     def show_external_tools_dialog(self) -> None:
         wx = self._wx
@@ -11451,6 +11657,119 @@ class MainFrame:
         result = dialog.ShowModal()
         dialog.Destroy()
         return result
+
+    def show_help_status_page(self) -> None:
+        report_html = self._build_help_status_html()
+        index = self._open_generated_tab("Application Status", report_html)
+        self._select_tab(index)
+        if 0 <= index < len(self._document_tabs):
+            self._show_side_preview_for(self._document_tabs[index])
+        self._set_status("Opened application status page in HTML preview")
+
+    def _build_help_status_html(self) -> str:
+        feature_rows: list[str] = []
+        for feature_id, definition in sorted(FEATURE_DEFINITIONS.items()):
+            state = self.features.state_for(feature_id)
+            state_label = {
+                "on": "Enabled",
+                "quiet": "Quiet",
+                "off": "Disabled",
+            }.get(state, state)
+            feature_rows.append(
+                "<tr>"
+                f"<td>{html.escape(feature_id)}</td>"
+                f"<td>{html.escape(definition.name)}</td>"
+                f"<td>{html.escape(definition.category)}</td>"
+                f"<td>{html.escape(state_label)}</td>"
+                "</tr>"
+            )
+
+        settings = self.settings
+        speech_rows = [
+            ("Engine", settings.read_aloud_engine),
+            ("Voice (pyttsx3)", settings.read_aloud_voice or "(default system)"),
+            ("DECtalk executable", settings.read_aloud_dectalk_executable or "Not configured"),
+            ("DECtalk voice", settings.read_aloud_dectalk_voice),
+            ("Piper executable", settings.read_aloud_piper_executable or "Not configured"),
+            ("Piper model", settings.read_aloud_piper_model or "Not configured"),
+            ("Kokoro voice", settings.read_aloud_kokoro_voice),
+            ("VibeVoice executable", settings.read_aloud_vibevoice_executable or "Not configured"),
+            ("VibeVoice voice", settings.read_aloud_vibevoice_voice),
+            ("eSpeak executable", settings.read_aloud_espeak_executable or "PATH lookup"),
+            ("eSpeak English voice", settings.read_aloud_espeak_voice),
+        ]
+        speech_table_rows = "".join(
+            f"<tr><th scope='row'>{html.escape(name)}</th><td>{html.escape(str(value))}</td></tr>"
+            for name, value in speech_rows
+        )
+
+        task_rows: list[str] = []
+        for task in reversed(getattr(self, "_background_tasks", [])[-50:]):
+            label = str(task.get("label", ""))
+            status = str(task.get("status", ""))
+            progress = str(task.get("progress", ""))
+            started_at = str(task.get("started_at", ""))
+            finished_at = str(task.get("finished_at", ""))
+            task_rows.append(
+                "<tr>"
+                f"<td>{html.escape(label)}</td>"
+                f"<td>{html.escape(status.title())}</td>"
+                f"<td>{html.escape(progress)}</td>"
+                f"<td>{html.escape(started_at)}</td>"
+                f"<td>{html.escape(finished_at or 'Running')}</td>"
+                "</tr>"
+            )
+        if not task_rows:
+            task_rows.append("<tr><td colspan='5'>No background tasks have run in this session.</td></tr>")
+
+        notification_count = len(getattr(self, "_notifications", []))
+        active_tasks = int(getattr(self, "_background_task_count", 0))
+        profile_name = self.features.active_profile.name
+
+        return (
+            "<h1 id='status-page'>Quill Application Status</h1>"
+            "<p>This page reports current runtime status for features, speech setup, and background downloads/tasks.</p>"
+            "<h2 id='runtime-overview'>Runtime Overview</h2>"
+            "<table>"
+            "<caption>Current runtime summary</caption>"
+            "<thead><tr><th scope='col'>Item</th><th scope='col'>Value</th></tr></thead>"
+            "<tbody>"
+            f"<tr><th scope='row'>Version</th><td>{html.escape(__version__)}</td></tr>"
+            f"<tr><th scope='row'>Active profile</th><td>{html.escape(profile_name)}</td></tr>"
+            f"<tr><th scope='row'>Background tasks running</th><td>{active_tasks}</td></tr>"
+            f"<tr><th scope='row'>Notifications queued</th><td>{notification_count}</td></tr>"
+            "</tbody></table>"
+            "<h2 id='speech-status'>Speech Status</h2>"
+            "<table>"
+            "<caption>Speech engine configuration and downloads</caption>"
+            "<thead><tr><th scope='col'>Setting</th><th scope='col'>Value</th></tr></thead>"
+            f"<tbody>{speech_table_rows}</tbody></table>"
+            "<h2 id='background-tasks'>Background Tasks and Downloads</h2>"
+            "<table>"
+            "<caption>Recent asynchronous jobs (downloads, generation, indexing)</caption>"
+            "<thead><tr>"
+            "<th scope='col'>Task</th><th scope='col'>Status</th><th scope='col'>Progress</th>"
+            "<th scope='col'>Started</th><th scope='col'>Finished</th>"
+            "</tr></thead>"
+            f"<tbody>{''.join(task_rows)}</tbody></table>"
+            "<h2 id='features'>Feature Status</h2>"
+            "<table>"
+            "<caption>Enabled, quiet, and disabled features</caption>"
+            "<thead><tr>"
+            "<th scope='col'>Feature ID</th>"
+            "<th scope='col'>Feature Name</th>"
+            "<th scope='col'>Category</th>"
+            "<th scope='col'>Status</th>"
+            "</tr></thead>"
+            f"<tbody>{''.join(feature_rows)}</tbody></table>"
+            "<h2 id='recommended-actions'>Recommended Actions</h2>"
+            "<ul>"
+            "<li>Open AI &gt; Speech &gt; Settings to configure engine-specific paths.</li>"
+            "<li>Open AI &gt; Speech &gt; Voice to preview voices and variants.</li>"
+            "<li>Open AI &gt; Speech &gt; Generate Audio to run asynchronous speech output jobs.</li>"
+            "<li>Open Tools &gt; Support &gt; Show Notifications for detailed alerts and outcomes.</li>"
+            "</ul>"
+        )
 
     def check_for_updates(self, silent_no_update: bool = False) -> None:
         wx = self._wx
@@ -15357,10 +15676,37 @@ class MainFrame:
         self._set_status("Reset to Essential profile")
         self._refresh_title()
 
-    def run_profile_onboarding(self) -> None:
+    def run_startup_wizard(self) -> None:
+        wx = self._wx
+        self.show_startup_wizard_page()
+        proceed = self._show_message_box(
+            "The Startup Wizard overview opened in preview. Start guided setup now?\n\n"
+            "This will walk through profile, AI, assistant, and speech setup.",
+            "Startup Wizard",
+            wx.ICON_QUESTION | wx.YES_NO,
+        )
+        if proceed != wx.YES:
+            self._set_status("Startup Wizard opened")
+            return
         self._show_profile_onboarding(force=True)
+        self._offer_ai_onboarding()
+        self._show_assistant_onboarding(force=True)
+        self._show_speech_onboarding(force=True)
+        self._set_status("Startup Wizard completed")
+
+    def run_profile_onboarding(self) -> None:
+        # Backward-compatible alias for older command IDs and automation scripts.
+        self.run_startup_wizard()
 
     def _maybe_run_first_run_onboarding(self) -> None:
+        if any(
+            (
+                getattr(self, "_first_run_profile_prompt", False),
+                getattr(self, "_first_run_assistant_prompt", False),
+                getattr(self, "_first_run_speech_prompt", False),
+            )
+        ):
+            self.show_startup_wizard_page()
         if getattr(self, "_first_run_profile_prompt", False):
             self._show_profile_onboarding(force=False)
             self._first_run_profile_prompt = False
@@ -15368,6 +15714,82 @@ class MainFrame:
         if getattr(self, "_first_run_assistant_prompt", False):
             self._show_assistant_onboarding(force=False)
             self._first_run_assistant_prompt = False
+        if getattr(self, "_first_run_speech_prompt", False):
+            self._show_speech_onboarding(force=False)
+            self._first_run_speech_prompt = False
+
+    def show_startup_wizard_page(self) -> None:
+        index = self._open_generated_tab(
+            "Startup Wizard",
+            self._build_startup_wizard_html(),
+        )
+        self._select_tab(index)
+        if 0 <= index < len(self._document_tabs):
+            self._show_side_preview_for(self._document_tabs[index])
+        self._set_status("Opened Startup Wizard overview")
+
+    def _build_startup_wizard_html(self) -> str:
+        status_rows = [
+            (
+                "Profile setup",
+                "Completed" if load_onboarding_complete() else "Pending",
+                "Choose how Quill starts and what features are surfaced.",
+            ),
+            (
+                "Writing assistant setup",
+                "Completed" if load_assistant_onboarding_complete() else "Pending",
+                "Enable assistant defaults and prompt style.",
+            ),
+            (
+                "Speech setup",
+                "Completed" if load_speech_onboarding_complete() else "Pending",
+                "Configure engines, paths, voices, and downloads.",
+            ),
+        ]
+        status_html = "".join(
+            (
+                "<tr>"
+                f"<td>{html.escape(step)}</td>"
+                f"<td>{html.escape(state)}</td>"
+                f"<td>{html.escape(detail)}</td>"
+                "</tr>"
+            )
+            for step, state, detail in status_rows
+        )
+
+        flow_steps = [
+            "Step 1: Choose your startup profile.",
+            "Step 2: Decide whether AI should be enabled now.",
+            "Step 3: Configure writing assistant defaults.",
+            "Step 4: Configure speech engines and download optional runtimes.",
+            "Step 5: Confirm settings and start writing.",
+        ]
+        flow_html = "".join(f"<li>{html.escape(step)}</li>" for step in flow_steps)
+
+        return (
+            "<h1 id='startup-wizard'>Startup Wizard</h1>"
+            "<p>This guided setup prepares Quill for your preferred writing, AI, and speech experience.</p>"
+            "<h2 id='progress'>Current Setup Progress</h2>"
+            "<table>"
+            "<caption>Wizard setup status</caption>"
+            "<thead><tr>"
+            "<th scope='col'>Setup area</th>"
+            "<th scope='col'>Status</th>"
+            "<th scope='col'>What this controls</th>"
+            "</tr></thead>"
+            f"<tbody>{status_html}</tbody>"
+            "</table>"
+            "<h2 id='guided-flow'>Guided Flow</h2>"
+            f"<ol>{flow_html}</ol>"
+            "<h2 id='accessibility-notes'>Accessibility Notes</h2>"
+            "<ul>"
+            "<li>Every step uses keyboard-first dialogs with clear announcements.</li>"
+            "<li>You can cancel any step and rerun Startup Wizard from the Help menu.</li>"
+            "<li>No speech downloads occur without explicit confirmation.</li>"
+            "</ul>"
+            "<h2 id='where-next'>After Wizard</h2>"
+            "<p>Open Help > Status Page (HTML Preview) to monitor task activity, feature state, and speech setup health.</p>"
+        )
 
     def _offer_ai_onboarding(self) -> None:
         """First run: ask whether to use AI; if yes, set up the model."""
@@ -15497,6 +15919,136 @@ class MainFrame:
             save_settings(self.settings)
             mark_assistant_onboarding_complete()
             self._set_status("Configured writing assistant onboarding")
+
+    def _show_speech_onboarding(self, force: bool) -> None:  # noqa: PLR0912
+        wx = self._wx
+        start_setup = self._show_message_box(
+            "Set up speech engines now?\n\n"
+            "You can download/configure DECtalk, eSpeak-NG, Piper, Kokoro, and VibeVoice.\n"
+            "You can always change these later in AI > Speech > Settings.",
+            "Speech Setup",
+            wx.ICON_QUESTION | wx.YES_NO,
+        )
+        if start_setup != wx.YES:
+            if not force:
+                mark_speech_onboarding_complete()
+            self._set_status("Speech setup skipped")
+            return
+
+        choices = [
+            "Download and configure DECtalk runtime (recommended)",
+            "Configure eSpeak-NG path and English variant",
+            "Configure Piper executable and English model folder",
+            "Configure Kokoro English voice defaults",
+            "Configure VibeVoice executable and default voice",
+            "Open speech setup docs",
+        ]
+        with wx.MultiChoiceDialog(
+            self.frame,
+            "Select the speech setup steps you want to run now:",
+            "Speech Setup",
+            choices=choices,
+        ) as dialog:
+            if self._show_modal_dialog(dialog, "Speech Setup") != wx.ID_OK:
+                if not force:
+                    mark_speech_onboarding_complete()
+                self._set_status("Speech setup cancelled")
+                return
+            selected = set(dialog.GetSelections())
+
+        def _ask_text(prompt: str, value: str) -> str | None:
+            with wx.TextEntryDialog(self.frame, prompt, "Speech Setup", value=value) as td:
+                if self._show_modal_dialog(td, "Speech Setup") != wx.ID_OK:
+                    return None
+                return td.GetValue().strip()
+
+        if 0 in selected:
+            speech_root = app_data_dir() / "speech" / "dectalk"
+
+            def work(progress: Callable[[str, int, int], None]) -> object:
+                progress("Downloading DECtalk runtime", 0, 1)
+                exe = download_dectalk_runtime(speech_root)
+                progress("Finalizing DECtalk runtime", 1, 1)
+                return str(exe)
+
+            def on_success(result: object) -> None:
+                self.settings.read_aloud_dectalk_executable = str(result)
+                save_settings(self.settings)
+                self._set_status("DECtalk runtime downloaded and configured")
+
+            self._run_background_task(
+                "Downloading DECtalk speech runtime",
+                work,
+                on_success,
+                notify_on_success=True,
+                notify_on_error=True,
+                notification_category="speech",
+            )
+
+        if 1 in selected:
+            path = _ask_text(
+                "Path to espeak-ng.exe (leave blank to use PATH):",
+                self.settings.read_aloud_espeak_executable,
+            )
+            if path is not None:
+                self.settings.read_aloud_espeak_executable = path
+            voices = list_espeak_english_voices()
+            if voices:
+                voice_names = [voice.name for voice in voices]
+                with wx.SingleChoiceDialog(
+                    self.frame,
+                    "Choose default eSpeak English voice:",
+                    "Speech Setup",
+                    choices=voice_names,
+                ) as voice_dialog:
+                    if self._show_modal_dialog(voice_dialog, "Speech Setup") == wx.ID_OK:
+                        idx = voice_dialog.GetSelection()
+                        if 0 <= idx < len(voices):
+                            self.settings.read_aloud_espeak_voice = voices[idx].id
+
+        if 2 in selected:
+            exe = _ask_text("Path to piper.exe:", self.settings.read_aloud_piper_executable)
+            if exe is not None:
+                self.settings.read_aloud_piper_executable = exe
+            model_dir = _ask_text(
+                "Folder containing English Piper .onnx models:",
+                self.settings.read_aloud_piper_model_dir,
+            )
+            if model_dir is not None:
+                self.settings.read_aloud_piper_model_dir = model_dir
+
+        if 3 in selected:
+            voices = list_kokoro_voices()
+            if voices:
+                with wx.SingleChoiceDialog(
+                    self.frame,
+                    "Choose default Kokoro English voice:",
+                    "Speech Setup",
+                    choices=[voice.name for voice in voices],
+                ) as voice_dialog:
+                    if self._show_modal_dialog(voice_dialog, "Speech Setup") == wx.ID_OK:
+                        idx = voice_dialog.GetSelection()
+                        if 0 <= idx < len(voices):
+                            self.settings.read_aloud_kokoro_voice = voices[idx].id
+
+        if 4 in selected:
+            exe = _ask_text("Path to vibevoice.exe:", self.settings.read_aloud_vibevoice_executable)
+            if exe is not None:
+                self.settings.read_aloud_vibevoice_executable = exe
+            default_voice = _ask_text(
+                "Default VibeVoice voice id (English):",
+                self.settings.read_aloud_vibevoice_voice,
+            )
+            if default_voice:
+                self.settings.read_aloud_vibevoice_voice = default_voice
+
+        if 5 in selected:
+            docs_path = app_data_dir().parent / "Quill" / "docs" / "userguide.md"
+            webbrowser.open(str(docs_path))
+
+        save_settings(self.settings)
+        mark_speech_onboarding_complete()
+        self._set_status("Speech setup complete")
 
     def _profile_choice_labels(self, profiles: list[object]) -> list[str]:
         return [self._profile_choice_label(profile) for profile in profiles]
