@@ -337,20 +337,30 @@ The palette also learns from usage. Commands you use more often rise naturally.
 - **Next Misspelling**
 - **Thesaurus...**
 - **Dictionary Status...**
+- **AI Hub...**
 - **Writing Assistant...**
+- **Prompt Studio...**
+- **Agent Center...**
 - **Rewrite Selection**
 - **Summarize Selection**
 - **Continue Writing**
 - **Fix Grammar**
 - **Run Python...**
 
-The Writing Assistant shell ranks Quill commands from your prompt, offers preset prompts for rewrite/summarize/continue/grammar flows, and Run Python executes a sandboxed transform against the current document text and selection.
+The Writing Assistant shell ranks Quill commands from your prompt, offers preset prompts for rewrite/summarize/continue/grammar flows, and Run Python executes a sandboxed transform against the current document text and selection. Prompt Studio lets you build reusable custom prompts with template variables, and Agent Center generates guided task plans that you can review before sending to the Writing Assistant.
 
-Use **AI -> AI Connection...** or **Preferences -> AI Connection** to set provider, host, model, and optional key.
+Use **AI -> AI Hub...** for a single control surface that links provider verification, model discovery, Prompt Studio, Agent Center, and Writing Assistant.
+
+Trust and privacy baseline:
+
+- On first run, Quill shows a trust and privacy consent acknowledgement.
+- Quill does not persist AI chat session transcripts by default.
+- Cloud requests happen only when you explicitly invoke an AI action.
+- API keys are stored in Windows Credential Manager when available, with DPAPI-encrypted fallback storage.
 
 AI connection flow:
 
-1. Choose provider (`Ollama (local)`, `OpenAI`, `Claude`, `OpenRouter`, `Google Gemini`, `Microsoft Azure OpenAI`, `Ollama Cloud`, or `Custom OpenAI-compatible`).
+1. Open **AI Hub** and choose provider (`Ollama (local)`, `OpenAI`, `Claude`, `OpenRouter`, `Google Gemini`, `Microsoft Azure OpenAI`, `Ollama Cloud`, or `Custom OpenAI-compatible`).
 2. Confirm host URL and model.
 3. Enter key only when your endpoint requires authentication.
 4. Use **Verify Connection** to test endpoint and credentials.
@@ -361,6 +371,8 @@ AI connection flow:
 Most cloud providers are pre-configured with default host URLs so setup is key-first, not URL-first. For advanced OpenAI-compatible endpoints, use Custom and override host/model explicitly.
 
 Quill stores optional keys with Windows DPAPI and announces the verification result in plain language for immediate screen-reader feedback.
+
+For policy details, see the repository's `PRIVACY.md` and `RESPONSIBLE_AI_USE.md`.
 
 These help you stay inside the editor instead of breaking flow for small writing chores.
 
@@ -384,13 +396,13 @@ Behavior notes:
 - Proposed actions use an explicit `Approve` or `Discard` step.
 - If model/runtime is unavailable, Quill reports this clearly and does not apply destructive changes.
 
-### Writing Assistant connection setup
+### Writing Assistant and AI Hub setup
 
 For release-safe beta validation, Word and CSV open in the normal plain-text editor surface. AI connection and chat flows remain available.
 
 Provider setup:
 
-1. Open `AI -> AI Connection...` (or `Preferences -> AI Connection`).
+1. Open `AI -> AI Hub...` (or `AI -> AI Model & Connection...`).
 2. Choose provider: `Ollama (local)`, `OpenAI`, `Claude`, `OpenRouter`, `Google Gemini`, `Microsoft Azure OpenAI`, `Ollama Cloud`, or `Custom OpenAI-compatible`.
 3. Enter host and model (cloud defaults are prefilled; Azure requires your resource hostname).
 4. Enter API key only if required.
@@ -398,6 +410,7 @@ Provider setup:
 6. Use `List Models` to select from endpoint-reported models with search filtering.
 7. Use `Recommend Model` for guided picks tuned for local hardware or cloud framing.
 8. Save settings. Quill auto-verifies and updates AI status/detail lines.
+9. Use `Prompt Studio` to save reusable templates and `Agent Center` to generate guided task prompts.
 
 Ollama Cloud onboarding remains available here as well. Users with API keys can use the free personal-use tier, which has lower usage limits.
 

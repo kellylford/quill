@@ -155,13 +155,17 @@ Quill positions GLOW as an integral writing workflow, not a separate compliance 
 
 Quill 0.1.2 includes an expanded local-first AI surface:
 
+- AI Hub as the central AI launch point
 - Writing Assistant panel and quick prompt flows
+- Prompt Studio for reusable custom prompts
+- Agent Center for guided task planning prompts
 - Ask Quill Chat workflows
 - AI model settings and AI connection settings
 - rewrite selection, summarize selection, continue writing, and grammar-fix entry points
 - explicit approval model for operations that change document text
 - clear status and detail feedback in menu and UI
 - plain-language verification results with screen-reader announcements
+- startup trust/privacy/responsible-AI consent acknowledgement
 
 Connection workflows include:
 
@@ -170,6 +174,7 @@ Connection workflows include:
 - guided model recommendations based on local hardware and task framing
 - provider selection across local, cloud, and OpenAI-compatible endpoints
 - optional secret handling with platform protection where available
+- no persisted AI chat transcript storage by default
 
 AI Connection now includes first-class setup for OpenAI, Claude, OpenRouter, Google Gemini, and Microsoft Azure OpenAI alongside Ollama local/cloud. Most providers ship with smart default hosts so users can focus on key + model selection. Advanced OpenAI-compatible services remain available through custom endpoint mode.
 
@@ -177,6 +182,7 @@ Automation support includes:
 
 - run-python action for controlled text transformations
 - command execution integration from assistant flows
+- review-first prompt and agent flows wired back into Writing Assistant
 
 ### Accessibility and low-vision capability
 

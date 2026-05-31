@@ -77,9 +77,24 @@ All contributors should follow these baseline practices:
 3. Keep networked behavior explicit and user-initiated.
 4. Validate external input and fail safely.
 5. Use dependency updates intentionally and review changelogs for risk.
+6. Keep cloud endpoints on HTTPS; allow HTTP only for local-only runtimes.
+7. Ensure diagnostics and logs redact API keys, bearer tokens, and equivalent secrets.
 
 Related project docs:
 
 - `CONTRIBUTING.md`
 - `CODE_OF_CONDUCT.md`
+- `PRIVACY.md`
+- `RESPONSIBLE_AI_USE.md`
 - `docs/engineering/quality-gates.md`
+
+## Secret handling baseline
+
+QUILL stores AI API keys in Windows Credential Manager when available. If
+Credential Manager is unavailable, QUILL falls back to DPAPI-encrypted local
+storage. Plaintext API key storage is not permitted.
+
+## Security automation baseline
+
+- `.github/workflows/security-ci.yml` runs dependency audit, secret scanning, and SBOM generation.
+- `.github/workflows/windows-release.yml` publishes release metadata plus SBOM artifacts.

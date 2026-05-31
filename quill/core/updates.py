@@ -3,10 +3,12 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 import ssl
 import sys
 from dataclasses import dataclass
 from urllib.error import URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 DEFAULT_UPDATE_MANIFEST_URL = (
@@ -16,6 +18,8 @@ DEFAULT_UPDATE_MANIFEST_URL = (
 # reaches beta users only (see fetch_latest_release / the Get beta updates setting).
 GITHUB_RELEASES_API = "https://api.github.com/repos/Community-Access/quill/releases"
 _SIGNATURE_SALT = "quill-manifest-signature-v1"
+_MANIFEST_KEY_ENV = "QUILL_UPDATE_MANIFEST_KEY"
+_TRUSTED_HOSTS_ENV = "QUILL_UPDATE_TRUSTED_HOSTS"
 
 
 def _ssl_context() -> ssl.SSLContext:
@@ -46,6 +50,7 @@ def fetch_update_manifest(
     url: str = DEFAULT_UPDATE_MANIFEST_URL,
     timeout: int = 10,
 ) -> UpdateManifest:
+    _validate_remote_url(url)
     with urlopen(url, timeout=timeout, context=_ssl_context()) as response:
         payload = response.read().decode("utf-8", errors="strict")
     return parse_update_manifest(payload)
@@ -202,6 +207,7 @@ def parse_update_manifest(payload: str) -> UpdateManifest:
     )
     if not manifest.version or not manifest.download_url or not manifest.signature:
         raise ValueError("Manifest is missing required fields")
+    _validate_remote_url(manifest.download_url)
     if not verify_manifest_signature(manifest):
         raise ValueError("Manifest signature verification failed")
     return manifest
@@ -218,7 +224,8 @@ def verify_manifest_signature(manifest: UpdateManifest) -> bool:
         separators=(",", ":"),
         sort_keys=True,
     )
-    expected = hashlib.sha256(f"{canonical}|{_SIGNATURE_SALT}".encode()).hexdigest()
+    key = os.getenv(_MANIFEST_KEY_ENV, _SIGNATURE_SALT).encode("utf-8")
+    expected = hmac.new(key, canonical.encode("utf-8"), hashlib.sha256).hexdigest()
     return hmac.compare_digest(manifest.signature, expected)
 
 
@@ -241,11 +248,38 @@ def _version_tuple(value: str) -> tuple[int, int, int]:
 
 def download_release_asset(url: str, destination, timeout: int = 60) -> None:
     """Download an update asset to ``destination`` (verified TLS)."""
+    _validate_remote_url(url)
     request = Request(url, headers={"User-Agent": "Quill-Updater"})
     with urlopen(request, timeout=timeout, context=_ssl_context()) as response:
         data = response.read()
     with open(destination, "wb") as handle:
         handle.write(data)
+
+
+def _validate_remote_url(url: str) -> None:
+    parsed = urlparse(url)
+    if parsed.scheme.lower() != "https":
+        raise ValueError("Update URLs must use HTTPS.")
+    host = (parsed.hostname or "").lower()
+    if not host:
+        raise ValueError("Update URL must include a host.")
+    trusted_hosts = _trusted_update_hosts()
+    if trusted_hosts and host not in trusted_hosts:
+        raise ValueError(f"Update URL host is not trusted: {host}")
+
+
+def _trusted_update_hosts() -> set[str]:
+    raw_hosts = os.getenv(_TRUSTED_HOSTS_ENV, "")
+    trusted = {item.strip().lower() for item in raw_hosts.split(",") if item.strip()}
+    trusted.update(
+        {
+            "community-access.github.io",
+            "github.com",
+            "objects.githubusercontent.com",
+            "github-releases.githubusercontent.com",
+        }
+    )
+    return trusted
 
 
 __all__ = [

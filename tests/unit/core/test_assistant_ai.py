@@ -29,6 +29,8 @@ def test_assistant_api_key_is_protected(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    monkeypatch.setattr(assistant_ai, "_save_api_key_with_credential_manager", lambda *_args: False)
+    monkeypatch.setattr(assistant_ai, "_load_api_key_from_credential_manager", lambda: "")
     monkeypatch.setattr(assistant_ai, "protect_secret", lambda secret: f"enc:{secret}")
     monkeypatch.setattr(
         assistant_ai,
@@ -37,6 +39,27 @@ def test_assistant_api_key_is_protected(
     )
     assistant_ai.save_assistant_api_key("secret-value")
     assert assistant_ai.load_assistant_api_key() == "secret-value"
+
+
+def test_assistant_api_key_prefers_credential_manager(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    saved: dict[str, str] = {}
+
+    def _save(secret: str) -> bool:
+        saved["secret"] = secret
+        return True
+
+    monkeypatch.setattr(assistant_ai, "_save_api_key_with_credential_manager", _save)
+    monkeypatch.setattr(
+        assistant_ai,
+        "_load_api_key_from_credential_manager",
+        lambda: saved.get("secret", ""),
+    )
+    assistant_ai.save_assistant_api_key("vault-secret")
+    assert assistant_ai.load_assistant_api_key() == "vault-secret"
+    assert not assistant_ai.assistant_secret_path().exists()
 
 
 class _FakeResponse:
@@ -115,6 +138,35 @@ def test_verify_assistant_connection_reports_auth_error(monkeypatch: pytest.Monk
     ok, message = assistant_ai.verify_assistant_connection(settings, api_key="bad-key")
     assert ok is False
     assert "Authentication failed" in message
+
+
+def test_verify_assistant_connection_rejects_non_https_cloud_endpoint() -> None:
+    settings = assistant_ai.AssistantConnectionSettings(
+        provider="openai",
+        host="http://api.openai.com",
+        model="gpt-4o-mini",
+    )
+    ok, message = assistant_ai.verify_assistant_connection(settings, api_key="bad-key")
+    assert ok is False
+    assert "Only HTTPS endpoints are allowed" in message
+
+
+def test_verify_assistant_connection_allows_local_custom_http(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        assistant_ai,
+        "urlopen",
+        lambda *_args, **_kwargs: _FakeResponse({"data": [{"id": "llama3.1:8b"}]}),
+    )
+    settings = assistant_ai.AssistantConnectionSettings(
+        provider="custom",
+        host="http://localhost:11434",
+        model="llama3.1:8b",
+    )
+    ok, message = assistant_ai.verify_assistant_connection(settings, api_key="")
+    assert ok is True
+    assert "Connection verified" in message
 
 
 def test_build_auth_headers_for_provider_types() -> None:

@@ -168,10 +168,12 @@ from quill.core.onboarding import (
     load_assistant_onboarding_complete,
     load_onboarding_complete,
     load_speech_onboarding_complete,
+    load_trust_consent_complete,
     load_watch_folder_onboarding_complete,
     mark_assistant_onboarding_complete,
     mark_onboarding_complete,
     mark_speech_onboarding_complete,
+    mark_trust_consent_complete,
     mark_watch_folder_onboarding_complete,
 )
 from quill.core.outline import OutlineEntry, extract_outline_entries
@@ -345,7 +347,10 @@ from quill.platform.windows.sr_detect import detect_screen_reader
 from quill.ui.ai_model_panel import AIModelDialog
 from quill.ui.assistant_panel import AskQuillChatDialog
 from quill.ui.assistant_tools import (
+    AIHubDialog,
+    AgentCenterDialog,
     AssistantConnectionDialog,
+    PromptStudioDialog,
     RunPythonDialog,
     WritingAssistantDialog,
 )
@@ -590,6 +595,7 @@ class MainFrame:
         self.document = Document()
         ensure_app_directories()
         self._first_run_profile_prompt = not safe_mode and not load_onboarding_complete()
+        self._first_run_trust_consent_prompt = not safe_mode and not load_trust_consent_complete()
         self.features = FeatureManager.load(persistent=not safe_mode)
         self.macros = MacroManager.load(persistent=not safe_mode)
         self.settings = load_settings()
@@ -764,6 +770,13 @@ class MainFrame:
             self._set_status(f"Detected screen reader: {detection.name}. Adaptive hints enabled.")
         elif not self._safe_mode:
             self._set_status("Ready. Tip: press Ctrl+Shift+P for Command Palette.")
+        if getattr(self, "_first_run_trust_consent_prompt", False):
+            accepted = self._show_trust_consent_onboarding(force=False)
+            self._first_run_trust_consent_prompt = False
+            if not accepted:
+                self._set_status("Startup consent declined. Quill is closing.")
+                self.frame.Close()
+                return
         self._offer_crash_recovery()
         self._maybe_run_first_run_onboarding()
         self._maybe_start_watch_folder()
@@ -995,9 +1008,27 @@ class MainFrame:
             self._binding_for("view.browser_preview"),
         )
         self.commands.register(
+            "tools.ai_hub",
+            "AI Hub",
+            self.open_ai_hub,
+            None,
+        )
+        self.commands.register(
             "tools.ai_assistant",
             "Writing Assistant",
             self.open_writing_assistant,
+            None,
+        )
+        self.commands.register(
+            "tools.ai_prompt_studio",
+            "Prompt Studio",
+            self.open_prompt_studio,
+            None,
+        )
+        self.commands.register(
+            "tools.ai_agent_center",
+            "Agent Center",
+            self.open_agent_center,
             None,
         )
         self.commands.register(
@@ -2744,7 +2775,10 @@ class MainFrame:
         self._id_glow_fix_document = wx.NewIdRef()
         self._id_glow_fix_selection = wx.NewIdRef()
         self._id_link_inventory = wx.NewIdRef()
+        self._id_ai_hub = wx.NewIdRef()
         self._id_ai_assistant = wx.NewIdRef()
+        self._id_ai_prompt_studio = wx.NewIdRef()
+        self._id_ai_agent_center = wx.NewIdRef()
         self._id_ask_quill_chat = wx.NewIdRef()
         self._id_ai_enabled = wx.NewIdRef()
         self._id_ai_status_badge = wx.NewIdRef()
@@ -2991,6 +3025,10 @@ class MainFrame:
             self._id_ai_status_detail, "AI Detail: Open AI Connection to verify settings"
         )
         ai_menu.Append(
+            self._id_ai_hub,
+            self._menu_label("AI &Hub...", "tools.ai_hub"),
+        )
+        ai_menu.Append(
             self._id_ask_quill_chat,
             self._menu_label("Ask Quill &Chat...", "tools.ask_quill_chat"),
         )
@@ -3001,6 +3039,14 @@ class MainFrame:
         ai_menu.Append(
             self._id_ai_assistant,
             self._menu_label("&Writing Assistant...", "tools.ai_assistant"),
+        )
+        ai_menu.Append(
+            self._id_ai_prompt_studio,
+            self._menu_label("Prompt &Studio...", "tools.ai_prompt_studio"),
+        )
+        ai_menu.Append(
+            self._id_ai_agent_center,
+            self._menu_label("Agent &Center...", "tools.ai_agent_center"),
         )
         ai_menu.Append(
             self._id_ai_rewrite_selection,
@@ -3347,8 +3393,23 @@ class MainFrame:
         )
         self.frame.Bind(
             wx.EVT_MENU,
+            lambda _e: self.open_ai_hub(),
+            id=self._id_ai_hub,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
             lambda _e: self.open_writing_assistant(),
             id=self._id_ai_assistant,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
+            lambda _e: self.open_prompt_studio(),
+            id=self._id_ai_prompt_studio,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
+            lambda _e: self.open_agent_center(),
+            id=self._id_ai_agent_center,
         )
         self.frame.Bind(
             wx.EVT_MENU,
@@ -4228,7 +4289,10 @@ class MainFrame:
             "view.focus_preview": self._id_focus_preview,
             "view.browser_preview": self._id_browser_preview,
             "tools.read_aloud_generate_audio": self._id_read_aloud_generate_audio,
+            "tools.ai_hub": self._id_ai_hub,
             "tools.ai_assistant": self._id_ai_assistant,
+            "tools.ai_prompt_studio": self._id_ai_prompt_studio,
+            "tools.ai_agent_center": self._id_ai_agent_center,
             "tools.ask_quill_chat": self._id_ask_quill_chat,
             "tools.ai_model": self._id_ai_model,
             "tools.ai_connection": self._id_ai_connection,
@@ -14043,9 +14107,12 @@ class MainFrame:
             return
         enabled = load_ai_enabled()
         ai_item_ids = (
+            self._id_ai_hub,
             self._id_ask_quill_chat,
             self._id_ai_model,
             self._id_ai_assistant,
+            self._id_ai_prompt_studio,
+            self._id_ai_agent_center,
             self._id_ai_rewrite_selection,
             self._id_ai_summarize_selection,
             self._id_ai_continue_writing,
@@ -14102,6 +14169,18 @@ class MainFrame:
             open_connection=self.open_ai_preferences,
         ).show()
 
+    def open_ai_hub(self) -> None:
+        dialog = AIHubDialog(
+            self.frame,
+            open_connection=self.open_ai_preferences,
+            open_model_settings=self.open_ai_model_settings,
+            open_writing_assistant=self.open_writing_assistant,
+            open_prompt_studio=self.open_prompt_studio,
+            open_agent_center=self.open_agent_center,
+            announce=self._set_status,
+        )
+        dialog.show_modal()
+
     def open_writing_assistant(self, initial_prompt: str = "") -> None:
         dialog = WritingAssistantDialog(
             self.frame,
@@ -14113,6 +14192,26 @@ class MainFrame:
             initial_prompt=initial_prompt,
             assistant_enabled=getattr(self.settings, "assistant_enabled", False),
             prompt_style=getattr(self.settings, "assistant_prompt_style", "balanced"),
+        )
+        dialog.show_modal()
+
+    def open_prompt_studio(self) -> None:
+        dialog = PromptStudioDialog(
+            self.frame,
+            selection_text=self._selected_text(),
+            document_text=self.editor.GetValue(),
+            on_use_prompt=self.open_writing_assistant,
+            announce=self._set_status,
+        )
+        dialog.show_modal()
+
+    def open_agent_center(self) -> None:
+        dialog = AgentCenterDialog(
+            self.frame,
+            selection_text=self._selected_text(),
+            document_text=self.editor.GetValue(),
+            on_use_prompt=self.open_writing_assistant,
+            announce=self._set_status,
         )
         dialog.show_modal()
 
@@ -16723,6 +16822,9 @@ class MainFrame:
         if proceed != wx.YES:
             self._set_status("Startup Wizard opened")
             return
+        if not self._show_trust_consent_onboarding(force=True):
+            self._set_status("Startup consent is required to continue setup.")
+            return
         self._show_profile_onboarding(force=True)
         self._offer_ai_onboarding()
         self._show_assistant_onboarding(force=True)
@@ -16737,6 +16839,7 @@ class MainFrame:
     def _maybe_run_first_run_onboarding(self) -> None:
         if any(
             (
+                getattr(self, "_first_run_trust_consent_prompt", False),
                 getattr(self, "_first_run_profile_prompt", False),
                 getattr(self, "_first_run_assistant_prompt", False),
                 getattr(self, "_first_run_speech_prompt", False),
@@ -16768,8 +16871,40 @@ class MainFrame:
             self._show_side_preview_for(self._document_tabs[index])
         self._set_status("Opened Startup Wizard overview")
 
+    def _show_trust_consent_onboarding(self, force: bool) -> bool:
+        wx = self._wx
+        message = (
+            "Trust, Privacy, and Responsible AI Use\n\n"
+            "By selecting Yes, you confirm that:\n"
+            "1. You are responsible for how AI outputs are used, reviewed, and shared.\n"
+            "2. Cloud AI requests are user-initiated and subject to provider terms.\n"
+            "3. Quill does not persist chat session transcripts from AI interactions.\n"
+            "4. API keys are stored in Windows Credential Manager when available, "
+            "with DPAPI-encrypted fallback storage.\n\n"
+            "Do you accept and want to continue?"
+        )
+        accepted = (
+            self._show_message_box(
+                message,
+                "Trust and Privacy Consent",
+                wx.ICON_QUESTION | wx.YES_NO,
+            )
+            == wx.YES
+        )
+        if accepted:
+            mark_trust_consent_complete()
+            return True
+        if force:
+            return False
+        return False
+
     def _build_startup_wizard_html(self) -> str:
         status_rows = [
+            (
+                "Trust and privacy consent",
+                "Completed" if load_trust_consent_complete() else "Pending",
+                "Acknowledge responsible AI use, data handling, and user accountability.",
+            ),
             (
                 "Profile setup",
                 "Completed" if load_onboarding_complete() else "Pending",
@@ -16803,12 +16938,13 @@ class MainFrame:
         )
 
         flow_steps = [
-            "Step 1: Choose your startup profile.",
-            "Step 2: Decide whether AI should be enabled now.",
-            "Step 3: Configure writing assistant defaults.",
-            "Step 4: Configure speech engines and download optional runtimes.",
-            "Step 5: Set up watch folder automation for supported document intake.",
-            "Step 6: Confirm settings and start writing.",
+            "Step 1: Review and accept trust, privacy, and responsible AI terms.",
+            "Step 2: Choose your startup profile.",
+            "Step 3: Decide whether AI should be enabled now.",
+            "Step 4: Configure writing assistant defaults.",
+            "Step 5: Configure speech engines and download optional runtimes.",
+            "Step 6: Set up watch folder automation for supported document intake.",
+            "Step 7: Confirm settings and start writing.",
         ]
         flow_html = "".join(f"<li>{html.escape(step)}</li>" for step in flow_steps)
 

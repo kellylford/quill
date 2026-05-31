@@ -10,10 +10,17 @@ from urllib.request import Request, urlopen
 from quill.core.ai.model_manager import total_ram_gb
 from quill.core.paths import app_data_dir
 from quill.core.storage import read_json, write_json_atomic
+from quill.platform.windows.credential_manager import (
+    credential_manager_available,
+    delete_generic_credential,
+    load_generic_credential,
+    save_generic_credential,
+)
 from quill.platform.windows.dpapi import protect_secret, unprotect_secret
 
 _ASSISTANT_CONNECTION_FILE = "assistant-connection.json"
 _ASSISTANT_SECRET_FILE = "assistant-secret.json"
+_ASSISTANT_CREDENTIAL_TARGET = "QUILL:assistant:api-key"
 _SUPPORTED_PROVIDERS = {
     "off",
     "ollama",
@@ -25,6 +32,9 @@ _SUPPORTED_PROVIDERS = {
     "azure_openai",
     "custom",
 }
+_CLOUD_PROVIDERS = frozenset(
+    {"openai", "claude", "openrouter", "gemini", "azure_openai", "ollama_cloud"}
+)
 
 
 @dataclass(slots=True)
@@ -114,20 +124,20 @@ def provider_requires_api_key(provider: str) -> bool:
 def provider_api_key_label(provider: str) -> str:
     normalized = provider.strip().lower()
     if normalized == "openai":
-        return "OpenAI API key (stored encrypted with DPAPI)"
+        return "OpenAI API key (Credential Manager or DPAPI-encrypted fallback)"
     if normalized == "claude":
-        return "Claude API key (stored encrypted with DPAPI)"
+        return "Claude API key (Credential Manager or DPAPI-encrypted fallback)"
     if normalized == "openrouter":
-        return "OpenRouter API key (stored encrypted with DPAPI)"
+        return "OpenRouter API key (Credential Manager or DPAPI-encrypted fallback)"
     if normalized == "gemini":
-        return "Google Gemini API key (stored encrypted with DPAPI)"
+        return "Google Gemini API key (Credential Manager or DPAPI-encrypted fallback)"
     if normalized == "azure_openai":
-        return "Azure OpenAI API key (stored encrypted with DPAPI)"
+        return "Azure OpenAI API key (Credential Manager or DPAPI-encrypted fallback)"
     if normalized == "ollama_cloud":
-        return "Ollama Cloud API key (stored encrypted with DPAPI)"
+        return "Ollama Cloud API key (Credential Manager or DPAPI-encrypted fallback)"
     if normalized == "custom":
-        return "API key (OpenAI-compatible endpoint; stored encrypted with DPAPI)"
-    return "API key (optional; stored encrypted with DPAPI)"
+        return "API key (OpenAI-compatible endpoint; Credential Manager or DPAPI fallback)"
+    return "API key (optional; Credential Manager or DPAPI-encrypted fallback)"
 
 
 def provider_help_text(provider: str) -> str:
@@ -337,6 +347,9 @@ def list_assistant_models(
     host = (settings.host or "").strip().rstrip("/")
     if not host:
         host = default_host_for_provider(provider)
+    policy_error = _validate_endpoint_security(provider, host)
+    if policy_error:
+        return [], policy_error
 
     headers = _build_auth_headers(provider, host, api_key)
     candidates = _model_endpoint_candidates(provider, host)
@@ -445,6 +458,44 @@ def _model_endpoint_candidates(provider: str, host: str) -> list[str]:
     return [f"{host}/api/tags", f"{host}/v1/models"]
 
 
+def _validate_endpoint_security(provider: str, host: str) -> str | None:
+    parsed = urlparse(host)
+    scheme = parsed.scheme.lower()
+    hostname = (parsed.hostname or "").lower()
+    if provider == "off":
+        return None
+    if scheme == "https":
+        return None
+    if scheme == "http" and provider in {"ollama", "custom"} and _is_local_host(hostname):
+        return None
+    if scheme == "http" and provider not in _CLOUD_PROVIDERS and _is_local_host(hostname):
+        return None
+    return (
+        "Only HTTPS endpoints are allowed for cloud providers. "
+        "HTTP is only supported for local loopback/private-network endpoints."
+    )
+
+
+def _is_local_host(hostname: str) -> bool:
+    if not hostname:
+        return False
+    if hostname in {"localhost", "::1"}:
+        return True
+    if hostname.endswith(".localhost"):
+        return True
+    if hostname.startswith("127."):
+        return True
+    if hostname.startswith("10.") or hostname.startswith("192.168."):
+        return True
+    if hostname.startswith("172."):
+        try:
+            second_octet = int(hostname.split(".")[1])
+        except (IndexError, ValueError):
+            return False
+        return 16 <= second_octet <= 31
+    return False
+
+
 def _build_auth_headers(provider: str, host: str, api_key: str) -> dict[str, str]:
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     secret = api_key.strip()
@@ -497,20 +548,65 @@ def save_assistant_connection_settings(settings: AssistantConnectionSettings) ->
 
 
 def load_assistant_api_key() -> str:
+    credential_secret = _load_api_key_from_credential_manager()
+    if credential_secret:
+        return credential_secret
+
     raw = read_json(assistant_secret_path(), default={})
     if not isinstance(raw, dict):
         return ""
     encrypted = str(raw.get("protected_secret", "")).strip()
     if not encrypted:
         return ""
-    return unprotect_secret(encrypted)
+    decrypted = unprotect_secret(encrypted)
+    if not decrypted:
+        return ""
+    if _save_api_key_with_credential_manager(decrypted):
+        path = assistant_secret_path()
+        if path.exists():
+            path.unlink()
+    return decrypted
 
 
 def save_assistant_api_key(api_key: str) -> None:
     secret = api_key.strip()
     path = assistant_secret_path()
     if not secret:
+        _delete_api_key_from_credential_manager()
+        if path.exists():
+            path.unlink()
+        return
+    if _save_api_key_with_credential_manager(secret):
         if path.exists():
             path.unlink()
         return
     write_json_atomic(path, {"protected_secret": protect_secret(secret)})
+
+
+def _load_api_key_from_credential_manager() -> str:
+    if not credential_manager_available():
+        return ""
+    credential = load_generic_credential(_ASSISTANT_CREDENTIAL_TARGET)
+    if credential is None:
+        return ""
+    return credential.secret.strip()
+
+
+def _save_api_key_with_credential_manager(api_key: str) -> bool:
+    secret = api_key.strip()
+    if not secret or not credential_manager_available():
+        return False
+    try:
+        save_generic_credential(_ASSISTANT_CREDENTIAL_TARGET, secret)
+    except OSError:
+        return False
+    return True
+
+
+def _delete_api_key_from_credential_manager() -> None:
+    if not credential_manager_available():
+        return
+    try:
+        delete_generic_credential(_ASSISTANT_CREDENTIAL_TARGET)
+    except OSError:
+        return

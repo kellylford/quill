@@ -2160,7 +2160,7 @@ A five-step welcome flow the first time Quill launches. Each step is a normal mo
 4. **AI provider**: Off (default), Ollama local, Ollama Cloud, OpenAI, Azure OpenAI, Anthropic/Claude, OpenRouter, Gemini, or a custom OpenAI-compatible endpoint. Providers include sensible default hosts where possible; advanced custom mode allows manual endpoint override. If a provider is picked, the API-key dialog opens when required; the key is stored via DPAPI (10.11). Network is never used without explicit per-action consent.
 5. **Telemetry**: confirms it stays off (default). A short plain-language sentence explains what telemetry would collect if turned on later.
 
-The onboarding completion writes `%APPDATA%\Quill\onboarding-complete.json`. Re-running `Help → Run Onboarding Again` reopens the flow without resetting anything else.
+The onboarding completion writes `%APPDATA%\Quill\onboarding-complete.json`. Trust and privacy consent acknowledgement is stored separately in `%APPDATA%\Quill\trust-consent.json` and is versioned so policy text updates can require re-acknowledgement. Re-running `Help → Run Onboarding Again` reopens the flow without resetting anything else.
 
 ### 5.57 Privacy summary
 
@@ -3104,7 +3104,7 @@ All JSON files validate against schemas in `quill/core/schemas/`. All writes are
 
 ### 10.11 Security architecture
 
-- **Secrets**: AI provider keys stored via DPAPI (`platform.windows.dpapi`); never in plain text on disk; never logged; never in diagnostics bundles.
+- **Secrets**: AI provider keys stored via Windows Credential Manager where available, with DPAPI-encrypted fallback (`platform.windows.dpapi`) when vault APIs are unavailable; never in plain text on disk; never logged; never in diagnostics bundles.
 - **Document data**: never leaves the machine without per-action consent.
 - **Network calls**: an internal `ai.safety.consent(action, host, size_estimate)` gate is required before any network call; the call records what was sent (action name, host, size only) in the audit log.
 - **Updates**: manifest signature verified with a pinned Ed25519 public key; artefact SHA-256 verified before install.
@@ -3191,12 +3191,13 @@ The engineering choices above add up to the user-visible magic the product promi
 ## 12. Privacy and security
 
 - Local first. Nothing leaves the machine without an explicit per-action confirmation.
-- AI provider keys stored via Windows DPAPI; never plain text.
+- AI provider keys stored via Windows Credential Manager when available, with DPAPI-encrypted fallback; never plain text.
 - Logs never include document content. Logs include action names and outcomes only.
 - Spell-check learning data stays on disk under the user profile and can be wiped from a single button.
 - Crash reports are opt-in and scrubbed of paths and content.
 - All file dialogs use the OS dialog so the user controls disclosure.
 - Network calls show host, payload size, and estimated cost (where the provider supplies it) before sending.
+- Startup includes a trust/privacy/responsible-AI consent acknowledgement before guided onboarding continues.
 
 ---
 
@@ -3345,7 +3346,7 @@ The organising principle is simple: **v1.0 ships only Confidence A. Confidence B
 - **Linked-notes / wikilink editor (Obsidian-style).** Backlog.
 - **Per-file-class backup retention policy.** v1.0 ships a single global retention rule (5.13). v1.1 introduces per-format-class defaults (e.g. 100 backups for source code, 25 for long-form documents) once we have telemetry on user save patterns.
 - **Single-line compose box mode.** A small, screen-reader-optimised composer dialog whose Enter sends back to the main editor at the cursor. Useful for slow-speech users; needs user testing to confirm it is worth the surface area. Backlog for v1.1.
-- **Advanced model lifecycle in core app flow.** Quill now ships a local Writing Assistant shell, prompt presets, generated tool catalog, assistant onboarding, AI connection preferences, connection verification/model discovery actions, searchable model selection, provider-aware guided recommendations, AI menu status-detail feedback, and sandboxed Python runner. Broader built-in model catalog lifecycle and background prefetch policy remain future work.
+- **Advanced model lifecycle in core app flow.** Quill now ships a local Writing Assistant shell, prompt presets, generated tool catalog, assistant onboarding, AI Hub entry point, Prompt Studio custom templates, Agent Center guided plans, AI connection preferences, connection verification/model discovery actions, searchable model selection, provider-aware guided recommendations, AI menu status-detail feedback, and sandboxed Python runner. Broader built-in model catalog lifecycle and background prefetch policy remain future work.
 
 ### 17.4 Explicitly out of scope for Quill (any version unless re-evaluated)
 
@@ -3356,7 +3357,7 @@ Quill is opinionated about what it is *not*. The following are intentionally and
 - **Cloud-sync of documents.** Sync is for keymap and settings only (8.8). Document storage stays on the user's machine and chosen cloud-drive folder.
 - **Mobile, web, macOS, or Linux ports.** Cross-platform is post-v2 at earliest. The `core/` layer has no `wx` so it remains *possible*, not *committed*.
 - **Voice input / dictation.** Use Windows dictation; Quill does not reinvent the mic/STT stack. An opt-in Hey QUILL command layer may sit on top of dictation and dispatch existing Quill commands, but it stays silent and only listens while dictation is active.
-- **AI authoring assistant.** The current build exposes a local Writing Assistant shell, prompt presets, AI connection preferences (Ollama local/cloud, OpenAI, Claude, OpenRouter, Gemini, Azure OpenAI, custom OpenAI-compatible), provider verification/model discovery, searchable model filtering, status-detail accessibility announcements, and a sandboxed Python tool. Longer-horizon autocomplete policy tuning and richer model-catalog management remain future work.
+- **AI authoring assistant.** The current build exposes a local Writing Assistant shell, prompt presets, Prompt Studio reusable prompt templates, Agent Center guided profiles, AI Hub launch surface, AI connection preferences (Ollama local/cloud, OpenAI, Claude, OpenRouter, Gemini, Azure OpenAI, custom OpenAI-compatible), provider verification/model discovery, searchable model filtering, status-detail accessibility announcements, and a sandboxed Python tool. Longer-horizon autocomplete policy tuning and richer model-catalog management remain future work.
 - **Project workspaces and Find in Folder.** Deferred to v1.2 (see 17.2).
 - **Embedded media playback inside documents.** Out of scope for the editor.
 - **PDF form filling and signing.** Out of scope.

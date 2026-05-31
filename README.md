@@ -131,14 +131,16 @@ Run the full 0.1.2 readiness flow:
 This runs:
 
 1. Lint (`ruff check .`)
-2. Tests (`pytest -q`)
-3. Docs rebuild for `docs/*.md` (HTML + EPUB)
-4. Docs artifact parity check
-5. Release corpus verification
+2. Dependency audit (`pip-audit --strict`)
+3. Tests (`pytest -q`)
+4. Docs rebuild for `docs/*.md` (HTML + EPUB)
+5. Docs artifact parity check
+6. Release corpus verification
 
 ## CI and release automation
 
 - CI workflow: `.github/workflows/accessibility-ci.yml`
+- Security workflow: `.github/workflows/security-ci.yml`
 - Windows release workflow: `.github/workflows/windows-release.yml`
 - Docs site workflow: `.github/workflows/github-pages.yml` (publishes the docs hub and updates feed)
 
@@ -153,6 +155,8 @@ Community contributions are welcome.
 - Read **[CONTRIBUTING.md](CONTRIBUTING.md)** for setup, workflow, and PR expectations.
 - Read **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** before participating.
 - Read **[SECURITY.md](SECURITY.md)** for private vulnerability reporting.
+- Read **[PRIVACY.md](PRIVACY.md)** for data handling and retention behavior.
+- Read **[RESPONSIBLE_AI_USE.md](RESPONSIBLE_AI_USE.md)** for ethical and accountable AI use requirements.
 - Read **[GOVERNANCE.md](GOVERNANCE.md)** for project decision model.
 - Read **[MAINTAINERS.md](MAINTAINERS.md)** for maintainer responsibilities.
 - Contributor graph: **[contrib.rocks / QUILL](https://contrib.rocks/image?repo=Community-Access/quill)**
