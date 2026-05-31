@@ -85,17 +85,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Download installer artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: quill-installer
           path: release-assets/installer
       - name: Download portable artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: quill-portable
           path: release-assets/portable
       - name: Download release metadata
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: quill-release-artifacts
           path: release-assets/metadata
