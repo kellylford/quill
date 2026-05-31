@@ -61,9 +61,9 @@ DEFAULT_KEYMAP: dict[str, str] = {
     "edit.follow_link": "Ctrl+Enter",
     "edit.word_prediction": "Ctrl+Space",
     "view.browser_preview": "Ctrl+Shift+V",
-    # Preview commands are menu-only by default (View menu). Earlier defaults
-    # collided with Command Palette (Ctrl+Shift+P), Match Bracket (Ctrl+Shift+\),
-    # and Next Region (F6); users can bind their own in the keymap editor.
+    "view.preview": "Ctrl+Shift+P",
+    "view.split_preview": "Ctrl+Shift+Backslash",
+    "view.focus_preview": "F6",
     "edit.set_mark": "Ctrl+Shift+M",
     "edit.pop_mark": "Ctrl+M",
     "edit.exchange_point_mark": "Ctrl+Shift+X",
