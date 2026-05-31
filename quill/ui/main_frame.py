@@ -8475,6 +8475,8 @@ class MainFrame:
     _ABOUT_ACKNOWLEDGMENTS: str = (
         "Quill is built with these open-source projects, with gratitude:\n\n"
         "• wxPython / wxWidgets — application UI toolkit\n"
+        "• wx-accessible-webview — accessible wx.html2.WebView surfaces "
+        "(chat, preview, dialogs), by Taylor Arndt / Community Access\n"
         "• Prism (prismatoid) — screen-reader speech bridge (Windows)\n"
         "• pyttsx3 — system text-to-speech\n"
         "• llama.cpp / llama-cpp-python — on-device AI (Windows and Linux)\n"
