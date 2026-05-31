@@ -58,22 +58,22 @@ jobs:
         run: |
           cyclonedx-py environment --of JSON --output-file release-artifacts/sbom.json
       - name: Upload portable bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quill-portable
           path: windows-distribution/portable
       - name: Upload installer executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quill-installer
           path: windows-distribution/installer/Output/Quill-Setup-*.exe
       - name: Upload installer script
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quill-installer-script
           path: windows-distribution/installer/quill.iss
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quill-release-artifacts
           path: release-artifacts
