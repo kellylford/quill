@@ -3,10 +3,21 @@ from __future__ import annotations
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any
 
 from quill.core.document import Document
 from quill.io.markitdown_bridge import convert_with_markitdown
+
+# Pages paragraph style names → Markdown heading prefix
+_STYLE_HEADING_PREFIX: dict[str, str] = {
+    "title": "# ",
+    "heading": "## ",
+    "heading 1": "## ",
+    "heading 2": "### ",
+    "heading 3": "#### ",
+    "heading 4": "##### ",
+    "heading 5": "###### ",
+    "heading 6": "###### ",
+}
 
 
 def read_pages_document(path: Path) -> Document:
@@ -17,18 +28,15 @@ def read_pages_document(path: Path) -> Document:
     returns a graceful error message.
     """
     try:
-        # Try Route A: Pure Python IWA parsing (requires keynote-parser)
         return _read_pages_via_iwa(path)
     except (ImportError, Exception):
-        pass  # Fall through to Route B
+        pass
 
     try:
-        # Route B: LibreOffice headless + MarkItDown
         return _read_pages_via_libreoffice(path)
     except (ImportError, subprocess.CalledProcessError, Exception):
-        pass  # Fall through to error message
+        pass
 
-    # No engines available
     return Document(
         text=(
             f"(Pages import not available for {path.name}.)\n\n"
@@ -48,47 +56,114 @@ def read_pages_document(path: Path) -> Document:
     )
 
 
+class _UnknownIWAMessage:
+    """Stub returned for Pages-specific IWA message types keynote-parser doesn't know."""
+
+    def __init__(self, type_id: int, data: bytes) -> None:
+        self._type_id = type_id
+
+    @classmethod
+    def FromString(cls, data: bytes) -> "_UnknownIWAMessage":
+        return cls(0, data)
+
+    def to_dict(self) -> dict:
+        return {"_pbtype": f"UNKNOWN.Type{self._type_id}"}
+
+
+def _patched_id_name_map():
+    """Return a wrapper around keynote-parser's ID_NAME_MAP that never raises KeyError."""
+    import keynote_parser.codec as _codec
+
+    class _FallbackMap(dict):
+        def __missing__(self, type_id: int):
+            class _Factory:
+                _tid = type_id
+
+                @classmethod
+                def FromString(cls, data: bytes) -> "_UnknownIWAMessage":
+                    return _UnknownIWAMessage(cls._tid, data)
+
+            return _Factory
+
+    return _FallbackMap(_codec.ID_NAME_MAP)
+
+
+def _parse_iwa_bundle(path: Path, zip_file_reader) -> dict[str, list[dict]]:
+    """Walk a .pages bundle and return all decoded IWA objects keyed by archive ID."""
+    from keynote_parser.codec import IWAFile
+
+    archives_by_id: dict[str, list[dict]] = {}
+    for filename, handle in zip_file_reader(str(path), progress=False):
+        if ".iwa" not in filename:
+            continue
+        try:
+            iwa = IWAFile.from_buffer(handle.read(), filename)
+            for chunk in iwa.to_dict()["chunks"]:
+                for archive in chunk["archives"]:
+                    arch_id = str(archive.get("header", {}).get("identifier", ""))
+                    objects = [o for o in archive.get("objects", []) if isinstance(o, dict)]
+                    if arch_id and arch_id != "0":
+                        archives_by_id[arch_id] = objects
+        except Exception:
+            continue
+    return archives_by_id
+
+
 def _read_pages_via_iwa(path: Path) -> Document:
-    """Route A: Parse .pages as IWA (requires keynote-parser + pyiwa)."""
+    """Route A: Parse .pages IWA archives (requires keynote-parser).
+
+    keynote-parser only ships Keynote proto definitions; Pages-specific message
+    types (e.g. type 10000 = WP.DocumentArchive) are unknown to it.  We patch
+    ID_NAME_MAP at call time so unknown types are silently skipped rather than
+    crashing the entire parse.
+    """
     try:
-        from keynote_parser.parser import load_presentation  # type: ignore[import-untyped]
+        import keynote_parser.codec as _codec
+        from keynote_parser.file_utils import zip_file_reader
     except ImportError as e:
         raise ImportError("keynote-parser not available") from e
 
-    # Load via keynote-parser (also handles Pages via IWA)
-    doc_obj: Any = load_presentation(str(path))
+    # Temporarily replace ID_NAME_MAP with a fallback-safe version.
+    _original_map = _codec.ID_NAME_MAP
+    _codec.ID_NAME_MAP = _patched_id_name_map()
+    try:
+        archives_by_id = _parse_iwa_bundle(path, zip_file_reader)
+    finally:
+        _codec.ID_NAME_MAP = _original_map
 
-    # Extract text and structure from IWA
+    if not archives_by_id:
+        raise ValueError("No IWA archives found in Pages file")
+
+    # Find TSWP.StorageArchive objects — the main text stores.
+    # Prefer those flagged as in_document / inDocument; fall back to any with text.
+    all_storage: list[dict] = []
+    for objects in archives_by_id.values():
+        for obj in objects:
+            if obj.get("_pbtype") == "TSWP.StorageArchive":
+                all_storage.append(obj)
+
+    storages = [s for s in all_storage if s.get("inDocument") or s.get("in_document")]
+    if not storages:
+        storages = [s for s in all_storage if s.get("text", "").strip()]
+
+    if not storages:
+        raise ValueError("No text content found in Pages IWA archives")
+
     text_parts: list[str] = []
+    for storage in storages:
+        # text is a protobuf repeated string field → list in MessageToDict output
+        raw_parts = storage.get("text")
+        raw = "".join(raw_parts) if isinstance(raw_parts, list) else (raw_parts or "")
+        if not raw.strip():
+            continue
+        text_parts.append(_storage_to_markdown(storage, archives_by_id))
 
-    # keynote-parser returns slides/pages; iterate and extract text with heading levels
-    if hasattr(doc_obj, "pages") or hasattr(doc_obj, "slides"):
-        pages_or_slides: list[Any] = getattr(doc_obj, "pages", None) or getattr(
-            doc_obj, "slides", []
-        )
-        for page_or_slide in pages_or_slides:
-            # Extract title (usually h1 equivalent)
-            if hasattr(page_or_slide, "title") and page_or_slide.title:
-                text_parts.append(f"# {page_or_slide.title}\n")
-
-            # Extract body/notes (h2+)
-            if hasattr(page_or_slide, "notes") and page_or_slide.notes:
-                text_parts.append(page_or_slide.notes)
-            elif hasattr(page_or_slide, "text") and page_or_slide.text:
-                text_parts.append(page_or_slide.text)
-
-            text_parts.append("\n")
-    else:
-        # Fallback: try direct text extraction
-        text_content = str(doc_obj)
-        text_parts.append(text_content)
-
-    text = "".join(text_parts).strip()
-    if not text:
+    combined = "\n\n".join(t for t in text_parts if t.strip())
+    if not combined.strip():
         raise ValueError("No text extracted from Pages via IWA")
 
     return Document(
-        text=text + "\n",
+        text=combined.strip() + "\n",
         path=path,
         modified=False,
         encoding="utf-8",
@@ -101,20 +176,101 @@ def _read_pages_via_iwa(path: Path) -> Document:
     )
 
 
-def _read_pages_via_libreoffice(path: Path) -> Document:
-    """Route B: Convert .pages to DOCX/HTML via LibreOffice, then MarkItDown.
+def _storage_to_markdown(storage: dict, archives_by_id: dict[str, list[dict]]) -> str:
+    """Convert a TSWP.StorageArchive dict to Markdown, applying heading prefixes."""
+    raw_parts = storage.get("text")
+    raw_text = "".join(raw_parts) if isinstance(raw_parts, list) else (raw_parts or "")
 
-    Requires LibreOffice (soffice) and markitdown Python package.
+    # Build char-position → style-name map from tableParaStyle entries.
+    # Each entry: {characterIndex: N, object: {identifier: M}}
+    # The referenced archive contains a TSWP.ParagraphStyleArchive whose
+    # inline TSS.StyleArchive has a human-readable "name" field.
+    para_style: dict[int, str] = {}
+    table = storage.get("tableParaStyle", {})
+    for entry in table.get("entries", []):
+        char_idx = entry.get("characterIndex")
+        if char_idx is None:
+            continue
+        ref = entry.get("object", {})
+        ref_id = str(ref.get("identifier", ""))
+        if not ref_id or ref_id not in archives_by_id:
+            continue
+        name = _resolve_style_name(archives_by_id[ref_id], archives_by_id)
+        if name:
+            para_style[int(char_idx)] = name
+
+    if not para_style:
+        return raw_text.rstrip("\n")
+
+    # Walk paragraphs (split on \n) and prefix headings.
+    lines: list[str] = []
+    char_pos = 0
+    for para in raw_text.split("\n"):
+        style_name = _para_style_at(para_style, char_pos)
+        prefix = _STYLE_HEADING_PREFIX.get(style_name.lower().strip(), "")
+        lines.append(f"{prefix}{para}" if prefix and para.strip() else para)
+        char_pos += len(para) + 1  # +1 for the \n separator
+
+    return "\n".join(lines).rstrip("\n")
+
+
+def _resolve_style_name(
+    objects: list[dict],
+    archives_by_id: dict[str, list[dict]] | None = None,
+    _depth: int = 0,
+) -> str:
+    """Return the style name from a ParagraphStyleArchive archive's objects.
+
+    Pages stores base styles with super.name set directly; variation styles only
+    carry super.parent (a reference to the base style).  We follow that chain up
+    to 5 levels deep to find the authoritative name.
     """
-    # Use a temp directory for the converted file
+    if _depth > 5:
+        return ""
+    for obj in objects:
+        if obj.get("_pbtype") != "TSWP.ParagraphStyleArchive":
+            continue
+        super_style = obj.get("super", {})
+        if not isinstance(super_style, dict):
+            continue
+        name = super_style.get("name", "")
+        if name:
+            return name
+        # Variation style — follow parent reference
+        if archives_by_id:
+            parent_id = str((super_style.get("parent") or {}).get("identifier", ""))
+            if parent_id and parent_id in archives_by_id:
+                name = _resolve_style_name(
+                    archives_by_id[parent_id], archives_by_id, _depth + 1
+                )
+                if name:
+                    return name
+    return ""
+
+
+def _para_style_at(para_style: dict[int, str], char_pos: int) -> str:
+    """Return the style name in effect at char_pos (closest entry ≤ char_pos)."""
+    if char_pos in para_style:
+        return para_style[char_pos]
+    best_pos = -1
+    best_name = ""
+    for pos, name in para_style.items():
+        if pos <= char_pos and pos > best_pos:
+            best_pos = pos
+            best_name = name
+    return best_name
+
+
+def _read_pages_via_libreoffice(path: Path) -> Document:
+    """Route B: Convert .pages to DOCX via LibreOffice, then MarkItDown.
+
+    Requires LibreOffice (soffice) and the markitdown Python package.
+    """
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
-
-        # Try DOCX first (MarkItDown handles it well)
         docx_path = tmpdir_path / "converted.docx"
 
         try:
-            # Call LibreOffice headless to convert .pages to DOCX
             subprocess.run(
                 [
                     "soffice",
@@ -135,10 +291,9 @@ def _read_pages_via_libreoffice(path: Path) -> Document:
             stderr = e.stderr.decode("utf-8", errors="ignore")
             raise RuntimeError(f"LibreOffice conversion failed: {stderr}") from e
 
-        # Check if conversion succeeded
         if not docx_path.exists():
             raise RuntimeError("LibreOffice did not produce a DOCX file")
-        # Convert DOCX to Markdown via MarkItDown
+
         text = convert_with_markitdown(docx_path)
 
         return Document(
@@ -159,7 +314,7 @@ def outline_pages_document(document: Document) -> list[tuple[int, str]]:
     """Extract heading outline from a Pages-imported document.
 
     Returns list of (level, heading_text) tuples.
-    Expects document to be Markdown with # headings.
+    Expects document text to be Markdown with # headings.
     """
     import re
 
@@ -167,8 +322,5 @@ def outline_pages_document(document: Document) -> list[tuple[int, str]]:
     for line in document.text.split("\n"):
         match = re.match(r"^(#{1,6})\s+(.+)$", line)
         if match:
-            level = len(match.group(1))
-            heading_text = match.group(2).strip()
-            headings.append((level, heading_text))
-
+            headings.append((len(match.group(1)), match.group(2).strip()))
     return headings
