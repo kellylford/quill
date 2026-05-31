@@ -46,7 +46,7 @@ ai = ["llama-cpp-python>=0.3.23"]
 dictation = ["SpeechRecognition>=3.10.0"]
 pages = ["keynote-parser>=1.0", "markitdown[all]>=0.1.0"]
 dev = [
-  "pytest>=8.2",
+  "pytest>=9.0.3",
   "pytest-xdist>=3.6",
   "pytest-timeout>=2.3",
   "ruff>=0.6",
