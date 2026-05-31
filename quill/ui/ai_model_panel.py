@@ -4,6 +4,7 @@ Defaults to "Recommended" (picked from the machine's RAM). The chosen model is
 downloaded automatically (no manual file handling). Accessible; download runs
 off the UI thread.
 """
+
 from __future__ import annotations
 
 import threading
@@ -21,13 +22,16 @@ from quill.core.ai.model_manager import (
 
 
 class AIModelDialog:
-    def __init__(self, parent: object, announce=None) -> None:
+    def __init__(self, parent: object, announce=None, open_connection=None) -> None:
         import wx
 
         self._wx = wx
         self._announce = announce or (lambda _m: None)
+        self._open_connection = open_connection
 
-        self.dialog = wx.Dialog(parent, title="AI Model", style=wx.DEFAULT_DIALOG_STYLE)
+        self.dialog = wx.Dialog(
+            parent, title="AI Model & Connection", style=wx.DEFAULT_DIALOG_STYLE
+        )
         self.dialog.SetSize((540, 380))
         root = wx.BoxSizer(wx.VERTICAL)
 
@@ -38,7 +42,9 @@ class AIModelDialog:
                 label=f"This computer has about {total_ram_gb():.0f} GB of RAM.\n"
                 f"Recommended model: {MODELS[rec].name}.",
             ),
-            0, wx.ALL, 12,
+            0,
+            wx.ALL,
+            12,
         )
 
         root.Add(wx.StaticText(self.dialog, label="Model"), 0, wx.LEFT | wx.RIGHT, 12)
@@ -64,6 +70,10 @@ class AIModelDialog:
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         self.download_button = wx.Button(self.dialog, label="Download Now")
         buttons.Add(self.download_button, 0, wx.RIGHT, 8)
+        if self._open_connection is not None:
+            self.connection_button = wx.Button(self.dialog, label="Connection Settings...")
+            self.connection_button.Bind(wx.EVT_BUTTON, self._on_connection)
+            buttons.Add(self.connection_button, 0, wx.RIGHT, 8)
         buttons.AddStretchSpacer()
         buttons.Add(wx.Button(self.dialog, wx.ID_OK, label="Save"), 0, wx.RIGHT, 8)
         buttons.Add(wx.Button(self.dialog, wx.ID_CANCEL, label="Cancel"), 0)
@@ -74,13 +84,21 @@ class AIModelDialog:
         self.download_button.Bind(wx.EVT_BUTTON, self._on_download)
         self._refresh_status()
 
+    def _on_connection(self, _event: object) -> None:
+        if self._open_connection is not None:
+            self._open_connection()
+
     def _selected_id(self) -> str:
         return self._ids[self.choice.GetSelection()]
 
     def _refresh_status(self) -> None:
         spec = resolve_spec(self._selected_id())
-        state = "already downloaded" if is_downloaded(spec) else "downloads automatically on first use"
-        self.status.SetLabel(f"{spec.note}\n{spec.name} (~{spec.approx_gb:g} GB). {state.capitalize()}.")
+        state = (
+            "already downloaded" if is_downloaded(spec) else "downloads automatically on first use"
+        )
+        self.status.SetLabel(
+            f"{spec.note}\n{spec.name} (~{spec.approx_gb:g} GB). {state.capitalize()}."
+        )
 
     def _on_download(self, _event: object) -> None:
         save_model_choice(self._selected_id())

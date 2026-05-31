@@ -2994,11 +2994,7 @@ class MainFrame:
         )
         ai_menu.Append(
             self._id_ai_model,
-            self._menu_label("AI &Model...", "tools.ai_model"),
-        )
-        ai_menu.Append(
-            self._id_ai_connection,
-            self._menu_label("AI &Connection...", "tools.ai_connection"),
+            self._menu_label("AI &Model && Connection...", "tools.ai_model"),
         )
         ai_menu.Append(
             self._id_ai_assistant,
@@ -14017,7 +14013,13 @@ class MainFrame:
         self.commands.run(command_id)
 
     def open_ai_model_settings(self) -> None:
-        AIModelDialog(self.frame, announce=self._set_status).show()
+        # Combined AI Model & Connection — the model dialog hosts a button to the
+        # connection settings, so there's one entry point for all AI setup.
+        AIModelDialog(
+            self.frame,
+            announce=self._set_status,
+            open_connection=self.open_ai_preferences,
+        ).show()
 
     def open_writing_assistant(self, initial_prompt: str = "") -> None:
         dialog = WritingAssistantDialog(
