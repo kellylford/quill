@@ -11171,7 +11171,6 @@ class MainFrame:
             self._record_notification("Update check failed", "update")
             return
         if release is None or not is_newer_version(current_version, release.version):
-            available = release.version if release is not None else current_version
             if silent_no_update:
                 self._record_notification("Update check found no newer version", "update")
                 return
@@ -11179,7 +11178,7 @@ class MainFrame:
             self._record_notification("Update check found no newer version", "update")
             if not beta:
                 # On the stable channel and up to date — offer the beta channel.
-                self._offer_beta_switch(current_version, available)
+                self._offer_beta_switch(current_version, release)
             else:
                 self._show_message_box(
                     "You're up to date on the beta channel.\n"
@@ -11227,14 +11226,21 @@ class MainFrame:
         ).show_modal()
         return result == wx.ID_OK
 
-    def _offer_beta_switch(self, current_version: str, available: str) -> None:
+    def _offer_beta_switch(
+        self, current_version: str, stable_release: GitHubRelease | None
+    ) -> None:
         from quill.ui.preview_dialog import HtmlMessageDialog
 
         wx = self._wx
+        stable_line = (
+            f"the latest stable release is {stable_release.version}"
+            if stable_release is not None
+            else "no stable release is published yet"
+        )
         body = self._render_html(
             "# You're up to date\n\n"
-            f"You're on the **stable** channel (current {current_version}; "
-            f"latest stable {available}).\n\n"
+            f"You're on the **stable** channel (current version {current_version}; "
+            f"{stable_line}).\n\n"
             "Want earlier features sooner? The **beta** channel delivers prerelease "
             "builds as soon as they're published.\n"
         )
@@ -11249,7 +11255,30 @@ class MainFrame:
             save_settings(self.settings)
             self._set_status("Switched to the beta update channel")
             self._announce("Beta updates enabled")
-            self.check_for_updates(silent_no_update=False)
+            # Surface the latest prerelease right away so the user can install it,
+            # even if its version matches the current build (they opted into beta).
+            self._offer_latest_beta(current_version)
+
+    def _offer_latest_beta(self, current_version: str) -> None:
+        wx = self._wx
+        try:
+            release = fetch_latest_release(include_prereleases=True)
+        except (URLError, ValueError, OSError) as error:
+            self._show_message_box(
+                f"Could not check beta updates: {error}",
+                "Check for Updates",
+                wx.ICON_ERROR | wx.OK,
+            )
+            return
+        if release is None:
+            self._show_message_box(
+                "No beta (prerelease) build is available yet.",
+                "Check for Updates",
+                wx.ICON_INFORMATION | wx.OK,
+            )
+            return
+        if self._show_update_available_dialog(current_version, release):
+            self._download_update_release(release)
 
     def _confirm_beta_channel(self) -> bool:
         """HTML consent gate the user must agree to before beta updates turn on."""
