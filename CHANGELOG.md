@@ -8,19 +8,20 @@
 
 ## Quill 0.1.2 Beta
 
-Quill 0.1.2 Beta expands Quill's writing flow with prediction, snippets, browser preview, local assistant workflows, and packaging/onboarding polish.
+Quill 0.1.2 Beta expands Quill's writing flow with prediction, snippets, in-app preview, local assistant workflows, and packaging/onboarding polish.
 
 ### Added and improved in 0.1.2
 
 - Added **Word Prediction** with `Ctrl+Space`, including document-word, HTML tag, and Markdown tag suggestions.
 - Moved **Insert Snippet** to `Ctrl+Alt+Space` and **Manage Snippets** to `Ctrl+Alt+Shift+Space` so snippet insertion no longer clashes with prediction.
 - Added a **Word Prediction as you type** preference and View-menu toggle.
-- Added **Browser Preview** (`Ctrl+Shift+V`) with system-default browser support and selectable browser preference.
+- Added **In-App Preview** and **Side-by-Side Preview** with keyboard-first focus movement.
 - Added a local **Writing Assistant** menu surface with rewrite/summarize/continue/grammar quick actions and ranked command suggestions.
 - Added a sandboxed **Run Python** transform tool for document/selection automation.
 - Added first-run **Writing Assistant onboarding** plus **Preferences -> AI Connection** for provider, host, and model setup.
 - Added secure optional API-key storage for AI endpoints using **Windows DPAPI**.
 - Added AI provider support for **Ollama Cloud (API key)** and improved custom-endpoint handling.
+- Added explicit **Ollama Cloud onboarding** guidance in AI Connection, including note that free personal-use access is available with lower usage limits.
 - Added **Verify Connection**, **List Models**, and **Recommend Model** actions in AI connection settings.
 - Added automatic AI-connection verification on save and an AI-menu status flow with **Ready / Needs attention / Not checked**.
 - Added an AI-menu detail line with short verification reason text.

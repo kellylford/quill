@@ -1,128 +1,293 @@
-# Announcing Quill Beta
+# Announcing Quill 0.1.2 Beta
 
-**QUILL** stands for **Quality, Usable, Inclusive, Lightweight, Literate**.
+Quill 0.1.2 Beta is a major expansion of the QUILL experience.
 
-**QUILL: A quality, usable, inclusive, lightweight, and literate editor built for everyone who writes, codes, learns, and creates.**
+QUILL stands for Quality, Usable, Inclusive, Lightweight, Literate. This release doubles down on that promise with a broad set of user-facing capabilities for writing, reviewing, reading, conversion, accessibility, and local-first AI workflows on Windows.
 
-## A screen-reader-first writing environment for Windows
+This announcement is a complete map of what you can do in Quill 0.1.2 Beta today.
 
-Quill Beta is here.
+## What Quill is
 
-This release is Quill 0.1.2 Beta from Blind Information Technology Solutions (BITS) and Community Access.
+Quill is a screen-reader-first, keyboard-first writing and document-intelligence environment for Windows.
 
-Quill is a writing, reading, review, and document-intelligence environment for Windows built around a simple idea: powerful tools should feel calm, predictable, and welcoming from the keyboard. The editor is local-first, screen-reader-first, and designed to make serious text work feel steady instead of fragile.
+It is designed to feel calm and predictable for everyday editing, while still supporting advanced workflows:
 
-The name is intentional. Quill reflects writing craft and dependable engineering. This work is built by us, for us, and for the wider world.
+- long-document navigation
+- deterministic cleanup and accessibility fixes
+- In-App Preview and Side-by-Side Preview workflows
+- compare and review sessions
+- format conversion and extraction quality review
+- local-first AI and automation helpers
 
-Quill is not only a place to type notes. It is a place to open and write plain text, Markdown, HTML, and RTF; inspect structure; compare revisions; navigate EPUB content; review extraction quality; run accessibility checks; work with spelling and thesaurus tools; use golden keyboard packs; and move through real documents with confidence.
+## Complete capability map for 0.1.2 Beta
 
-It is also a place to grow. Quill now includes guided onboarding for optional external tools, so users can see exactly what helpers such as Pandoc, Tesseract OCR, LibreOffice, and Ghostscript would unlock before they install anything. When Pandoc is present, Quill can open a native conversion wizard and turn supported source files into Markdown, HTML, or plain text surfaces ready for reading, editing, or GLOW-oriented downstream workflows.
+The sections below list user-facing features by workflow so you can quickly understand the full product surface.
 
-This beta also includes a menu discoverability pass. The Tools menu is grouped into plain-language submenus (Writing and Language, Read Aloud, Integrations, Document Intake, Authoring and Automation, Compare Documents, Accessibility, Support, and Customize), and mark-ring wording now reads as Recent Marks (Ring) to lower jargon. The interactive status bar is also fuller: focused cells now expose direct context actions (Activate, Hide this item, Status bar settings), and status bar settings now include Restore Defaults.
+### Core editor and workspace
 
-Quill 0.1.2 extends that foundation with editor-quality workflow upgrades: word prediction and tag IntelliSense (`Ctrl+Space`), dedicated snippet hotkeys (`Ctrl+Alt+Space` and `Ctrl+Alt+Shift+Space`), browser preview (`Ctrl+Shift+V`), Markdown list continuation/nesting plus a List Manager tree (`Ctrl+Alt+L`), heading style controls for live font/size/alignment updates, a keyboard-first Heading Organizer (`Ctrl+Alt+Shift+H`) for level/reorder/validation, a local Writing Assistant surface with rewrite/summarize/continue/grammar quick actions, and AI connection preferences for local Ollama, Ollama cloud key mode, or custom endpoints with DPAPI-protected optional keys.
+Quill includes a full multi-document editor shell with:
 
-This cycle also improves AI connection confidence and accessibility. The connection dialog now supports Verify Connection, List Models, and model recommendations, and saving settings automatically runs verification. The AI menu shows a one-line status and detail (`Ready` or `Needs attention` with reason), and the same plain-language result is announced for screen-reader users immediately.
+- tabbed document workflows
+- command palette with fast filtering and command discovery
+- interactive status bar with actionable cells and customizable layout
+- region cycling and focus movement designed for screen-reader users
+- title/path behavior tuned to avoid duplicate information noise
+- startup behavior controls, including opening with no document
 
-This cycle also strengthens customization with custom profiles (including opt-in inheritance or bare-bones starts), a quick profile picker on `Alt+Shift+P`, and cleaner status/title behavior by suppressing duplicate file-path reporting when full-path title mode is enabled.
+File and workspace operations include:
 
-This cycle also expands document-intake depth. For release-safe beta validation, Word and CSV/TSV currently open in the normal plain-text editing surface by default. Structured Word and CSV grid paths remain in the codebase behind an internal gate for continued verification before wider rollout.
+- new, open, open recent, save, save as, save all
+- save as plain text export
+- reload from disk and backup restore
+- page setup and print
+- open from URL with trust and safety checks
+- workspace snapshots and session restore patterns
 
-## What makes Quill special
+### Writing and editing tools
 
-Quill Beta already includes a broad set of everyday and specialist features:
+Everyday editing includes:
 
-- a keyboard-first editor shell with command palette, tabs, rich navigation, and an interactive status bar
-- plain text, Markdown, HTML, and RTF workflows that stay readable and structured
-- spell check, thesaurus, word count, link insertion, and source-aware copy
-- heading, list, table, code block, and markup insertion tools
-- a new snippet system with searchable insertion (`Ctrl+Alt+Space`), management (`Ctrl+Alt+Shift+Space`), and starter packs
-- compare workflows for file-to-file and document-to-document review
-- EPUB navigation, OCR image intake, and extraction-quality review
-- expanded structured intake for `.doc`/`.docx`, `.ppt`/`.pptx`, `.xlsx`/`.xls`, `.pages`, and low-confidence PDF fallback via MarkItDown when available
-- feature profiles that keep the interface calm without taking power away
-- golden keyboard packs inspired by Windows Notepad, Notepad++, VS Code, Microsoft Word, and Quill-native workflows
-- the first native GLOW workflows for deterministic audit and fix work inside the editor itself
-- external tool onboarding with wizard-like guidance for Pandoc and other optional format helpers
-- accessibility-focused support such as region cycling, keyboard-trap inspection, contrast validation, and discoverable help surfaces
-- backups, autosave, recovery, persistent undo, trusted locations, notifications, diagnostics export, and signed update checks
+- undo and redo
+- cut, copy, paste, select all
+- copy with source context where relevant
+- insert and overwrite mode support
+- selection growth and structural selection helpers
+- mark ring and bookmark navigation helpers
 
-Snippets are local-first and accessibility-first: they support placeholder prompts, cursor anchors, and optional trigger expansion while typing so repeated writing patterns can be reused without leaving the editor.
+Line and structure editing includes:
 
-## The new GLOW experience inside Quill
+- move line up and down
+- duplicate line
+- delete line
+- join lines
+- indent and outdent
+- toggle line and block comments
+- trimming and cleanup helpers for consistent text quality
 
-One of the most exciting additions in this beta is the first native GLOW workflow inside Quill.
+### Search, replace, and navigation
 
-GLOW stands for guided layout and output workflow. In Quill Beta, GLOW makes accessibility-aware review feel like part of writing rather than a separate compliance chore. You can audit the current document, audit the current selection, fix the current document into a preview tab, compare original and fixed output, or apply deterministic fixes directly to the current selection.
+Quill supports both simple and advanced search flows:
 
-This first slice focuses on plain text, Markdown, and HTML. It already helps with heading spacing, heading-level jumps, generic link text, missing HTML language metadata, missing image alt attributes, dense paragraphs, and plain-language friction.
+- find, find next, find previous
+- replace and replace all
+- wildcard and regex search modes
+- search history and repeated search workflows
+- find all matches summary reporting
 
-Quill also now has the start of a broader format-bridge story. With Pandoc available, users can bring in supported text-centric source formats through a guided wizard instead of a command line, then continue the work inside Quill with structure-aware editing, compare, spell, and GLOW flows. That matters because accessible document work often begins in an awkward format and only becomes productive after it is translated into a surface that is stable, readable, and reviewable.
+Navigation features include:
 
-That same spirit applies to the learning surface. Quill now has a cleaner documentation ladder: the welcome guide for a first orientation, the keyboard reference for exact current bindings, the full user guide for day-to-day depth, this beta announcement for the big-picture feature story, and the PRD for the broader 1.0 direction. The goal is not to bury users in docs. The goal is to make sure there is always one clear next document when a user asks, "What do I do now?"
+- go to line and page
+- previous and next location jumps
+- heading navigation
+- block and structure navigation
+- outline navigator for fast structural movement
+- bracket matching
+- next and previous region movement
 
-## Why this beta matters
+### Formatting, markup, and authoring
 
-Quill is being built for people who need an editor that feels trustworthy.
+Quill is strong in plain text and markup authoring:
 
-That includes:
+- case conversion tools
+- format-aware insertion workflows for headings, lists, links, tables, and code blocks
+- link insertion and follow link
+- heading insertion and level controls
+- heading style controls (font, size, alignment)
+- heading organizer for level repair, reorder, and validation
+- list insertion and management
+- code block insertion
+- table insertion
+- dedicated Markdown and HTML tag assist tools
 
-- screen-reader users who want a native Windows experience
-- writers and editors who work heavily in plain text, Markdown, or HTML
-- accessibility-minded teams reviewing structure and readability
-- people opening difficult or imperfect source documents and trying to decide whether the extracted text is good enough to trust
-- people who need one Windows editor that can stay simple for daily writing while expanding into optional conversion and ingestion workflows when needed
-- users who want a serious editor that still teaches them what it can do
+### Word prediction and snippets
 
-This beta is not just a preview. It is the moment when Quill starts learning from real work.
+0.1.2 expands composition speed features:
 
-## This is a beta
+- word prediction and tag IntelliSense via Ctrl+Space
+- insert snippet via Ctrl+Alt+Space
+- manage snippet library via Ctrl+Alt+Shift+Space
+- snippet trigger expansion support
+- snippet placeholders, choices, date/time tokens, and cursor anchors
+- starter snippet pack install flows from settings
 
-Quill Beta is already useful, but it is still a beta.
+### Preview and reading flows
 
-That means:
+Quill supports multiple preview paths:
 
-- bugs may be found
-- some features are deeper than others
-- some workflows are still maturing toward the full 1.0 vision
-- parts of the support and feedback experience still need polishing before the broadest public rollout
+- In-App Preview
+- Side-by-Side Preview
+- Focus Preview command and keyboard flow
+- automatic preview behavior for supported documents
 
-If something feels rough, that feedback is valuable. If something delights you, that is valuable too. Both help shape what Quill becomes next.
+Read workflows include:
 
-## Feedback and bug reports
+- Read Aloud with controls and voice handling
+- EPUB navigation and rendering support
+- sticky notes and note vault workflows for review sessions
 
-We want the beta feedback path to be inclusive and low-friction.
+### Compare and review workflows
 
-Inside Quill 0.1.2 Beta, the primary feedback path starts in the Help menu.
+Compare tools include:
 
-If you want to report a problem, Quill now guides you through it like this:
+- compare document against file
+- compare with clipboard
+- compare options tuning
+- synchronization and difference group traversal
+- spoken and keyboard-friendly difference review
 
-1. Open **Help -> Report a Bug...**.
-2. Review the in-app support summary that Quill prepares for you.
-3. Choose whether to include diagnostics, and whether to include plain file paths.
-4. If diagnostics are included, save the diagnostics zip somewhere easy to find, such as your Desktop or Downloads folder.
-5. Choose **Open Support Form** to open the Community Access support page.
-6. Describe what happened in plain language and attach the diagnostics zip if it helps.
+These features are designed for revision-heavy editing and content QA.
 
-That is the intended unified user route. It keeps the work inside Quill for as long as possible, explains what is being shared, and gives the user a clearer handoff into the Community Access support process.
+### GLOW workflows
 
-There is still room to improve this over time, especially around future no-login upload flows, but the important point for Quill 0.1.2 Beta is that users should start in **Help**, not by hunting for a GitHub page.
+GLOW is built directly into the editor for deterministic text quality and accessibility checks.
 
-## Thank you for trying Quill
+Current GLOW capability includes:
 
-Trying a beta takes generosity. You are trusting unfinished software with real work, real attention, and real patience.
+- full-document and selection audit reports
+- fix preview generation before applying changes
+- deterministic fixes for common structural and accessibility issues
+- comparison between original and fixed output
+- direct apply flows after review
 
-Thank you for that.
+Quill positions GLOW as an integral writing workflow, not a separate compliance afterthought.
 
-We also want to give specific, sincere thanks to contributors and beta testers who helped shape this release:
+### AI and automation
 
-- Techopolis
-- Taylor Arndt
-- Michael Doise
-- Kayla Bentas
-- Shane Popplestone
-- Becky Knobb
+Quill 0.1.2 includes an expanded local-first AI surface:
 
-If Quill helps you write more confidently, review more carefully, or simply feel more at home in a Windows editor, then the beta is already doing something important. And if you help point out what still needs work, you are helping build the version that will be even stronger.
+- Writing Assistant panel and quick prompt flows
+- Ask Quill Chat workflows
+- AI model settings and AI connection settings
+- rewrite selection, summarize selection, continue writing, and grammar-fix entry points
+- explicit approval model for operations that change document text
+- clear status and detail feedback in menu and UI
+- plain-language verification results with screen-reader announcements
 
-Quill Beta is ready to be explored. Open a file, press `Ctrl+Shift+P`, and start.
+Connection workflows include:
+
+- verify connection
+- list models
+- provider selection (local and endpoint-driven)
+- optional secret handling with platform protection where available
+
+Ollama Cloud onboarding is available directly in AI Connection settings. For users with API keys, Ollama Cloud currently offers free personal-use access with lower usage limits.
+
+Automation support includes:
+
+- run-python action for controlled text transformations
+- command execution integration from assistant flows
+
+### Accessibility and low-vision capability
+
+Accessibility is a first-class surface throughout Quill:
+
+- screen-reader-first UI behavior and announcements
+- region navigation model
+- keyboard trap checks and accessibility inspection helpers
+- contrast and high-contrast-aware behavior
+- status bar as an interactive control surface
+- clear state messages for long-running or risky actions
+- discoverable help, what-can-I-do-here guidance, and keyboard references
+
+### Dictation and voice workflows
+
+Voice support includes:
+
+- Windows dictation integration
+- dictation command toggles and control states
+- voice-command interpretation support in supported paths
+
+### External tools and conversion workflows
+
+Quill supports optional external tooling with guided onboarding and capability discovery:
+
+- Pandoc integration for conversion workflows
+- OCR tooling pathways (for image and extraction support scenarios)
+- extraction quality review and bad extraction reporting
+- document intake reporting for confidence and auditability
+
+### Structured intake and file-type support
+
+Quill supports a broad mix of source formats and intake paths.
+
+Primary writing and editing surfaces include:
+
+- plain text
+- Markdown
+- HTML
+- RTF
+
+Additional intake and review flows include:
+
+- CSV and TSV
+- Word (.docx and .doc)
+- EPUB
+- PowerPoint (.pptx and .ppt)
+- spreadsheet-style formats (.xlsx and .xls)
+- PDF and OCR-assisted pathways
+- Pages and related extraction bridges where available
+
+Release-safety note for this beta cycle:
+
+- Word and CSV/TSV currently default to opening in the normal plain-text editor surface.
+- Structured Word and CSV grid code paths remain in the codebase behind an internal gate while validation continues.
+
+### Profiles, keymaps, and customization
+
+Customization features include:
+
+- feature profiles (including minimal and fuller experiences)
+- keyboard packs for different editing conventions
+- keymap management and preview tools
+- status bar settings with restore defaults
+- view and behavior toggles (dark mode, soft wrap, spellcheck-as-you-type, persistent undo, tray mode, and more)
+
+### Reliability, trust, and recovery
+
+Quill includes stability and trust-focused features:
+
+- autosave and backup workflows
+- persistent undo support
+- trusted locations and safe handling paths
+- notification and update checks
+- diagnostics creation and support handoff flows
+- safe mode and recovery behaviors for problematic launches
+
+### Packaging and installer experience
+
+Current build and installer work includes:
+
+- polished Windows distribution output
+- Inno Setup integration
+- executable-first launch shortcuts where possible (to reduce extra console windows)
+- optional bundled component wiring for Pandoc in installer flows
+
+## Why this matters
+
+Quill 0.1.2 Beta is not a narrow patch. It is a broad capability release that makes Quill viable for:
+
+- daily writing and editing
+- markup-heavy technical authoring
+- accessibility review and deterministic cleanup
+- complex import and conversion workflows
+- revision and comparison-heavy editing
+- local-first AI-assisted drafting and refinement
+
+## What is still in beta
+
+Quill is still a beta release, which means:
+
+- some workflows are deeper than others
+- some integrations depend on optional local tools
+- behavior can still be tuned based on real-world feedback
+
+But the feature surface is already substantial and practical for real work.
+
+## How to get the most from 0.1.2
+
+1. Start with the user guide to pick workflows that match your daily work.
+2. Use the command palette to discover features quickly.
+3. Try one advanced workflow at a time: compare, preview, GLOW, or assistant.
+4. Report rough edges with diagnostics so the next release can harden where it matters most.
+
+Quill 0.1.2 Beta is ready for serious use, and this release is intentionally built to make the full capability surface visible instead of hidden.

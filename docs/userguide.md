@@ -171,7 +171,7 @@ The **File** menu is the full document lifecycle.
 - **Save As Plain Text...** exports a clean plain-text version.
 - **Reload from Disk** throws away in-memory edits and reloads the file from storage after confirmation.
 - **Restore Backup...** lets you restore a saved backup version.
-- **Page Setup...**, **Print Preview...**, and **Print...** support paper and print workflows.
+- **Page Setup...** and **Print...** support paper and print workflows.
 - **Close Document** closes the current tab.
 - **Exit** closes the application.
 
@@ -342,9 +342,6 @@ The palette also learns from usage. Commands you use more often rise naturally.
 - **Continue Writing**
 - **Fix Grammar**
 - **Run Python...**
-- **Browser Preview...** (`Ctrl+Shift+V`)
-
-Browser Preview opens the current document in your chosen browser, defaulting to the system browser. It refreshes as you type so Markdown and HTML changes stay visible without leaving Quill.
 
 The Writing Assistant shell ranks Quill commands from your prompt, offers preset prompts for rewrite/summarize/continue/grammar flows, and Run Python executes a sandboxed transform against the current document text and selection.
 
@@ -358,6 +355,8 @@ AI connection flow:
 4. Use **Verify Connection** to test endpoint and credentials.
 5. Use **List Models** to fetch available models and select one.
 6. Save settings. Quill auto-runs verification and updates the AI status line in the AI menu.
+
+Ollama Cloud onboarding is available in this same flow. If you use an Ollama Cloud API key, free personal-use access is available with lower usage limits.
 
 Quill stores optional keys with Windows DPAPI and announces the verification result in plain language for immediate screen-reader feedback.
 
@@ -396,6 +395,8 @@ Provider setup:
 5. Use `Verify Connection`.
 6. Use `List Models` to select from endpoint-reported models.
 7. Save settings. Quill auto-verifies and updates AI status/detail lines.
+
+Ollama Cloud onboarding is available here as well. Users with API keys can use the free personal-use tier, which has lower usage limits.
 
 After save, Quill announces plain-language verification feedback (for example, ready, auth failure, timeout, or endpoint unreachable).
 

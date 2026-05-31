@@ -1625,7 +1625,7 @@ A group of small, individually unremarkable features whose absence would feel ch
 - **Word prediction**: `Ctrl+Space` opens an IntelliSense-style picker for document words plus HTML and Markdown tag completions. It can also run automatically while typing when enabled in Settings.
 - **Snippets**: per-format snippet packs with trigger + Tab expansion. `Ctrl+Alt+Space` opens Insert Snippet; `Ctrl+Alt+Shift+Space` opens Manage Snippets. Off by default in prose, on by default in code. Editable in Settings.
 - **Save options** (per document and per workspace): trim trailing whitespace on save, ensure final newline, normalise line endings on save.
-- **Smart paste**: by default, strip rich-text formatting when pasting from sources that include it. Browser Preview uses `Ctrl+Shift+V`.
+- **Smart paste**: by default, strip rich-text formatting when pasting from sources that include it.
 - **Sessions**: `File > Save Session…` and `File > Open Session…` preserve the set of open documents and per-document cursor position.
 - **Print**: `Ctrl+P` opens the system print dialog, preserving the editor font and encoding.
 - **Extract to plain text**: `Tools > Save As Plain Text` works for any opened format and is the canonical way to harvest text from a non-editable source.

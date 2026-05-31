@@ -33,7 +33,7 @@ Highlights in 0.1.2 include:
 - Verify Connection, List Models, and Recommend Model actions in AI Connection settings.
 - AI menu status line with plain-language detail (`Ready` or `Needs attention`) and immediate accessible feedback.
 - Optional Ollama cloud key mode over HTTPS (no local Ollama required for cloud endpoint access).
-- Browser Preview with `Ctrl+Shift+V` and a selectable preview browser.
+- In-App Preview and Side-by-Side Preview with a dedicated Focus Preview command.
 - Heading styling tools to apply font family, size, and alignment to current-level or all headings in Markdown/HTML.
 - Heading Organizer (`Ctrl+Alt+Shift+H`) with keyboard-driven heading level changes, section reordering, and accessibility validation.
 - Search menu simplification with replace-all inside the Replace dialog.
@@ -48,6 +48,8 @@ AI quick start:
 3. Enter host/model/key as needed.
 4. Save settings; Quill auto-verifies and updates the AI status line.
 5. Use **List Models** to choose a provider-returned model.
+
+Ollama Cloud onboarding is available in this same flow. If you have an API key, Ollama Cloud offers a free personal-use tier with lower usage limits.
 
 Snippet workflow quick start:
 
