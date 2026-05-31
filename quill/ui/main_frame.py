@@ -283,21 +283,21 @@ from quill.io.pandoc import (
     convert_document_with_pandoc,
 )
 from quill.io.text import read_text_document, write_text_document
-from quill.platform.windows.high_contrast import is_high_contrast_enabled
-from quill.platform.windows.prism_bridge import AnnouncementEngine
-from quill.platform.windows.shell_integration import (
+from quill.platform.high_contrast import is_high_contrast_enabled
+from quill.platform.announce_engine import AnnouncementEngine
+from quill.platform.shell_integration import (
     build_shell_integration_plan,
     install_shell_integration,
     launcher_command,
     remove_shell_integration,
 )
-from quill.platform.windows.sr_announce import (
+from quill.platform.sr_announce import (
     announce,
     enable_transcript_capture,
     set_announce_handler,
     set_transcript_path,
 )
-from quill.platform.windows.sr_detect import detect_screen_reader
+from quill.platform.sr_detect import detect_screen_reader
 from quill.ui.palette import CommandPaletteDialog
 from quill.ui.csv_grid import CsvGridSurface
 from quill.ui.word_view import WordDocumentSurface
