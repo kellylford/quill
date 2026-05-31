@@ -268,7 +268,11 @@ from quill.core.trust import is_trusted_location, load_trusted_locations, save_t
 from quill.core.undo_store import load_undo_history, save_undo_history
 from quill.core.updates import (
     DEFAULT_UPDATE_MANIFEST_URL,
+    URLError,
+    GitHubRelease,
     UpdateManifest,
+    download_release_asset,
+    fetch_latest_release,
     fetch_update_manifest,
     is_newer_version,
 )
@@ -7491,6 +7495,13 @@ class MainFrame:
             auto_updates.SetValue(self.settings.auto_check_updates)
             panel_sizer.Add(auto_updates, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
+            beta_updates = wx.CheckBox(
+                panel, label="Get beta updates (note: these may be unstable)"
+            )
+            beta_updates.SetValue(getattr(self.settings, "beta_updates", False))
+            beta_updates.SetName("Get beta updates, note these may be unstable")
+            panel_sizer.Add(beta_updates, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
             persistent_undo = wx.CheckBox(panel, label="Enable persistent undo")
             persistent_undo.SetValue(self.settings.persistent_undo)
             panel_sizer.Add(persistent_undo, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
@@ -7562,6 +7573,7 @@ class MainFrame:
                     "full_path" if title_path_choice.GetSelection() == 1 else "name"
                 ),
                 "auto_check_updates": bool(auto_updates.GetValue()),
+                "beta_updates": bool(beta_updates.GetValue()),
                 "persistent_undo": bool(persistent_undo.GetValue()),
                 "spellcheck_as_you_type": bool(spellcheck.GetValue()),
                 "intellisense_as_you_type": bool(intellisense.GetValue()),
@@ -7597,6 +7609,7 @@ class MainFrame:
         self.settings.auto_check_updates = bool(
             values.get("auto_check_updates", self.settings.auto_check_updates)
         )
+        self.settings.beta_updates = bool(values.get("beta_updates", self.settings.beta_updates))
         self.settings.persistent_undo = bool(
             values.get("persistent_undo", self.settings.persistent_undo)
         )
@@ -11130,53 +11143,105 @@ class MainFrame:
         wx = self._wx
         current_version = getattr(getattr(self, "_updates", None), "current_version", "")
         if not current_version:
-            current_version = "0.0.0"
+            current_version = __version__ or "0.0.0"
 
-        self._set_status("Checking for updates...")
+        beta = bool(getattr(self.settings, "beta_updates", False))
+        channel = "beta" if beta else "stable"
+        self._set_status(f"Checking for updates ({channel})...")
         try:
-            manifest = fetch_update_manifest(DEFAULT_UPDATE_MANIFEST_URL)
-        except (URLError, ValueError) as error:
+            release = fetch_latest_release(include_prereleases=beta)
+        except (URLError, ValueError, OSError) as error:
             if silent_no_update:
                 self._record_notification(f"Update check failed: {error}", "update")
                 self._set_status("Update check failed")
                 return
             self._show_message_box(
-                f"Could not verify update manifest: {error}",
+                f"Could not check for updates: {error}",
                 "Check for Updates",
                 wx.ICON_ERROR | wx.OK,
             )
             self._set_status("Update check failed")
             self._record_notification("Update check failed", "update")
             return
-        if not is_newer_version(current_version, manifest.version):
+        if release is None or not is_newer_version(current_version, release.version):
+            available = release.version if release is not None else current_version
             if silent_no_update:
                 self._record_notification("Update check found no newer version", "update")
                 return
             self._show_message_box(
-                f"You're up to date.\nCurrent: {current_version}\nAvailable: {manifest.version}",
+                f"You're up to date.\nCurrent: {current_version}\nLatest {channel}: {available}",
                 "Check for Updates",
                 wx.ICON_INFORMATION | wx.OK,
             )
             self._set_status("No update available")
             self._record_notification("Update check found no newer version", "update")
             return
-        notes = manifest.notes or "(no release notes provided)"
+        if silent_no_update:
+            # Auto-update channel: download the new release in the background.
+            self._record_notification(
+                f"Update {release.version} found ({channel}); downloading", "update"
+            )
+            self._download_update_release(release)
+            return
+        notes = release.notes or "(no release notes provided)"
+        beta_tag = "  [beta / prerelease]" if release.prerelease else ""
         result = self._show_message_box(
             (
                 f"Current version: {current_version}\n"
-                f"Available version: {manifest.version}\n\n"
+                f"Available version: {release.version}{beta_tag}\n\n"
                 f"Release notes:\n{notes}\n\n"
-                "Open download page now?\n"
-                "Quill will need to close before you run the installer."
+                "Download this update now?"
             ),
             "Check for Updates",
             wx.ICON_INFORMATION | wx.YES_NO | wx.NO_DEFAULT,
         )
         if result != wx.YES:
             self._set_status("Update deferred")
-            self._record_notification(f"Update {manifest.version} deferred", "update")
+            self._record_notification(f"Update {release.version} deferred", "update")
             return
-        self._open_update_download_flow(manifest)
+        self._download_update_release(release)
+
+    def _download_update_release(self, release: GitHubRelease) -> None:
+        """Auto-download the release asset to <app data>/updates, off-thread.
+
+        If the release has no downloadable asset, open its page instead.
+        """
+        import threading
+
+        from quill.core.paths import app_data_dir
+
+        url = release.download_url or ""
+        if "/releases/download/" not in url:
+            if url and webbrowser.open(url):
+                self._set_status(f"Opened download page for {release.version}")
+                self._record_notification(f"Opened update page for {release.version}", "update")
+            else:
+                self._set_status("No downloadable update asset found")
+            return
+
+        target_dir = app_data_dir() / "updates"
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target = target_dir / (url.rsplit("/", 1)[-1] or f"quill-{release.version}")
+        self._set_status(f"Downloading update {release.version}...")
+
+        def worker() -> None:
+            try:
+                download_release_asset(url, target)
+            except Exception as exc:  # noqa: BLE001
+                self._wx.CallAfter(
+                    self._record_notification, f"Update download failed: {exc}", "update"
+                )
+                self._wx.CallAfter(self._set_status, "Update download failed")
+                return
+            self._wx.CallAfter(
+                self._record_notification,
+                f"Update {release.version} downloaded to {target}",
+                "update",
+            )
+            self._wx.CallAfter(self._set_status, f"Downloaded update {release.version}")
+            self._wx.CallAfter(self._announce, f"Update {release.version} downloaded")
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def _open_update_download_flow(self, manifest: UpdateManifest) -> None:
         wx = self._wx
