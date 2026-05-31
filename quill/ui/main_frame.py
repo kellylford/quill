@@ -371,6 +371,24 @@ def _vibevoice_feature_enabled() -> bool:
     return False
 
 
+def _word_feature_enabled() -> bool:
+    """Structured Word (.docx) view is NOT enabled on this branch.
+
+    Experimental and not ready for users (same policy as VibeVoice): hard-disabled,
+    so Word files always open in the normal text editor and there is no env-var
+    override. Developed on the feature/structured-surfaces branch."""
+    return False
+
+
+def _csv_feature_enabled() -> bool:
+    """CSV grid view is NOT enabled on this branch.
+
+    Experimental and not ready for users (same policy as VibeVoice): hard-disabled,
+    so CSV files always open in the normal text editor and there is no env-var
+    override. Developed on the feature/structured-surfaces branch."""
+    return False
+
+
 @dataclass(slots=True)
 class _DocumentTab:
     panel: object
@@ -6927,7 +6945,7 @@ class MainFrame:
         self._set_status(build_intake_summary(loaded))
 
     def _resolve_csv_open_mode(self, path: Path) -> str:
-        if not self._experimental_structured_surfaces_enabled():
+        if not _csv_feature_enabled():
             return "text"
         mode = getattr(self.settings, "csv_open_mode", "prompt")
         if mode in {"grid", "text"}:
@@ -6935,19 +6953,12 @@ class MainFrame:
         return self._prompt_csv_open_mode(path)
 
     def _resolve_word_open_mode(self, path: Path) -> str:
-        if not self._experimental_structured_surfaces_enabled():
+        if not _word_feature_enabled():
             return "text"
         mode = getattr(self.settings, "word_open_mode", "prompt")
         if mode in {"structured", "text"}:
             return mode
         return self._prompt_word_open_mode(path)
-
-    def _experimental_structured_surfaces_enabled(self) -> bool:
-        # The structured Word view and CSV grid are experimental and NOT enabled
-        # for users (same policy as VibeVoice). Hard-disabled — Word/CSV files
-        # always open in the normal text editor, with no env-var override. The
-        # code stays in the repository for future development on a feature branch.
-        return False
 
     def _prompt_csv_open_mode(self, path: Path) -> str:
         wx = self._wx
