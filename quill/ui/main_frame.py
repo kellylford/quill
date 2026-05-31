@@ -8165,69 +8165,15 @@ class MainFrame:
         )
 
     def show_about_quill(self) -> None:
-        # Render the About content (with all links) as HTML in a WebView, reusing
-        # the document-preview pipeline. Links open in the system browser.
-        wx = self._wx
-        import wx.html2 as webview
-
+        # Reuse the same WebView preview surface as the document preview/chat:
+        # render the About content (with all links) and open links in the browser.
         from quill.core.browser_preview import render_preview_body
-        from quill.ui.preview_dialog import _preview_page
+        from quill.ui.preview_dialog import MarkdownPreviewDialog
 
         body = render_preview_body(self._about_markdown(), "markdown")
-        page = _preview_page("About Quill", body, escape_bridge=True)
-
-        dialog = wx.Dialog(
-            self.frame, title="About Quill",
-            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
-        )
-        dialog.SetName("About Quill")
-        dialog.SetSize((640, 680))
-        outer = wx.BoxSizer(wx.VERTICAL)
-
-        view = webview.WebView.New(dialog)
-        view.SetName("About Quill")
-        try:
-            view.AddScriptMessageHandler("quill")
-            view.Bind(
-                webview.EVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED,
-                lambda _e: dialog.EndModal(wx.ID_CLOSE),
-            )
-        except Exception:  # noqa: BLE001
-            pass
-
-        def _on_nav(event: object) -> None:
-            url = event.GetURL() or ""
-            if url.startswith(("http://", "https://")):
-                # Open external links in the browser, not inside the dialog.
-                event.Veto()
-                import webbrowser
-
-                webbrowser.open(url)
-
-        view.Bind(webview.EVT_WEBVIEW_NAVIGATING, _on_nav)
-        view.SetPage(page, "")
-        outer.Add(view, 1, wx.EXPAND)
-
-        buttons = wx.BoxSizer(wx.HORIZONTAL)
-        buttons.AddStretchSpacer()
-        close = wx.Button(dialog, wx.ID_CLOSE, label="Close")
-        buttons.Add(close, 0)
-        outer.Add(buttons, 0, wx.EXPAND | wx.ALL, 10)
-
-        dialog.SetSizer(outer)
-        close.Bind(wx.EVT_BUTTON, lambda _e: dialog.EndModal(wx.ID_CLOSE))
-        dialog.Bind(
-            wx.EVT_CHAR_HOOK,
-            lambda e: dialog.EndModal(wx.ID_CLOSE)
-            if e.GetKeyCode() == wx.WXK_ESCAPE
-            else e.Skip(),
-        )
-        dialog.CentreOnParent()
-        self._wx.CallAfter(view.SetFocus)
-        try:
-            dialog.ShowModal()
-        finally:
-            dialog.Destroy()
+        MarkdownPreviewDialog(
+            self.frame, "About Quill", body, open_links_externally=True
+        ).show()
         self._set_status("Opened About Quill")
 
     def show_external_tools_dialog(self) -> None:

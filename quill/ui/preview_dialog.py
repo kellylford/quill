@@ -95,12 +95,14 @@ class MarkdownPreviewDialog:
         title: str,
         body_html: str,
         start_anchor: str | None = None,
+        open_links_externally: bool = False,
     ) -> None:
         import wx
 
         self._wx = wx
         self._fallback = None
         self.view = None
+        self._loaded = False
 
         self.dialog = wx.Dialog(
             parent, title=title, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER
@@ -120,6 +122,13 @@ class MarkdownPreviewDialog:
                 )
             except Exception:  # noqa: BLE001
                 pass
+            if open_links_externally:
+                # Guarded so it can't interfere with the initial SetPage render:
+                # only act on user link clicks after the page has loaded.
+                self.view.Bind(
+                    webview.EVT_WEBVIEW_LOADED, lambda _e: setattr(self, "_loaded", True)
+                )
+                self.view.Bind(webview.EVT_WEBVIEW_NAVIGATING, self._on_navigating)
             self.view.SetPage(
                 _preview_page(title, body_html, start_anchor=start_anchor, escape_bridge=True), ""
             )
@@ -139,6 +148,15 @@ class MarkdownPreviewDialog:
         outer.Add(footer, 0, wx.EXPAND | wx.ALL, 10)
         self.dialog.SetSizer(outer)
         self.dialog.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
+
+    def _on_navigating(self, event: object) -> None:
+        url = event.GetURL() or ""
+        # Only divert real link clicks after load; never the initial page load.
+        if self._loaded and url.startswith(("http://", "https://")):
+            event.Veto()
+            import webbrowser
+
+            webbrowser.open(url)
 
     def _on_char_hook(self, event: object) -> None:
         if event.GetKeyCode() == self._wx.WXK_ESCAPE:
