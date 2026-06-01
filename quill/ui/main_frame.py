@@ -734,8 +734,11 @@ class MainFrame:
         self._mark_ring = MarkRing()
         self._location_ring = LocationRing()
         self._region_tracker = RegionTracker()
-        self._focus_regions = ("Editor", "Status Bar")
-        self._active_region_index = 0
+        # The F6 / Shift+F6 region rotation is computed live (see
+        # _current_focus_region_labels) because the side preview pane only
+        # exists while it is split open. _active_region is the tracked label so
+        # we always know where to resume cycling from.
+        self._active_region = "Editor"
         self._persistent_undo_history: list[str] = [self.document.text]
         self._persistent_undo_index = 0
         self._suspend_persistent_undo = False
@@ -7643,9 +7646,7 @@ class MainFrame:
             return
         if key_code == wx.WXK_ESCAPE:
             self.editor.SetFocus()
-            self._active_region_index = 0
-            self._region_tracker.exit("Status Bar")
-            self._region_tracker.enter("Editor")
+            self._set_active_region("Editor")
             announce("Returned to editor")
             return
         if key_code == wx.WXK_TAB:
@@ -11397,25 +11398,93 @@ class MainFrame:
     def navigate_previous_region(self) -> None:
         self._cycle_region(reverse=True)
 
-    def _cycle_region(self, reverse: bool) -> None:
-        if not self._focus_regions:
-            return
-        current = self._active_region_index
-        step = -1 if reverse else 1
-        next_index = (current + step) % len(self._focus_regions)
-        if next_index == current:
-            return
-        current_label = self._focus_regions[current]
-        next_label = self._focus_regions[next_index]
-        self._region_tracker.exit(current_label)
-        self._region_tracker.enter(next_label)
-        self._active_region_index = next_index
-        if next_label == "Editor":
-            self.editor.SetFocus()
-        elif next_label == "Status Bar":
+    def _current_focus_region_labels(self) -> tuple[str, ...]:
+        """Regions reachable with F6 right now.
+
+        Editor and Status Bar are always present. The side preview is only in
+        the rotation while it is split open, so screen reader users can F6 into
+        the rendered Markdown/HTML and use browse-mode heading navigation, then
+        F6 back out."""
+        labels = ["Editor"]
+        tab = self._active_tab()
+        if (
+            tab is not None
+            and getattr(tab, "preview", None) is not None
+            and getattr(tab, "splitter", None) is not None
+            and tab.splitter.IsSplit()
+        ):
+            labels.append("Preview")
+        labels.append("Status Bar")
+        return tuple(labels)
+
+    def _detect_active_region(self, regions: tuple[str, ...]) -> str:
+        """Resolve which region currently holds focus.
+
+        Editor and Status Bar report focus reliably through wx. The preview is
+        a WebView whose native child often hides focus from wx.Window.FindFocus,
+        so for that case we trust the tracked region instead."""
+        tab = self._active_tab()
+        preview_ctrl = (
+            tab.preview.control
+            if tab is not None and getattr(tab, "preview", None) is not None
+            else None
+        )
+        try:
+            win = self._wx.Window.FindFocus()
+        except Exception:
+            win = None
+        while win is not None:
+            if preview_ctrl is not None and win is preview_ctrl and "Preview" in regions:
+                return "Preview"
+            if win is self.statusbar:
+                return "Status Bar"
+            if win is self.editor:
+                return "Editor"
+            get_parent = getattr(win, "GetParent", None)
+            win = get_parent() if callable(get_parent) else None
+        # The WebView preview can hide focus from wx; fall back to the tracked
+        # region so the cycle still resumes from the right place.
+        if self._active_region in regions:
+            return self._active_region
+        return "Editor"
+
+    def _focus_region(self, label: str) -> None:
+        if label == "Status Bar":
             self.statusbar.SetFocus()
-        else:
-            self.frame.SetFocus()
+            return
+        if label == "Preview":
+            tab = self._active_tab()
+            if tab is not None and getattr(tab, "preview", None) is not None:
+                tab.preview.control.SetFocus()
+                return
+        self.editor.SetFocus()
+
+    def _set_active_region(self, label: str) -> None:
+        """Record a region transition for the keyboard-trap audit, keeping the
+        tracker's enter/exit balanced. Routing every focus move through here
+        keeps F6 cycling consistent regardless of how focus got there."""
+        previous = self._active_region
+        if label == previous:
+            return
+        self._region_tracker.exit(previous)
+        self._region_tracker.enter(label)
+        self._active_region = label
+
+    def _cycle_region(self, reverse: bool) -> None:
+        regions = self._current_focus_region_labels()
+        if len(regions) < 2:
+            return
+        current_label = self._detect_active_region(regions)
+        # Reconcile the tracker to where focus actually is before we move, so a
+        # detected drift (e.g. preview just closed) doesn't unbalance the audit.
+        self._active_region = current_label
+        current = regions.index(current_label)
+        step = -1 if reverse else 1
+        next_label = regions[(current + step) % len(regions)]
+        if next_label == current_label:
+            return
+        self._set_active_region(next_label)
+        self._focus_region(next_label)
         self._set_status(f"Focused {next_label} region")
 
     def _outline_entries(self) -> list[OutlineEntry]:
@@ -16365,6 +16434,7 @@ class MainFrame:
             splitter.Unsplit(tab.preview.control)
             self._set_status("Preview hidden")
             self.editor.SetFocus()
+            self._set_active_region("Editor")
             return
         self._show_side_preview_for(tab)
         self._set_status("Preview shown on the right")
@@ -16385,11 +16455,13 @@ class MainFrame:
             self.toggle_side_preview()
         if tab.preview is not None and tab.splitter.IsSplit():
             tab.preview.control.SetFocus()
+            self._set_active_region("Preview")
             self._set_status("Moved to preview. Press Escape or F6 to return to the editor.")
 
     def _focus_editor_from_preview(self) -> None:
         if self.editor is not None:
             self.editor.SetFocus()
+            self._set_active_region("Editor")
             self._set_status("Back in the editor")
 
     def _refresh_side_preview(self) -> None:

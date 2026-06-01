@@ -176,8 +176,7 @@ def _build_frame(text: str, insertion_point: int = 0) -> MainFrame:
     frame._session_menu_ids = {}
     frame._location_ring = LocationRing()
     frame._region_tracker = RegionTracker()
-    frame._focus_regions = ("Editor", "Status Bar")
-    frame._active_region_index = 0
+    frame._active_region = "Editor"
     frame._region_tracker.enter("Editor")
     frame._status_message = "Ready"
     frame._overwrite_mode = False
@@ -212,8 +211,64 @@ def _build_frame(text: str, insertion_point: int = 0) -> MainFrame:
 def test_navigate_next_region_focuses_status_bar() -> None:
     frame = _build_frame("hello")
     frame.navigate_next_region()
-    assert frame._active_region_index == 1
+    assert frame._active_region == "Status Bar"
     assert frame.statusbar.focused is True
+
+
+def _attach_split_preview(frame: MainFrame) -> object:
+    """Give the active tab a visible side-preview pane (split open)."""
+
+    class _PreviewControl:
+        def __init__(self) -> None:
+            self.focused = False
+
+        def SetFocus(self) -> None:
+            self.focused = True
+
+    class _Splitter:
+        def IsSplit(self) -> bool:
+            return True
+
+    preview = type("Preview", (), {"control": _PreviewControl()})()
+    tab = frame._document_tabs[0]
+    tab.preview = preview
+    tab.splitter = _Splitter()
+    return preview.control
+
+
+def test_navigate_next_region_includes_preview_when_split() -> None:
+    frame = _build_frame("# hi")
+    preview_control = _attach_split_preview(frame)
+    # Editor -> Preview -> Status Bar -> Editor
+    frame.navigate_next_region()
+    assert frame._active_region == "Preview"
+    assert preview_control.focused is True
+    frame.navigate_next_region()
+    assert frame._active_region == "Status Bar"
+    assert frame.statusbar.focused is True
+    frame.navigate_next_region()
+    assert frame._active_region == "Editor"
+    assert frame.editor.focused is True
+
+
+def test_navigate_previous_region_reaches_preview() -> None:
+    frame = _build_frame("# hi")
+    preview_control = _attach_split_preview(frame)
+    # Shift+F6 from Editor wraps backwards to Status Bar, then Preview.
+    frame.navigate_previous_region()
+    assert frame._active_region == "Status Bar"
+    frame.navigate_previous_region()
+    assert frame._active_region == "Preview"
+    assert preview_control.focused is True
+
+
+def test_navigate_region_skips_preview_when_hidden() -> None:
+    frame = _build_frame("hello")
+    # No split preview attached: rotation stays Editor <-> Status Bar.
+    frame.navigate_next_region()
+    assert frame._active_region == "Status Bar"
+    frame.navigate_next_region()
+    assert frame._active_region == "Editor"
 
 
 def test_match_bracket_moves_to_match() -> None:
