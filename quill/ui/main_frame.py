@@ -14626,52 +14626,141 @@ class MainFrame:
             dialog.Destroy()
 
     def find_text(self) -> None:
+        self._open_find_replace(replace=False)
+
+    def _open_find_replace(self, replace: bool) -> None:
+        """Open the native (modeless) wx.FindReplaceDialog for Find / Replace.
+
+        Native dialog = reliable buttons, read directly by VoiceOver/NVDA, and
+        the standard Find Next / Replace / Replace All flow. It carries
+        case-sensitive + whole-word + direction; regex and wildcard searches
+        stay available via Find All Matches / Search in Files.
+        """
         wx = self._wx
-        prompt = self._prompt_search("Find")
-        if prompt is None:
-            self._set_status("Find cancelled")
+        existing = getattr(self, "_find_replace_dialog", None)
+        if existing is not None:
+            # Recreate so toggling Find<->Replace works and it returns to front.
+            existing.Destroy()
+            self._find_replace_dialog = None
+        flags = wx.FR_DOWN
+        options = getattr(self, "_last_search_options", None)
+        if options is not None:
+            if getattr(options, "case_sensitive", False):
+                flags |= wx.FR_MATCHCASE
+            if getattr(options, "whole_word", False):
+                flags |= wx.FR_WHOLEWORD
+        data = wx.FindReplaceData(flags)
+        seed = getattr(self, "_last_find_query", "") or (
+            self._search_history[0] if self._search_history else ""
+        )
+        if seed:
+            data.SetFindString(seed)
+        self._find_replace_data = data  # keep a reference alive for the dialog
+        style = wx.FR_REPLACEDIALOG if replace else 0
+        dialog = wx.FindReplaceDialog(self.frame, data, "Replace" if replace else "Find", style)
+        dialog.Bind(wx.EVT_FIND, self._on_find_event)
+        dialog.Bind(wx.EVT_FIND_NEXT, self._on_find_event)
+        dialog.Bind(wx.EVT_FIND_REPLACE, self._on_find_replace_event)
+        dialog.Bind(wx.EVT_FIND_REPLACE_ALL, self._on_find_replace_all_event)
+        dialog.Bind(wx.EVT_FIND_CLOSE, self._on_find_close_event)
+        self._find_replace_dialog = dialog
+        dialog.Show(True)
+        dialog.Raise()
+
+    def _search_options_from_flags(self, flags: int) -> SearchOptions:
+        wx = self._wx
+        return SearchOptions(
+            case_sensitive=bool(flags & wx.FR_MATCHCASE),
+            whole_word=bool(flags & wx.FR_WHOLEWORD),
+            use_regex=False,
+            wildcard=False,
+        )
+
+    def _on_find_event(self, event: object) -> None:
+        query = event.GetFindString()
+        if not query:
             return
-        query, _replacement, options = prompt
+        self._last_find_query = query
+        self._last_search_options = self._search_options_from_flags(event.GetFlags())
+        self._search_history = add_search_term(query)
+        reverse = not bool(event.GetFlags() & self._wx.FR_DOWN)
+        self._find_relative(reverse=reverse)
+
+    def _on_find_replace_event(self, event: object) -> None:
+        query = event.GetFindString()
+        if not query:
+            return
+        options = self._search_options_from_flags(event.GetFlags())
         self._last_find_query = query
         self._last_search_options = options
-        self._search_history = add_search_term(query)
+        self._replace_current_match(query, event.GetReplaceString(), options)
 
+    def _on_find_replace_all_event(self, event: object) -> None:
+        wx = self._wx
+        query = event.GetFindString()
+        if not query:
+            return
+        options = self._search_options_from_flags(event.GetFlags())
+        self._last_find_query = query
+        self._last_search_options = options
+        text = self.editor.GetValue()
+        try:
+            updated_text, replacements = replace_all(text, query, event.GetReplaceString(), options)
+        except SearchPatternError as error:
+            self._show_message_box(str(error), "Replace All", wx.ICON_ERROR | wx.OK)
+            return
+        if replacements == 0:
+            self._set_status("No replacements made")
+            return
+        self._replace_document_text(updated_text)
+        self.document.set_text(updated_text)
+        self._set_status(f"Replaced {replacements} occurrence(s)")
+
+    def _on_find_close_event(self, _event: object) -> None:
+        dialog = getattr(self, "_find_replace_dialog", None)
+        if dialog is not None:
+            dialog.Destroy()
+        self._find_replace_dialog = None
+        self._find_replace_data = None
+
+    def _replace_current_match(self, query: str, replacement: str, options: SearchOptions) -> None:
+        wx = self._wx
         text = self.editor.GetValue()
         try:
             matches = find_matches(text, query, options)
         except SearchPatternError as error:
-            self._show_message_box(str(error), "Find", wx.ICON_ERROR | wx.OK)
-            self._set_status("Find error")
+            self._show_message_box(str(error), "Replace", wx.ICON_ERROR | wx.OK)
             return
         if not matches:
-            self._show_message_box("No matches found.", "Find", wx.ICON_INFORMATION | wx.OK)
-            self._set_status("No matches found")
+            self._set_status("No replacements made")
             return
-
-        cursor = self.editor.GetInsertionPoint()
+        sel_start, sel_end = self.editor.GetSelection()
         chosen: tuple[int, int] | None = None
-        for current_start, current_end in matches:
-            if current_start >= cursor:
-                chosen = (current_start, current_end)
-                break
         wrapped = False
-        if chosen is None and self.settings.wrap_find:
-            chosen = matches[0]
-            wrapped = True
+        if sel_start != sel_end and (sel_start, sel_end) in matches:
+            chosen = (sel_start, sel_end)
+        else:
+            cursor = sel_end if sel_start != sel_end else self.editor.GetInsertionPoint()
+            for start, end in matches:
+                if start >= cursor:
+                    chosen = (start, end)
+                    break
+            if chosen is None and self.settings.wrap_find:
+                chosen = matches[0]
+                wrapped = True
         if chosen is None:
-            self._set_status("No matches found from the current position")
+            self._set_status("No replacements made from the current position")
             return
         start, end = chosen
-        self.editor.SetFocus()
-        self._ensure_extend_selection_anchor()
-        if self._extend_selection_mode and self._extend_selection_anchor is not None:
-            self._move_point(end)
-        else:
-            self.editor.SetSelection(start, end)
-            self.editor.SetInsertionPoint(end)
-        self._last_match = chosen
+        updated_text = text[:start] + replacement + text[end:]
+        self._replace_document_text(updated_text)
+        self.document.set_text(updated_text)
+        replaced_end = start + len(replacement)
+        self.editor.SetSelection(start, replaced_end)
+        self.editor.SetInsertionPoint(replaced_end)
+        self._last_match = (start, replaced_end)
         wrap_suffix = " (wrapped)" if wrapped else ""
-        self._set_status(f"Found at position {start + 1}{wrap_suffix}")
+        self._set_status(f"Replaced at position {start + 1}{wrap_suffix}")
 
     def find_next(self) -> None:
         self._find_relative(reverse=False)
@@ -14748,9 +14837,17 @@ class MainFrame:
     def find_all_matches(self) -> None:
         wx = self._wx
         if not self._last_find_query:
-            self.find_text()
-            if not self._last_find_query:
+            # Rich modal prompt here keeps regex / wildcard search available
+            # (the native Find dialog only does case / whole-word / direction).
+            prompt = self._prompt_search("Find All Matches")
+            if prompt is None:
                 return
+            query, _replacement, options = prompt
+            if not query:
+                return
+            self._last_find_query = query
+            self._last_search_options = options
+            self._search_history = add_search_term(query)
 
         text = self.editor.GetValue()
         try:
@@ -14802,94 +14899,11 @@ class MainFrame:
         self._set_status(f"Found {len(matches)} match(es)")
 
     def replace_text(self) -> None:
-        wx = self._wx
-        prompt = self._prompt_search("Replace", replacement=True)
-        if prompt is None:
-            self._set_status("Replace cancelled")
-            return
-        query, replacement, options = prompt
-        if replacement is None:
-            self._set_status("Replace cancelled")
-            return
-        self._search_history = add_search_term(query)
-        self._last_find_query = query
-        self._last_search_options = options
-
-        text = self.editor.GetValue()
-        try:
-            matches = find_matches(text, query, options)
-        except SearchPatternError as error:
-            self._show_message_box(str(error), "Replace", wx.ICON_ERROR | wx.OK)
-            self._set_status("Replace error")
-            return
-        if not matches:
-            self._set_status("No replacements made")
-            return
-
-        cursor = self.editor.GetInsertionPoint()
-        selected_start, selected_end = self.editor.GetSelection()
-        if selected_start != selected_end:
-            cursor = selected_end
-        chosen: tuple[int, int] | None = None
-        wrapped = False
-        for start, end in matches:
-            if start >= cursor:
-                chosen = (start, end)
-                break
-        if chosen is None and self.settings.wrap_find:
-            chosen = matches[0]
-            wrapped = True
-        if chosen is None:
-            self._set_status("No replacements made from the current position")
-            return
-
-        start, end = chosen
-        updated_text = text[:start] + replacement + text[end:]
-        self._replace_document_text(updated_text)
-        self.document.set_text(updated_text)
-        replaced_end = start + len(replacement)
-        self.editor.SetSelection(start, replaced_end)
-        self.editor.SetInsertionPoint(replaced_end)
-        self._last_match = (start, replaced_end)
-        wrap_suffix = " (wrapped)" if wrapped else ""
-        self._set_status(f"Replaced at position {start + 1}{wrap_suffix}")
+        self._open_find_replace(replace=True)
 
     def replace_all_text(self) -> None:
-        wx = self._wx
-        prompt = self._prompt_search("Replace All", replacement=True)
-        if prompt is None:
-            self._set_status("Replace cancelled")
-            return
-        query, replacement, options = prompt
-        if replacement is None:
-            self._set_status("Replace cancelled")
-            return
-        self._search_history = add_search_term(query)
-        self._last_find_query = query
-        self._last_search_options = options
-
-        text = self.editor.GetValue()
-        try:
-            matches = find_matches(text, query, options)
-        except SearchPatternError as error:
-            self._show_message_box(str(error), "Replace All", wx.ICON_ERROR | wx.OK)
-            self._set_status("Replace error")
-            return
-        if not matches:
-            self._set_status("No replacements made")
-            return
-        try:
-            updated_text, replacements = replace_all(text, query, replacement, options)
-        except SearchPatternError as error:
-            self._show_message_box(str(error), "Replace All", wx.ICON_ERROR | wx.OK)
-            self._set_status("Replace error")
-            return
-        if replacements == 0:
-            self._set_status("No replacements made")
-            return
-        self._replace_document_text(updated_text)
-        self.document.set_text(updated_text)
-        self._set_status(f"Replaced {replacements} occurrence(s)")
+        # The native Replace dialog has its own Replace All button.
+        self._open_find_replace(replace=True)
 
     def _prompt_file_search(self, *, replace: bool) -> _FileSearchRequest | None:
         wx = self._wx

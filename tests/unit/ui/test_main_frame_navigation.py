@@ -411,7 +411,9 @@ def test_confirm_discard_changes_accepts_reload_only() -> None:
     assert frame._confirm_discard_changes() is True
 
 
-def test_show_startup_wizard_page_uses_rendered_html_preview(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_show_startup_wizard_page_uses_rendered_html_preview(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     frame = MainFrame.__new__(MainFrame)
     frame.frame = _Frame()
     frame.settings = type("Settings", (), {"bw_provider_id": "", "bw_speech_model_id": ""})()
@@ -903,31 +905,48 @@ def test_sort_lines_descending_uses_undo_preserving_replace_path() -> None:
     assert frame.editor.GetValue() == "c\nb\na\n"
 
 
-def test_replace_all_uses_undo_preserving_replace_path(monkeypatch: pytest.MonkeyPatch) -> None:
+class _FindEvent:
+    """Stand-in for wx FindDialogEvent (GetFindString/GetReplaceString/GetFlags)."""
+
+    def __init__(self, find: str, replace: str = "", flags: int = 1) -> None:
+        self._find = find
+        self._replace = replace
+        self._flags = flags
+
+    def GetFindString(self) -> str:
+        return self._find
+
+    def GetReplaceString(self) -> str:
+        return self._replace
+
+    def GetFlags(self) -> int:
+        return self._flags
+
+
+_FIND_WX = type(
+    "WX",
+    (),
+    {"FR_DOWN": 1, "FR_WHOLEWORD": 2, "FR_MATCHCASE": 4, "ICON_ERROR": 0, "OK": 0},
+)
+
+
+def test_replace_all_uses_undo_preserving_replace_path() -> None:
     frame = _build_frame("alpha beta alpha", insertion_point=0)
-    frame._wx = type("WX", (), {"ICON_QUESTION": 0, "YES_NO": 0, "NO_DEFAULT": 0, "YES": 1})()
-    frame._prompt_search = lambda _title, replacement=False: (  # type: ignore[method-assign]
-        "alpha",
-        "omega",
-        SearchOptions(),
-    )
+    frame._wx = _FIND_WX()
     frame._show_message_box = lambda *_args, **_kwargs: 1  # type: ignore[method-assign]
 
-    frame.replace_all_text()
+    # Native Replace dialog "Replace All" button fires EVT_FIND_REPLACE_ALL.
+    frame._on_find_replace_all_event(_FindEvent("alpha", "omega"))
 
     assert frame.editor.GetValue() == "omega beta omega"
 
 
 def test_replace_text_replaces_next_match() -> None:
     frame = _build_frame("alpha beta alpha", insertion_point=0)
-    frame._wx = type("WX", (), {"ICON_ERROR": 0, "OK": 0})()
-    frame._prompt_search = lambda _title, replacement=False: (  # type: ignore[method-assign]
-        "alpha",
-        "omega",
-        SearchOptions(),
-    )
+    frame._wx = _FIND_WX()
 
-    frame.replace_text()
+    # Native Replace dialog "Replace" button fires EVT_FIND_REPLACE.
+    frame._on_find_replace_event(_FindEvent("alpha", "omega"))
 
     assert frame.editor.GetValue() == "omega beta alpha"
     assert frame._status_message == "Replaced at position 1"
@@ -935,15 +954,10 @@ def test_replace_text_replaces_next_match() -> None:
 
 def test_replace_text_wraps_when_enabled() -> None:
     frame = _build_frame("alpha beta alpha", insertion_point=len("alpha beta alpha"))
-    frame._wx = type("WX", (), {"ICON_ERROR": 0, "OK": 0})()
+    frame._wx = _FIND_WX()
     frame.settings.wrap_find = True
-    frame._prompt_search = lambda _title, replacement=False: (  # type: ignore[method-assign]
-        "alpha",
-        "omega",
-        SearchOptions(),
-    )
 
-    frame.replace_text()
+    frame._on_find_replace_event(_FindEvent("alpha", "omega"))
 
     assert frame.editor.GetValue() == "omega beta alpha"
     assert frame._status_message.endswith("(wrapped)")
@@ -1108,20 +1122,16 @@ def test_find_next_extends_selection_when_mode_enabled() -> None:
 
 def test_find_text_sets_anchor_and_extends_when_mode_is_on() -> None:
     frame = _build_frame("alpha beta alpha", insertion_point=6)
-    frame._wx = type("WX", (), {"ICON_ERROR": 0, "OK": 0, "ICON_INFORMATION": 0})()
+    frame._wx = _FIND_WX()
     frame.toggle_extend_selection_mode(True)
     frame._extend_selection_anchor = None
-    frame._prompt_search = lambda _title, replacement=False: (  # type: ignore[method-assign]
-        "alpha",
-        None,
-        SearchOptions(),
-    )
 
-    frame.find_text()
+    # Native Find dialog Find / Find Next fires EVT_FIND / EVT_FIND_NEXT.
+    frame._on_find_event(_FindEvent("alpha"))
 
     assert frame._extend_selection_anchor == 6
     assert frame.editor.selection == (6, 16)
-    assert frame._status_message == "Found at position 12"
+    assert frame._status_message == "Found next at position 12"
 
 
 def test_prompt_search_defers_focus_and_wires_escape() -> None:
@@ -1357,200 +1367,80 @@ def test_restore_backup_loads_selected_snapshot(
 
 def test_prompt_untrusted_location_uses_single_checkbox_dialog() -> None:
     frame = _build_frame("hello")
-
-    class _CheckBox:
-        def __init__(self, _parent: object, label: str) -> None:
-            self.label = label
-            self.value = True
-
-        def GetValue(self) -> bool:
-            return self.value
-
-    class _Panel:
-        def __init__(self, _parent: object) -> None:
-            return None
-
-        def SetSizer(self, _sizer: object) -> None:
-            return None
-
-    class _BoxSizer:
-        def __init__(self, _orientation: int) -> None:
-            return None
-
-        def Add(self, _item: object, *_args: object, **_kwargs: object) -> None:
-            return None
-
-    class _StaticText:
-        def __init__(self, _parent: object, label: str) -> None:
-            self.label = label
-
-    class _Dialog:
-        def __init__(self, _parent: object, title: str) -> None:
-            self.title = title
-            self.affirmative_id: int | None = None
-            self.escape_id: int | None = None
-            self.show_count = 0
-
-        def CreateButtonSizer(self, _style: int) -> object:
-            return object()
-
-        def SetAffirmativeId(self, value: int) -> None:
-            self.affirmative_id = value
-
-        def SetEscapeId(self, value: int) -> None:
-            self.escape_id = value
-
-        def ShowModal(self) -> int:
-            self.show_count += 1
-            return 1
-
-    wx = type(
-        "WX",
-        (),
-        {
-            "Dialog": _Dialog,
-            "Panel": _Panel,
-            "BoxSizer": _BoxSizer,
-            "StaticText": _StaticText,
-            "CheckBox": _CheckBox,
-            "VERTICAL": 1,
-            "ALL": 2,
-            "EXPAND": 4,
-            "LEFT": 8,
-            "RIGHT": 16,
-            "BOTTOM": 32,
-            "ALIGN_RIGHT": 64,
-            "OK": 1,
-            "CANCEL": 2,
-            "ID_OK": 1,
-            "ID_CANCEL": 0,
-        },
-    )()
-    frame._wx = wx
-
-    result = frame._prompt_untrusted_location(Path(r"C:\Users\Jeff\Notes"))
-
-    assert result is True
-
-
-def test_prompt_unsaved_changes_space_activates_focused_dont_save() -> None:
-    frame = _build_frame("hello")
     captured: dict[str, object] = {}
 
-    class _KeyEvent:
-        def __init__(self, key_code: int) -> None:
-            self._key_code = key_code
-            self.skipped = False
+    class _RichMessageDialog:
+        def __init__(self, _parent: object, message: str, title: str, _style: int) -> None:
+            captured["message"] = message
+            captured["title"] = title
 
-        def GetKeyCode(self) -> int:
-            return self._key_code
+        def SetOKCancelLabels(self, ok: str, cancel: str) -> bool:
+            captured["labels"] = (ok, cancel)
+            return True
 
-        def Skip(self) -> None:
-            self.skipped = True
+        def ShowCheckBox(self, label: str) -> None:
+            captured["checkbox"] = label
 
-    class _Dialog:
-        def __init__(self, _parent: object, title: str) -> None:
-            self.title = title
-            self.handlers: dict[int, object] = {}
-            self.buttons: list[object] = []
-            self.focused: object | None = None
-            self.modal_result: int | None = None
-            captured["dialog"] = self
-
-        def Bind(self, event: int, handler: object) -> None:
-            self.handlers[event] = handler
-
-        def EndModal(self, result: int) -> None:
-            self.modal_result = result
-
-        def SetAffirmativeId(self, _value: int) -> None:
-            return None
-
-        def SetEscapeId(self, _value: int) -> None:
-            return None
-
-        def SetSizerAndFit(self, _sizer: object) -> None:
-            return None
-
-        def FindFocus(self) -> object | None:
-            return self.focused
+        def IsCheckBoxChecked(self) -> bool:
+            return True
 
         def Destroy(self) -> None:
             return None
 
-    class _Panel:
-        def __init__(self, parent: object) -> None:
-            self.dialog = parent
+    wx = type(
+        "WX",
+        (),
+        {
+            "RichMessageDialog": _RichMessageDialog,
+            "OK": 1,
+            "CANCEL": 2,
+            "ICON_WARNING": 4,
+            "ID_OK": 1,
+        },
+    )()
+    frame._wx = wx
+    frame._show_modal_dialog = lambda _dialog, _label: wx.ID_OK  # type: ignore[method-assign]
 
-        def SetSizer(self, _sizer: object) -> None:
-            return None
+    result = frame._prompt_untrusted_location(Path(r"C:\Users\Jeff\Notes"))
 
-    class _Button:
-        def __init__(self, parent: object, id: int, label: str) -> None:
-            self.id = id
-            self.label = label
-            self.handlers: dict[int, object] = {}
-            parent.dialog.buttons.append(self)
+    assert result is True
+    assert captured["checkbox"] == "Trust this folder for future opens"
 
-        def Bind(self, event: int, handler: object) -> None:
-            self.handlers[event] = handler
 
-        def SetDefault(self) -> None:
-            return None
+def test_prompt_unsaved_changes_action_uses_native_message_dialog() -> None:
+    frame = _build_frame("hello")
+    captured: dict[str, object] = {}
 
-    class _StaticText:
-        def __init__(self, _parent: object, label: str) -> None:
-            self.label = label
-            return None
+    class _MessageDialog:
+        def __init__(self, _parent: object, message: str, title: str, style: int) -> None:
+            captured["message"] = message
+            captured["title"] = title
+            captured["style"] = style
 
-    class _BoxSizer:
-        def __init__(self, _orientation: int) -> None:
-            return None
+        def SetYesNoCancelLabels(self, yes: str, no: str, cancel: str) -> bool:
+            captured["labels"] = (yes, no, cancel)
+            return True
 
-        def Add(self, _item: object, *_args: object, **_kwargs: object) -> None:
-            return None
-
-        def AddStretchSpacer(self, _prop: int) -> None:
+        def Destroy(self) -> None:
             return None
 
     wx = type(
         "WX",
         (),
         {
-            "Dialog": _Dialog,
-            "Panel": _Panel,
-            "BoxSizer": _BoxSizer,
-            "Button": _Button,
-            "StaticText": _StaticText,
-            "VERTICAL": 1,
-            "HORIZONTAL": 2,
-            "ALL": 4,
-            "EXPAND": 8,
-            "LEFT": 16,
-            "RIGHT": 32,
-            "BOTTOM": 64,
+            "MessageDialog": _MessageDialog,
+            "YES_NO": 4,
+            "CANCEL": 8,
+            "ICON_WARNING": 16,
             "ID_YES": 1,
             "ID_NO": 2,
             "ID_CANCEL": 0,
-            "EVT_BUTTON": 100,
-            "EVT_CHAR_HOOK": 101,
-            "WXK_ESCAPE": 27,
-            "WXK_RETURN": 13,
-            "WXK_NUMPAD_ENTER": 312,
-            "WXK_SPACE": 32,
         },
     )()
     frame._wx = wx
-
-    def _show_modal(dialog: object, _label: str) -> int:
-        dont_save = next(
-            button for button in dialog.buttons if getattr(button, "id", None) == wx.ID_NO
-        )
-        dialog.focused = dont_save
-        dialog.handlers[wx.EVT_CHAR_HOOK](_KeyEvent(wx.WXK_SPACE))
-        return dialog.modal_result
-
-    frame._show_modal_dialog = _show_modal  # type: ignore[method-assign]
+    # Native wx.MessageDialog handles keys itself; we only own the labels and
+    # that ShowModal's result is returned unchanged.
+    frame._show_modal_dialog = lambda _dialog, _label: wx.ID_NO  # type: ignore[method-assign]
 
     result = frame._prompt_unsaved_changes_action(
         "Unsaved changes",
@@ -1560,6 +1450,7 @@ def test_prompt_unsaved_changes_space_activates_focused_dont_save() -> None:
     )
 
     assert result == wx.ID_NO
+    assert captured["labels"] == ("Save", "Don't Save", "Cancel")
 
 
 def test_prompt_table_shape_reprompts_invalid_values() -> None:
