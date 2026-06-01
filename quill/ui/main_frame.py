@@ -346,7 +346,6 @@ from quill.core.undo_store import load_undo_history, save_undo_history
 from quill.core.updates import (
     GitHubRelease,
     UpdateManifest,
-    URLError,
     download_release_asset,
     fetch_latest_release,
     fetch_releases,
