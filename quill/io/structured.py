@@ -17,6 +17,7 @@ from xml.etree.ElementTree import Element
 
 from quill.core.document import Document
 from quill.core.epub import load_epub_book, render_epub_book
+from quill.core.safe_archive import open_zip
 from quill.core.safe_xml import fromstring as safe_xml_fromstring
 from quill.io.markitdown_bridge import convert_with_markitdown
 from quill.io.pages import read_pages_document
@@ -411,7 +412,7 @@ def _format_sqlite(path: Path) -> str:
 
 
 def _format_docx(path: Path) -> str:
-    with zipfile.ZipFile(path) as archive:
+    with open_zip(path) as archive:
         xml_bytes = archive.read("word/document.xml")
     root = safe_xml_fromstring(xml_bytes.decode("utf-8"))
     namespace = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
@@ -434,7 +435,7 @@ def _format_docx(path: Path) -> str:
 
 
 def _format_odt(path: Path) -> str:
-    with zipfile.ZipFile(path) as archive:
+    with open_zip(path) as archive:
         content = archive.read("content.xml").decode("utf-8", errors="ignore")
     text = _strip_markup(content)
     lines = ["# ODT Extract", "", text or "(no extractable text)"]
@@ -466,7 +467,7 @@ _PPTX_NAMESPACES = {
 
 
 def _format_pptx(path: Path) -> str:
-    with zipfile.ZipFile(path) as archive:
+    with open_zip(path) as archive:
         slide_paths = sorted(
             [
                 name

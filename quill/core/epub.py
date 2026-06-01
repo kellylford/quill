@@ -7,6 +7,7 @@ import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from quill.core.safe_archive import open_zip
 from quill.core.safe_xml import UnsafeXMLError
 from quill.core.safe_xml import fromstring as safe_xml_fromstring
 
@@ -35,7 +36,7 @@ class EpubBook:
 
 
 def load_epub_book(path: Path) -> EpubBook:
-    with zipfile.ZipFile(path) as archive:
+    with open_zip(path) as archive:
         chapter_files = _chapter_files(archive)
         toc = _read_toc(archive)
         title = _read_book_title(archive) or path.stem
