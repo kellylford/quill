@@ -931,9 +931,13 @@ storage writers; tests prove traversal is blocked.</td>
 <td>Whitelist OCR language codes</td>
 <td>Security</td>
 <td>S</td>
-<td>Todo</td>
-<td>Only known language codes reach Tesseract; invalid codes are
-rejected with a clear message; test included.</td>
+<td>Done</td>
+<td><code>validate_ocr_language</code> enforces the Tesseract code
+grammar (lowercase ISO segments with optional script suffix, joined by
+<code>+</code>); option-injection like <code>--config</code> or
+<code>-psm</code> and any malformed code is rejected with a clear
+message before reaching the CLI; tests cover accepted and rejected
+shapes.</td>
 </tr>
 <tr>
 <td>SEC-5</td>

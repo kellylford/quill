@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 import time
@@ -20,6 +21,38 @@ class OcrCancelledError(RuntimeError):
     pass
 
 
+class OcrLanguageError(ValueError):
+    """Raised when a requested OCR language code is not a valid Tesseract code."""
+
+
+# Tesseract language codes are lowercase ISO 639-2/3 codes, optionally with a
+# script suffix (chi_sim, aze_cyrl), and may be combined with '+' (eng+fra).
+# Validating against this grammar rejects option injection like '-psm' or
+# '--config' and any other unexpected input before it reaches the CLI.
+_LANGUAGE_SEGMENT = re.compile(r"^[a-z]{2,4}(_[a-z]+)*$")
+_MAX_LANGUAGE_SEGMENTS = 8
+
+
+def validate_ocr_language(language: str) -> str:
+    """Return a normalized, validated Tesseract language string.
+
+    Raises OcrLanguageError if any segment is not a well-formed language code.
+    """
+    cleaned = language.strip()
+    if not cleaned:
+        raise OcrLanguageError("OCR language cannot be empty.")
+    segments = cleaned.split("+")
+    if len(segments) > _MAX_LANGUAGE_SEGMENTS:
+        raise OcrLanguageError("Too many OCR language codes requested.")
+    for segment in segments:
+        if not _LANGUAGE_SEGMENT.match(segment):
+            raise OcrLanguageError(
+                f"Unknown OCR language code: {segment!r}. "
+                "Use Tesseract codes such as 'eng', 'fra', or 'eng+fra'."
+            )
+    return "+".join(segments)
+
+
 @dataclass(slots=True)
 class OcrResult:
     text: str
@@ -38,7 +71,7 @@ def ocr_image(
         raise OcrUnavailableError("Tesseract OCR is not installed or not on PATH.")
     command = [executable, str(path), "stdout"]
     if language:
-        command.extend(["-l", language])
+        command.extend(["-l", validate_ocr_language(language)])
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
