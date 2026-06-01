@@ -838,18 +838,62 @@ class MainFrame:
             self._set_status(f"Detected screen reader: {detection.name}. Adaptive hints enabled.")
         elif not self._safe_mode:
             self._set_status("Ready. Tip: press Ctrl+Shift+P for Command Palette.")
-        if getattr(self, "_first_run_trust_consent_prompt", False):
-            accepted = self._show_trust_consent_onboarding(force=False)
-            self._first_run_trust_consent_prompt = False
-            if not accepted:
-                self._set_status("Startup consent declined. Quill is closing.")
-                self.frame.Close()
-                return
-        self._offer_crash_recovery()
-        self._maybe_run_first_run_onboarding()
-        self._maybe_start_watch_folder()
+        # A first-run / onboarding step must NEVER take down the whole app on
+        # launch. Previously an exception here propagated out of the wx CallAfter
+        # handler and the app "crashed right away" after the startup tip, with
+        # nothing in the log. Now we isolate each step, record the full
+        # traceback, and keep Quill open. (Tracked for a proper fix in #73.)
+        try:
+            if getattr(self, "_first_run_trust_consent_prompt", False):
+                accepted = self._show_trust_consent_onboarding(force=False)
+                self._first_run_trust_consent_prompt = False
+                if not accepted:
+                    self._set_status("Startup consent declined. Quill is closing.")
+                    self.frame.Close()
+                    return
+        except Exception:
+            self._report_startup_task_failure("trust-consent onboarding")
+        for label, task in (
+            ("crash recovery", self._offer_crash_recovery),
+            ("first-run onboarding", self._maybe_run_first_run_onboarding),
+            ("watch-folder startup", self._maybe_start_watch_folder),
+        ):
+            try:
+                task()
+            except Exception:
+                self._report_startup_task_failure(label)
         if getattr(self.settings, "auto_check_updates", False) and not self._safe_mode:
-            self.check_for_updates(silent_no_update=True)
+            try:
+                self.check_for_updates(silent_no_update=True)
+            except Exception:
+                self._report_startup_task_failure("update check")
+
+    def _report_startup_task_failure(self, task_label: str) -> None:
+        """Log a startup task's traceback to a findable file and keep going.
+
+        Startup runs inside a wx CallAfter, where an unhandled exception kills
+        the app with no visible error. We persist the traceback so the failing
+        step can be diagnosed, and surface a non-fatal status instead.
+        """
+        import logging
+        import traceback
+
+        logging.getLogger(__name__).exception("Startup task failed: %s", task_label)
+        try:
+            from quill.core.paths import app_data_dir
+
+            log_path = app_data_dir() / "logs" / "startup-errors.log"
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            with log_path.open("a", encoding="utf-8") as handle:
+                handle.write(f"--- startup task failed: {task_label} ---\n")
+                handle.write(traceback.format_exc())
+                handle.write("\n")
+        except Exception:
+            pass
+        self._set_status(
+            f"Startup step '{task_label}' could not run; Quill is ready. "
+            "See logs/startup-errors.log."
+        )
 
     def _apply_startup_document_preference(self) -> None:
         if not self.settings.start_with_no_document_open:
