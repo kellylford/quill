@@ -219,7 +219,7 @@ Quill’s feature-profile system is a first-class product surface, not a cosmeti
 Search and Unicode cleanup are first-class accessibility features, not power-user extras.
 
 - **Search modes**: Find, Find All, Replace, Replace All, Find in Selection, and saved search recipes support plain text, whole word, regular expression, and wildcard modes.
-- **Regex helper**: a screen-reader-friendly helper surfaces common tokens, explanations, and try-on-document previews.
+- **Regex helper**: a screen-reader-friendly helper provides recipe presets, plain-language explanations, editable sample text, live match previews, and copy-pattern actions.
 - **Plain-English errors**: regex errors are reported in single-sentence form with character positions and no traceback.
 - **Match review**: users can review captured groups for a match, including named groups.
 - **Replace preview**: Replace All shows a preview before applying, with undo as one step.
@@ -228,6 +228,10 @@ Search and Unicode cleanup are first-class accessibility features, not power-use
 - **Character Inspector**: reports the character under the cursor by name, code point, category, and common encodings.
 - **Invisible character view**: users can switch to an inspection view that describes invisible characters textually.
 - **Unicode cleanup**: normalization and cleanup commands remove or rewrite common noisy characters with a preview first.
+
+Menu and window stability requirement:
+
+- **Menu mutation guard**: while native menus are open, Quill defers menu label/check/enable mutations and applies them on menu close. This avoids crash-prone churn during rapid keyboard menu navigation.
 
 ### 5.1e Feature flags and profiles
 

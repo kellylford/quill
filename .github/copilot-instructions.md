@@ -68,3 +68,21 @@ Persistence model in the PRD:
 - Keep storage robust: schema-validated JSON, `.bak`/recovery behavior, atomic writes on all persistent stores.
 - Type and lint policy from PRD: ruff formatting/lint, strict mypy in `core` + `io`, gradual typing in `ui`.
 - Security/privacy defaults are non-negotiable: DPAPI for secrets, no document content in logs, explicit consent gate before outbound document data.
+
+## Dialog, Window, and Accessibility Lessons
+
+Apply these rules to every UI change in `quill/ui/*`:
+
+- Keep parent ownership consistent in dialog layout trees.
+	- If controls are parented to `panel = wx.Panel(dialog)`, keep that control tree in a panel sizer and attach the panel to an outer dialog sizer.
+	- Do not attach the same root sizer to both panel and dialog.
+- Prefer stock controls for instructional content users must read.
+	- Use `wx.TextCtrl(..., wx.TE_MULTILINE | wx.TE_READONLY)` or list controls for screen-reader review, not transient message boxes when content is long.
+- Avoid mutating menu items while menus are open.
+	- Defer menu label/enable/check updates until menu close to avoid focus churn and native menu instability under rapid arrow navigation.
+- Treat `wx.CallAfter` as optional in tests and fallback environments.
+	- Guard with `getattr(wx, "CallAfter", None)` and provide a synchronous fallback where safe.
+- Keep dialog focus behavior predictable.
+	- Set explicit default buttons, bind Escape/Close consistently, and return focus to editor after modal close.
+- Add focused tests for dialog and menu regressions.
+	- Include at least one behavior test (or source-contract test when UI stubs are limited) per bug class.

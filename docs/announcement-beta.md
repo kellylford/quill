@@ -71,6 +71,7 @@ Quill supports both simple and advanced search flows:
 - find, find next, find previous
 - replace and replace all
 - wildcard and regex search modes
+- redesigned accessible Regex Helper with presets, plain-language explanations, sample-text preview, and copy-pattern workflow
 - search history and repeated search workflows
 - find all matches summary reporting
 
@@ -228,6 +229,7 @@ Accessibility is a first-class surface throughout Quill:
 - status bar as an interactive control surface
 - clear state messages for long-running or risky actions
 - discoverable help, what-can-I-do-here guidance, and keyboard references
+- hardened Help menu navigation by deferring menu-state mutations until menu close during rapid keyboard traversal
 
 ### Dictation and voice workflows
 

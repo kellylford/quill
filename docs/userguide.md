@@ -547,6 +547,16 @@ The key design choice is how GLOW feels inside Quill. Audit results open as read
 
 These are especially valuable in large cleanup jobs and repetitive editing workflows.
 
+Regex Helper now opens as a full accessible dialog rather than a short informational prompt. It includes:
+
+- recipe presets for common patterns
+- plain-language explanation for the selected pattern
+- editable sample text for safe try-before-use checks
+- preview results with match offsets and snippets
+- one-step copy pattern action for Find and Replace workflows
+
+This keeps regex learning and validation in a keyboard-first, screen-reader-friendly surface.
+
 The new external-tools surface deserves a special note. Quill does not treat optional tools as hidden technical chores. **External Tools and Format Support...** explains what each supported helper unlocks, whether Quill can already see it, and what the best first touch point is. If Pandoc is installed or bundled, **Pandoc Conversion Wizard...** can turn supported source files into Markdown, HTML, or plain text tabs that open directly in Quill. That makes Quill feel less like a dead-end editor and more like a calm bridge into real-world document cleanup and GLOW-oriented handoff work.
 
 #### Compare documents
@@ -613,6 +623,8 @@ The **Help** menu is where Quill becomes a guide.
 - **Open Third-Party Notices** opens a full notices document with dependency tables and bundled license texts.
 
 If you only remember one thing about Help, remember this: it is a working surface, not a dead-end menu. The welcome guide teaches the basics, the keyboard reference reflects your live bindings, the user guide gives the full map, diagnostics package the current state, and the bug-report action turns that state into a support-ready starting point.
+
+Menu stability note: Quill now defers internal menu-state updates while native menus are open, then applies them after menu close. This prevents rapid-arrow navigation churn and keeps Help menu navigation stable.
 
 ### How to report a problem from inside Quill
 

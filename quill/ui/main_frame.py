@@ -221,11 +221,13 @@ from quill.core.notifications import add_notification, clear_notifications, load
 from quill.core.onboarding import (
     load_assistant_onboarding_complete,
     load_onboarding_complete,
+    load_startup_wizard_prompt_suppressed,
     load_speech_onboarding_complete,
     load_trust_consent_complete,
     load_watch_folder_onboarding_complete,
     mark_assistant_onboarding_complete,
     mark_onboarding_complete,
+    mark_startup_wizard_prompt_suppressed,
     mark_speech_onboarding_complete,
     mark_trust_consent_complete,
     mark_watch_folder_onboarding_complete,
@@ -724,6 +726,8 @@ class MainFrame:
         self._browse_cache_build_generation = 0
         self._browse_cache_build_thread: threading.Thread | None = None
         self._quill_key_mode_active = False
+        self._quill_key_prefix_pending = False
+        self._quill_key_prefix_started_at = 0.0
         self._quill_key_mode_started_at = 0.0
         self._quill_key_mode_timeout_seconds = 1.5
         self._notifications = [] if safe_mode else load_notifications()
@@ -803,6 +807,8 @@ class MainFrame:
         self._recent_menu_ids: dict[int, Path] = {}
         self._recent_session_menu_ids: dict[int, Path] = {}
         self._session_menu_ids: dict[int, int] = {}
+        self._menu_open_depth = 0
+        self._pending_menu_refresh = False
         self._recent_sessions = [] if safe_mode else load_recent_sessions()
 
         self.frame = wx.Frame(None, title="Untitled - Quill", size=(1000, 700))
@@ -4924,6 +4930,12 @@ class MainFrame:
             self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self._on_notebook_page_changed)
             self.notebook.Bind(wx.EVT_CONTEXT_MENU, self._on_notebook_context_menu)
             self.notebook.Bind(wx.EVT_KEY_DOWN, self._on_notebook_key_down)
+        menu_open_event = getattr(wx, "EVT_MENU_OPEN", None)
+        if menu_open_event is not None:
+            self.frame.Bind(menu_open_event, self._on_menu_open)
+        menu_close_event = getattr(wx, "EVT_MENU_CLOSE", None)
+        if menu_close_event is not None:
+            self.frame.Bind(menu_close_event, self._on_menu_close)
         self.frame.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
         self.statusbar.Bind(wx.EVT_CONTEXT_MENU, self._on_statusbar_context_menu)
         self.frame.Bind(wx.EVT_CONTEXT_MENU, self._on_frame_context_menu)
@@ -4932,6 +4944,44 @@ class MainFrame:
         self.frame.Bind(wx.EVT_HOTKEY, self._on_global_hotkey)
         self._apply_soft_wrap(self.settings.soft_wrap)
 
+    def _menu_updates_allowed(self) -> bool:
+        return int(getattr(self, "_menu_open_depth", 0)) <= 0
+
+    def _request_menu_refresh(self) -> None:
+        self._pending_menu_refresh = True
+        if not self._menu_updates_allowed():
+            return
+        call_after = getattr(self._wx, "CallAfter", None)
+        if callable(call_after):
+            call_after(self._flush_pending_menu_refresh)
+            return
+        self._flush_pending_menu_refresh()
+
+    def _flush_pending_menu_refresh(self) -> None:
+        if not getattr(self, "_pending_menu_refresh", False):
+            return
+        if not self._menu_updates_allowed():
+            return
+        self._pending_menu_refresh = False
+        self._refresh_contextual_menu_items()
+        self._sync_announcement_backend_menu_state()
+        self._apply_watch_folder_menu_state()
+        self._apply_ai_menu_enabled()
+
+    def _on_menu_open(self, event: object) -> None:
+        self._menu_open_depth += 1
+        skip = getattr(event, "Skip", None)
+        if callable(skip):
+            skip()
+
+    def _on_menu_close(self, event: object) -> None:
+        self._menu_open_depth = max(0, self._menu_open_depth - 1)
+        if self._menu_open_depth == 0 and getattr(self, "_pending_menu_refresh", False):
+            self._request_menu_refresh()
+        skip = getattr(event, "Skip", None)
+        if callable(skip):
+            skip()
+
     def _bind_editor_events(self, editor: object) -> None:
         binder = getattr(editor, "bind_editor_events", None)
         if callable(binder):
@@ -4939,11 +4989,27 @@ class MainFrame:
             return
         wx = self._wx
         editor.Bind(wx.EVT_TEXT, self._on_text_changed)
+        editor.Bind(wx.EVT_CHAR_HOOK, self._on_editor_char_hook)
         editor.Bind(wx.EVT_KEY_DOWN, self._on_editor_key_down)
         editor.Bind(wx.EVT_KEY_UP, self._on_editor_key_up)
         editor.Bind(wx.EVT_LEFT_UP, self._on_editor_caret_activity)
         editor.Bind(wx.EVT_SET_FOCUS, self._on_editor_caret_activity)
         editor.Bind(wx.EVT_CONTEXT_MENU, self._on_editor_context_menu)
+
+    def _on_editor_char_hook(self, event: object) -> None:
+        wx = self._wx
+        if (
+            event.ControlDown()
+            and not event.AltDown()
+            and not event.ShiftDown()
+            and event.GetKeyCode() in (ord("K"), ord("k"), 11)
+        ):
+            self.insert_link()
+            return
+        if event.GetKeyCode() == wx.WXK_ESCAPE and self._extend_selection_mode:
+            event.Skip()
+            return
+        event.Skip()
 
     def _create_document_tab(self, document: Document, select: bool = True) -> int:
         wx = self._wx
@@ -5050,17 +5116,73 @@ class MainFrame:
         event.Skip()
 
     def _on_char_hook(self, event: object) -> None:
+        key_code = event.GetKeyCode()
+        if (
+            event.ControlDown()
+            and not event.AltDown()
+            and not event.ShiftDown()
+            and key_code in (ord("K"), ord("k"), 11)
+            and self._active_tab() is not None
+        ):
+            self.insert_link()
+            return
+        if not self._focus_is_in_document_surface():
+            # Modal dialogs (including WebView-hosted HTML surfaces) should
+            # receive keys directly. If browse mode was active in the editor,
+            # drop it silently when focus leaves the document surface.
+            self._quill_key_mode_active = False
+            self._quill_key_prefix_pending = False
+            self._quill_key_prefix_started_at = 0.0
+            self._quill_key_mode_started_at = 0.0
+            event.Skip()
+            return
         if self._handle_quill_key_mode_event(event):
             return
         event.Skip()
+
+    def _focus_is_in_document_surface(self) -> bool:
+        wx = self._wx
+        finder = getattr(getattr(wx, "Window", None), "FindFocus", None)
+        if not callable(finder):
+            return False
+        focus = finder()
+        if focus is None:
+            return False
+        document_surface = getattr(self, "_documents_panel", None)
+        node = focus
+        while node is not None:
+            if node is document_surface or node is self.notebook or node is self.editor:
+                return True
+            get_parent = getattr(node, "GetParent", None)
+            node = get_parent() if callable(get_parent) else None
+        return False
 
     def _handle_quill_key_mode_event(self, event: object) -> bool:
         wx = self._wx
         key_code = event.GetKeyCode()
         prefix_key = getattr(wx, "WXK_BACKTICK", ord("`"))
         if not self._quill_key_mode_active:
+            if self._quill_key_prefix_pending:
+                if (time.monotonic() - self._quill_key_prefix_started_at) > self._quill_key_mode_timeout_seconds:
+                    self._quill_key_prefix_pending = False
+                    self._quill_key_prefix_started_at = 0.0
+                    return False
+                if key_code in {getattr(wx, "WXK_ESCAPE", 27), 27}:
+                    self._quill_key_prefix_pending = False
+                    self._quill_key_prefix_started_at = 0.0
+                    return True
+                if not event.ControlDown() and not event.AltDown() and not event.ShiftDown() and key_code in (ord("N"), ord("n")):
+                    self._quill_key_prefix_pending = False
+                    self._quill_key_prefix_started_at = 0.0
+                    self._enter_quill_key_mode()
+                    return True
+                self._quill_key_prefix_pending = False
+                self._quill_key_prefix_started_at = 0.0
+                return False
             if event.ControlDown() and event.ShiftDown() and key_code == prefix_key and not event.AltDown():
-                self._enter_quill_key_mode()
+                self._quill_key_prefix_pending = True
+                self._quill_key_prefix_started_at = time.monotonic()
+                self._set_status_quiet("QUILL key prefix active. Press N for browse mode")
                 return True
             return False
 
@@ -5098,6 +5220,8 @@ class MainFrame:
         return True
 
     def _enter_quill_key_mode(self) -> None:
+        self._quill_key_prefix_pending = False
+        self._quill_key_prefix_started_at = 0.0
         self._quill_key_mode_active = True
         self._quill_key_mode_started_at = time.monotonic()
         self._quill_feedback(
@@ -5816,6 +5940,14 @@ class MainFrame:
 
     def _on_editor_key_down(self, event: object) -> None:
         wx = self._wx
+        if (
+            event.ControlDown()
+            and not event.AltDown()
+            and not event.ShiftDown()
+            and event.GetKeyCode() in (ord("K"), ord("k"), 11)
+        ):
+            self.insert_link()
+            return
         if event.ControlDown() and event.ShiftDown() and event.GetKeyCode() in (ord("O"), ord("o")):
             self.open_outline_navigator()
             return
@@ -7055,6 +7187,9 @@ class MainFrame:
         return "plain"
 
     def _refresh_contextual_menu_items(self) -> None:
+        if not self._menu_updates_allowed():
+            self._pending_menu_refresh = True
+            return
         get_menu_bar = getattr(self.frame, "GetMenuBar", None)
         if not callable(get_menu_bar):
             return
@@ -7525,13 +7660,21 @@ class MainFrame:
         self._popup_context_menu(popup_target, menu, event)
 
     def _show_modal_dialog(self, dialog: object, label: str) -> int:
-        return show_modal_dialog(
+        result = show_modal_dialog(
             dialog,
             label,
             announce=announce,
             enter_region=self._region_tracker.enter,
             exit_region=self._region_tracker.exit,
         )
+        editor = getattr(self, "editor", None)
+        if editor is not None and hasattr(editor, "SetFocus"):
+            call_after = getattr(self._wx, "CallAfter", None)
+            if callable(call_after):
+                call_after(editor.SetFocus)
+            else:
+                editor.SetFocus()
+        return result
 
     def _show_message_box(self, message: str, caption: str, style: int) -> int:
         self._region_tracker.enter(caption)
@@ -9277,6 +9420,9 @@ class MainFrame:
         menu_bar = self.frame.GetMenuBar()
         if menu_bar is None:
             return
+        if not self._menu_updates_allowed():
+            self._pending_menu_refresh = True
+            return
         item = menu_bar.FindItemById(self._id_ai_status_badge)
         if item is not None:
             item.SetItemLabel(label)
@@ -9329,6 +9475,9 @@ class MainFrame:
             )
 
     def _sync_announcement_backend_menu_state(self) -> None:
+        if not self._menu_updates_allowed():
+            self._pending_menu_refresh = True
+            return
         menu_bar = self.frame.GetMenuBar()
         if menu_bar is None:
             return
@@ -9800,13 +9949,11 @@ class MainFrame:
         )
 
     def show_about_quill(self) -> None:
-        # Reuse the same WebView preview surface as the document preview/chat:
-        # render the About content (with all links) and open links in the browser.
         from quill.core.browser_preview import render_preview_body
         from quill.ui.preview_dialog import MarkdownPreviewDialog
 
         body = render_preview_body(self._about_markdown(), "markdown")
-        MarkdownPreviewDialog(self.frame, "About Quill", body, open_links_externally=True).show()
+        MarkdownPreviewDialog(self.frame, "About Quill", body).show()
         self._set_status("Opened About Quill")
 
     def show_whisperer_about_page(self) -> None:
@@ -13974,6 +14121,9 @@ class MainFrame:
         ).normalized()
 
     def _apply_watch_folder_menu_state(self) -> None:
+        if not self._menu_updates_allowed():
+            self._pending_menu_refresh = True
+            return
         menu_bar = self.frame.GetMenuBar()
         if menu_bar is None:
             return
@@ -15750,7 +15900,9 @@ class MainFrame:
             root.Add(buttons, 0, wx.ALL | wx.ALIGN_RIGHT, 8)
         apply_modal_ids(dialog, affirmative_id=wx.ID_OK, escape_id=wx.ID_CANCEL)
         panel.SetSizer(root)
-        dialog.SetSizerAndFit(root)
+        outer = wx.BoxSizer(wx.VERTICAL)
+        outer.Add(panel, 1, wx.EXPAND)
+        dialog.SetSizerAndFit(outer)
         query_ctrl.SetFocus()
 
         try:
@@ -15892,34 +16044,83 @@ class MainFrame:
 
     def insert_link(self) -> None:
         wx = self._wx
+        import wx.html as wxhtml
+
         selected_text = self.editor.GetStringSelection()
-        dialog = wx.Dialog(self.frame, title="Insert Link", size=(540, 0))
-        panel = wx.Panel(dialog)
+        dialog = wx.Dialog(self.frame, title="Insert Link", style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        dialog.SetSize((700, 380))
+
+        intro_html = (
+            "<h1 id='insert-link-title' tabindex='-1'>Insert Link</h1>"
+            "<p>Enter the text to display and the destination URL. Then tab to the buttons below.</p>"
+        )
+
+        html_pane = wxhtml.HtmlWindow(dialog)
+        html_pane.SetPage(
+            "<!doctype html><html><head><meta charset='utf-8'>"
+            "<meta name='viewport' content='width=device-width, initial-scale=1'>"
+            "<style>body{font-family:Segoe UI,Arial,sans-serif;line-height:1.5;margin:12px 14px;}"
+            "h1{margin:0 0 .5rem 0;} p{margin:0 0 .75rem 0;} :focus{outline:2px solid Highlight;}</style>"
+            "</head><body>"
+            f"{intro_html}"
+            "</body></html>"
+        )
+
         root = wx.BoxSizer(wx.VERTICAL)
-        root.Add(wx.StaticText(panel, label="Display text:"), 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
-        display_text_ctrl = wx.TextCtrl(panel, value=selected_text or "")
-        root.Add(display_text_ctrl, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 8)
-        root.Add(wx.StaticText(panel, label="URL:"), 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
-        url_ctrl = wx.TextCtrl(panel, value="https://", style=wx.TE_PROCESS_ENTER)
-        root.Add(url_ctrl, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 8)
+        root.Add(html_pane, 0, wx.EXPAND | wx.ALL, 10)
+
+        root.Add(wx.StaticText(dialog, label="Display text:"), 0, wx.LEFT | wx.RIGHT | wx.TOP, 10)
+        display_text_ctrl = wx.TextCtrl(dialog, value=selected_text or "")
+        root.Add(display_text_ctrl, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 10)
+
+        root.Add(wx.StaticText(dialog, label="URL:"), 0, wx.LEFT | wx.RIGHT | wx.TOP, 10)
+        url_ctrl = wx.TextCtrl(dialog, value="https://", style=wx.TE_PROCESS_ENTER)
+        root.Add(url_ctrl, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 10)
+
         buttons = dialog.CreateButtonSizer(wx.OK | wx.CANCEL)
         if buttons is not None:
-            root.Add(buttons, 0, wx.EXPAND | wx.ALL, 8)
-        panel.SetSizer(root)
-        outer = wx.BoxSizer(wx.VERTICAL)
-        outer.Add(panel, 1, wx.EXPAND)
-        dialog.SetSizerAndFit(outer)
-        url_ctrl.Bind(wx.EVT_TEXT_ENTER, lambda _e: dialog.EndModal(wx.ID_OK))
-        display_text_ctrl.Bind(wx.EVT_TEXT_ENTER, lambda _e: dialog.EndModal(wx.ID_OK))
-        url_ctrl.SetFocus()
+            ok_button = dialog.FindWindowById(wx.ID_OK)
+            if ok_button is not None:
+                ok_button.SetLabel("Insert")
+            root.Add(buttons, 0, wx.EXPAND | wx.ALL, 10)
+
+        dialog.SetSizerAndFit(root)
+        if buttons is not None:
+            ok_button = dialog.FindWindowById(wx.ID_OK)
+            if ok_button is not None and hasattr(dialog, "SetDefaultItem"):
+                dialog.SetDefaultItem(ok_button)
+
+        def _focus_insert_dialog_on_show(event: object) -> None:
+            shown = getattr(event, "IsShown", None)
+            if callable(shown) and not shown():
+                skip = getattr(event, "Skip", None)
+                if callable(skip):
+                    skip()
+                return
+            self._wx.CallAfter(html_pane.SetFocus)
+            skip = getattr(event, "Skip", None)
+            if callable(skip):
+                skip()
+
+        def _focus_insert_dialog_on_activate(event: object) -> None:
+            active = getattr(event, "GetActive", None)
+            if callable(active) and active():
+                self._wx.CallAfter(html_pane.SetFocus)
+            skip = getattr(event, "Skip", None)
+            if callable(skip):
+                skip()
+
+        dialog.Bind(wx.EVT_SHOW, _focus_insert_dialog_on_show)
+        dialog.Bind(wx.EVT_ACTIVATE, _focus_insert_dialog_on_activate)
         try:
-            apply_modal_ids(dialog, affirmative_id=wx.ID_OK, escape_id=wx.ID_CANCEL)
             if self._show_modal_dialog(dialog, "Insert Link") != wx.ID_OK:
+                self._set_status("Insert link cancelled")
                 return
             url = url_ctrl.GetValue().strip()
             display_text = display_text_ctrl.GetValue()
         finally:
             dialog.Destroy()
+
         if not url:
             self._set_status("Insert link cancelled")
             return
@@ -16162,6 +16363,9 @@ class MainFrame:
         back on."""
         from quill.core.ai.model_manager import load_ai_enabled
 
+        if not self._menu_updates_allowed():
+            self._pending_menu_refresh = True
+            return
         bar = self.frame.GetMenuBar()
         if bar is None:
             return
@@ -18905,7 +19109,11 @@ class MainFrame:
         self.run_startup_wizard()
 
     def _maybe_run_first_run_onboarding(self) -> None:
-        wx = self._wx
+        def _focus_editor() -> None:
+            editor = getattr(self, "editor", None)
+            if editor is not None and hasattr(editor, "SetFocus"):
+                self._wx.CallAfter(editor.SetFocus)
+
         if any((
             getattr(self, "_first_run_trust_consent_prompt", False),
             getattr(self, "_first_run_profile_prompt", False),
@@ -18913,15 +19121,16 @@ class MainFrame:
             getattr(self, "_first_run_speech_prompt", False),
             getattr(self, "_first_run_watch_folder_prompt", False),
         )):
+            if load_startup_wizard_prompt_suppressed():
+                self._set_status("Startup Wizard prompt suppressed")
+                _focus_editor()
+                return
             self.show_startup_wizard_page()
-            proceed = self._show_message_box(
-                "Start guided setup now?\n\n"
-                "Choose Yes to continue through profile, AI, assistant, speech, and watch folder setup.",
-                "Startup Wizard",
-                wx.ICON_QUESTION | wx.YES_NO,
-            )
-            if proceed != wx.YES:
+            if hasattr(self.frame, "SetFocus"):
+                self.frame.SetFocus()
+            if not self._show_startup_wizard_first_run_prompt():
                 self._set_status("Startup Wizard overview opened")
+                _focus_editor()
                 return
         if getattr(self, "_first_run_profile_prompt", False):
             self._show_profile_onboarding(force=False)
@@ -18936,6 +19145,31 @@ class MainFrame:
         if getattr(self, "_first_run_watch_folder_prompt", False):
             self._show_watch_folder_onboarding(force=False)
             self._first_run_watch_folder_prompt = False
+        _focus_editor()
+
+    def _show_startup_wizard_first_run_prompt(self) -> bool:
+        wx = self._wx
+        dialog = wx.RichMessageDialog(
+            self.frame,
+            "Start guided setup now?\n\n"
+            "Choose Yes to continue through profile, AI, assistant, speech, and watch folder setup.",
+            "Startup Wizard",
+            wx.YES_NO | wx.ICON_QUESTION,
+        )
+        if hasattr(dialog, "SetYesNoLabels"):
+            dialog.SetYesNoLabels("Yes", "No")
+        if hasattr(dialog, "ShowCheckBox"):
+            dialog.ShowCheckBox("Do not show this again")
+
+        apply_modal_ids(dialog, affirmative_id=wx.ID_YES, escape_id=wx.ID_NO)
+        try:
+            result = self._show_modal_dialog(dialog, "Startup Wizard")
+            is_checked = getattr(dialog, "IsCheckBoxChecked", None)
+            if callable(is_checked) and is_checked():
+                mark_startup_wizard_prompt_suppressed()
+        finally:
+            dialog.Destroy()
+        return result == wx.ID_YES
 
     def show_startup_wizard_page(self) -> None:
         from quill.ui.preview_dialog import MarkdownPreviewDialog
@@ -19074,70 +19308,31 @@ class MainFrame:
         if response != wx.YES:
             if force:
                 self._set_status("BITS Whisperer setup skipped")
-            return
-        self.apply_bw_recommended_provider()
-        self.apply_bw_recommended_model()
-        if not bool(getattr(self.settings, "bw_auto_open_status_page_on_download_start", False)):
-            auto_open = self._show_message_box(
-                "Auto-open Help > Status Page when BITS Whisperer model downloads start?",
-                "BITS Whisperer Setup",
-                wx.ICON_QUESTION | wx.YES_NO,
-            )
-            self.settings.bw_auto_open_status_page_on_download_start = auto_open == wx.YES
-            save_settings(self.settings)
-        self._set_status("BITS Whisperer rollout defaults configured")
+            with wx.TextEntryDialog(
+                self.frame,
+                "Display text:",
+                "Insert Link",
+                value=selected_text or "",
+                style=wx.OK | wx.CANCEL,
+            ) as display_dialog:
+                apply_modal_ids(display_dialog, affirmative_id=wx.ID_OK, escape_id=wx.ID_CANCEL)
+                if self._show_modal_dialog(display_dialog, "Insert Link") != wx.ID_OK:
+                    self._set_status("Insert link cancelled")
+                    return
+                display_text = display_dialog.GetValue()
 
-    def _offer_ai_onboarding(self) -> None:
-        """First run: ask whether to use AI; if yes, set up the model."""
-        from quill.core.ai.llama_cpp_backend import LlamaCppBackend
-        from quill.core.ai.model_manager import existing_model, save_ai_enabled
-
-        wx = self._wx
-        use_ai = self._show_message_box(
-            "Do you want to use Quill's built-in artificial intelligence (Ask Quill)?\n\n"
-            "It runs entirely on your computer. You can turn it on or off later from the "
-            "AI menu.",
-            "Use Artificial Intelligence?",
-            wx.ICON_QUESTION | wx.YES_NO,
-        )
-        enabled = use_ai == wx.YES
-        save_ai_enabled(enabled)
-        self._sync_ai_enabled_menu(enabled)
-        if not enabled:
-            self._set_status("AI is off. You can enable it later from the AI menu.")
-            return
-        # Foundation Models (macOS) needs no download; only llama.cpp does.
-        assistant = self._get_assistant()
-        if (
-            isinstance(assistant.backend, LlamaCppBackend)
-            and assistant.is_available()[0]
-            and not existing_model()
-        ):
-            AIModelDialog(self.frame, announce=self._set_status).show()
-        else:
-            self._set_status("AI is ready.")
-
-    def _sync_ai_enabled_menu(self, enabled: bool) -> None:
-        menu_bar = self.frame.GetMenuBar()
-        if menu_bar is not None and hasattr(self, "_id_ai_enabled"):
-            item = menu_bar.FindItemById(self._id_ai_enabled)
-            if item is not None:
-                item.Check(enabled)
-
-    def _show_profile_onboarding(self, force: bool) -> None:
-        wx = self._wx
-        profiles = list(PROFILE_DEFINITIONS.values())
-        with wx.SingleChoiceDialog(
-            self.frame,
-            "Choose how Quill should start:",
-            "Profile Onboarding",
-            choices=self._profile_choice_labels(profiles),
-        ) as dialog:
-            if self._show_modal_dialog(dialog, "Profile Onboarding") != wx.ID_OK:
-                if not force:
-                    mark_onboarding_complete()
-                if force:
-                    self._set_status("Profile onboarding skipped")
+            with wx.TextEntryDialog(
+                self.frame,
+                "URL:",
+                "Insert Link",
+                value="https://",
+                style=wx.OK | wx.CANCEL,
+            ) as url_dialog:
+                apply_modal_ids(url_dialog, affirmative_id=wx.ID_OK, escape_id=wx.ID_CANCEL)
+                if self._show_modal_dialog(url_dialog, "Insert Link") != wx.ID_OK:
+                    self._set_status("Insert link cancelled")
+                    return
+                url = url_dialog.GetValue().strip()
                 return
             selection = dialog.GetSelection()
         if selection == wx.NOT_FOUND:
@@ -19392,32 +19587,171 @@ class MainFrame:
         return f"{name} — {description}"
 
     def show_regex_helper(self) -> None:
-        report = (
-            "Regex helper\n\n"
-            r"\d any digit"
-            "\n"
-            r"\w any word character"
-            "\n"
-            r"\s whitespace"
-            "\n"
-            r"^ start of line"
-            "\n"
-            r"$ end of line"
-            "\n"
-            r"+ one or more"
-            "\n"
-            r"* zero or more"
-            "\n"
-            r"? optional"
-            "\n"
-            r"(text) capture group"
-            "\n"
-            r"(?P<name>text) named group"
-            "\n"
-            "Use the search mode selector to choose plain text, whole word, "
-            "regular expression, or wildcard."
+        wx = self._wx
+
+        recipes = [
+            (
+                "Email address",
+                r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b",
+                "Matches common email addresses.",
+            ),
+            (
+                "HTTP or HTTPS URL",
+                r"https?://[^\s)]+",
+                "Matches links that begin with http:// or https://.",
+            ),
+            (
+                "Markdown heading",
+                r"(?m)^\s{0,3}#{1,6}\s+.+$",
+                "Matches Markdown headings from H1 to H6.",
+            ),
+            (
+                "Numbered list item",
+                r"(?m)^\s*\d+[.)]\s+.+$",
+                "Matches list lines like 1. Item or 2) Item.",
+            ),
+            (
+                "Markdown link",
+                r"\[[^\]]+\]\([^)]+\)",
+                "Matches Markdown links like [label](url).",
+            ),
+            (
+                "Double-spaced words",
+                r"\S\s{2,}\S",
+                "Finds words separated by two or more spaces.",
+            ),
+        ]
+
+        dialog = wx.Dialog(self.frame, title="Regex Helper", style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        dialog.SetSize((820, 640))
+        panel = wx.Panel(dialog)
+        root = wx.BoxSizer(wx.VERTICAL)
+
+        intro = wx.StaticText(
+            panel,
+            label=(
+                "Choose a recipe, review the pattern in plain language, then preview matches "
+                "against sample text before using it in Find/Replace."
+            ),
         )
-        self._show_message_box(report, "Regex Helper", self._wx.ICON_INFORMATION | self._wx.OK)
+        root.Add(intro, 0, wx.EXPAND | wx.ALL, 10)
+
+        content = wx.BoxSizer(wx.HORIZONTAL)
+
+        left = wx.BoxSizer(wx.VERTICAL)
+        left.Add(wx.StaticText(panel, label="Recipes"), 0, wx.BOTTOM, 6)
+        recipe_list = wx.ListBox(panel, choices=[item[0] for item in recipes])
+        left.Add(recipe_list, 1, wx.EXPAND)
+        content.Add(left, 0, wx.EXPAND | wx.ALL, 10)
+
+        right = wx.BoxSizer(wx.VERTICAL)
+        right.Add(wx.StaticText(panel, label="Pattern"), 0, wx.BOTTOM, 4)
+        pattern_ctrl = wx.TextCtrl(panel, style=wx.TE_PROCESS_ENTER)
+        right.Add(pattern_ctrl, 0, wx.EXPAND | wx.BOTTOM, 8)
+
+        right.Add(wx.StaticText(panel, label="What this pattern means"), 0, wx.BOTTOM, 4)
+        explanation_ctrl = wx.TextCtrl(panel, style=wx.TE_MULTILINE | wx.TE_READONLY)
+        explanation_ctrl.SetMinSize((480, 80))
+        right.Add(explanation_ctrl, 0, wx.EXPAND | wx.BOTTOM, 8)
+
+        right.Add(wx.StaticText(panel, label="Sample text"), 0, wx.BOTTOM, 4)
+        default_sample = self.editor.GetStringSelection().strip() or self.editor.GetValue()[:1200]
+        sample_ctrl = wx.TextCtrl(panel, value=default_sample, style=wx.TE_MULTILINE)
+        sample_ctrl.SetMinSize((480, 170))
+        right.Add(sample_ctrl, 1, wx.EXPAND | wx.BOTTOM, 8)
+
+        right.Add(wx.StaticText(panel, label="Preview results"), 0, wx.BOTTOM, 4)
+        results_ctrl = wx.TextCtrl(panel, style=wx.TE_MULTILINE | wx.TE_READONLY)
+        results_ctrl.SetMinSize((480, 170))
+        right.Add(results_ctrl, 1, wx.EXPAND)
+
+        content.Add(right, 1, wx.EXPAND | wx.ALL, 10)
+        root.Add(content, 1, wx.EXPAND)
+
+        button_row = wx.BoxSizer(wx.HORIZONTAL)
+        preview_btn = wx.Button(panel, label="Preview")
+        copy_btn = wx.Button(panel, label="Copy Pattern")
+        close_btn = wx.Button(panel, id=wx.ID_CLOSE, label="Close")
+        button_row.Add(preview_btn, 0, wx.RIGHT, 8)
+        button_row.Add(copy_btn, 0, wx.RIGHT, 8)
+        button_row.AddStretchSpacer(1)
+        button_row.Add(close_btn, 0)
+        root.Add(button_row, 0, wx.EXPAND | wx.ALL, 10)
+
+        panel.SetSizer(root)
+        outer = wx.BoxSizer(wx.VERTICAL)
+        outer.Add(panel, 1, wx.EXPAND)
+        dialog.SetSizerAndFit(outer)
+        apply_modal_ids(dialog, affirmative_id=wx.ID_CLOSE, escape_id=wx.ID_CLOSE)
+
+        def set_recipe(index: int) -> None:
+            if index < 0 or index >= len(recipes):
+                return
+            _name, pattern, explanation = recipes[index]
+            pattern_ctrl.SetValue(pattern)
+            explanation_ctrl.SetValue(explanation)
+
+        def render_preview() -> None:
+            pattern = pattern_ctrl.GetValue()
+            sample = sample_ctrl.GetValue()
+            if not pattern.strip():
+                results_ctrl.SetValue("Enter a pattern to preview matches.")
+                return
+            try:
+                matches = list(re.finditer(pattern, sample, re.MULTILINE))
+            except re.error as error:
+                results_ctrl.SetValue(f"Pattern error: {error}")
+                return
+            if not matches:
+                results_ctrl.SetValue("No matches found in sample text.")
+                return
+            lines = [f"Matches found: {len(matches)}"]
+            for idx, match in enumerate(matches[:25], start=1):
+                value = match.group(0).replace("\n", "\\n")
+                if len(value) > 80:
+                    value = value[:77] + "..."
+                lines.append(
+                    f"{idx}. {match.start()}-{match.end()}: {value}"
+                )
+            if len(matches) > 25:
+                lines.append(f"...and {len(matches) - 25} more")
+            results_ctrl.SetValue("\n".join(lines))
+
+        def on_recipe_selected(_event: object) -> None:
+            set_recipe(recipe_list.GetSelection())
+            render_preview()
+
+        def on_preview(_event: object) -> None:
+            render_preview()
+
+        def on_copy(_event: object) -> None:
+            pattern = pattern_ctrl.GetValue()
+            if not pattern.strip():
+                self._set_status("Regex helper: no pattern to copy")
+                return
+            if self._copy_to_clipboard(pattern):
+                self._set_status("Regex pattern copied")
+            else:
+                self._set_status("Regex helper could not copy pattern")
+
+        def on_close(_event: object) -> None:
+            dialog.EndModal(wx.ID_CLOSE)
+
+        recipe_list.Bind(wx.EVT_LISTBOX, on_recipe_selected)
+        preview_btn.Bind(wx.EVT_BUTTON, on_preview)
+        copy_btn.Bind(wx.EVT_BUTTON, on_copy)
+        close_btn.Bind(wx.EVT_BUTTON, on_close)
+        pattern_ctrl.Bind(wx.EVT_TEXT_ENTER, on_preview)
+
+        recipe_list.SetSelection(0)
+        set_recipe(0)
+        render_preview()
+        recipe_list.SetFocus()
+
+        try:
+            self._show_modal_dialog(dialog, "Regex Helper")
+        finally:
+            dialog.Destroy()
 
     def copy_with_source(self) -> None:
         start, end = self.editor.GetSelection()
