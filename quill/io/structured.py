@@ -17,6 +17,7 @@ from xml.etree.ElementTree import Element
 
 from quill.core.document import Document
 from quill.core.epub import load_epub_book, render_epub_book
+from quill.core.safe_xml import fromstring as safe_xml_fromstring
 from quill.io.markitdown_bridge import convert_with_markitdown
 from quill.io.pages import read_pages_document
 from quill.io.pdf import extract_pdf_text, format_pdf_document
@@ -353,7 +354,7 @@ def _validate_toml(text: str) -> str:
 
 
 def _format_xml(text: str) -> str:
-    root = ET.fromstring(text)
+    root = safe_xml_fromstring(text)
     ET.indent(root, space="  ")
     return ET.tostring(root, encoding="unicode") + "\n"
 
@@ -412,7 +413,7 @@ def _format_sqlite(path: Path) -> str:
 def _format_docx(path: Path) -> str:
     with zipfile.ZipFile(path) as archive:
         xml_bytes = archive.read("word/document.xml")
-    root = ET.fromstring(xml_bytes.decode("utf-8"))
+    root = safe_xml_fromstring(xml_bytes.decode("utf-8"))
     namespace = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
     paragraphs = []
     for paragraph in root.findall(".//w:p", namespace):
@@ -479,7 +480,7 @@ def _format_pptx(path: Path) -> str:
         slide_rel_map = _load_pptx_slide_rel_map(archive)
         lines = [f"# PPTX Extract: {path.name}", ""]
         for index, slide_path in enumerate(slide_paths, start=1):
-            root = ET.fromstring(archive.read(slide_path).decode("utf-8", errors="ignore"))
+            root = safe_xml_fromstring(archive.read(slide_path).decode("utf-8", errors="ignore"))
             title = _pptx_slide_title(root) or f"Slide {index}"
             lines.append(f"# {title}")
             body_lines = _pptx_slide_body_lines(root)
@@ -517,7 +518,7 @@ def _load_pptx_slide_rel_map(archive: zipfile.ZipFile) -> dict[str, str]:
         if name.startswith("ppt/slides/_rels/slide") and name.endswith(".xml.rels")
     ]:
         try:
-            root = ET.fromstring(archive.read(rel_path).decode("utf-8", errors="ignore"))
+            root = safe_xml_fromstring(archive.read(rel_path).decode("utf-8", errors="ignore"))
         except ET.ParseError:
             continue
         slide_name = rel_path.replace("ppt/slides/_rels/", "").replace(".rels", "")
@@ -629,7 +630,7 @@ def _pptx_slide_notes_lines(
     if notes_path not in archive.namelist():
         return []
     try:
-        root = ET.fromstring(archive.read(notes_path).decode("utf-8", errors="ignore"))
+        root = safe_xml_fromstring(archive.read(notes_path).decode("utf-8", errors="ignore"))
     except ET.ParseError:
         return []
     lines: list[str] = []

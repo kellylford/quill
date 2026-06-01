@@ -18,7 +18,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Operating System :: Microsoft :: Windows",
 ]
-dependencies = ["regex>=2026.5.9"]
+dependencies = ["regex>=2026.5.9", "defusedxml>=0.7.1"]
 
 [project.optional-dependencies]
 ui = [

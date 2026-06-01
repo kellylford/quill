@@ -6,6 +6,10 @@
 # Core (always required)
 regex>=2024.0.0
 
+# Hardened XML parsing for untrusted document inputs (DOCX/XLSX/ODT/PPTX/EPUB)
+# — disables entity expansion to block billion-laughs denial-of-service files.
+defusedxml>=0.7.1
+
 # UI
 wxPython>=4.2.5
 # Accessible wx.html2.WebView surfaces (chat, preview, About, update dialogs).

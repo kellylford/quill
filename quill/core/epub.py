@@ -7,6 +7,9 @@ import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from quill.core.safe_xml import UnsafeXMLError
+from quill.core.safe_xml import fromstring as safe_xml_fromstring
+
 _HTML_HEADING_PATTERN = re.compile(r"<h([1-6])[^>]*>(.*?)</h\1>", re.IGNORECASE | re.DOTALL)
 _HTML_TAG_PATTERN = re.compile(r"<[^>]+>")
 
@@ -80,8 +83,8 @@ def _read_toc(archive: zipfile.ZipFile) -> list[tuple[str, str]]:
     for toc_name in toc_names:
         xml_text = archive.read(toc_name).decode("utf-8", errors="ignore")
         try:
-            root = ET.fromstring(xml_text)
-        except ET.ParseError:
+            root = safe_xml_fromstring(xml_text)
+        except (ET.ParseError, UnsafeXMLError):
             continue
         namespace = {"ncx": "http://www.daisy.org/z3986/2005/ncx/"}
         for navpoint in root.findall(".//ncx:navPoint", namespace):
@@ -102,8 +105,8 @@ def _read_book_title(archive: zipfile.ZipFile) -> str | None:
     for opf_name in opf_names:
         xml_text = archive.read(opf_name).decode("utf-8", errors="ignore")
         try:
-            root = ET.fromstring(xml_text)
-        except ET.ParseError:
+            root = safe_xml_fromstring(xml_text)
+        except (ET.ParseError, UnsafeXMLError):
             continue
         namespace = {"dc": "http://purl.org/dc/elements/1.1/"}
         title_node = root.find(".//dc:title", namespace)
