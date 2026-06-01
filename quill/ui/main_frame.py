@@ -18347,70 +18347,50 @@ class MainFrame:
         self._refresh_title()
 
     def _show_assistant_onboarding(self, force: bool) -> None:
-        wx = self._wx
-        with wx.Dialog(
+        from quill.ui.web_form import show_web_form
+
+        styles = [
+            ("balanced", "Balanced"),
+            ("concise", "Concise"),
+            ("gentle", "Gentle"),
+            ("technical", "Technical"),
+        ]
+        values = show_web_form(
             self.frame,
+            self._wx,
             title="Writing Assistant Onboarding",
-            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
-        ) as dialog:
-            panel = wx.Panel(dialog)
-            root = wx.BoxSizer(wx.VERTICAL)
-            panel_sizer = wx.BoxSizer(wx.VERTICAL)
-
-            panel_sizer.Add(
-                wx.StaticText(
-                    panel,
-                    label=(
-                        "Quill can seed the writing assistant with a few focused prompt styles. "
-                        "You can change this later in General Preferences."
-                    ),
-                ),
-                0,
-                wx.EXPAND | wx.ALL,
-                8,
-            )
-
-            assistant_enabled = wx.CheckBox(panel, label="Enable the writing assistant by default")
-            assistant_enabled.SetValue(getattr(self.settings, "assistant_enabled", False))
-            panel_sizer.Add(assistant_enabled, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
-
-            prompt_style = wx.Choice(panel, choices=["Balanced", "Concise", "Gentle", "Technical"])
-            prompt_style.SetSelection(
+            intro=(
+                "Quill can seed the writing assistant with a few focused prompt styles. "
+                "You can change this later in General Preferences."
+            ),
+            fields=[
                 {
-                    "balanced": 0,
-                    "concise": 1,
-                    "gentle": 2,
-                    "technical": 3,
-                }.get(getattr(self.settings, "assistant_prompt_style", "balanced"), 0)
-            )
-            row = wx.BoxSizer(wx.HORIZONTAL)
-            row.Add(wx.StaticText(panel, label="Prompt style"), 0, wx.ALIGN_CENTER_VERTICAL)
-            row.AddSpacer(8)
-            row.Add(prompt_style, 1, wx.EXPAND)
-            panel_sizer.Add(row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
-
-            panel.SetSizer(panel_sizer)
-            buttons = dialog.CreateButtonSizer(wx.OK | wx.CANCEL)
-            root.Add(panel, 1, wx.EXPAND | wx.ALL, 8)
-            if buttons is not None:
-                root.Add(buttons, 0, wx.EXPAND | wx.ALL, 8)
-            dialog.SetSizerAndFit(root)
-
-            if self._show_modal_dialog(dialog, "Writing Assistant Onboarding") != wx.ID_OK:
-                if not force:
-                    mark_assistant_onboarding_complete()
-                return
-
-            self.settings.assistant_enabled = bool(assistant_enabled.GetValue())
-            self.settings.assistant_prompt_style = {
-                0: "balanced",
-                1: "concise",
-                2: "gentle",
-                3: "technical",
-            }.get(prompt_style.GetSelection(), "balanced")
-            save_settings(self.settings)
-            mark_assistant_onboarding_complete()
-            self._set_status("Configured writing assistant onboarding")
+                    "name": "enabled",
+                    "label": "Enable the writing assistant by default",
+                    "type": "checkbox",
+                    "value": getattr(self.settings, "assistant_enabled", False),
+                },
+                {
+                    "name": "style",
+                    "label": "Prompt style",
+                    "type": "select",
+                    "value": getattr(self.settings, "assistant_prompt_style", "balanced"),
+                    "options": styles,
+                },
+            ],
+        )
+        if values is None:
+            if not force:
+                mark_assistant_onboarding_complete()
+            return
+        self.settings.assistant_enabled = bool(values.get("enabled"))
+        style = str(values.get("style", "balanced"))
+        if style not in {key for key, _ in styles}:
+            style = "balanced"
+        self.settings.assistant_prompt_style = style
+        save_settings(self.settings)
+        mark_assistant_onboarding_complete()
+        self._set_status("Configured writing assistant onboarding")
 
     def _show_speech_onboarding(self, force: bool) -> None:  # noqa: PLR0912
         wx = self._wx
