@@ -984,9 +984,12 @@ termination is announced; test included.</td>
 <td>Scoped strict mypy in CI on every pull request</td>
 <td>Code quality</td>
 <td>S</td>
-<td>Todo</td>
-<td>CI runs mypy on quill/core and quill/io; failures block merge; local
-command documented.</td>
+<td>Done</td>
+<td>A <code>scoped-strict-typing</code> job in Security CI runs
+<code>mypy quill\core quill\io</code> on every push and PR and blocks
+merge on any error; the scoped command is documented in CONTRIBUTING.
+The full TYPE backlog was cleared so the gate currently reports zero
+errors across 95 source files.</td>
 </tr>
 <tr>
 <td>PERF-8</td>
@@ -3381,10 +3384,12 @@ docs-artifact, and security jobs; merge is blocked unless green.</td>
 <td>Strict typing gate (scoped)</td>
 <td>Gates</td>
 <td>S</td>
-<td>Todo</td>
-<td>mypy on <code>quill/core</code> and <code>quill/io</code> reports
-zero errors and is required for merge; the whole-tree scan is never
-used.</td>
+<td>Done</td>
+<td><code>mypy quill\core quill\io</code> reports zero errors and is
+enforced by the <code>scoped-strict-typing</code> CI job (required for
+merge); third-party stub gaps are handled via
+<code>ignore_missing_imports</code> module overrides in pyproject; the
+whole-tree scan is never used.</td>
 </tr>
 <tr>
 <td>GATE-4</td>

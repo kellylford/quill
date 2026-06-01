@@ -293,7 +293,9 @@ def _render_markdown(text: str) -> str:
             flush_paragraph()
             if not list_tag:
                 list_tag = "ul" if bullet else "ol"
-            list_items.append(f"<li>{_render_inline((bullet or numbered).group(3))}</li>")
+            item_match = bullet or numbered
+            assert item_match is not None  # one of the two matched
+            list_items.append(f"<li>{_render_inline(item_match.group(3))}</li>")
             continue
         if not stripped:
             flush_paragraph()

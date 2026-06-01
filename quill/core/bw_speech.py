@@ -4,12 +4,15 @@ import importlib.util
 import shutil
 import subprocess
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
 from quill.core.paths import app_data_dir
 
 FAST_WHISPER_REQUIREMENT = "faster-whisper>=1.2.1,<2"
+
+_ProgressCallback = Callable[[int, int], None]
 
 
 @dataclass(frozen=True, slots=True)
@@ -166,7 +169,7 @@ def total_ram_gb() -> float:
         stat = _MEMORYSTATUSEX()
         stat.dwLength = ctypes.sizeof(_MEMORYSTATUSEX)
         ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
-        return stat.ullTotalPhys / (1024**3)
+        return float(stat.ullTotalPhys) / (1024**3)
     return 8.0
 
 
@@ -220,7 +223,9 @@ def faster_whisper_status() -> tuple[bool, str]:
     )
 
 
-def _download_whisper_model(spec: SpeechModelSpec, progress=None) -> Path:
+def _download_whisper_model(
+    spec: SpeechModelSpec, progress: _ProgressCallback | None = None
+) -> Path:
     try:
         from faster_whisper import WhisperModel
     except ImportError as exc:
@@ -252,7 +257,7 @@ def _download_whisper_model(spec: SpeechModelSpec, progress=None) -> Path:
     return path
 
 
-def download_model(spec: SpeechModelSpec, progress=None) -> Path:
+def download_model(spec: SpeechModelSpec, progress: _ProgressCallback | None = None) -> Path:
     if spec.family != "whisper":
         raise RuntimeError(
             "Only whisper model acquisition is enabled in phase 1. "

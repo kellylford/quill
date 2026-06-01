@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from pathlib import Path
 
@@ -138,7 +138,10 @@ def starter_pack_names() -> list[str]:
 
 
 def starter_pack_snippets(name: str) -> list[Snippet]:
-    return [Snippet(**snippet.to_dict()) for snippet in _STARTER_PACKS.get(name, [])]
+    return [
+        replace(snippet, tags=list(snippet.tags) if snippet.tags is not None else None)
+        for snippet in _STARTER_PACKS.get(name, [])
+    ]
 
 
 def load_snippet_library(path: Path | None = None) -> SnippetLibrary:

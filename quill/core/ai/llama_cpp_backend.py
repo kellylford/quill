@@ -12,6 +12,8 @@ Recommended default model: Phi-4-mini (Q4); Llama 3.2 1B for low-end machines.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
+from typing import Any
 
 from quill.core.ai.agent import ACTIONS, AgentDecision
 from quill.core.ai.backend import AIBackend, ContextWindowExceeded
@@ -19,6 +21,7 @@ from quill.core.ai.model_manager import choose_model_spec, ensure_model, existin
 
 _N_CTX = 4096
 _MAX_TOKENS = 1024
+_ProgressCallback = Callable[[int, int], None]
 
 # STATUS_ILLEGAL_INSTRUCTION — the prebuilt llama.cpp used a CPU instruction
 # (e.g. AVX2) the CPU/emulator doesn't support.
@@ -83,13 +86,18 @@ def _extract_message_content(response: object) -> str:
 class LlamaCppBackend(AIBackend):
     name = "llama.cpp (local CPU)"
 
-    def __init__(self, model_path: str | None = None, n_ctx: int = _N_CTX, progress=None) -> None:
+    def __init__(
+        self,
+        model_path: str | None = None,
+        n_ctx: int = _N_CTX,
+        progress: _ProgressCallback | None = None,
+    ) -> None:
         self._model_path = model_path
         self._n_ctx = n_ctx
         self._progress = progress
-        self._llm = None
+        self._llm: Any = None
 
-    def _load(self):
+    def _load(self) -> Any:
         if self._llm is None:
             try:
                 from llama_cpp import Llama  # type: ignore[import-not-found]

@@ -3,9 +3,14 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 try:  # pragma: no cover - Windows-only runtime hook
-    from quill.platform.windows.dictation import launch_windows_dictation
+    from quill.platform.windows.dictation import (
+        launch_windows_dictation as _launch_windows_dictation,
+    )
+
+    launch_windows_dictation: Callable[[], None] | None = _launch_windows_dictation
 except ImportError:  # pragma: no cover - non-Windows fallback
     launch_windows_dictation = None
 
@@ -63,7 +68,7 @@ class DictationController:
         return transcript
 
 
-def _transcribe_audio(recognizer: object, audio: object, settings: DictationSettings) -> str:
+def _transcribe_audio(recognizer: Any, audio: object, settings: DictationSettings) -> str:
     """Transcribe one audio chunk using the configured local recognizer engine."""
     engine = (settings.engine or "").strip().lower()
     if engine == "whisper":

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as _ET
+from typing import cast
 from xml.etree.ElementTree import Element
 
 ParseError = _ET.ParseError
@@ -30,8 +31,8 @@ class UnsafeXMLError(ValueError):
 
 
 try:  # Preferred: defusedxml disables entity expansion and external entities.
-    from defusedxml.ElementTree import fromstring as _defused_fromstring
     from defusedxml.common import DefusedXmlException
+    from defusedxml.ElementTree import fromstring as _defused_fromstring
 
     _HAVE_DEFUSED = True
 except ImportError:  # pragma: no cover - exercised only without defusedxml
@@ -56,7 +57,7 @@ def fromstring(text: str | bytes) -> Element:
     """
     if _HAVE_DEFUSED and _defused_fromstring is not None:
         try:
-            return _defused_fromstring(text)
+            return cast("Element", _defused_fromstring(text))
         except DefusedXmlException as exc:  # entity / external-entity abuse
             raise UnsafeXMLError(
                 f"Refused to parse untrusted XML with forbidden constructs: {exc}"

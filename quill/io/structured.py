@@ -5,14 +5,15 @@ import html
 import io
 import json
 import posixpath
-import subprocess
 import re
 import sqlite3
+import subprocess
 import tempfile
 import tomllib
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
+from typing import Any
 from xml.etree.ElementTree import Element
 
 from quill.core.document import Document
@@ -248,7 +249,7 @@ def _format_spreadsheet(path: Path) -> tuple[str, dict[str, object]]:
     }
 
 
-def _read_workbook_as_text(path: Path, workbook) -> Document:
+def _read_workbook_as_text(path: Path, workbook: Any) -> Document:
     lines = [f"# Spreadsheet Extract: {path.name}", ""]
     for worksheet in workbook.worksheets:
         lines.append(f"## Sheet: {worksheet.title}")

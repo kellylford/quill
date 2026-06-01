@@ -8,8 +8,14 @@ Calls are blocking — the UI should run them off the main thread.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING
+
 from quill.core.ai.backend import AIBackend, ContextWindowExceeded
 from quill.core.ai.tools import AITool, build_tools_from_registry, run_tool
+
+if TYPE_CHECKING:
+    from quill.core.ai.agent import AgentDecision
 
 # Max characters of input we send in one call; larger inputs are chunked.
 _CHUNK_CHARS = 4000
@@ -127,7 +133,7 @@ class Assistant:
     def ask(self, prompt: str) -> str:
         return self.backend.respond(self._wrap(prompt))
 
-    def _respond_fitting(self, build_prompt) -> str:
+    def _respond_fitting(self, build_prompt: Callable[[int], str]) -> str:
         """Try the prompt with shrinking document context until it fits the window."""
         last_error: Exception | None = None
         for budget in _CONTEXT_BUDGETS:
@@ -197,7 +203,9 @@ class Assistant:
     def run_tool(self, registry: object, name: str) -> None:
         run_tool(registry, name)
 
-    def decide(self, user_message: str, document_text: str, tool_ids):
+    def decide(
+        self, user_message: str, document_text: str, tool_ids: Iterable[str]
+    ) -> AgentDecision:
         """Agentic decision: answer / insert / replace / run a tool.
 
         Falls back to a plain text answer if the backend can't make structured
@@ -209,7 +217,9 @@ class Assistant:
         decide = getattr(self.backend, "decide", None)
         if decide is None:
             return AgentDecision(action="answer", text=self.ask(user_message))
-        decision = decide(user_message, document_text, tuple(tool_ids), self._style_preamble)
+        decision: AgentDecision = decide(
+            user_message, document_text, tuple(tool_ids), self._style_preamble
+        )
         # Guard against the model turning a plain chat message (a greeting, a
         # question) into a document edit. If the user didn't actually ask to
         # write or edit anything, answer in chat instead of offering an insert.

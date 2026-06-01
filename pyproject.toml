@@ -106,3 +106,19 @@ strict_optional = true
 check_untyped_defs = true
 disallow_untyped_defs = true
 exclude = ["quill/ui/"]
+
+# Third-party modules without type stubs or a py.typed marker. Quill treats
+# these as untyped at the import boundary so the scoped strict gate
+# (mypy quill/core quill/io, see CONTRIBUTING) stays green without weakening
+# typing in our own code.
+[[tool.mypy.overrides]]
+module = [
+    "defusedxml.*",
+    "regex",
+    "enchant",
+    "keynote_parser.*",
+    "faster_whisper",
+    "kokoro",
+    "openpyxl",
+]
+ignore_missing_imports = true

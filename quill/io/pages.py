@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import subprocess
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from quill.core.document import Document
 from quill.io.markitdown_bridge import convert_with_markitdown
@@ -63,24 +65,24 @@ class _UnknownIWAMessage:
         self._type_id = type_id
 
     @classmethod
-    def FromString(cls, data: bytes) -> "_UnknownIWAMessage":
+    def FromString(cls, data: bytes) -> _UnknownIWAMessage:
         return cls(0, data)
 
     def to_dict(self) -> dict:
         return {"_pbtype": f"UNKNOWN.Type{self._type_id}"}
 
 
-def _patched_id_name_map():
+def _patched_id_name_map() -> dict[int, Any]:
     """Return a wrapper around keynote-parser's ID_NAME_MAP that never raises KeyError."""
     import keynote_parser.codec as _codec
 
     class _FallbackMap(dict):
-        def __missing__(self, type_id: int):
+        def __missing__(self, type_id: int) -> type:
             class _Factory:
                 _tid = type_id
 
                 @classmethod
-                def FromString(cls, data: bytes) -> "_UnknownIWAMessage":
+                def FromString(cls, data: bytes) -> _UnknownIWAMessage:
                     return _UnknownIWAMessage(cls._tid, data)
 
             return _Factory
@@ -88,7 +90,7 @@ def _patched_id_name_map():
     return _FallbackMap(_codec.ID_NAME_MAP)
 
 
-def _parse_iwa_bundle(path: Path, zip_file_reader) -> dict[str, list[dict]]:
+def _parse_iwa_bundle(path: Path, zip_file_reader: Callable[..., Any]) -> dict[str, list[dict]]:
     """Walk a .pages bundle and return all decoded IWA objects keyed by archive ID."""
     from keynote_parser.codec import IWAFile
 
@@ -235,7 +237,7 @@ def _resolve_style_name(
             continue
         name = super_style.get("name", "")
         if name:
-            return name
+            return str(name)
         # Variation style — follow parent reference
         if archives_by_id:
             parent_id = str((super_style.get("parent") or {}).get("identifier", ""))

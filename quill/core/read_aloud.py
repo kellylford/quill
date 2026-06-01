@@ -321,7 +321,7 @@ def synthesize_with_kokoro(
     if not text.strip():
         raise ReadAloudUnavailableError("Cannot generate speech from empty text")
     try:
-        from kokoro import KPipeline  # type: ignore[import]
+        from kokoro import KPipeline  # type: ignore[attr-defined]
     except ImportError as exc:
         raise ReadAloudUnavailableError(
             "Kokoro TTS requires the 'kokoro' package (pip install kokoro)"

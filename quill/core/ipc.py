@@ -4,6 +4,7 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import IO
 
 from quill.core.paths import app_data_dir
 
@@ -13,7 +14,7 @@ from quill.core.paths import app_data_dir
 # instance. There is no PID to go stale and nothing to "self-heal": if a
 # process is gone, its lock is gone. That is what makes the single-instance
 # guard just work no matter how the previous run ended.
-_lock_handle: object | None = None
+_lock_handle: IO[str] | None = None
 
 
 def try_claim_primary_instance() -> bool:
@@ -70,7 +71,7 @@ def release_primary_instance() -> None:
     _lock_file_path().unlink(missing_ok=True)
 
 
-def _acquire_os_lock(handle: object) -> bool:
+def _acquire_os_lock(handle: IO[str]) -> bool:
     """Take an exclusive, non-blocking lock. False if another process holds it."""
     fileno = handle.fileno()
     if os.name == "nt":
@@ -86,13 +87,13 @@ def _acquire_os_lock(handle: object) -> bool:
     import fcntl
 
     try:
-        fcntl.flock(fileno, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.flock(fileno, fcntl.LOCK_EX | fcntl.LOCK_NB)  # type: ignore[attr-defined]
     except OSError:
         return False
     return True
 
 
-def _release_os_lock(handle: object) -> None:
+def _release_os_lock(handle: IO[str]) -> None:
     fileno = handle.fileno()
     if os.name == "nt":
         import msvcrt
@@ -107,7 +108,7 @@ def _release_os_lock(handle: object) -> None:
     import fcntl
 
     try:
-        fcntl.flock(fileno, fcntl.LOCK_UN)
+        fcntl.flock(fileno, fcntl.LOCK_UN)  # type: ignore[attr-defined]
     except OSError:
         pass
 

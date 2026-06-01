@@ -145,7 +145,7 @@ def _rank_choices(
     if not normalized:
         return list(choices)
     tokens = [token for token in normalized.split() if token]
-    scored: list[tuple[tuple[int, int, str], str]] = []
+    scored: list[tuple[tuple[int, int, int], str]] = []
     for choice in choices:
         choice_lower = choice.lower()
         haystack = " ".join((choice_lower, *aliases.get(choice, ())))

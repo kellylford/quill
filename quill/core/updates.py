@@ -243,7 +243,9 @@ def _version_tuple(value: str) -> tuple[int, int, int]:
     return integers[0], integers[1], integers[2]
 
 
-def download_release_asset(url: str, destination, timeout: int = 60) -> None:
+def download_release_asset(
+    url: str, destination: str | os.PathLike[str], timeout: int = 60
+) -> None:
     """Download an update asset to ``destination`` (verified TLS)."""
     _validate_remote_url(url)
     request = Request(url, headers={"User-Agent": "Quill-Updater"})
