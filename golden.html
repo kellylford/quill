@@ -270,6 +270,20 @@ escape and a default. See A11Y-4.</li>
 <li>Honesty about AI and extraction. Always show provider, model, scope,
 and confidence. Never a silent network call. Already strong; keep it as
 a hard rule. See AI-5.</li>
+<li>Feature flags are a fundamental, not an afterthought. Every feature
+is individually switchable through the existing
+<code>FeatureManager</code> (<code>quill/core/features.py</code>), and
+the UI must honor that choice everywhere: a disabled feature hides or
+disables its commands, menu items, status-bar cells, QUILL key and Quick
+Nav entries, settings groups, and onboarding prompts, and a feature with
+unmet dependencies stays off. Feature profiles (Essential, Writer,
+Developer Power Text, Accessibility Professional, Full QUILL) let users
+adopt whole sets at once, and individual toggles override within a
+profile. Every new feature ships with a <code>FeatureDefinition</code>
+(id, dependencies, maturity, privacy, and whether it is off by default),
+so users can turn anything on or off and the product respects it
+consistently, with no orphaned or dead commands. See FLAG-1 through
+FLAG-4.</li>
 </ol>
 <hr />
 <h2 id="the-quill-key-as-a-flagship-feature">3. The QUILL key as a
@@ -561,10 +575,13 @@ FEAT-6.</li>
 announces each step, and export or import. See FEAT-7.</li>
 <li>Document Intake: make the intake report a calm, skimmable summary
 with confidence and a one-key path to cleanup recipes. See FEAT-8.</li>
-<li>Watch Folder: announce new arrivals with a non-interrupting
-notification and a one-key “open it.” See FEAT-9.- Sticky Notes: make
-the vault searchable and screen-reader pageable, with quick capture
-confirmation. See FEAT-10.</li>
+<li>Watch Folder: evolve the single watched folder into Watch Profiles —
+many folders, each bound to its own action, all feeding one monitorable
+queue. Announce new arrivals with a non-interrupting notification and a
+one-key “open it.” See FEAT-9 and the WATCH family (WATCH-1 through
+WATCH-9).</li>
+<li>Sticky Notes: make the vault searchable and screen-reader pageable,
+with quick capture confirmation. See FEAT-10.</li>
 <li>Status bar: ensure every cell has a crisp spoken label and a context
 menu, and that layout changes persist and announce. See FEAT-11.</li>
 </ul>
@@ -596,7 +613,88 @@ document is changed (or deleted) by another program, reload in place
 without moving the cursor when the buffer is clean, and offer a clear,
 spoken reload-or-keep-mine choice on conflict; fully configurable and
 quiet by default. See FEAT-19.</li>
+<li>Watch Profiles: many folders, many actions, one monitorable queue.
+The signature automation feature — a blind writer sets up named
+“profiles,” each watching its own folder and running its own action,
+then monitors everything from one accessible queue. See the design below
+and the WATCH family (WATCH-1 through WATCH-9).</li>
 </ul>
+<h3
+id="watch-profiles-many-folders-many-actions-one-monitorable-queue">Watch
+Profiles: many folders, many actions, one monitorable queue</h3>
+<p>Today QUILL watches one folder and opens whatever lands there. That
+is useful, but it is a single trick. The aggressive vision turns it into
+a personal, accessible automation hub that no mainstream editor offers a
+screen-reader user — and it becomes a quiet differentiator that ties the
+whole product together.</p>
+<p>The shape of it:</p>
+<ul>
+<li><strong>Many independent profiles, each its own watcher.</strong> A
+profile is a named, enabled-or-disabled rule: a folder to watch, the
+filters that decide what counts, the one action to take, and what to do
+with the file afterward. A user can run several at once — “Incoming
+transcripts” watching a Dropbox folder, “Audio to transcribe” watching a
+recorder’s export folder, “Make accessible” watching a shared drive,
+“Clean exports” watching a scans folder — and each runs concurrently and
+fails in isolation, so one bad file never stalls the others.</li>
+<li><strong>Each folder bound to a different action.</strong> The action
+is the magic. The built-in set covers Open, Convert or export to a
+chosen format, Move/copy/archive to a destination, Run a named macro,
+and Run a saved Python transform, plus consented AI actions (summarize,
+tag, rewrite to a style). Two more actions light up as their tiers land:
+“Audit and fix accessibility” through GLOW, and “Transcribe” through
+BITS Whisperer — which completes a genuinely unique drop-audio-in,
+get-an-accessible-edited-document-out loop, entirely hands-free and
+screen-reader-narrated.</li>
+<li><strong>One queue you can actually watch.</strong> Every detected
+file becomes a queue item with a clear lifecycle — queued, processing,
+done, failed, skipped — with ordering, de-duplication (a file is claimed
+once, never double-processed across profiles), retry with backoff, and
+pause/resume per profile or globally. The queue is durable: it survives
+a restart and recovers cleanly, so nothing is silently lost.</li>
+<li><strong>A Watch Queue Monitor that is born accessible.</strong>
+Surfaced from Help (alongside the status page) and from the Tools menu,
+it is a screen-reader-pageable list of queue items showing state,
+action, profile, source file, outcome, and timing, with one-key pause,
+resume, retry, open-result, and clear. Arrivals and completions announce
+through the shared announcement grammar as calm, non-interrupting
+notifications (“Transcribed meeting.m4a, opened as meeting.md”), and a
+live per-profile counter (“Make accessible: 3 done, 1 working, 0
+failed”) gives an at-a-glance pulse without visual reliance.</li>
+<li><strong>Magical, but safe and quiet by default.</strong> Networked
+and AI actions stay opt-in per profile with the same no-silent-network
+promise as the rest of QUILL; nothing reaches a cloud without an
+explicit, per-profile consent. Wall-clock and concurrency caps (shared
+with the Python sandbox limits) keep a runaway folder from overwhelming
+the machine. A dry-run preview shows exactly what a profile would do
+before it is armed. Profiles are exportable and importable, so a power
+user or an administrator can pre-configure a whole automation setup and
+hand it to someone on day one.</li>
+<li><strong>Feature-flag aware to its core.</strong> The whole Watch
+Profiles surface lives behind the existing <code>FeatureManager</code>
+and respects it the way every other feature does (delight theme 7). The
+engine gets its own feature id (succeeding
+<code>core.watch_folder</code>), and each action is gated by the feature
+that powers it: the AI actions require the AI feature and its consent,
+the GLOW action requires <code>core.glow</code>, the transcription
+action requires <code>core.bw_transcription</code>. When a feature is
+off, its action is hidden from the profile editor and the action
+registry advertises it as unavailable with an announced reason rather
+than failing silently, and the Watch Queue Monitor, menu items, and
+status entries disappear in lockstep. A profile that depends on a
+now-disabled action is paused, not lost, and resumes when the feature is
+re-enabled. Users can run a minimal Open-only setup or a full automation
+hub purely by toggling features, and the UI always matches their
+choices.</li>
+</ul>
+<p>Why this is a key differentiator: it is the rare feature that is
+simultaneously a productivity superpower and an accessibility
+superpower. For a sighted user it is a slick automation hub; for a blind
+writer it is the difference between manually shepherding every file and
+simply dropping work into folders and listening to a calm queue do it.
+It also unifies the product’s most distinctive engines — AI editing,
+GLOW accessibility, and BITS Whisperer transcription — behind one
+simple, learnable mental model: a folder, an action, a queue.</p>
 <hr />
 <h2 id="code-quality-review">10. Code quality review</h2>
 <p>Overall the codebase is well-structured: clean dataclass document
@@ -1031,6 +1129,61 @@ returns to the editor on close; tests or a contract check cover
 representative dialogs.</td>
 </tr>
 <tr>
+<td>FLAG-1</td>
+<td>Feature-flag respect is a UI contract</td>
+<td>Foundations</td>
+<td>M</td>
+<td>Todo</td>
+<td>Disabling any feature through <code>FeatureManager</code>
+consistently hides or disables every surface it owns: commands and the
+palette (already filtered by <code>feature_id</code>), menu items,
+status-bar cells, QUILL key and Quick Nav entries, settings groups, and
+first-run/onboarding prompts. No command is left orphaned or dead when
+its feature is off, and a feature with unmet dependencies stays off. A
+contract test enumerates <code>FEATURE_DEFINITIONS</code> and asserts
+each owned surface is gated; representative features (watch, dictation,
+macros, AI) are covered.</td>
+</tr>
+<tr>
+<td>FLAG-2</td>
+<td>Every new feature ships a FeatureDefinition</td>
+<td>Foundations</td>
+<td>S</td>
+<td>Todo</td>
+<td>A definition-of-done item and a check require each user-facing
+feature to register a <code>FeatureDefinition</code> (id, name,
+description, dependencies, maturity, privacy, off-by-default where
+appropriate) and to wire its commands and surfaces to that id. A test
+fails when a feature-bearing command references a
+<code>feature_id</code> absent from
+<code>FEATURE_DEFINITIONS</code>.</td>
+</tr>
+<tr>
+<td>FLAG-3</td>
+<td>Feature profiles and per-feature toggles UI</td>
+<td>Foundations</td>
+<td>M</td>
+<td>Todo</td>
+<td>An accessible surface lets users pick a feature profile (Essential,
+Writer, Developer Power Text, Accessibility Professional, Full QUILL)
+and override individual features within it; changes apply live,
+announce, and persist (schema-validated, atomic, recoverable).
+Dependencies resolve automatically (enabling a feature enables what it
+needs; disabling one quietly pauses dependents) and the resolution is
+announced. Fully keyboard and screen-reader navigable.</td>
+</tr>
+<tr>
+<td>FLAG-4</td>
+<td>Export, import, and pre-configure feature flags</td>
+<td>Foundations</td>
+<td>S</td>
+<td>Todo</td>
+<td>The full feature-flag and profile state can be exported, imported,
+and reset to defaults so a power user or administrator can pre-tune
+which features are on before first run; a documented schema describes
+the format. (Pairs with SET-7.)</td>
+</tr>
+<tr>
 <td>QK-1</td>
 <td>Name and remappable QUILL key</td>
 <td>QUILL key</td>
@@ -1421,6 +1574,128 @@ group, defaults are safe and quiet, and the watcher runs off the UI
 thread reusing the existing watch-folder and stability patterns. Cursor,
 selection, and scroll are preserved across reload; tests cover clean
 reload, conflict prompt, deletion, and cursor preservation.</td>
+</tr>
+<tr>
+<td>WATCH-1</td>
+<td>Multi-profile watch engine</td>
+<td>Features</td>
+<td>L</td>
+<td>Todo</td>
+<td>Replace the single
+<code>WatchFolderConfig</code>/<code>WatchFolderService</code> with a
+list of named, independently enabled <code>WatchProfile</code>s, each
+with its own folder, filters, action, and post-action handling. A
+<code>WatchManager</code> runs one watcher per profile concurrently with
+isolated failure (one bad profile or file never stalls the others),
+shared de-duplication so a file is claimed exactly once across profiles,
+and clean start/stop/restart. The whole surface lives behind a feature
+id that succeeds <code>core.watch_folder</code> and honors
+<code>FeatureManager</code> per FLAG-1: when the feature is off, no
+watcher runs and its surfaces disappear. The core stays UI-agnostic (no
+<code>wx</code>), reuses the existing poll/age/seen-set patterns, and
+persists profiles as schema-validated JSON under
+<code>%APPDATA%\Quill</code> with atomic writes and corrupt-file
+recovery. Tests cover concurrent profiles, isolation, dedupe,
+persistence round-trip, and the feature-off path.</td>
+</tr>
+<tr>
+<td>WATCH-2</td>
+<td>Pluggable watch action registry</td>
+<td>Features</td>
+<td>M</td>
+<td>Todo</td>
+<td>A typed action registry binds each profile to exactly one action via
+a stable action id. Actions implement a small contract
+(<code>describe</code>, <code>validate(options)</code>,
+<code>run(item) -&gt; outcome</code>) so new actions register without
+touching the engine, and each action declares the feature id it requires
+so the registry can gate it through <code>FeatureManager</code>
+(FLAG-1). The registry is the seam GLOW (WATCH-8) and BITS Whisperer
+(WATCH-9) plug into. Unknown, disabled, or unavailable actions degrade
+gracefully with an announced reason rather than failing a profile. Tests
+cover registration, validation, the disabled-feature path, and the
+unavailable-action path.</td>
+</tr>
+<tr>
+<td>WATCH-3</td>
+<td>Durable, monitorable processing queue</td>
+<td>Features</td>
+<td>L</td>
+<td>Todo</td>
+<td>Every detected file becomes a queue item with an explicit lifecycle
+(queued, processing, done, failed, skipped), stable ordering, retry with
+bounded backoff, and per-profile and global pause/resume. The queue is
+durable across restarts (schema-validated, atomic, recoverable) and
+exposes events for the UI. An atomic claim guarantees no item is
+processed twice even across overlapping profiles. Tests cover lifecycle
+transitions, retry/backoff, pause/resume, dedupe under contention, and
+restart recovery.</td>
+</tr>
+<tr>
+<td>WATCH-4</td>
+<td>Watch Queue Monitor (accessible status surface)</td>
+<td>Features</td>
+<td>M</td>
+<td>Todo</td>
+<td>A screen-reader-pageable monitor, reachable from Help (next to the
+status page) and the Tools menu, lists queue items with state, action,
+profile, source, outcome, and timing, and offers one-key pause, resume,
+retry, open-result, and clear. The monitor and its menu and status
+entries are gated by the watch feature id and disappear in lockstep when
+it is off (FLAG-1). Arrivals and completions announce through the shared
+announcement grammar (A11Y-1) as calm, non-interrupting notifications,
+and a live per-profile counter (“Make accessible: 3 done, 1 working, 0
+failed”) gives an at-a-glance pulse without visual reliance. Fully
+keyboard and screen-reader operable; tests verify item rendering, the
+announced phrasing, the action keys, and the feature-off path. Subsumes
+and extends FEAT-9.</td>
+</tr>
+<tr>
+<td>WATCH-5</td>
+<td>Per-profile configuration and Settings group</td>
+<td>Features</td>
+<td>L</td>
+<td>Todo</td>
+<td>An accessible manager creates, edits, duplicates, enables, and
+deletes profiles. Each profile configures its folder, filters (suffix
+set, name patterns, min size and age, include-subfolders), action plus
+action options, schedule (always, interval, or quiet-hours window), and
+post-action handling (leave in place, move to a processed folder, or
+delete). A dedicated Settings group (SET-1) holds the global watch
+defaults. Validation is live and errors are announced; the whole surface
+is keyboard and screen-reader navigable. Tests cover create/edit/delete,
+validation, and persistence.</td>
+</tr>
+<tr>
+<td>WATCH-6</td>
+<td>Watch safety, consent, and resource governance</td>
+<td>Features</td>
+<td>M</td>
+<td>Todo</td>
+<td>Networked and AI watch actions stay opt-in per profile under the
+no-silent-network promise (AI-5): nothing reaches a cloud without
+explicit per-profile consent, and provider, model, and scope are shown.
+Wall-clock and concurrency caps (shared with the Python sandbox limits,
+SEC-9) prevent a runaway folder from overwhelming the machine;
+termination is announced. A dry-run preview shows exactly what a profile
+would do before it is armed. The atomic claim from WATCH-3 prevents
+double-processing. Tests cover the consent gate, the resource cap,
+dry-run, and the claim.</td>
+</tr>
+<tr>
+<td>WATCH-7</td>
+<td>Built-in watch actions</td>
+<td>Features</td>
+<td>M</td>
+<td>Todo</td>
+<td>Ship the core action set on top of WATCH-2: Open, Convert or export
+to a chosen format (via the existing IO and Pandoc paths),
+Move/copy/archive to a destination, Run a named macro (FEAT-7), Run a
+saved Python transform (sandboxed, SEC-9), and consented AI actions
+(summarize, tag, rewrite to a style) via the assistant. Each action
+validates its options, announces its outcome, and routes failures to the
+queue’s failed state with a clear reason. Tests cover each action’s
+happy path and its failure path.</td>
 </tr>
 <tr>
 <td>FEAT-16</td>
@@ -1860,7 +2135,36 @@ and import.</td>
 <td>Features</td>
 <td>S</td>
 <td>Todo</td>
-<td>Non-interrupting notification with one-key open.</td>
+<td>Non-interrupting notification with one-key open. Delivered as part
+of the WATCH family (WATCH-4); retained for traceability.</td>
+</tr>
+<tr>
+<td>WATCH-8</td>
+<td>GLOW “audit and fix accessibility” watch action</td>
+<td>Features</td>
+<td>M</td>
+<td>Todo</td>
+<td>A watch action that registers through the WATCH-2 registry and runs
+the GLOW audit-and-fix flow (GLOW-1 through GLOW-5) over each arriving
+document against a chosen standards profile, reversibly, surfacing
+findings in the queue outcome. Becomes available once GLOW lands; until
+then the action advertises itself as unavailable with an announced
+reason. Tests cover registration and the unavailable-until-GLOW
+path.</td>
+</tr>
+<tr>
+<td>WATCH-9</td>
+<td>BITS Whisperer “transcribe” watch action</td>
+<td>Features</td>
+<td>M</td>
+<td>Todo</td>
+<td>A watch action that registers through the WATCH-2 registry and
+transcribes arriving audio via BITS Whisperer (BW-1 through BW-4),
+emitting an editable document that the queue can then chain to other
+profiles — completing the drop-audio-in, accessible-edited-document-out
+loop. Becomes available once BITS Whisperer lands; until then it
+advertises itself as unavailable with an announced reason. Tests cover
+registration and the unavailable-until-BW path.</td>
 </tr>
 <tr>
 <td>FEAT-10</td>
@@ -4179,6 +4483,12 @@ and agents become a force multiplier instead of a risk.</li>
 <li>The accessibility gate on every change: GATE-7. Value: the mission
 becomes machine-enforced. Outcome: no UI change can quietly break a
 screen reader.</li>
+<li>Make feature flags a kept promise: FLAG-1 (and FLAG-2 as a
+definition-of-done check). Value: turning a feature off actually removes
+it from every surface, with no orphaned commands or dead menu entries.
+Outcome: users trust that the product respects their choices, and every
+later feature inherits the same contract for free. The richer profiles
+UI (FLAG-3) and export (FLAG-4) follow in Tier 2.</li>
 </ul>
 <p>Why first: these are inexpensive, they protect users immediately, and
 they make every later step cheaper and safer. Skipping them would mean
@@ -4213,12 +4523,29 @@ and AI hardening, so it sits here with the flagship.</li>
 <li>Deep, tunable settings: SET-1 through SET-7. Value: users shape
 QUILL precisely to their hands and ears. Outcome: the product meets
 people exactly where they are.</li>
+<li>Feature profiles and per-feature control: FLAG-3 and FLAG-4. Value:
+users adopt whole sets of features at once (Essential through Full
+QUILL) or toggle anything individually, with dependencies resolved and
+announced, and can export or pre-configure the whole set. Outcome: the
+feature-flag promise from Tier 1 becomes a rich, accessible control
+surface, so people run exactly the QUILL they want.</li>
 <li>Trustworthy external-change handling: FEAT-19. Value: a file edited
 by another program is never silently lost or silently overwritten; clean
 files reload in place without losing the cursor, and conflicts get a
 clear spoken choice. Outcome: QUILL feels safe and alive when documents
 change underneath it, which matters most to a screen-reader user who
 cannot see a flicker.</li>
+<li>Watch Profiles, the accessible automation hub: WATCH-1 through
+WATCH-7 (many folders, each bound to its own action, all feeding one
+durable, monitorable queue with an accessible Watch Queue Monitor in
+Help). Value: a blind writer drops work into folders and listens to a
+calm queue process it — open, convert, move, run a macro or Python
+transform, or a consented AI action — instead of shepherding every file
+by hand. Outcome: a productivity-and-accessibility superpower that
+unifies QUILL’s distinctive engines behind one learnable model (a
+folder, an action, a queue), and a quiet differentiator no mainstream
+editor offers. The GLOW and transcription actions (WATCH-8, WATCH-9)
+plug into the same registry as their tiers land.</li>
 </ul>
 <p>Why second: this is where user love is won. It comes right after the
 protections so the flagship is built on a safe, gated base.</p>
@@ -4246,6 +4573,11 @@ thin <code>quill/core/glow.py</code> bridge with calls into
 <code>quill-glow-core</code>, add contract tests for the shared API, and
 keep version and component reporting honest. Value: a clean, tested
 seam. Outcome: GLOW improvements flow into QUILL without surprises.</li>
+<li>GLOW as a watch action: WATCH-8. Value: register GLOW’s
+audit-and-fix flow as a Watch Profile action so a shared folder of
+incoming documents is made accessible automatically, reversibly, and
+announced through the queue. Outcome: the accessibility engine becomes
+hands-free for whole folders, not just the open document.</li>
 </ul>
 <p>Why third: high strategic value that extends the core mission,
 depends on the gated base (Tier 1), and is most compelling once the
@@ -4308,6 +4640,13 @@ core, so it follows the flagship, GLOW, structure, and docs.</p>
 Value: transcribe audio, then edit, audit, and publish without leaving
 QUILL. Outcome: a write-transcribe-audit-publish loop no mainstream
 editor has.</li>
+<li>Transcription as a watch action: WATCH-9. Value: register BITS
+Whisperer transcription as a Watch Profile action so dropping audio into
+a folder produces an editable, accessible document automatically, which
+the queue can chain into the GLOW (WATCH-8) and export actions. Outcome:
+the drop-audio-in, accessible-edited-document-out loop becomes fully
+hands-free and screen-reader-narrated — the most distinctive single
+payoff of the WATCH family.</li>
 <li>Right-size and unify the suite: BW-8 (drop BITS Whisperer’s
 duplicate shell, tray, setup wizard, updater, settings, watch folder,
 plugins, and registration in favor of QUILL’s), BW-9 (right-size the 18
@@ -4399,27 +4738,28 @@ CQ-16) are counted once, in their primary tier.</p>
 <tr>
 <td>Tier 1</td>
 <td>Protect users and unlock the team</td>
+<td>22</td>
 <td>20</td>
-<td>20</td>
-<td>0</td>
-<td>(complete)</td>
+<td>2</td>
+<td>FLAG-1, FLAG-2</td>
 </tr>
 <tr>
 <td>Tier 2</td>
 <td>Flagship experience</td>
-<td>29</td>
+<td>38</td>
 <td>0</td>
-<td>29</td>
+<td>38</td>
 <td>QK-1..5, QK-9, NAV-1, NAV-4, NAV-5, SEL-1..3, AGENT-1, AI-7, AI-1,
-AI-6, AI-13, AI-15, AI-17, AI-14, AI-16, SET-1..7, FEAT-19</td>
+AI-6, AI-13, AI-15, AI-17, AI-14, AI-16, SET-1..7, FEAT-19, WATCH-1..7,
+FLAG-3, FLAG-4</td>
 </tr>
 <tr>
 <td>Tier 3</td>
 <td>GLOW accessibility engine</td>
-<td>5</td>
+<td>6</td>
 <td>0</td>
-<td>5</td>
-<td>GLOW-1..5</td>
+<td>6</td>
+<td>GLOW-1..5, WATCH-8</td>
 </tr>
 <tr>
 <td>Tier 4</td>
@@ -4442,18 +4782,18 @@ CQ-23, CQ-24</td>
 <tr>
 <td>Tier 6</td>
 <td>BITS Whisperer and expansion</td>
-<td>26</td>
+<td>27</td>
 <td>0</td>
-<td>26</td>
-<td>BW-1..10, NAV-10, AI-11, AI-12, AI-18, FEAT-12..18, LINUX-1,
-LINUX-2, ECO-1, L10N-1, COLLAB-1</td>
+<td>27</td>
+<td>BW-1..10, WATCH-9, NAV-10, AI-11, AI-12, AI-18, FEAT-12..18,
+LINUX-1, LINUX-2, ECO-1, L10N-1, COLLAB-1</td>
 </tr>
 <tr>
 <td><strong>Total</strong></td>
 <td>All tiers</td>
-<td><strong>142</strong></td>
+<td><strong>155</strong></td>
 <td><strong>20</strong></td>
-<td><strong>122</strong></td>
+<td><strong>135</strong></td>
 <td></td>
 </tr>
 </tbody>
@@ -4467,16 +4807,57 @@ cleared the <code>quill/core</code> and <code>quill/io</code> portion of
 the TYPE-1..8 zone, though those formal rows stay open until each is
 individually verified and closed.</p>
 <h4
+id="planning-watch-profiles-scoped-and-feature-flag-respect-made-fundamental">2026-06-01
+(planning): Watch Profiles scoped, and feature-flag respect made
+fundamental</h4>
+<p>No code shipped in this entry; it records two planning decisions
+committed to <code>golden.md</code> (and <code>golden.html</code>)
+before Tier 2 begins.</p>
+<ul>
+<li>Watch Profiles (the WATCH family, WATCH-1 through WATCH-9) turns
+today’s single watch-folder into a personal, accessible automation hub:
+many named profiles, each watching its own folder and bound to its own
+action (Open, convert or export, move or archive, run a macro, run a
+sandboxed Python transform, consented AI actions, plus GLOW “audit and
+fix” and BITS Whisperer “transcribe” as their tiers land), all feeding
+one durable, restart-safe queue with an accessible Watch Queue Monitor
+in Help. The core seven items are Tier 2 (flagship); the GLOW action is
+Tier 3 and the transcription action is Tier 6, plugging into the same
+registry. This is positioned as a key differentiator because it is
+simultaneously a productivity and an accessibility superpower and it
+unifies QUILL’s distinctive engines behind one learnable model: a
+folder, an action, a queue.</li>
+<li>Feature flags were elevated from an implementation detail to a
+stated fundamental (new product-wide delight theme 7) backed by the FLAG
+family. The codebase already has a mature <code>FeatureManager</code>
+(feature ids, dependencies, maturity, privacy, profiles,
+command-visibility filtering, status-bar gating); FLAG-1 makes “disabled
+feature is gone from every surface” a tested UI contract, FLAG-2 makes
+shipping a <code>FeatureDefinition</code> part of the definition of
+done, and FLAG-3/FLAG-4 add the rich feature-profile UI and export.
+FLAG-1 and FLAG-2 are foundational and were added to Tier 1 (its only
+remaining items); FLAG-3 and FLAG-4 are Tier 2. The entire Watch
+Profiles surface is specified to honor these flags, so users can run
+anything from an Open-only setup to a full automation hub purely by
+toggling features, with the UI always matching their choices.</li>
+</ul>
+<p>Backlog totals moved from 142 to 155 (WATCH-1..9 and FLAG-1..4); Tier
+1 is now 20 of 22 (the gate ladder and protections complete,
+FLAG-1/FLAG-2 open), and Tier 2 grew to 38 items.</p>
+<h4
 id="continuation-brief-resume-point-for-the-next-agent-or-session">Continuation
 brief (resume point for the next agent or session)</h4>
-<p>Tier 1 is complete: all seven bugs, the cheap security hardening, and
-the full gate ladder (GATE-1 through GATE-9) are committed and enforced
-in three CI workflows (<code>pr-ci.yml</code>,
+<p>Tier 1’s original scope is complete: all seven bugs, the cheap
+security hardening, and the full gate ladder (GATE-1 through GATE-9) are
+committed and enforced in three CI workflows (<code>pr-ci.yml</code>,
 <code>security-ci.yml</code>, <code>accessibility-ci.yml</code>). The
 working tree is gate-clean: <code>ruff format --check .</code> passes,
 <code>ruff check . --ignore E501</code> passes,
 <code>mypy quill\core quill\io</code> reports zero errors, and the full
-suite is 701 passed / 7 skipped with 72.28% core+io coverage.</p>
+suite is 701 passed / 7 skipped with 72.28% core+io coverage. Two
+foundational feature-flag items (FLAG-1, FLAG-2) were subsequently added
+to Tier 1 and are the only Tier 1 work still open; the richer
+feature-profile UI (FLAG-3, FLAG-4) sits in Tier 2.</p>
 <p>The agreed next sequence (decided with the maintainer): (1) do the
 cheap Tier 4 quality cleanup first — CQ-18 (the ~43 remaining E501
 line-length wraps, after which the <code>--ignore E501</code> can be

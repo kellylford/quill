@@ -16,3 +16,8 @@ kokoro/_hf_cache/
 
 tmp/
 mypy_out.txt
+
+# Coverage data and scratch commit-message files
+.coverage
+.coverage.*
+msg.txt
