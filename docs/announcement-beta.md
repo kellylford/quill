@@ -238,6 +238,9 @@ Voice support includes:
 - Windows dictation integration
 - dictation command toggles and control states
 - voice-command interpretation support in supported paths
+- bundled read-aloud fallback voices (DECtalk and eSpeak NG) for immediate local playback
+- download-first voice expansion for Piper and Kokoro through explicit Speech Center flows
+- voice availability announcements and onboarding previews before any model download
 - watch-folder monitoring to auto-open newly dropped supported files
 - watch-folder settings for folder path, subfolders, startup, and polling
 - startup-wizard watch-folder onboarding for first-run automation setup

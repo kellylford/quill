@@ -1769,8 +1769,9 @@ Goals:
 
 - Add a first-class **Speech** submenu under the top-level **AI** menu.
 - Add two downloadable local speech engines: **Kokoro** and **Piper**.
+- Keep **DECtalk** and **eSpeak NG** as bundled local engines for immediate read-aloud availability.
 - Provide voice lifecycle UX end to end: discover, download, preview, set preferred, configure, remove.
-- Keep installer size lean by bundling **no voices** in core builds.
+- Keep installer size lean by making heavier engines download-only while preserving bundled fallback voices.
 - Preserve screen-reader-first behavior with predictable announcements, keyboard-first flows, and no surprise network actions.
 
 #### 5.25a.1 AI menu information architecture
@@ -1792,14 +1793,18 @@ The Speech submenu mirrors the command palette and status surfaces, with live ke
 Supported engines for this milestone:
 
 - `windows-native` (existing SAPI/OneCore path)
+- `dectalk-local` (bundled)
+- `espeak-local` (bundled)
 - `kokoro-local`
 - `piper-local`
 
 Policy:
 
+- DECtalk and eSpeak NG ship with QUILL as local bundled engines.
 - No Kokoro or Piper voices are bundled in installer or portable artifacts.
 - Voice models are downloaded on demand into `%APPDATA%\Quill\speech\voices\...`.
 - Downloads require explicit user action and clear size disclosure before start.
+- Speech onboarding includes preview-first guidance and availability announcements before model download.
 
 #### 5.25a.3 Voice library and download UX
 

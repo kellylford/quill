@@ -42,6 +42,7 @@ def show_web_form(
     save_label: str = "Save",
     cancel_label: str = "Cancel",
     size: tuple[int, int] = (720, 560),
+    auto_focus_first_field: bool = True,
 ) -> dict | None:
     """Show a modal accessible web form; return values on save or ``None``."""
     dialog = _WebFormDialog(
@@ -53,6 +54,7 @@ def show_web_form(
         save_label=save_label,
         cancel_label=cancel_label,
         size=size,
+        auto_focus_first_field=auto_focus_first_field,
     )
     return dialog.show()
 
@@ -69,11 +71,13 @@ class _WebFormDialog:
         save_label: str,
         cancel_label: str,
         size: tuple[int, int],
+        auto_focus_first_field: bool,
     ) -> None:
         self._wx = wx
         self._fields = fields
         self._save_label = save_label
         self._cancel_label = cancel_label
+        self._auto_focus_first_field = auto_focus_first_field
         self._result: dict | None = None
         self._native_controls: dict = {}
 
@@ -113,6 +117,8 @@ class _WebFormDialog:
         if self._native_controls:
             first = next(iter(self._native_controls.values()))
             self._wx.CallAfter(first.SetFocus)
+        elif self._webview is not None and self._webview.using_webview:
+            self._wx.CallAfter(self._webview.control.SetFocus)
         try:
             if show_modal_dialog(self.dialog, self.dialog.GetTitle()) != self._wx.ID_OK:
                 return None
@@ -125,7 +131,10 @@ class _WebFormDialog:
     # -- web rendering -----------------------------------------------------
 
     def _form_html(self, intro: str) -> str:
-        parts: list[str] = [f"<h1>{html.escape(self.dialog.GetTitle())}</h1>"]
+        heading_id = "form-title"
+        parts: list[str] = [
+            f"<h1 id='{heading_id}' tabindex='-1'>{html.escape(self.dialog.GetTitle())}</h1>"
+        ]
         if intro:
             parts.append(f"<p>{html.escape(intro)}</p>")
         first_id = ""
@@ -176,6 +185,17 @@ class _WebFormDialog:
         )
         names = [str(field["name"]) for field in self._fields]
         types = {str(field["name"]): field.get("type", "text") for field in self._fields}
+        focus_script = ""
+        if self._auto_focus_first_field and first_id:
+            focus_script = (
+                f"setTimeout(function(){{var f=document.getElementById({json.dumps(first_id)});"
+                "if(f){f.focus();if(f.select)f.select();}},60);"
+            )
+        elif not self._auto_focus_first_field:
+            focus_script = (
+                f"setTimeout(function(){{var h=document.getElementById({json.dumps(heading_id)});"
+                "if(h){h.focus();}} ,60);"
+            )
         parts.append(
             "<script>(function(){"
             "function post(o){if(window.awv&&window.awv.postMessage)"
@@ -188,8 +208,7 @@ class _WebFormDialog:
             "post({type:'save',values:collect()});});"
             "document.getElementById('form-cancel').addEventListener('click',function(){"
             "post({type:'cancel'});});"
-            f"setTimeout(function(){{var f=document.getElementById({json.dumps(first_id)});"
-            "if(f){f.focus();if(f.select)f.select();}},60);"
+            f"{focus_script}"
             "})();</script>"
         )
         return "".join(parts)

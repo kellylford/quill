@@ -10,6 +10,7 @@ _ASSISTANT_ONBOARDING_STATE_FILE = "assistant-onboarding-complete.json"
 _SPEECH_ONBOARDING_STATE_FILE = "speech-onboarding-complete.json"
 _WATCH_FOLDER_ONBOARDING_STATE_FILE = "watch-folder-onboarding-complete.json"
 _TRUST_CONSENT_STATE_FILE = "trust-consent.json"
+_STARTUP_WIZARD_PROMPT_STATE_FILE = "startup-wizard-prompt.json"
 _TRUST_CONSENT_VERSION = 1
 
 
@@ -31,6 +32,10 @@ def watch_folder_onboarding_complete_path() -> Path:
 
 def trust_consent_state_path() -> Path:
     return app_data_dir() / _TRUST_CONSENT_STATE_FILE
+
+
+def startup_wizard_prompt_state_path() -> Path:
+    return app_data_dir() / _STARTUP_WIZARD_PROMPT_STATE_FILE
 
 
 def load_onboarding_complete() -> bool:
@@ -94,3 +99,14 @@ def mark_trust_consent_complete() -> None:
             "version": _TRUST_CONSENT_VERSION,
         },
     )
+
+
+def load_startup_wizard_prompt_suppressed() -> bool:
+    raw = read_json(startup_wizard_prompt_state_path(), default={})
+    if not isinstance(raw, dict):
+        return False
+    return bool(raw.get("suppressed", False))
+
+
+def mark_startup_wizard_prompt_suppressed() -> None:
+    write_json_atomic(startup_wizard_prompt_state_path(), {"suppressed": True})

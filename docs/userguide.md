@@ -783,7 +783,7 @@ Quill earns trust by making difficult files readable and inspectable.
 
 ### Read Aloud
 
-Read Aloud uses local voices when available. You can start, pause, stop, and choose a voice. It is useful for proofreading by ear, reviewing extracted text, and staying oriented in dense material.
+Read Aloud uses local voices with a deterministic support policy. DECtalk and eSpeak NG are bundled for immediate local playback. Piper and Kokoro are available as explicit downloads from Speech Center so base installs stay smaller. You can start, pause, stop, preview, and choose a voice. Speech onboarding announces current availability and recommended next actions before any download starts.
 
 ### EPUB Navigator
 
