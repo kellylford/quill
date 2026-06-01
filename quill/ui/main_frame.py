@@ -7419,79 +7419,63 @@ class MainFrame:
             return mode
         return self._prompt_word_open_mode(path)
 
-    def _prompt_csv_open_mode(self, path: Path) -> str:
+    def _prompt_open_mode(
+        self,
+        path: Path,
+        *,
+        question: str,
+        special_label: str,
+        special_mode: str,
+        remember_label: str,
+        settings_attr: str,
+    ) -> str:
+        """Native open-mode chooser (special view vs plain text) + remember box.
+
+        Uses wx.RichMessageDialog so it's a real native dialog with a checkbox —
+        no hand-rolled wx.Dialog that can render over the startup wizard. Yes
+        opens the special view, No opens plain text, and closing defaults to text.
+        """
         wx = self._wx
-        dialog = wx.Dialog(self.frame, title=f"Open {path.name}")
-        panel = wx.Panel(dialog)
-        root = wx.BoxSizer(wx.VERTICAL)
-        root.Add(
-            wx.StaticText(
-                panel,
-                label=(
-                    f"{path.name} can open in the special CSV grid or in the normal text editor."
-                ),
-            ),
-            0,
-            wx.ALL | wx.EXPAND,
-            8,
+        dialog = wx.RichMessageDialog(
+            self.frame,
+            question,
+            f"Open {path.name}",
+            wx.YES_NO | wx.ICON_QUESTION,
         )
-        grid_choice = wx.RadioButton(panel, label="Open in special CSV grid", style=wx.RB_GROUP)
-        text_choice = wx.RadioButton(panel, label="Open in normal text editor")
-        grid_choice.SetValue(True)
-        root.Add(grid_choice, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
-        root.Add(text_choice, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
-        remember_choice = wx.CheckBox(panel, label="Remember this choice for CSV files")
-        root.Add(remember_choice, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
-        buttons = dialog.CreateButtonSizer(wx.OK | wx.CANCEL)
-        root.Add(buttons, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.ALIGN_RIGHT, 8)
-        panel.SetSizer(root)
-        dialog.SetAffirmativeId(wx.ID_OK)
-        dialog.SetEscapeId(wx.ID_CANCEL)
-        if self._show_modal_dialog(dialog, "CSV Open Choice") != wx.ID_OK:
-            return "text"
-        mode = "grid" if grid_choice.GetValue() else "text"
-        if remember_choice.GetValue():
-            self.settings.csv_open_mode = mode
+        dialog.SetYesNoLabels(special_label, "Open in normal text editor")
+        dialog.ShowCheckBox(remember_label)
+        result = self._show_modal_dialog(dialog, "Open Choice")
+        remembered = bool(dialog.IsCheckBoxChecked())
+        dialog.Destroy()
+        mode = special_mode if result == wx.ID_YES else "text"
+        if remembered:
+            setattr(self.settings, settings_attr, mode)
             save_settings(self.settings)
         return mode
 
-    def _prompt_word_open_mode(self, path: Path) -> str:
-        wx = self._wx
-        dialog = wx.Dialog(self.frame, title=f"Open {path.name}")
-        panel = wx.Panel(dialog)
-        root = wx.BoxSizer(wx.VERTICAL)
-        root.Add(
-            wx.StaticText(
-                panel,
-                label=(
-                    f"{path.name} can open in a structured Word view or in the normal text editor."
-                ),
+    def _prompt_csv_open_mode(self, path: Path) -> str:
+        return self._prompt_open_mode(
+            path,
+            question=(
+                f"{path.name} can open in the special CSV grid or in the normal text editor."
             ),
-            0,
-            wx.ALL | wx.EXPAND,
-            8,
+            special_label="Open in special CSV grid",
+            special_mode="grid",
+            remember_label="Remember this choice for CSV files",
+            settings_attr="csv_open_mode",
         )
-        structured_choice = wx.RadioButton(
-            panel, label="Open in structured Word view", style=wx.RB_GROUP
+
+    def _prompt_word_open_mode(self, path: Path) -> str:
+        return self._prompt_open_mode(
+            path,
+            question=(
+                f"{path.name} can open in a structured Word view or in the normal text editor."
+            ),
+            special_label="Open in structured Word view",
+            special_mode="structured",
+            remember_label="Remember this choice for Word files",
+            settings_attr="word_open_mode",
         )
-        text_choice = wx.RadioButton(panel, label="Open in normal text editor")
-        structured_choice.SetValue(True)
-        root.Add(structured_choice, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
-        root.Add(text_choice, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
-        remember_choice = wx.CheckBox(panel, label="Remember this choice for Word files")
-        root.Add(remember_choice, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
-        buttons = dialog.CreateButtonSizer(wx.OK | wx.CANCEL)
-        root.Add(buttons, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.ALIGN_RIGHT, 8)
-        panel.SetSizer(root)
-        dialog.SetAffirmativeId(wx.ID_OK)
-        dialog.SetEscapeId(wx.ID_CANCEL)
-        if self._show_modal_dialog(dialog, "Word Open Choice") != wx.ID_OK:
-            return "text"
-        mode = "structured" if structured_choice.GetValue() else "text"
-        if remember_choice.GetValue():
-            self.settings.word_open_mode = mode
-            save_settings(self.settings)
-        return mode
 
     def _create_csv_document_tab(self, document: Document, select: bool = True) -> int:
         wx = self._wx
