@@ -526,6 +526,7 @@ class _IntellisensePopup:
     def __init__(self, wx: object, parent: object) -> None:
         self._wx = wx
         self._accept_callback = None
+        self._dismiss_callback = None
         self.frame = wx.Frame(
             parent,
             title="Word Prediction",
@@ -536,14 +537,27 @@ class _IntellisensePopup:
         self.status = wx.StaticText(self.frame, label="")
         root.Add(self.status, 0, wx.EXPAND | wx.ALL, 6)
         self.listbox = wx.ListBox(self.frame)
+        # Accessible name so a screen reader announces the list's purpose if
+        # focus ever lands here directly.
+        self.listbox.SetName("Word prediction suggestions")
         root.Add(self.listbox, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 6)
         self.frame.SetSizer(root)
         self.suggestions: list[IntellisenseSuggestion] = []
         self.frame.Bind(wx.EVT_CLOSE, self._on_close)
         self.listbox.Bind(wx.EVT_LISTBOX_DCLICK, self._on_accept)
+        # The intended flow keeps focus in the editor and drives this list from
+        # the editor's char hook. But focus can still land in the listbox (Tab,
+        # mouse, or screen-reader navigation into this floating window), and a
+        # bare wx.ListBox has no way out — Escape/Tab/Enter would do nothing,
+        # trapping the user. Handle those keys here too so the list is never a
+        # dead end regardless of where focus is.
+        self.listbox.Bind(wx.EVT_CHAR_HOOK, self._on_listbox_key)
 
     def set_accept_callback(self, callback: object) -> None:
         self._accept_callback = callback
+
+    def set_dismiss_callback(self, callback: object) -> None:
+        self._dismiss_callback = callback
 
     def _on_close(self, event: object) -> None:
         self.frame.Hide()
@@ -554,6 +568,30 @@ class _IntellisensePopup:
     def _on_accept(self, _event: object) -> None:
         if callable(self._accept_callback):
             self._accept_callback()
+
+    def _dismiss(self) -> None:
+        if callable(self._dismiss_callback):
+            self._dismiss_callback()
+
+    def _on_listbox_key(self, event: object) -> None:
+        """Keep the listbox from becoming a keyboard trap when it has focus.
+
+        Escape cancels; Enter and Tab accept the highlighted suggestion. All
+        three return focus to the editor (via the accept/dismiss callbacks),
+        mirroring the editor-focused behaviour. Arrow keys fall through to the
+        native listbox so the screen reader announces each selection."""
+        wx = self._wx
+        key_code = event.GetKeyCode()
+        if key_code == wx.WXK_ESCAPE:
+            self._dismiss()
+            return
+        if key_code in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER, wx.WXK_TAB):
+            if callable(self._accept_callback):
+                self._accept_callback()
+            else:
+                self._dismiss()
+            return
+        event.Skip()
 
     def update(self, suggestions: list[IntellisenseSuggestion], status: str) -> None:
         self.suggestions = list(suggestions)
@@ -817,6 +855,7 @@ class MainFrame:
         self.frame = wx.Frame(None, title="Untitled - Quill", size=(1000, 700))
         self._intellisense_popup = _IntellisensePopup(wx, self.frame)
         self._intellisense_popup.set_accept_callback(self._apply_intellisense_selection)
+        self._intellisense_popup.set_dismiss_callback(self._dismiss_intellisense_popup)
         self._tab_control_visible = bool(self.settings.show_tab_control)
         self._documents_panel = wx.Panel(self.frame)
         self._documents_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -18287,6 +18326,16 @@ class MainFrame:
         self._intellisense_fragment_text = ""
         self._intellisense_suggestions = []
 
+    def _dismiss_intellisense_popup(self) -> None:
+        """Cancel the prediction popup and return focus to the editor.
+
+        Used when the listbox itself has focus (Escape), so the user is never
+        stranded in the floating window."""
+        self._hide_intellisense_popup()
+        if self.editor is not None:
+            self.editor.SetFocus()
+        self._set_status("Word prediction dismissed")
+
     def _apply_intellisense_selection(self) -> bool:
         popup = getattr(self, "_intellisense_popup", None)
         context = getattr(self, "_intellisense_context", None)
@@ -18309,6 +18358,10 @@ class MainFrame:
         finally:
             self._intellisense_guard = False
         self._hide_intellisense_popup()
+        # Return focus to the editor in case the listbox itself held focus
+        # (e.g. the user Tabbed or clicked into the floating window).
+        if self.editor is not None:
+            self.editor.SetFocus()
         self._set_status(f'Inserted prediction "{suggestion.label}".')
         return True
 
