@@ -59,6 +59,27 @@ def _format_native_load_error(exc: OSError) -> str:
     )
 
 
+def _extract_message_content(response: object) -> str:
+    """Safely pull the assistant text out of a chat-completion response.
+
+    A malformed or version-mismatched llama.cpp payload must not crash with a
+    raw ``KeyError``/``IndexError``/``TypeError``; surface a friendly error.
+    """
+    try:
+        choices = response["choices"]  # type: ignore[index]
+        first = choices[0]
+        content = first["message"]["content"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise RuntimeError(
+            "The local AI model returned an unexpected response shape. "
+            "This can happen after a llama-cpp-python upgrade; reinstall a "
+            "compatible version or disable AI on this machine."
+        ) from exc
+    if content is None:
+        return ""
+    return str(content).strip()
+
+
 class LlamaCppBackend(AIBackend):
     name = "llama.cpp (local CPU)"
 
@@ -115,7 +136,7 @@ class LlamaCppBackend(AIBackend):
             raise
         except OSError as exc:
             raise RuntimeError(_cpu_error_message(exc)) from exc
-        return out["choices"][0]["message"]["content"].strip()
+        return _extract_message_content(out)
 
     def respond(self, prompt: str) -> str:
         return self._complete([{"role": "user", "content": prompt}])

@@ -50,3 +50,43 @@ def test_load_raises_runtime_error_for_native_loader_failure(monkeypatch) -> Non
         assert "0xc000001d" in str(exc)
     else:
         raise AssertionError("Expected RuntimeError for native loader failure")
+
+
+class _StubLlm:
+    def __init__(self, response: object) -> None:
+        self._response = response
+
+    def create_chat_completion(self, **_kwargs):
+        return self._response
+
+
+def _backend_with_response(response: object) -> LlamaCppBackend:
+    backend = LlamaCppBackend(model_path="dummy.gguf")
+    backend._llm = _StubLlm(response)
+    return backend
+
+
+def test_complete_extracts_well_formed_content() -> None:
+    backend = _backend_with_response(
+        {"choices": [{"message": {"content": "  hello world  "}}]}
+    )
+    assert backend.respond("hi") == "hello world"
+
+
+def test_complete_handles_missing_choices(monkeypatch) -> None:
+    # Regression for BUG-5: a malformed/version-mismatched response must not
+    # raise KeyError/IndexError; surface a friendly RuntimeError instead.
+    for bad in ({}, {"choices": []}, {"choices": [{}]}, {"choices": [{"message": {}}]}, None):
+        backend = _backend_with_response(bad)
+        try:
+            backend.respond("hi")
+        except RuntimeError as exc:
+            assert "unexpected response shape" in str(exc)
+        else:
+            raise AssertionError(f"Expected RuntimeError for malformed response: {bad!r}")
+
+
+def test_complete_treats_null_content_as_empty() -> None:
+    backend = _backend_with_response({"choices": [{"message": {"content": None}}]})
+    assert backend.respond("hi") == ""
+
