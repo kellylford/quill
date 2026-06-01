@@ -23,7 +23,12 @@ import json
 from quill.ui.dialog_contract import apply_modal_ids, show_modal_dialog
 
 try:
-    from wx_accessible_webview import AccessibleHtmlDialog, SidePreview
+    from wx_accessible_webview import (
+        AccessibleHtmlDialog as _LibraryAccessibleHtmlDialog,
+        SidePreview,
+    )
+
+    AccessibleHtmlDialog = _LibraryAccessibleHtmlDialog
 
     _HAS_WEBVIEW_LIB = True
 except ImportError:
@@ -122,9 +127,57 @@ except ImportError:
             self._view.SetFocus()
 
 
-# Quill's HtmlMessageDialog and the library's AccessibleHtmlDialog share the same
-# constructor (parent, title, body_html, buttons) and the same show_modal()->int.
-HtmlMessageDialog = AccessibleHtmlDialog
+def _build_accessible_dialog_body(
+    body_html: str,
+    *,
+    start_anchor: str | None = None,
+) -> str:
+    """Add focus/keyboard hardening for modal HTML reading surfaces."""
+
+    safe_anchor = json.dumps(start_anchor) if start_anchor else "null"
+    script = (
+        "<script>(function(){"
+        "window.addEventListener('load',function(){"
+        "var c=document.getElementById('content');"
+        "if(c){c.setAttribute('tabindex','0');c.focus();}"
+        f"var a={safe_anchor};"
+        "if(a){var n=document.getElementById(a);if(n){n.scrollIntoView();}}"
+        "});"
+        "document.addEventListener('keydown',function(e){"
+        "if(e.key!=='Enter'){return;}"
+        "var el=document.activeElement;"
+        "if(!el){return;}"
+        "var tag=(el.tagName||'').toLowerCase();"
+        "var interactive=(tag==='a'||tag==='button'||tag==='input'||"
+        "tag==='select'||tag==='textarea'||!!el.isContentEditable);"
+        "if(!interactive){e.preventDefault();}"
+        "},true);"
+        "})();</script>"
+    )
+    return (body_html or "") + script
+
+
+class HtmlMessageDialog:
+    """Quill wrapper around AccessibleHtmlDialog with content-focus hardening."""
+
+    def __init__(
+        self,
+        parent: object,
+        title: str,
+        body_html: str,
+        buttons=None,
+        **kwargs,
+    ) -> None:
+        self._dialog = AccessibleHtmlDialog(
+            parent,
+            title,
+            _build_accessible_dialog_body(body_html),
+            buttons,
+            **kwargs,
+        )
+
+    def show_modal(self) -> int:
+        return self._dialog.show_modal()
 
 __all__ = ["HtmlMessageDialog", "SidePreview", "MarkdownPreviewDialog"]
 
@@ -147,18 +200,10 @@ class MarkdownPreviewDialog:
     ) -> None:
         import wx
 
-        if start_anchor:
-            # Inline scripts in a full-document load execute, so scroll to the
-            # target heading once the page is ready.
-            body_html += (
-                "<script>window.addEventListener('load',function(){"
-                f"var n=document.getElementById({json.dumps(start_anchor)});"
-                "if(n){n.scrollIntoView();}});</script>"
-            )
         self._dialog = AccessibleHtmlDialog(
             parent,
             title,
-            body_html,
+            _build_accessible_dialog_body(body_html, start_anchor=start_anchor),
             [("Close", wx.ID_CANCEL)],
             size=(820, 760),
             open_links_externally=open_links_externally,

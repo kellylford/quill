@@ -195,11 +195,17 @@ class _WebFormDialog:
         return "".join(parts)
 
     def _on_message(self, data: object) -> None:
-        if not isinstance(data, dict):
+        payload = data
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except Exception:  # noqa: BLE001
+                return
+        if not isinstance(payload, dict):
             return
-        kind = data.get("type")
+        kind = payload.get("type")
         if kind == "save":
-            values = data.get("values")
+            values = payload.get("values")
             self._result = values if isinstance(values, dict) else {}
             self.dialog.EndModal(self._wx.ID_OK)
         elif kind in ("cancel", "close"):

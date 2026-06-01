@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import json
 
 from quill.core.sticky_notes import (
     StickyNote,
@@ -107,11 +108,20 @@ class StickyNoteEditorDialog:
         )
 
     def _on_message(self, data: object) -> None:
-        if not isinstance(data, dict):
+        payload = data
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except Exception:  # noqa: BLE001
+                return
+        if not isinstance(payload, dict):
             return
-        kind = data.get("type")
+        kind = payload.get("type")
         if kind == "save":
-            self._result = self._combine(str(data.get("title", "")), str(data.get("body", "")))
+            self._result = self._combine(
+                str(payload.get("title", "")),
+                str(payload.get("body", "")),
+            )
             self.dialog.EndModal(self._wx.ID_OK)
         elif kind in ("cancel", "close"):
             self.dialog.EndModal(self._wx.ID_CANCEL)

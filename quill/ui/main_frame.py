@@ -235,13 +235,13 @@ from quill.core.paths import app_data_dir, ensure_app_directories
 from quill.core.read_aloud import (
     ReadAloudController,
     ReadAloudUnavailableError,
+    VoiceOption as ReadAloudVoiceOption,
     discover_chatterbox_executable,
     discover_dectalk_executable,
     discover_espeak_executable,
     discover_melotts_executable,
     discover_openvoice_executable,
     discover_piper_executable,
-    discover_rhvoice_executable,
     download_dectalk_runtime,
     list_chatterbox_english_voices,
     list_dectalk_voices,
@@ -250,7 +250,6 @@ from quill.core.read_aloud import (
     list_melotts_english_voices,
     list_openvoice_english_voices,
     list_piper_voices,
-    list_rhvoice_english_voices,
     list_voices,
     synthesize_to_file_with_dectalk,
     synthesize_to_file_with_pyttsx3,
@@ -260,7 +259,6 @@ from quill.core.read_aloud import (
     synthesize_with_melotts,
     synthesize_with_openvoice,
     synthesize_with_piper,
-    synthesize_with_rhvoice,
 )
 from quill.core.recent import add_recent_file, clear_recent_files, load_recent_files
 from quill.core.recovery import (
@@ -12338,7 +12336,6 @@ class MainFrame:
             "dectalk",
             "kokoro",
             "espeak",
-            "rhvoice",
             "melotts",
             "chatterbox",
             "openvoice",
@@ -12368,6 +12365,64 @@ class MainFrame:
 
     _PREVIEW_TEXT = "Hello, this is a voice preview. The quick brown fox jumps over the lazy dog."
 
+    def _voice_preview_catalog_roots(self) -> list[Path]:
+        roots: list[Path] = []
+        app_root_raw = os.environ.get("QUILL_APP_ROOT", "").strip()
+        if app_root_raw:
+            app_root = Path(app_root_raw)
+            roots.append(app_root / "quill" / "data" / "voice-previews")
+            roots.append(app_root / "tools" / "speech" / "previews")
+        roots.append(Path(__file__).resolve().parents[1] / "data" / "voice-previews")
+        roots.append(app_data_dir() / "speech" / "previews")
+        deduped: list[Path] = []
+        seen: set[str] = set()
+        for root in roots:
+            marker = str(root).lower()
+            if marker in seen:
+                continue
+            seen.add(marker)
+            deduped.append(root)
+        return deduped
+
+    def _voice_preview_sample_path(self, engine: str, voice_id: str) -> Path | None:
+        safe_engine = (engine or "").strip().lower()
+        safe_voice = (voice_id or "").strip()
+        if not safe_engine or not safe_voice:
+            return None
+        for root in self._voice_preview_catalog_roots():
+            provider_dir = root / safe_engine
+            if not provider_dir.exists():
+                continue
+            for extension in (".wav", ".mp3"):
+                candidate = provider_dir / f"{safe_voice}{extension}"
+                if candidate.exists():
+                    return candidate
+        return None
+
+    def _voice_preview_voice_ids(self, engine: str) -> list[str]:
+        safe_engine = (engine or "").strip().lower()
+        if not safe_engine:
+            return []
+        discovered: set[str] = set()
+        for root in self._voice_preview_catalog_roots():
+            provider_dir = root / safe_engine
+            if not provider_dir.exists():
+                continue
+            for candidate in provider_dir.glob("*.wav"):
+                discovered.add(candidate.stem)
+            for candidate in provider_dir.glob("*.mp3"):
+                discovered.add(candidate.stem)
+        return sorted(discovered)
+
+    def _play_preview_asset(self, sample_path: Path) -> None:
+        suffix = sample_path.suffix.lower()
+        if suffix == ".wav" and _winsound is not None:
+            _winsound.PlaySound(str(sample_path), _winsound.SND_FILENAME)
+            return
+        raise ReadAloudUnavailableError(
+            "Preview sample playback supports WAV files."
+        )
+
     def _preview_voice(self, engine: str, voice_id: str) -> None:
         """Play a short preview of *voice_id* through *engine* on a background thread."""
         import tempfile as _tmpfile
@@ -12377,6 +12432,10 @@ class MainFrame:
         s = self.settings
 
         def _work(_progress: Callable[[str, int, int], None]) -> object:
+            preview_sample = self._voice_preview_sample_path(engine, voice_id)
+            if preview_sample is not None:
+                self._play_preview_asset(preview_sample)
+                return None
             with _tmpfile.NamedTemporaryFile(suffix=".wav", delete=False) as fh:
                 wav = _Path(fh.name)
             try:
@@ -12426,17 +12485,6 @@ class MainFrame:
                         executable_path=exe,
                         voice=voice_id,
                         rate=s.read_aloud_espeak_rate,
-                    )
-                elif engine == "rhvoice":
-                    exe = discover_rhvoice_executable(s.read_aloud_rhvoice_executable)
-                    if exe is None:
-                        raise ReadAloudUnavailableError("RHVoice executable not configured")
-                    synthesize_with_rhvoice(
-                        sample,
-                        wav,
-                        executable_path=exe,
-                        voice=voice_id,
-                        rate=s.read_aloud_rhvoice_rate,
                     )
                 elif engine == "melotts":
                     exe = discover_melotts_executable(s.read_aloud_melotts_executable)
@@ -12502,9 +12550,6 @@ class MainFrame:
                     espeak_executable=s.read_aloud_espeak_executable,
                     espeak_voice=voice_id if engine == "espeak" else s.read_aloud_espeak_voice,
                     espeak_rate=s.read_aloud_espeak_rate,
-                    rhvoice_executable=s.read_aloud_rhvoice_executable,
-                    rhvoice_voice=voice_id if engine == "rhvoice" else s.read_aloud_rhvoice_voice,
-                    rhvoice_rate=s.read_aloud_rhvoice_rate,
                     melotts_executable=s.read_aloud_melotts_executable,
                     melotts_voice=voice_id if engine == "melotts" else s.read_aloud_melotts_voice,
                     melotts_rate=s.read_aloud_melotts_rate,
@@ -12544,6 +12589,11 @@ class MainFrame:
             current_voice_id = self.settings.read_aloud_dectalk_voice
         elif engine == "piper":
             voices = list_piper_voices(self.settings.read_aloud_piper_model_dir)
+            if not voices:
+                voices = [
+                    ReadAloudVoiceOption(id=voice_id, name=f"{voice_id} (preview sample)")
+                    for voice_id in self._voice_preview_voice_ids("piper")
+                ]
             current_voice_id = self.settings.read_aloud_piper_model
         elif engine == "kokoro":
             voices = list_kokoro_voices()
@@ -12551,9 +12601,6 @@ class MainFrame:
         elif engine == "espeak":
             voices = list_espeak_english_voices()
             current_voice_id = self.settings.read_aloud_espeak_voice
-        elif engine == "rhvoice":
-            voices = list_rhvoice_english_voices()
-            current_voice_id = self.settings.read_aloud_rhvoice_voice
         elif engine == "melotts":
             voices = list_melotts_english_voices()
             current_voice_id = self.settings.read_aloud_melotts_voice
@@ -12636,8 +12683,6 @@ class MainFrame:
             self.settings.read_aloud_kokoro_voice = voices[selected].id
         elif engine == "espeak":
             self.settings.read_aloud_espeak_voice = voices[selected].id
-        elif engine == "rhvoice":
-            self.settings.read_aloud_rhvoice_voice = voices[selected].id
         elif engine == "melotts":
             self.settings.read_aloud_melotts_voice = voices[selected].id
         elif engine == "chatterbox":
@@ -12658,7 +12703,6 @@ class MainFrame:
             "Piper (neural, offline)",
             "Kokoro (neural, offline)",
             "eSpeak-NG (English variants)",
-            "RHVoice (accessibility-focused, offline)",
             "MeloTTS (multilingual add-on, English mode)",
             "Chatterbox (high-fidelity read/export)",
             "OpenVoice (advanced style module)",
@@ -12669,7 +12713,6 @@ class MainFrame:
             "piper",
             "kokoro",
             "espeak",
-            "rhvoice",
             "melotts",
             "chatterbox",
             "openvoice",
@@ -12796,20 +12839,6 @@ class MainFrame:
                 return
             self.settings.read_aloud_espeak_rate = v
 
-        elif selected_engine == "rhvoice":
-            exe = _ask_text(
-                "Path to RHVoice executable:", self.settings.read_aloud_rhvoice_executable
-            )
-            if exe is None:
-                self._set_status("Read aloud settings cancelled")
-                return
-            self.settings.read_aloud_rhvoice_executable = exe
-            v = _ask_int("Speaking rate", self.settings.read_aloud_rhvoice_rate, 80, 450)
-            if v is None:
-                self._set_status("Read aloud settings cancelled")
-                return
-            self.settings.read_aloud_rhvoice_rate = v
-
         elif selected_engine == "melotts":
             exe = _ask_text(
                 "Path to MeloTTS executable:", self.settings.read_aloud_melotts_executable
@@ -12866,7 +12895,6 @@ class MainFrame:
             "piper": self.settings.read_aloud_piper_model,
             "kokoro": self.settings.read_aloud_kokoro_voice,
             "espeak": self.settings.read_aloud_espeak_voice,
-            "rhvoice": self.settings.read_aloud_rhvoice_voice,
             "melotts": self.settings.read_aloud_melotts_voice,
             "chatterbox": self.settings.read_aloud_chatterbox_voice,
             "openvoice": self.settings.read_aloud_openvoice_voice,
@@ -12969,18 +12997,6 @@ class MainFrame:
                 return
             espeak_exe_snap = exe
 
-        elif engine == "rhvoice":
-            exe = discover_rhvoice_executable(s.read_aloud_rhvoice_executable)
-            if exe is None:
-                self._show_message_box(
-                    "RHVoice executable not found. Configure it in Read Aloud Settings.",
-                    _TITLE,
-                    wx.ICON_ERROR | wx.OK,
-                )
-                self._set_status("Speech generation cancelled")
-                return
-            rhvoice_exe_snap = exe
-
         elif engine == "melotts":
             exe = discover_melotts_executable(s.read_aloud_melotts_executable)
             if exe is None:
@@ -13039,8 +13055,6 @@ class MainFrame:
         _kokoro_speed = s.read_aloud_kokoro_speed
         _espeak_voice = s.read_aloud_espeak_voice
         _espeak_rate = s.read_aloud_espeak_rate
-        _rhvoice_voice = s.read_aloud_rhvoice_voice
-        _rhvoice_rate = s.read_aloud_rhvoice_rate
         _melotts_voice = s.read_aloud_melotts_voice
         _melotts_rate = s.read_aloud_melotts_rate
         _chatterbox_voice = s.read_aloud_chatterbox_voice
@@ -13079,14 +13093,6 @@ class MainFrame:
                     executable_path=espeak_exe_snap,
                     voice=_espeak_voice,
                     rate=_espeak_rate,
-                )
-            elif _engine == "rhvoice":
-                synthesize_with_rhvoice(
-                    _out_text,
-                    _out,
-                    executable_path=rhvoice_exe_snap,
-                    voice=_rhvoice_voice,
-                    rate=_rhvoice_rate,
                 )
             elif _engine == "melotts":
                 synthesize_with_melotts(
@@ -15346,6 +15352,9 @@ class MainFrame:
 
         buttons = dialog.CreateButtonSizer(wx.OK | wx.CANCEL)
         if buttons is not None:
+            ok_button = buttons.FindWindowById(wx.ID_OK)
+            if ok_button is not None:
+                ok_button.SetDefault()
             root.Add(buttons, 0, wx.EXPAND | wx.ALL, 8)
             ok_button = buttons.FindWindowById(wx.ID_OK)
             if ok_button is not None:
@@ -18896,6 +18905,7 @@ class MainFrame:
         self.run_startup_wizard()
 
     def _maybe_run_first_run_onboarding(self) -> None:
+        wx = self._wx
         if any((
             getattr(self, "_first_run_trust_consent_prompt", False),
             getattr(self, "_first_run_profile_prompt", False),
@@ -18904,6 +18914,15 @@ class MainFrame:
             getattr(self, "_first_run_watch_folder_prompt", False),
         )):
             self.show_startup_wizard_page()
+            proceed = self._show_message_box(
+                "Start guided setup now?\n\n"
+                "Choose Yes to continue through profile, AI, assistant, speech, and watch folder setup.",
+                "Startup Wizard",
+                wx.ICON_QUESTION | wx.YES_NO,
+            )
+            if proceed != wx.YES:
+                self._set_status("Startup Wizard overview opened")
+                return
         if getattr(self, "_first_run_profile_prompt", False):
             self._show_profile_onboarding(force=False)
             self._first_run_profile_prompt = False
@@ -19181,7 +19200,7 @@ class MainFrame:
         wx = self._wx
         start_setup = self._show_message_box(
             "Set up speech engines now?\n\n"
-            "You can download/configure DECtalk, eSpeak-NG, Piper, Kokoro, RHVoice, MeloTTS, Chatterbox, and OpenVoice.\n"
+            "You can download/configure DECtalk, eSpeak-NG, Piper, Kokoro, MeloTTS, Chatterbox, and OpenVoice.\n"
             "You can always change these later in AI > Speech > Settings.",
             "Speech Setup",
             wx.ICON_QUESTION | wx.YES_NO,
@@ -19197,7 +19216,6 @@ class MainFrame:
             "Configure eSpeak-NG path and English variant",
             "Configure Piper executable and English model folder",
             "Configure Kokoro English voice defaults",
-            "Configure RHVoice executable and English voice",
             "Configure MeloTTS executable and English voice",
             "Configure Chatterbox executable and English voice",
             "Configure OpenVoice executable, English voice, and consent",
@@ -19293,25 +19311,6 @@ class MainFrame:
 
         if 4 in selected:
             exe = _ask_text(
-                "Path to RHVoice executable:", self.settings.read_aloud_rhvoice_executable
-            )
-            if exe is not None:
-                self.settings.read_aloud_rhvoice_executable = exe
-            voices = list_rhvoice_english_voices()
-            if voices:
-                with wx.SingleChoiceDialog(
-                    self.frame,
-                    "Choose default RHVoice English voice:",
-                    "Speech Setup",
-                    choices=[voice.name for voice in voices],
-                ) as voice_dialog:
-                    if self._show_modal_dialog(voice_dialog, "Speech Setup") == wx.ID_OK:
-                        idx = voice_dialog.GetSelection()
-                        if 0 <= idx < len(voices):
-                            self.settings.read_aloud_rhvoice_voice = voices[idx].id
-
-        if 5 in selected:
-            exe = _ask_text(
                 "Path to MeloTTS executable:", self.settings.read_aloud_melotts_executable
             )
             if exe is not None:
@@ -19329,7 +19328,7 @@ class MainFrame:
                         if 0 <= idx < len(voices):
                             self.settings.read_aloud_melotts_voice = voices[idx].id
 
-        if 6 in selected:
+        if 5 in selected:
             exe = _ask_text(
                 "Path to Chatterbox executable:", self.settings.read_aloud_chatterbox_executable
             )
@@ -19348,7 +19347,7 @@ class MainFrame:
                         if 0 <= idx < len(voices):
                             self.settings.read_aloud_chatterbox_voice = voices[idx].id
 
-        if 7 in selected:
+        if 6 in selected:
             exe = _ask_text(
                 "Path to OpenVoice executable:", self.settings.read_aloud_openvoice_executable
             )
@@ -19374,7 +19373,7 @@ class MainFrame:
             )
             self.settings.read_aloud_openvoice_consent = consent == wx.YES
 
-        if 9 in selected:
+        if 7 in selected:
             docs_path = app_data_dir().parent / "Quill" / "docs" / "userguide.md"
             webbrowser.open(str(docs_path))
 
