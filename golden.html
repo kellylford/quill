@@ -1728,8 +1728,10 @@ matching until the field reaches the configured length; the
 pause</strong> (<code>read_aloud_sentence_pause_ms</code>) inserts an
 interruptible gap between sentences across every TTS engine loop.
 <strong>Remaining (honest):</strong> the dictation sensitivity field is
-surfaced/stored but still needs its transcription-engine consumer to
-read the new value.</td>
+surfaced/stored but the current dictation backend launches the Windows
+Win+H recognizer, which exposes no sensitivity control, so there is no
+consumer to wire until a sensitivity-aware capture engine (Whisper/Vosk
+live mic) lands.</td>
 </tr>
 <tr>
 <td>SET-3</td>
