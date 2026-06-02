@@ -2217,9 +2217,28 @@ A folding model designed for screen-reader users: folded ranges are summarised a
 
 ### 5.51 Settings export, import, and partitioned reset
 
-- `Settings → Export…` writes a single zip containing settings, keymap, templates, snippets, personal dictionary, saved searches, and bookmarks. API keys are excluded; the user is told so explicitly in the dialog.
-- `Settings → Import…` previews every change in a stock `wx.ListBox` and requires Enter to commit. Conflicts (e.g. a keymap rebind that contradicts the current keymap) are flagged inline.
-- `Settings → Reset to Defaults…` opens a partitioned reset dialog with checkboxes for: Keymap, Appearance, Spell-check learning, Templates and snippets, Recent files, Bookmarks, Everything. Never silent; every reset shows a confirmation listing what will be lost.
+Quill provides two package formats for exporting and importing configuration and content:
+
+- **Share a profile** (`.quillprofile`) - A portable, privacy-scrubbed package suitable for sharing with others. Private data (API keys, license info, recent files, device-specific paths) is structurally excluded from profile packages.
+- **Back up everything** (`.quillbackup`) - A complete personal restore point including all settings, secrets, and device-specific data for this machine.
+
+The `Tools → Customize → Export and Back Up…` dialog offers both modes with a checklist of sections to include:
+
+- Settings (per-feature groups from the settings registry)
+- Features & profile (feature flags and active profile)
+- Keymap (custom shortcuts)
+- Snippets (snippet library)
+- Macros (recorded macros)
+- Watch Profiles (automation rules)
+- Dictionary (personal dictionary words)
+- Style models (learned writing styles)
+- UI layout (window and pane arrangement)
+
+When exporting a profile, any private section is disabled and cannot be included. The package format is versioned (schema_version 1) and includes a human-readable manifest with the package kind, name, source version, timestamp, and included sections.
+
+The `Tools → Customize → Import or Restore…` dialog shows a summary of the package contents before import, then presents a checklist of sections to apply. Profile packages merge content (keymap overlays, snippets added by ID, watch profiles added when absent), while backup packages replace stores wholesale.
+
+`Settings → Reset to Defaults…` opens a confirmation dialog and resets all settings to factory defaults. Per-setting reset is available through individual Reset buttons in the Settings dialog (SET-6).
 
 ### 5.52 Document fingerprint
 
@@ -2374,13 +2393,29 @@ When Quill detects an autosave snapshot newer than the on-disk file on launch:
 - The file opens; the folder is **not** added to trusted locations.
 - Useful for one-off opens from Downloads or temp folders without expanding the trust footprint.
 
-### 5.73 Settings search
+### 5.73 Registry-driven Settings dialog with search
 
-- A search field at the top of the Settings dialog (`Ctrl+F` when focus is in Settings).
-- Indexes setting key, label, description, and a synonym list maintained alongside each setting.
-- As the user types, the tree filters to matching settings; the first match is announced.
-- `Esc` clears the filter; `Tab` moves to the tree.
-- The synonym list is gettext-translated alongside labels.
+The Settings dialog (`Ctrl+,` or `Tools → Settings…`) is rendered from `quill.core.settings_registry`, which defines every scalar setting with metadata including key, label, group, kind (bool/choice/int/float/text), description, valid range, feature-gating, and keywords for search.
+
+**Eight setting groups** organize the dialog as tabbed pages:
+
+1. **General** - autosave, new-document defaults, workspace behavior
+2. **Editing** - autoformat, line numbers, wrap, tabs/spaces
+3. **Navigation & QUILL Key** - QUILL key timeout, Quick Nav debounce and thresholds, browse-mode stickiness
+4. **Accessibility** - announcement verbosity, wrap announcements, mode-change announcements, spelling hints
+5. **Read Aloud** - voice selection, rate, pitch, sentence pause
+6. **AI & Assistant** - provider/model, external engines (off by default), consent gates
+7. **Transcription** - BITS Whisperer model and provider settings
+8. **Watch Folders** - global watch defaults (enable, poll interval, process-existing, auto-start)
+9. **Updates** - update channel, skip-version tracking, last-check timestamp
+
+**Settings search** (`Ctrl+F` when Settings dialog has focus) filters controls across all tabs by matching against label, key, description, group title, and keywords. The first matching control is focused and announced.
+
+**Per-setting reset**: Every rendered control has an individual **Reset** button (accessible name `Reset {label} to default`) that restores just that setting to `registry.default_value(key)` and announces the change. The restored value is committed on OK with the rest of the form.
+
+**Global reset**: `Settings → Reset to Defaults…` resets all settings to factory defaults with a confirmation gate.
+
+Collection-style customization (snippet bodies, macros, sticky notes, status-bar layout, watch profiles) lives in dedicated manager dialogs rather than as registry controls.
 
 ### 5.74 In-app changelog and update transparency
 

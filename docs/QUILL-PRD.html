@@ -4098,20 +4098,43 @@ is in effect.</li>
 </ul>
 <h3 id="settings-export-import-and-partitioned-reset">5.51 Settings
 export, import, and partitioned reset</h3>
+<p>Quill provides two package formats for exporting and importing
+configuration and content:</p>
 <ul>
-<li><code>Settings → Export…</code> writes a single zip containing
-settings, keymap, templates, snippets, personal dictionary, saved
-searches, and bookmarks. API keys are excluded; the user is told so
-explicitly in the dialog.</li>
-<li><code>Settings → Import…</code> previews every change in a stock
-<code>wx.ListBox</code> and requires Enter to commit. Conflicts (e.g. a
-keymap rebind that contradicts the current keymap) are flagged
-inline.</li>
-<li><code>Settings → Reset to Defaults…</code> opens a partitioned reset
-dialog with checkboxes for: Keymap, Appearance, Spell-check learning,
-Templates and snippets, Recent files, Bookmarks, Everything. Never
-silent; every reset shows a confirmation listing what will be lost.</li>
+<li><strong>Share a profile</strong> (<code>.quillprofile</code>) - A
+portable, privacy-scrubbed package suitable for sharing with others.
+Private data (API keys, license info, recent files, device-specific
+paths) is structurally excluded from profile packages.</li>
+<li><strong>Back up everything</strong> (<code>.quillbackup</code>) - A
+complete personal restore point including all settings, secrets, and
+device-specific data for this machine.</li>
 </ul>
+<p>The <code>Tools → Customize → Export and Back Up…</code> dialog
+offers both modes with a checklist of sections to include:</p>
+<ul>
+<li>Settings (per-feature groups from the settings registry)</li>
+<li>Features &amp; profile (feature flags and active profile)</li>
+<li>Keymap (custom shortcuts)</li>
+<li>Snippets (snippet library)</li>
+<li>Macros (recorded macros)</li>
+<li>Watch Profiles (automation rules)</li>
+<li>Dictionary (personal dictionary words)</li>
+<li>Style models (learned writing styles)</li>
+<li>UI layout (window and pane arrangement)</li>
+</ul>
+<p>When exporting a profile, any private section is disabled and cannot
+be included. The package format is versioned (schema_version 1) and
+includes a human-readable manifest with the package kind, name, source
+version, timestamp, and included sections.</p>
+<p>The <code>Tools → Customize → Import or Restore…</code> dialog shows
+a summary of the package contents before import, then presents a
+checklist of sections to apply. Profile packages merge content (keymap
+overlays, snippets added by ID, watch profiles added when absent), while
+backup packages replace stores wholesale.</p>
+<p><code>Settings → Reset to Defaults…</code> opens a confirmation
+dialog and resets all settings to factory defaults. Per-setting reset is
+available through individual Reset buttons in the Settings dialog
+(SET-6).</p>
 <h3 id="document-fingerprint">5.52 Document fingerprint</h3>
 <ul>
 <li>Every saved document has a SHA-256 fingerprint of its bytes shown in
@@ -4400,18 +4423,51 @@ locations.</li>
 <li>Useful for one-off opens from Downloads or temp folders without
 expanding the trust footprint.</li>
 </ul>
-<h3 id="settings-search">5.73 Settings search</h3>
-<ul>
-<li>A search field at the top of the Settings dialog
-(<code>Ctrl+F</code> when focus is in Settings).</li>
-<li>Indexes setting key, label, description, and a synonym list
-maintained alongside each setting.</li>
-<li>As the user types, the tree filters to matching settings; the first
-match is announced.</li>
-<li><code>Esc</code> clears the filter; <code>Tab</code> moves to the
-tree.</li>
-<li>The synonym list is gettext-translated alongside labels.</li>
-</ul>
+<h3 id="registry-driven-settings-dialog-with-search">5.73
+Registry-driven Settings dialog with search</h3>
+<p>The Settings dialog (<code>Ctrl+,</code> or
+<code>Tools → Settings…</code>) is rendered from
+<code>quill.core.settings_registry</code>, which defines every scalar
+setting with metadata including key, label, group, kind
+(bool/choice/int/float/text), description, valid range, feature-gating,
+and keywords for search.</p>
+<p><strong>Eight setting groups</strong> organize the dialog as tabbed
+pages:</p>
+<ol type="1">
+<li><strong>General</strong> - autosave, new-document defaults,
+workspace behavior</li>
+<li><strong>Editing</strong> - autoformat, line numbers, wrap,
+tabs/spaces</li>
+<li><strong>Navigation &amp; QUILL Key</strong> - QUILL key timeout,
+Quick Nav debounce and thresholds, browse-mode stickiness</li>
+<li><strong>Accessibility</strong> - announcement verbosity, wrap
+announcements, mode-change announcements, spelling hints</li>
+<li><strong>Read Aloud</strong> - voice selection, rate, pitch, sentence
+pause</li>
+<li><strong>AI &amp; Assistant</strong> - provider/model, external
+engines (off by default), consent gates</li>
+<li><strong>Transcription</strong> - BITS Whisperer model and provider
+settings</li>
+<li><strong>Watch Folders</strong> - global watch defaults (enable, poll
+interval, process-existing, auto-start)</li>
+<li><strong>Updates</strong> - update channel, skip-version tracking,
+last-check timestamp</li>
+</ol>
+<p><strong>Settings search</strong> (<code>Ctrl+F</code> when Settings
+dialog has focus) filters controls across all tabs by matching against
+label, key, description, group title, and keywords. The first matching
+control is focused and announced.</p>
+<p><strong>Per-setting reset</strong>: Every rendered control has an
+individual <strong>Reset</strong> button (accessible name
+<code>Reset {label} to default</code>) that restores just that setting
+to <code>registry.default_value(key)</code> and announces the change.
+The restored value is committed on OK with the rest of the form.</p>
+<p><strong>Global reset</strong>:
+<code>Settings → Reset to Defaults…</code> resets all settings to
+factory defaults with a confirmation gate.</p>
+<p>Collection-style customization (snippet bodies, macros, sticky notes,
+status-bar layout, watch profiles) lives in dedicated manager dialogs
+rather than as registry controls.</p>
 <h3 id="in-app-changelog-and-update-transparency">5.74 In-app changelog
 and update transparency</h3>
 <ul>
