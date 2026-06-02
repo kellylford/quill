@@ -1,0 +1,54 @@
+# Pre-provisions the GitHub Copilot coding agent's ephemeral cloud environment.
+#
+# GitHub looks for a job named EXACTLY `copilot-setup-steps`. Everything this job
+# installs is available to the agent before it starts working, so it does not
+# waste its first turn discovering the toolchain. This mirrors the PR CI jobs
+# (Python 3.12 + `pip install -e .[dev]`) and adds pandoc so the agent can
+# regenerate golden.html / docs artifacts exactly like the local workflow.
+#
+# The coding agent runs on Linux, so wxPython UI is NOT importable here. That is
+# fine: the test bar for UI is source-contract tests (which read the .py files
+# as text), the dialog-contract guard, and the public-surface fixture. Genuine
+# Windows-runtime items (real OCR engine, DPAPI, screen-reader bridges, live
+# device-login endpoints) cannot be exercised in cloud and must stay honestly
+# "In progress" rather than be marked Done.
+
+name: Copilot setup steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install pandoc (docs/golden.html regeneration)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pandoc
+
+      - name: Install project (dev tooling: ruff, mypy, pytest, coverage)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      - name: Smoke-check the toolchain
+        run: |
+          ruff --version
+          mypy --version
+          pytest --version
+          pandoc --version | head -n 1
+          python -c "import quill.core, quill.io; print('core/io import OK')"
