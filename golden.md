@@ -411,7 +411,7 @@ This table is the execution source of truth. Update Status as work progresses. S
 | SEC-5 | Explicit TLS verification on all network calls | Security | S | Done | A shared `verified_ssl_context()` (certifi-aware, `CERT_REQUIRED`, `check_hostname` on) backs AI, update, model-download, and DECTALK-download requests; HTTPS endpoints always pass it while local HTTP loopback does not; an audit test asserts no `_create_unverified_context` or `CERT_NONE` or disabled `check_hostname` anywhere in the package. |
 | SEC-6 | Verify checksums for downloaded binaries and models | Security | M | Todo | DECtalk runtime and GGUF downloads are checksum-verified before use; failure aborts with a clear message. |
 | SEC-8 | Gate plugin loading behind off-by-default experimental flag | Security | S | Todo | No third-party plugin loads in a default build; flag is documented as experimental. |
-| SEC-9 | Resource limits for the Python sandbox | Security | M | Todo | A wall-clock and memory limit terminate runaway transforms; termination is announced; test included. |
+| SEC-9 | Resource limits for the Python sandbox | Security | M | Todo | A wall-clock and memory limit end runaway transforms; termination is announced; test included. |
 | CQ-7 | Scoped strict mypy in CI on every pull request | Code quality | S | Done | A `scoped-strict-typing` job in Security CI runs `mypy quill\core quill\io` on every push and PR and blocks merge on any error; the scoped command is documented in CONTRIBUTING. The full TYPE backlog was cleared so the gate currently reports zero errors across 95 source files. |
 | PERF-8 | Document and enforce scoped type-check command | Performance | S | Done | CONTRIBUTING specifies `mypy quill\core quill\io` as the only recommended type-check command and explains why the whole-tree scan is excluded; no unscoped scan is recommended anywhere. |
 | A11Y-1 | Announcement style guide and audit | Accessibility | M | Done | A written grammar (`docs/accessibility/announcement-style-guide.md`) defines the shape `<Verb> <object>[, <count> <unit>(s)][, <detail>].` and is implemented in `quill/core/announcements.py` (`format_announcement`, `format_progress`, `pluralize`). The AI writing-action announcer now builds phrasing through the shared helpers, and unit tests verify the key phrases ("Rewrote paragraph, 42 words.", thousands separators, singular/plural units, verb-only and "Nothing to" forms). Migrating the remaining legacy status strings to the helpers is tracked as incremental follow-up. |
@@ -1047,9 +1047,9 @@ The user's directive is to develop with an impact-first mindset, and to be wise 
 Two ideas, kept distinct on purpose:
 
 - User impact: how much an item improves the real experience of a blind or low-vision writer (and the power user). A delightful, discoverable QUILL key is high user impact; an internal refactor is not.
-- Leverage: how much an item unlocks or de-risks everything else. The quality-gate ladder and the main_frame characterization tests are low direct user impact but very high leverage, because they make all later work faster, safer, and higher quality.
+- Impact on other work: how much an item unlocks or de-risks everything else. The quality-gate ladder and the main_frame characterization tests are low direct user impact but have very high impact on other work, because they make all later work faster, safer, and higher quality.
 
-Great products optimize for both. The wise sequence does the small, high-leverage protections first (so nothing later regresses users), then the high user-impact flagship work, then the larger structural and breadth investments, then the long tail. Specifically, on the user's question: yes, hardening and security and refactoring are worth doing, but not all at once and not all first. The cheap, user-protecting parts of hardening (the latent-crash bug fixes and the untrusted-input security) are top-tier because they are small and prevent real harm. The large refactor (decomposing the UI monolith) is high leverage but should come after the flagship value lands and only behind characterization tests, so it never becomes risk for its own sake.
+Great products optimize for both. The wise sequence does the small, high-impact protections first (so nothing later regresses users), then the high user-impact flagship work, then the larger structural and breadth investments, then the long tail. Specifically, on the user's question: yes, hardening and security and refactoring are worth doing, but not all at once and not all first. The cheap, user-protecting parts of hardening (the latent-crash bug fixes and the untrusted-input security) are top-tier because they are small and prevent real harm. The large refactor (decomposing the UI monolith) has high impact on other work but should come after the flagship value lands and only behind characterization tests, so it never becomes risk for its own sake.
 
 ### 23. The ranked tiers
 
@@ -1097,7 +1097,7 @@ Per the build directive, GLOW comes before transcription: it deepens QUILL's cor
 
 Why third: high strategic value that extends the core mission, depends on the gated base (Tier 1), and is most compelling once the flagship experience (Tier 2) already feels great. Most cost is integration, not invention.
 
-#### Tier 4: Structural health and performance that keep greatness durable (high leverage)
+#### Tier 4: Structural health and performance that keep greatness durable (high impact on other work)
 
 Not flashy, but what lets the product stay excellent as it grows.
 
@@ -1106,7 +1106,7 @@ Not flashy, but what lets the product stay excellent as it grows.
 - Remove first-use stalls and enforce budgets: PERF-1 through PERF-3, PERF-9 through PERF-14, GATE-10. Value: the app feels instant. Outcome: performance that does not slip back.
 - The remaining security hardening: SEC-6, SEC-7, SEC-14 through SEC-17, SEC-8 (plugins stay gated). Value: defense in depth. Outcome: a product that is safe by construction.
 
-Why fourth: high leverage but mostly invisible to users, so it follows the work that wins user love, while the cheap protective parts of it already happened in Tier 1.
+Why fourth: high impact on other work but mostly invisible to users, so it follows the work that wins user love, while the cheap protective parts of it already happened in Tier 1.
 
 #### Tier 5: BITS Whisperer transcription (deferred to QUILL 2.0)
 
@@ -1138,7 +1138,7 @@ Why last: valuable but not required for a great, trustworthy 1.0; the transcript
 
 ### 24. The development mindset in one paragraph
 
-Lead with cheap protections and gates, because they make everything after them safe and fast. Then spend the bulk of the energy on the flagship QUILL experience, including making the configured AI providers actually respond (AI-13), because that is where greatness is felt and where the product must be honest. Bring GLOW in next, since it extends QUILL's accessibility mission and reuses a proven engine, and only then add BITS Whisperer transcription, which is the most distant from the writing core. Treat the big refactor and performance and security depth as high-leverage investments that follow, not precede, the user-facing wins, and always do the refactor behind characterization tests. On the GitHub Copilot SDK: keep it optional and post-1.0, behind the same provider boundary, never a default, because its subscription and sign-in friction conflict with the local-first, bring-your-own-key promise even though the underlying models add value. Finish by making the documentation and learning surface as excellent as the product. Do not do hardening or refactoring for their own sake or all at once; do the parts that protect users early, and the parts that only reshape code later, once their value is clear and their risk is contained.
+Lead with cheap protections and gates, because they make everything after them safe and fast. Then spend the bulk of the energy on the flagship QUILL experience, including making the configured AI providers actually respond (AI-13), because that is where greatness is felt and where the product must be honest. Bring GLOW in next, since it extends QUILL's accessibility mission and reuses a proven engine, and only then add BITS Whisperer transcription, which is the most distant from the writing core. Treat the big refactor and performance and security depth as high-impact investments that follow, not precede, the user-facing wins, and always do the refactor behind characterization tests. On the GitHub Copilot SDK: keep it optional and post-1.0, behind the same provider boundary, never a default, because its subscription and sign-in friction conflict with the local-first, bring-your-own-key promise even though the underlying models add value. Finish by making the documentation and learning surface as excellent as the product. Do not do hardening or refactoring for their own sake or all at once; do the parts that protect users early, and the parts that only reshape code later, once their value is clear and their risk is contained.
 
 ---
 

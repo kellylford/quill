@@ -1,14 +1,11 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
 <head>
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>QUILL-PRD</title>
   <style>
-    /* Default styles provided by pandoc.
-    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-    */
     html {
       color: #1a1a1a;
       background-color: #fdfdfd;
@@ -63,10 +60,6 @@
     img {
       max-width: 100%;
     }
-    svg {
-      height: auto;
-      max-width: 100%;
-    }
     h1, h2, h3, h4, h5, h6 {
       margin-top: 1.4em;
     }
@@ -91,7 +84,6 @@
       color: #606060;
     }
     code {
-      white-space: pre-wrap;
       font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
       font-size: 85%;
       margin: 0;
@@ -111,8 +103,8 @@
      overflow: visible;
     }
     hr {
+      background-color: #1a1a1a;
       border: none;
-      border-top: 1px solid #1a1a1a;
       height: 1px;
       margin: 1em 0;
     }
@@ -155,6 +147,7 @@
     #TOC a:not(:hover) {
       text-decoration: none;
     }
+    code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
     div.columns{display: flex; gap: min(4vw, 1.5em);}
     div.column{flex: auto; overflow-x: auto;}
@@ -170,9 +163,8 @@
     }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
     /* CSS for syntax highlighting */
-    html { -webkit-text-size-adjust: 100%; }
     pre > code.sourceCode { white-space: pre; position: relative; }
-    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span { line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
     .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -496,7 +488,7 @@ status-bar cells with the same MSAA contract.</li>
 <col style="width: 25%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>Cell</th>
 <th>Default value</th>
 <th>Primary action (Enter)</th>
@@ -504,118 +496,118 @@ status-bar cells with the same MSAA contract.</li>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td><strong>Document name</strong></td>
 <td><code>chapter-7.md</code> or <code>Untitled 1</code></td>
 <td>Opens Quick Switcher (palette <code>~</code>)</td>
 <td>Switch document, Reveal in Explorer, Copy Path, Close</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Modified state</strong></td>
 <td><code>Modified</code> / <code>Saved</code></td>
 <td>Save</td>
 <td>Save, Save As, Reload From Disk, Restore Backup</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Line / Column</strong></td>
 <td><code>Line 12, Column 7</code></td>
 <td>Opens Go To Line</td>
 <td>Go To Line, Go To Page, Go To Bookmark</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Selection</strong></td>
 <td><code>Selection: 3 lines, 47 words</code> or hidden when no
 selection</td>
 <td>Opens Document Statistics on selection</td>
 <td>Statistics on selection, Convert case…, Sort selected lines</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Word count</strong></td>
 <td><code>1,248 words</code></td>
 <td>Opens Document Statistics on document</td>
 <td>Statistics, Configure reading rate</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Page</strong></td>
 <td><code>Page 4 of 23</code> (only when document has page markers)</td>
 <td>Opens Go To Page</td>
 <td>Next page, Previous page, Page list</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Search term</strong></td>
 <td><code>Find: "reading order"</code> (only when a search term is
 set)</td>
 <td>Opens Find with the term pre-filled</td>
 <td>Find Next, Find Previous, Find All, Clear Search</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Encoding</strong></td>
 <td><code>UTF-8</code></td>
 <td>Opens Reload With Encoding</td>
 <td>Reload With Encoding, Save With Encoding, Auto-detect</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Line endings</strong></td>
 <td><code>LF</code> / <code>CRLF</code> / <code>CR</code></td>
 <td>Cycles to the next style and prompts to confirm</td>
 <td>Choose explicitly, Convert on save</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Indent</strong></td>
 <td><code>Spaces: 4</code> / <code>Tabs</code></td>
 <td>Opens indent settings</td>
 <td>Convert to tabs, Convert to spaces, Set width</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Language</strong></td>
 <td><code>en-GB + tech + personal</code> (the active spell-check
 dictionary stack)</td>
 <td>Opens dictionary stack chooser</td>
 <td>Add dictionary, Pin to document, Per-paragraph (v1.2)</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Spell check</strong></td>
 <td><code>Spell check on</code> / <code>Spell check off</code>. When
 errors exist: <code>3 errors</code></td>
 <td>Toggles as-you-type spell check</td>
 <td>Run spell check, Jump to next misspelling, Reset learning</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Read aloud</strong></td>
 <td><code>Read aloud: ready</code> or
 <code>Read aloud: speaking</code></td>
 <td>Toggles read-aloud playback</td>
 <td>Voice…, Speed…, Read selection, Read document</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Accessibility audit</strong></td>
 <td><code>Audit: clean</code> or <code>Audit: 2 warnings</code> (only
 after a manual or auto audit)</td>
 <td>Opens the Issues panel</td>
 <td>Run audit, Configure rules, Ignore for this document</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>AI status</strong></td>
 <td><code>AI: Ready</code> / <code>AI: Needs attention</code> /
 <code>AI: Not checked</code>, with a short detail line</td>
 <td>Opens AI provider settings</td>
 <td>Verify connection, Switch provider, View last response</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Background tasks</strong></td>
 <td><code>Idle</code> or <code>Extracting PDF, 42%</code></td>
 <td>Opens a small Tasks dialog listing in-flight operations with
 Cancel</td>
 <td>Cancel all, Show task log</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Notifications</strong></td>
 <td><code>No new messages</code> or <code>2 messages</code></td>
 <td>Opens the Notifications dialog (release notes, available updates,
 backup recovery offers)</td>
 <td>Dismiss all, Open Notifications</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Quill</strong> (rightmost)</td>
 <td><code>Quill 1.0</code></td>
 <td>Opens About</td>
@@ -1082,7 +1074,7 @@ extraction is poor and the user asks.</p>
 <col style="width: 25%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>Format family</th>
 <th>Specific formats added</th>
 <th>Why it matters</th>
@@ -1090,7 +1082,7 @@ extraction is poor and the user asks.</p>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td><strong>Spreadsheets</strong></td>
 <td><code>xlsx</code>, <code>xlsm</code>, <code>xls</code>,
 <code>ods</code>, <code>numbers</code>, <code>csv</code>,
@@ -1101,7 +1093,7 @@ accessible tooling forces Excel</td>
 plain-text columns with header row, <code>Ctrl+Shift+Right/Left</code>
 navigates by column, <code>Ctrl+Shift+Down</code> summarises totals</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>OpenDocument</strong></td>
 <td><code>odt</code>, <code>odp</code>, <code>odg</code>,
 <code>ods</code></td>
@@ -1109,7 +1101,7 @@ navigates by column, <code>Ctrl+Shift+Down</code> summarises totals</td>
 <code>odfpy</code>; structure preserved as headings, lists, tables</td>
 <td></td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Apple iWork</strong></td>
 <td><code>pages</code>, <code>key</code>, <code>numbers</code></td>
 <td>Cross-platform collaboration is increasingly common; iWork files
@@ -1117,7 +1109,7 @@ arrive in email frequently</td>
 <td>Local extractor via the iWork archive format; AI escalation for
 complex layouts</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Legacy office</strong></td>
 <td><code>ppt</code>, <code>xls</code>, <code>wpd</code>,
 <code>wps</code>, <code>wri</code>,
@@ -1127,7 +1119,7 @@ readers; AI escalation by sending the original file when local reading
 fails</td>
 <td></td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>E-books (proprietary)</strong></td>
 <td><code>azw</code>, <code>azw3</code>, <code>mobi</code>,
 <code>kfx</code>, <code>fb2</code>, <code>lit</code>, <code>lrf</code>,
@@ -1137,27 +1129,27 @@ libraries</td>
 <td>Reuse Calibre’s conversion engine where present (plugin in v1.1) or
 bundled minimal readers for the open formats</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Comics with text</strong></td>
 <td><code>cbz</code>, <code>cbr</code></td>
 <td>Educational comics and graphic textbooks ship in CBZ; Extract pages,
 OCR each, present per-page text with page navigation</td>
 <td></td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>DjVu and XPS</strong></td>
 <td><code>djvu</code>, <code>xps</code>, <code>oxps</code></td>
 <td>Academic scans (DjVu) and Microsoft alternatives to PDF (XPS) are
 common in research</td>
 <td>Local extractors; PDF-style page navigation</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>PostScript</strong></td>
 <td><code>ps</code>, <code>eps</code></td>
 <td>Academic preprints and older typeset documents</td>
 <td>Convert via Ghostscript to text + page markers</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>TeX and Typst</strong></td>
 <td><code>tex</code>, <code>latex</code>, <code>bib</code>,
 <code>bibtex</code>, <code>typ</code></td>
@@ -1166,7 +1158,7 @@ accessible plain editor handles it gracefully</td>
 <td>Plain-text editing with optional rendered preview to PDF/HTML via
 local engines; bibtex entries readable as structured records</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Lightweight markup</strong></td>
 <td><code>rst</code>, <code>adoc</code>/<code>asciidoc</code>,
 <code>textile</code>, <code>org</code>,
@@ -1176,7 +1168,7 @@ Org-mode, wikis</td>
 <td>Plain-text editing; preview via the appropriate renderer; export to
 HTML/DOCX</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>DAISY and braille</strong></td>
 <td><code>daisy</code> 2.02/3, <code>nimas</code>, <code>brf</code>,
 <code>brl</code>, <code>pef</code>, <code>ueb</code></td>
@@ -1185,7 +1177,7 @@ editors. Braille files need round-trip print/braille translation</td>
 <td>Linear text presentation with chapter/section navigation; liblouis
 for braille back-translation; export to BRF</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>MHTML and web archives</strong></td>
 <td><code>mhtml</code>/<code>mht</code>, <code>warc</code>,
 <code>wacz</code>, browser “single file” saves, Safari
@@ -1195,7 +1187,7 @@ PDF</td>
 <td>Extract the primary document; show resources list; allow Preview as
 HTML</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>SVG</strong></td>
 <td><code>svg</code></td>
 <td>SVG is text; titles, descriptions, and <code>&lt;text&gt;</code>
@@ -1203,7 +1195,7 @@ content carry semantic meaning often inaccessible elsewhere</td>
 <td>Show as XML in edit field plus a “Reading View” that extracts
 titles, descriptions, and text in document order</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Subtitles (full set)</strong></td>
 <td><code>sbv</code>, <code>ass</code>/<code>ssa</code>,
 <code>sub</code>, <code>ttml</code>/<code>dfxp</code>, <code>scc</code>,
@@ -1212,7 +1204,7 @@ titles, descriptions, and text in document order</td>
 <td>Render as plain text with optional timecode column; export between
 formats</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Email and mail archives</strong></td>
 <td><code>eml</code>, <code>msg</code>, <code>mbox</code>,
 <code>pst</code></td>
@@ -1223,20 +1215,20 @@ and historically painful</td>
 with “Open in Quill” actions; <code>pst</code> and <code>mbox</code> get
 an index UI</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Calendar and contacts</strong></td>
 <td><code>ics</code>, <code>vcf</code></td>
 <td>Common attachments; today opened by heavy apps</td>
 <td>Render events and contacts as structured plain text records</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Notes ecosystems</strong></td>
 <td><code>one</code>, <code>enex</code>, Apple Notes export,
 <code>bear</code>, Simplenote JSON</td>
 <td>People have years of notes locked in proprietary apps</td>
 <td>Read-only renderers; each note opens as its own document</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Source code and config</strong></td>
 <td>Full polyglot list in 5.3</td>
 <td>Programmers and sysadmins use Quill for quick edits; the
@@ -1244,7 +1236,7 @@ screen-reader story for VS Code is good but heavyweight</td>
 <td>Syntax-aware tokeniser informs spell check and word navigation;
 presentation remains plain text</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Build, package, IaC</strong></td>
 <td><code>Dockerfile</code>, <code>*.tf</code>, <code>*.bicep</code>,
 <code>*.k8s.yaml</code>, <code>pyproject.toml</code>, etc.</td>
@@ -1252,7 +1244,7 @@ presentation remains plain text</td>
 <td>Plain text with section folding via shortcut, schema-aware error
 reporting in the <code>!</code> palette mode</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Diff and patch</strong></td>
 <td><code>diff</code>, <code>patch</code>, <code>gitconfig</code>,
 <code>gitignore</code></td>
@@ -1260,7 +1252,7 @@ reporting in the <code>!</code> palette mode</td>
 <td>Hunks rendered with <code>+</code>/<code>-</code> summarised aloud;
 <code>Ctrl+]</code> next hunk</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Notebooks</strong></td>
 <td><code>ipynb</code>, <code>qmd</code>, <code>rmd</code></td>
 <td>Data science and research; notebooks are JSON and unreadable in
@@ -1269,7 +1261,7 @@ basic editors</td>
 3”, “Markdown cell 4”, “Output of cell 3”), outputs included where
 text</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Data files</strong></td>
 <td><code>sqlite</code>/<code>db</code>, <code>parquet</code>,
 <code>feather</code></td>
@@ -1277,27 +1269,27 @@ text</td>
 <td>Read-only schema view + first N rows as a table; refuses to edit and
 explains why</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Logs and trace</strong></td>
 <td><code>evtx</code>, gzipped logs, single-file archives</td>
 <td>Sysadmin and support workflows</td>
 <td>Auto-extract; render with timestamp column</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Web feeds</strong></td>
 <td><code>rss</code>, <code>atom</code>, <code>opml</code>,
 <code>json-feed</code></td>
 <td>Accessible feed consumption</td>
 <td>Render as a list of articles, Enter to open one</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Chat exports</strong></td>
 <td>WhatsApp, Telegram, Slack, Discord, Teams, Zoom, Otter, ChatGPT</td>
 <td>People archive conversations and need to search them</td>
 <td>Linearised conversation with speaker headers, timestamps
 optional</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Image OCR</strong></td>
 <td><code>png</code>, <code>jpg</code>, <code>tif</code> (multi-page),
 <code>bmp</code>, <code>webp</code>, <code>heic</code>,
@@ -1307,7 +1299,7 @@ optional</td>
 <td>Local Tesseract OCR by default; AI escalation for handwriting or
 poor scans</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><strong>Audio with transcript</strong></td>
 <td><code>.mp3</code>/<code>.wav</code>/<code>.m4a</code>/<code>.opus</code>
 paired with <code>.vtt</code>/<code>.srt</code>/<code>.txt</code></td>
@@ -1315,7 +1307,7 @@ paired with <code>.vtt</code>/<code>.srt</code>/<code>.txt</code></td>
 <td>Opens the transcript; optional playback plugin syncs cursor to
 audio</td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>Code-block exchange</strong></td>
 <td>Gist URLs, Pastebin URLs, snippet bundles</td>
 <td>Developers share text via URLs daily</td>
@@ -1616,50 +1608,50 @@ Safety</h4>
 <col style="width: 44%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>Risk</th>
 <th>Impact</th>
 <th>Mitigation</th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>Large .docx files (10+ MB) cause extraction to hang</td>
 <td>Application freeze, loss of edits to other docs</td>
 <td>60-second Pandoc timeout, async extraction option for large
 files</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Corrupted Word files crash parser</td>
 <td>Application crash</td>
 <td>Graceful error cascade: Pandoc → python-docx → plaintext; never
 crash</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Complex formatting confuses extraction order</td>
 <td>User sees garbled text</td>
 <td>Clear in-app banner: “Word formatting not preserved” + retry
 option</td>
 </tr>
-<tr>
+<tr class="even">
 <td>VBA macros or malicious code in .docx</td>
 <td>Security vulnerability</td>
 <td>Pandoc subprocess isolation; no code execution; explicit security
 testing</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>.doc (OLE) files fail silently</td>
 <td>Silent data loss</td>
 <td>Pandoc attempts .doc → XML; if it fails, fallback to
 python-docx</td>
 </tr>
-<tr>
+<tr class="even">
 <td>User saves edits back to .docx, loses formatting</td>
 <td>Data loss if user relies on styles</td>
 <td>Always prompt before save: “Saving as plain text. Continue?” +
 option to cancel</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Memory explosion from embedded media</td>
 <td>Out-of-memory crash</td>
 <td>Pre-check file size; if &gt; 50 MB, warn; if &gt; 100 MB, offer
@@ -1806,53 +1798,53 @@ showing each diagnostic with suggestions and locations.</p>
 <col style="width: 50%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>Document</th>
 <th>Scenario</th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td><code>simple_heading.docx</code></td>
 <td>Single heading + paragraph, minimal structure</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>multi_page_structured.docx</code></td>
 <td>5 pages, multiple headings (H1–H3), numbered + bulleted lists,
 tables</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>embedded_images.docx</code></td>
 <td>3 images with alt text; verify alt text extracted, images are
 not</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>tracked_changes.docx</code></td>
 <td>Paragraph with deletions/insertions marked; verify resolved to plain
 text</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>corrupted.docx</code></td>
 <td>Intentionally malformed XML; verify graceful fallback</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>legacy_format.doc</code></td>
 <td>MS Word 97–2003 format; verify .doc reader works</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>password_protected.docx</code></td>
 <td>Password-protected; verify clear error message</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>large_50mb.docx</code> (stub)</td>
 <td>Verify timeout protection and progress indication</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>malicious_macros.docx</code></td>
 <td>Contains VBA code; verify Pandoc does NOT execute, code is
 dropped</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>mixed_language.docx</code></td>
 <td>Chinese, Arabic, emoji; verify encoding preserved</td>
 </tr>
@@ -2305,42 +2297,42 @@ class="sourceCode python"><code class="sourceCode python"><span id="cb15-1"><a h
 <col style="width: 50%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>Document</th>
 <th>Scenario</th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td><code>simple_title_slide.pptx</code></td>
 <td>Single slide with title and bullet points</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>multi_slide_structured.pptx</code></td>
 <td>10 slides with titles, nested bullets, speaker notes</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>with_charts.pptx</code></td>
 <td>5 slides with embedded charts; extract labels only</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>with_images.pptx</code></td>
 <td>3 slides with images and captions</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>with_animations.pptx</code></td>
 <td>Slides with animations and transitions; verify all text
 extracted</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>legacy_format.ppt</code></td>
 <td>MS PowerPoint 97–2003 format; verify .ppt reader works</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>corrupted.pptx</code></td>
 <td>Intentionally malformed XML; verify graceful fallback</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>large_100_slides.pptx</code></td>
 <td>Large presentation; verify timeout protection</td>
 </tr>
@@ -4732,54 +4724,54 @@ prefix.</li>
 be a mode prefix:</p>
 <table>
 <thead>
-<tr>
+<tr class="header">
 <th>Prefix</th>
 <th>Shortcut to open directly</th>
 <th>Meaning</th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>(none) or <code>&gt;</code></td>
 <td><code>Ctrl+Shift+P</code></td>
 <td>Run a command</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>?</code></td>
 <td><code>Ctrl+Shift+?</code></td>
 <td>Show help for all prefixes</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>:</code></td>
 <td><code>Ctrl+G</code> (when no page markers)</td>
 <td>Go to line</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>@</code></td>
 <td><code>Ctrl+R</code></td>
 <td>Jump to bookmark in current document</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>#</code></td>
 <td><code>Ctrl+T</code></td>
 <td>Jump to bookmark across all open documents</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>!</code></td>
 <td><code>Ctrl+Shift+M</code></td>
 <td>Show issues (spell check, bookmark, format)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>&lt;</code></td>
 <td><code>Ctrl+E</code></td>
 <td>Open a recent file</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>~</code></td>
 <td><code>Ctrl+Shift+O</code></td>
 <td>Switch open document</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>=</code></td>
 <td>(palette only)</td>
 <td>Open a setting</td>
@@ -5045,7 +5037,7 @@ build.</p>
 <col style="width: 20%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>SC</th>
 <th>Title</th>
 <th>Level</th>
@@ -5054,7 +5046,7 @@ build.</p>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>1.1.1</td>
 <td>Non-text Content</td>
 <td>A</td>
@@ -5064,14 +5056,14 @@ Accessibility Auditor (5.20) requires alt text on every image in user
 documents</td>
 <td>UI a11y harness; auditor unit tests</td>
 </tr>
-<tr>
+<tr class="even">
 <td>1.2.x</td>
 <td>Time-based Media</td>
 <td>A/AA</td>
 <td>Not applicable; Quill ships no audio/video</td>
 <td>n/a</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>1.3.1</td>
 <td>Info and Relationships</td>
 <td>A</td>
@@ -5081,7 +5073,7 @@ exposed as MSAA tree; status-bar cells expose
 name+role+value+description</td>
 <td>UI a11y harness verifies MSAA tree; snapshot tests</td>
 </tr>
-<tr>
+<tr class="even">
 <td>1.3.2</td>
 <td>Meaningful Sequence</td>
 <td>A</td>
@@ -5089,7 +5081,7 @@ name+role+value+description</td>
 <code>pywinauto</code> walking each dialog</td>
 <td>Tab-order snapshot tests</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>1.3.3</td>
 <td>Sensory Characteristics</td>
 <td>A</td>
@@ -5097,14 +5089,14 @@ name+role+value+description</td>
 hints are text in tooltips and Where Am I</td>
 <td>Manual checklist; copy review</td>
 </tr>
-<tr>
+<tr class="even">
 <td>1.3.4</td>
 <td>Orientation</td>
 <td>AA</td>
 <td>Window orientation is user-controlled; no orientation lock</td>
 <td>n/a (desktop)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>1.3.5</td>
 <td>Identify Input Purpose</td>
 <td>AA</td>
@@ -5112,7 +5104,7 @@ hints are text in tooltips and Where Am I</td>
 to autofill purposes where the OS supports them</td>
 <td>Settings inventory</td>
 </tr>
-<tr>
+<tr class="even">
 <td>1.4.1</td>
 <td>Use of Colour</td>
 <td>A</td>
@@ -5121,7 +5113,7 @@ severity uses prefix words (<code>Error:</code>, <code>Warning:</code>);
 diff hunks use <code>+</code>/<code>-</code> prefixes</td>
 <td>Theme tests; copy review</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>1.4.2</td>
 <td>Audio Control</td>
 <td>A</td>
@@ -5129,7 +5121,7 @@ diff hunks use <code>+</code>/<code>-</code> prefixes</td>
 silenced at any time without affecting the SR</td>
 <td>Manual + UI test</td>
 </tr>
-<tr>
+<tr class="even">
 <td>1.4.3</td>
 <td>Contrast (Minimum)</td>
 <td>AA</td>
@@ -5138,7 +5130,7 @@ and UI components; verified by an automated contrast checker run against
 every theme</td>
 <td>Contrast CI job</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>1.4.4</td>
 <td>Resize Text</td>
 <td>AA</td>
@@ -5148,7 +5140,7 @@ scales with Windows DPI (100–400%) without loss of function or
 clipping</td>
 <td>DPI smoke tests at 100/125/150/175/200/300/400</td>
 </tr>
-<tr>
+<tr class="even">
 <td>1.4.5</td>
 <td>Images of Text</td>
 <td>AA</td>
@@ -5156,7 +5148,7 @@ clipping</td>
 stock controls</td>
 <td>n/a</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>1.4.10</td>
 <td>Reflow</td>
 <td>AA</td>
@@ -5165,7 +5157,7 @@ device-independent pixels); status-bar cells overflow into a roll-up;
 menu falls back to compact mode</td>
 <td>Reflow tests at minimum window size</td>
 </tr>
-<tr>
+<tr class="even">
 <td>1.4.11</td>
 <td>Non-text Contrast</td>
 <td>AA</td>
@@ -5173,7 +5165,7 @@ menu falls back to compact mode</td>
 separators, toggle states) meet 3:1 against adjacent colours</td>
 <td>Contrast CI job covers component states</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>1.4.12</td>
 <td>Text Spacing</td>
 <td>AA</td>
@@ -5182,7 +5174,7 @@ paragraph spacing up to 2x font size, letter spacing up to 0.12em, word
 spacing up to 0.16em) without truncation or overlap</td>
 <td>Spacing test fixture</td>
 </tr>
-<tr>
+<tr class="even">
 <td>1.4.13</td>
 <td>Content on Hover or Focus</td>
 <td>AA</td>
@@ -5202,7 +5194,7 @@ moves away</td>
 <col style="width: 20%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>SC</th>
 <th>Title</th>
 <th>Level</th>
@@ -5211,7 +5203,7 @@ moves away</td>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>2.1.1</td>
 <td>Keyboard</td>
 <td>A</td>
@@ -5219,7 +5211,7 @@ moves away</td>
 explicitly omitted from required flows</td>
 <td>Keyboard parity matrix test</td>
 </tr>
-<tr>
+<tr class="even">
 <td>2.1.2</td>
 <td>No Keyboard Trap</td>
 <td>A</td>
@@ -5227,7 +5219,7 @@ explicitly omitted from required flows</td>
 have an explicit Cancel</td>
 <td>Trap detection in pywinauto suite</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>2.1.4</td>
 <td>Character Key Shortcuts</td>
 <td>A</td>
@@ -5236,7 +5228,7 @@ re-fire safely; users can rebind all of them; no single-letter shortcuts
 in editor focus</td>
 <td>Keymap audit</td>
 </tr>
-<tr>
+<tr class="even">
 <td>2.2.1</td>
 <td>Timing Adjustable</td>
 <td>A</td>
@@ -5244,7 +5236,7 @@ in editor focus</td>
 controls; no idle timeouts in v1.0</td>
 <td>Manual review</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>2.2.2</td>
 <td>Pause, Stop, Hide</td>
 <td>A</td>
@@ -5252,28 +5244,28 @@ controls; no idle timeouts in v1.0</td>
 progress indicator that the user can cancel</td>
 <td>Manual review</td>
 </tr>
-<tr>
+<tr class="even">
 <td>2.3.1</td>
 <td>Three Flashes or Below Threshold</td>
 <td>A</td>
 <td>Quill has no flashing UI</td>
 <td>n/a</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>2.4.1</td>
 <td>Bypass Blocks</td>
 <td>A</td>
 <td>F6 region cycling, command palette, outline navigator</td>
 <td>Navigation tests</td>
 </tr>
-<tr>
+<tr class="even">
 <td>2.4.2</td>
 <td>Page Titled</td>
 <td>A</td>
 <td>Window title always identifies the active document and Quill</td>
 <td>Title test</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>2.4.3</td>
 <td>Focus Order</td>
 <td>A</td>
@@ -5281,7 +5273,7 @@ progress indicator that the user can cancel</td>
 locations history surfaces movement</td>
 <td>Tab-order snapshot tests</td>
 </tr>
-<tr>
+<tr class="even">
 <td>2.4.4</td>
 <td>Link Purpose (In Context)</td>
 <td>A</td>
@@ -5289,7 +5281,7 @@ locations history surfaces movement</td>
 generic link text</td>
 <td>Auditor tests</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>2.4.5</td>
 <td>Multiple Ways</td>
 <td>AA</td>
@@ -5298,7 +5290,7 @@ generic link text</td>
 menu Navigate submenu</td>
 <td>Navigation tests</td>
 </tr>
-<tr>
+<tr class="even">
 <td>2.4.6</td>
 <td>Headings and Labels</td>
 <td>AA</td>
@@ -5306,7 +5298,7 @@ menu Navigate submenu</td>
 requires the same in user docs</td>
 <td>Copy review; auditor tests</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>2.4.7</td>
 <td>Focus Visible</td>
 <td>AA</td>
@@ -5314,7 +5306,7 @@ requires the same in user docs</td>
 focus); High Contrast theme amplifies the system focus ring</td>
 <td>Focus visibility audit</td>
 </tr>
-<tr>
+<tr class="even">
 <td>2.4.11</td>
 <td>Focus Not Obscured (Minimum)</td>
 <td>AA (new in 2.2)</td>
@@ -5322,14 +5314,14 @@ focus); High Contrast theme amplifies the system focus ring</td>
 modal dialogs receive focus and are larger than the focused control</td>
 <td>Focus-not-obscured check</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>2.4.12</td>
 <td>Focus Not Obscured (Enhanced)</td>
 <td>AAA</td>
 <td>Same as 2.4.11; Quill conforms by construction</td>
 <td>(auto)</td>
 </tr>
-<tr>
+<tr class="even">
 <td>2.4.13</td>
 <td>Focus Appearance</td>
 <td>AAA</td>
@@ -5338,14 +5330,14 @@ the 2px solid / 3:1 contrast target by relying on the OS focus
 rectangle</td>
 <td>Manual verification</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>2.5.1</td>
 <td>Pointer Gestures</td>
 <td>A</td>
 <td>No multi-point or path-based gestures required</td>
 <td>n/a</td>
 </tr>
-<tr>
+<tr class="even">
 <td>2.5.2</td>
 <td>Pointer Cancellation</td>
 <td>A</td>
@@ -5353,7 +5345,7 @@ rectangle</td>
 release</td>
 <td>Native button behaviour</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>2.5.3</td>
 <td>Label in Name</td>
 <td>A</td>
@@ -5361,14 +5353,14 @@ release</td>
 control</td>
 <td>UI a11y harness</td>
 </tr>
-<tr>
+<tr class="even">
 <td>2.5.4</td>
 <td>Motion Actuation</td>
 <td>A</td>
 <td>No motion-actuated functions</td>
 <td>n/a</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>2.5.7</td>
 <td>Dragging Movements</td>
 <td>AA (new in 2.2)</td>
@@ -5376,7 +5368,7 @@ control</td>
 alternative</td>
 <td>Keyboard parity matrix</td>
 </tr>
-<tr>
+<tr class="even">
 <td>2.5.8</td>
 <td>Target Size (Minimum)</td>
 <td>AA (new in 2.2)</td>
@@ -5396,7 +5388,7 @@ cells; verified per-theme</td>
 <col style="width: 20%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>SC</th>
 <th>Title</th>
 <th>Level</th>
@@ -5405,7 +5397,7 @@ cells; verified per-theme</td>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>3.1.1</td>
 <td>Language of Page</td>
 <td>A</td>
@@ -5413,7 +5405,7 @@ cells; verified per-theme</td>
 and exposed to MSAA</td>
 <td>Locale tests</td>
 </tr>
-<tr>
+<tr class="even">
 <td>3.1.2</td>
 <td>Language of Parts</td>
 <td>AA</td>
@@ -5421,14 +5413,14 @@ and exposed to MSAA</td>
 stack indicator (5.1b) expose document language to user and AT</td>
 <td>Metadata tests</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>3.2.1</td>
 <td>On Focus</td>
 <td>A</td>
 <td>Focus changes never trigger unexpected context changes</td>
 <td>Focus tests</td>
 </tr>
-<tr>
+<tr class="even">
 <td>3.2.2</td>
 <td>On Input</td>
 <td>A</td>
@@ -5436,7 +5428,7 @@ stack indicator (5.1b) expose document language to user and AT</td>
 change</td>
 <td>Form tests</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>3.2.3</td>
 <td>Consistent Navigation</td>
 <td>AA</td>
@@ -5444,14 +5436,14 @@ change</td>
 identical across every document and dialog</td>
 <td>Snapshot tests</td>
 </tr>
-<tr>
+<tr class="even">
 <td>3.2.4</td>
 <td>Consistent Identification</td>
 <td>AA</td>
 <td>The same icon and label is used for the same action everywhere</td>
 <td>Inventory test</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>3.2.6</td>
 <td>Consistent Help</td>
 <td>A (new in 2.2)</td>
@@ -5459,7 +5451,7 @@ identical across every document and dialog</td>
 window</td>
 <td>Snapshot tests</td>
 </tr>
-<tr>
+<tr class="even">
 <td>3.3.1</td>
 <td>Error Identification</td>
 <td>A</td>
@@ -5467,7 +5459,7 @@ window</td>
 just a code</td>
 <td>Error message inventory</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>3.3.2</td>
 <td>Labels or Instructions</td>
 <td>A</td>
@@ -5475,7 +5467,7 @@ just a code</td>
 hints that are also exposed as MSAA description</td>
 <td>Label inventory</td>
 </tr>
-<tr>
+<tr class="even">
 <td>3.3.3</td>
 <td>Error Suggestion</td>
 <td>AA</td>
@@ -5483,7 +5475,7 @@ hints that are also exposed as MSAA description</td>
 suggestion</td>
 <td>Error message inventory</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>3.3.4</td>
 <td>Error Prevention (Legal, Financial, Data)</td>
 <td>AA</td>
@@ -5492,7 +5484,7 @@ Backup, Reset Settings) always show a confirmation; backups exist for
 restores</td>
 <td>Confirmation matrix test</td>
 </tr>
-<tr>
+<tr class="even">
 <td>3.3.7</td>
 <td>Redundant Entry</td>
 <td>A (new in 2.2)</td>
@@ -5500,7 +5492,7 @@ restores</td>
 are available without re-entry</td>
 <td>Persistence tests</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>3.3.8</td>
 <td>Accessible Authentication (Minimum)</td>
 <td>AA (new in 2.2)</td>
@@ -5520,7 +5512,7 @@ paste-and-store via DPAPI; no cognitive-test puzzle</td>
 <col style="width: 20%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>SC</th>
 <th>Title</th>
 <th>Level</th>
@@ -5529,14 +5521,14 @@ paste-and-store via DPAPI; no cognitive-test puzzle</td>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>4.1.1</td>
 <td>Parsing</td>
 <td>A (obsolete in 2.2)</td>
 <td>(Marked obsolete; included for completeness.)</td>
 <td>n/a</td>
 </tr>
-<tr>
+<tr class="even">
 <td>4.1.2</td>
 <td>Name, Role, Value</td>
 <td>A</td>
@@ -5545,7 +5537,7 @@ description via MSAA and UIA. Custom status-bar cells implement this
 explicitly via <code>wx.Accessible</code> subclasses</td>
 <td>UI a11y harness (Inspect.exe parity)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>4.1.3</td>
 <td>Status Messages</td>
 <td>AA</td>
@@ -5566,7 +5558,7 @@ compatibility matrix</h3>
 <col style="width: 25%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>Reader</th>
 <th>Versions covered</th>
 <th>Quill support level</th>
@@ -5574,38 +5566,38 @@ compatibility matrix</h3>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>NVDA</td>
 <td>2024.x, 2025.x, 2026.x stable + current beta</td>
 <td>First-class (reference platform)</td>
 <td>All flows fully announced; no required scripts</td>
 </tr>
-<tr>
+<tr class="even">
 <td>JAWS</td>
 <td>2024, 2025, 2026 latest</td>
 <td>First-class</td>
 <td>Small optional script provides live-region parity for non-standard
 status-bar cell updates; ships in the installer</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Narrator</td>
 <td>Windows 11 24H2 and later</td>
 <td>First-class</td>
 <td>Uses UIA path; covered by the standard MSAA wiring</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Windows Magnifier</td>
 <td>Current</td>
 <td>Supported</td>
 <td>Focus following works because of stock controls</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>ZoomText / Fusion</td>
 <td>Current</td>
 <td>Supported</td>
 <td>Tested but not officially certified at v1.0</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Dolphin SuperNova</td>
 <td>Current</td>
 <td>Best effort</td>
@@ -5930,7 +5922,7 @@ development.</p>
 <col style="width: 20%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>Package</th>
 <th>Version</th>
 <th>License</th>
@@ -5939,7 +5931,7 @@ development.</p>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td><code>python</code></td>
 <td>3.12.x</td>
 <td>PSF</td>
@@ -5947,7 +5939,7 @@ development.</p>
 <td>Frozen with PyInstaller; 3.13 supported as soon as wxPython
 publishes wheels</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>wxPython</code></td>
 <td>4.2.2+</td>
 <td>wxWindows Library Licence</td>
@@ -5955,14 +5947,14 @@ publishes wheels</td>
 <td>Stock controls only; no <code>wx.lib.agw</code> controls in the
 writing path</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>pywin32</code></td>
 <td>308+</td>
 <td>PSF-style</td>
 <td>Windows shell, DPAPI, COM</td>
 <td>Required for file associations, Jump List, DPAPI</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>comtypes</code></td>
 <td>1.4+</td>
 <td>MIT</td>
@@ -5970,84 +5962,84 @@ writing path</td>
 <td>Used by <code>quill.platform.windows.sr_announce</code> and
 <code>tts</code></td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>wxasync</code></td>
 <td>0.49+</td>
 <td>MIT</td>
 <td>asyncio + wx integration</td>
 <td>Runs AI HTTP calls and background OCR without blocking UI</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>httpx</code></td>
 <td>0.27+</td>
 <td>BSD-3</td>
 <td>HTTP for AI providers and Open from URL</td>
 <td>Async; respects per-action consent</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>charset-normalizer</code></td>
 <td>3.3+</td>
 <td>MIT</td>
 <td>Encoding auto-detect</td>
 <td>Used by <code>io.detect</code> and editor encoding picker</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>python-docx</code></td>
 <td>1.1+</td>
 <td>MIT</td>
 <td>DOCX read/write</td>
 <td>Round-trips heading styles for export</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>mammoth</code></td>
 <td>1.7+</td>
 <td>BSD</td>
 <td>DOCX → HTML/Markdown extraction</td>
 <td>Used as fall-back when python-docx output is too raw</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>python-pptx</code></td>
 <td>1.0+</td>
 <td>MIT</td>
 <td>PPTX read</td>
 <td>Slides + speaker notes</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>openpyxl</code></td>
 <td>3.1+</td>
 <td>MIT</td>
 <td>XLSX read (as table)</td>
 <td>Sheets become sections</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>odfpy</code></td>
 <td>1.4+</td>
 <td>LGPL-2.1+</td>
 <td>ODT/ODP/ODS read</td>
 <td>LGPL is acceptable as a dynamically loaded library</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>ebooklib</code></td>
 <td>0.18+</td>
 <td>AGPL-3 with linking exception</td>
 <td>EPUB read</td>
 <td>Only used as library; no AGPL linkage concerns</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>beautifulsoup4</code></td>
 <td>4.12+</td>
 <td>MIT</td>
 <td>HTML/XHTML/SVG parsing</td>
 <td>With <code>lxml</code> parser</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>lxml</code></td>
 <td>5.2+</td>
 <td>BSD-3</td>
 <td>XML/HTML parsing backend</td>
 <td></td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>markdown-it-py</code></td>
 <td>3.0+</td>
 <td>MIT</td>
@@ -6055,154 +6047,154 @@ writing path</td>
 <td>With <code>mdit-py-plugins</code> for tables, footnotes,
 deflists</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>mdit-py-plugins</code></td>
 <td>0.4+</td>
 <td>MIT</td>
 <td>Markdown extensions</td>
 <td></td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>docutils</code></td>
 <td>0.21+</td>
 <td>Public Domain / BSD</td>
 <td>reStructuredText parsing &amp; outline</td>
 <td></td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>pdfplumber</code></td>
 <td>0.11+</td>
 <td>MIT</td>
 <td>PDF text &amp; layout, tier-1 path A</td>
 <td></td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>pypdfium2</code></td>
 <td>4.30+</td>
 <td>Apache-2.0 / BSD</td>
 <td>PDF text, tier-1 path B</td>
 <td>Native PDFium binary</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>pdfminer.six</code></td>
 <td>20240706+</td>
 <td>MIT</td>
 <td>PDF text fallback path C</td>
 <td>Used when A and B both score badly</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>pikepdf</code></td>
 <td>9.0+</td>
 <td>MPL-2.0</td>
 <td>PDF metadata + password handling</td>
 <td>Wraps QPDF</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>pytesseract</code></td>
 <td>0.3.10+</td>
 <td>Apache-2.0</td>
 <td>Tesseract OCR bridge</td>
 <td>Tesseract binary bundled separately</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>Pillow</code></td>
 <td>10.4+</td>
 <td>HPND</td>
 <td>Image handling for OCR and SVG raster fall-back</td>
 <td></td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>cyhunspell</code></td>
 <td>2.0+</td>
 <td>MPL-2.0</td>
 <td>Hunspell binding for spell check</td>
 <td>Hunspell dictionaries bundled per language</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>regex</code></td>
 <td>2024.7+</td>
 <td>Apache-2.0 / PSF</td>
 <td>Unicode regex for find/replace</td>
 <td>Replaces stdlib <code>re</code> where Unicode classes matter</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>rapidfuzz</code></td>
 <td>3.9+</td>
 <td>MIT</td>
 <td>Palette and command fuzzy matching</td>
 <td></td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>unicodedata2</code></td>
 <td>15.1+</td>
 <td>Apache-2.0</td>
 <td>Up-to-date Unicode tables</td>
 <td>Powers Unicode Insert and tokeniser</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>pyyaml</code></td>
 <td>6.0+</td>
 <td>MIT</td>
 <td>YAML read/write for sidecars and front-matter</td>
 <td><code>safe_load</code> only</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>tomli</code> / <code>tomllib</code></td>
 <td>stdlib for read; <code>tomli-w</code> 1.0+ for write</td>
 <td>MIT</td>
 <td>TOML</td>
 <td></td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>jsonschema</code></td>
 <td>4.23+</td>
 <td>MIT</td>
 <td>Settings, keymap, plugin manifest validation</td>
 <td></td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>platformdirs</code></td>
 <td>4.2+</td>
 <td>MIT</td>
 <td>AppData/log directory discovery</td>
 <td></td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>keyring</code></td>
 <td>25+</td>
 <td>MIT</td>
 <td>Optional secondary credential storage</td>
 <td>DPAPI is primary</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>cryptography</code></td>
 <td>43+</td>
 <td>Apache-2.0 / BSD</td>
 <td>DPAPI fallback + signed manifest verification</td>
 <td></td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>pygments</code></td>
 <td>2.18+</td>
 <td>BSD</td>
 <td>Syntax tokenisation for code-aware spell check and tokeniser</td>
 <td>Tokens only; no styling</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>chardet</code></td>
 <td>5.2+</td>
 <td>LGPL-2.1</td>
 <td>Encoding detection secondary</td>
 <td>charset-normalizer is primary</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>liblouis</code> (Python bindings)</td>
 <td>3.31+</td>
 <td>LGPL-2.1+</td>
 <td>Braille back-translation — deferred to v1.1</td>
 <td>Listed for reference</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>python-magic</code> (or <code>puremagic</code>)</td>
 <td>0.4.27+</td>
 <td>MIT</td>
@@ -6220,7 +6212,7 @@ deflists</td>
 <col style="width: 25%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>Binary</th>
 <th>Version</th>
 <th>License</th>
@@ -6228,26 +6220,26 @@ deflists</td>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>Tesseract OCR</td>
 <td>5.4+</td>
 <td>Apache-2.0</td>
 <td>OCR for image PDFs and image documents</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Hunspell dictionaries (en-US, en-GB, es-ES, fr-FR, de-DE, pt-BR,
 pl-PL, ja-JP)</td>
 <td>latest</td>
 <td>varies (mostly LGPL / Apache / public domain)</td>
 <td>Spell-check dictionary stack</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>PDFium</td>
 <td>bundled with <code>pypdfium2</code></td>
 <td>Apache-2.0 / BSD</td>
 <td>PDF rendering and text</td>
 </tr>
-<tr>
+<tr class="even">
 <td>QPDF</td>
 <td>bundled with <code>pikepdf</code></td>
 <td>Apache-2.0 / Clarified Artistic</td>
@@ -6265,69 +6257,69 @@ bundled; they are optional plugin dependencies (v1.1).</p>
 <col style="width: 33%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>Tool</th>
 <th>Version</th>
 <th>Role</th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td><code>uv</code></td>
 <td>0.4+</td>
 <td>Fast dependency resolution; lockfile</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>ruff</code></td>
 <td>0.6+</td>
 <td>Lint + format</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>mypy</code></td>
 <td>1.11+</td>
 <td>Static type-checking (strict in core, gradual in ui)</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>pytest</code> + <code>pytest-asyncio</code></td>
 <td>latest</td>
 <td>Test runner</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>pytest-wx</code> / custom fixtures</td>
 <td>latest</td>
 <td>wxPython test fixtures</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>pywinauto</code></td>
 <td>0.6.8+</td>
 <td>UI automation tests</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>Accessibility Insights for Windows</code> (CLI)</td>
 <td>latest</td>
 <td>A11y audit in CI</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>PyInstaller</code></td>
 <td>6.10+</td>
 <td>Frozen build</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>Inno Setup</code></td>
 <td>6.3+</td>
 <td>Installer authoring</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>signtool</code> (Windows SDK)</td>
 <td>latest</td>
 <td>EV code signing</td>
 </tr>
-<tr>
+<tr class="odd">
 <td><code>pip-audit</code> and <code>osv-scanner</code></td>
 <td>latest</td>
 <td>Supply-chain vulnerability scan</td>
 </tr>
-<tr>
+<tr class="even">
 <td><code>cibuildwheel</code></td>
 <td>latest</td>
 <td>Multi-Python wheel builds for any C-extension we author</td>
@@ -6368,7 +6360,7 @@ is the v1.0 commitment.</p>
 <col style="width: 16%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>Feature</th>
 <th>Module(s)</th>
 <th>Key APIs / Libraries</th>
@@ -6378,7 +6370,7 @@ is the v1.0 commitment.</p>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>Editor surface (5.2)</td>
 <td><code>ui.editor</code></td>
 <td><code>wx.TextCtrl</code> with
@@ -6387,7 +6379,7 @@ is the v1.0 commitment.</p>
 <td>In-memory document buffer</td>
 <td>Native stock control; MSAA edit role</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Outline Navigator (5.16)</td>
 <td><code>ui.outline</code>, <code>io.*</code> outline emitters</td>
 <td><code>wx.TreeCtrl</code>, <code>markdown-it-py</code>,
@@ -6399,7 +6391,7 @@ is the v1.0 commitment.</p>
 <code>outline_cache/&lt;hash&gt;.json</code></td>
 <td>TreeCtrl exposes hierarchical structure to AT</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Jump-by-structure (5.17)</td>
 <td><code>ui.editor</code>, <code>core.commands</code></td>
 <td>Same outline producers</td>
@@ -6407,7 +6399,7 @@ is the v1.0 commitment.</p>
 <td>n/a</td>
 <td>Announces via <code>a11y.announce</code></td>
 </tr>
-<tr>
+<tr class="even">
 <td>Line/block ops (5.18)</td>
 <td><code>ui.editor</code>, <code>core.history</code></td>
 <td>wx editor primitives</td>
@@ -6415,7 +6407,7 @@ is the v1.0 commitment.</p>
 <td>Undo via <code>core.history</code></td>
 <td>Announcements per action</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Statistics (5.19)</td>
 <td><code>core.document</code>, <code>core.metrics</code></td>
 <td>pure Python; <code>pyphen</code> optional for syllables
@@ -6424,7 +6416,7 @@ is the v1.0 commitment.</p>
 <td>n/a</td>
 <td>Dialog with one <code>wx.StaticText</code> per metric</td>
 </tr>
-<tr>
+<tr class="even">
 <td>A11y Auditor (5.20)</td>
 <td><code>core.audit</code>, <code>io.*</code> audit emitters</td>
 <td><code>markdown-it-py</code> AST, <code>beautifulsoup4</code>,
@@ -6433,7 +6425,7 @@ is the v1.0 commitment.</p>
 <td>Per-doc ignore list in sidecar</td>
 <td>List dialog; severity prefix in text</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Table Mode (5.21)</td>
 <td><code>ui.table_mode</code>, <code>io.md</code> table tokens</td>
 <td><code>markdown-it-py</code> tables, BS4 for HTML</td>
@@ -6441,7 +6433,7 @@ is the v1.0 commitment.</p>
 <td>n/a</td>
 <td>Announces column header on entry</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Editor essentials (5.22)</td>
 <td><code>ui.editor</code>, <code>core.document</code></td>
 <td><code>charset-normalizer</code>, stdlib <code>io</code></td>
@@ -6449,7 +6441,7 @@ is the v1.0 commitment.</p>
 <td>Per-doc prefs in <code>file-prefs.json</code></td>
 <td>Encoding/EOL cells in status bar</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Menu bar (5.1a)</td>
 <td><code>ui.menubar</code>, <code>core.commands</code></td>
 <td><code>wx.MenuBar</code></td>
@@ -6457,7 +6449,7 @@ is the v1.0 commitment.</p>
 <td>n/a</td>
 <td>Menu items show live keybindings; mnemonics</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Status bar (5.1b)</td>
 <td><code>ui.statusbar</code>,
 <code>ui.accessible.statusbar_cell</code></td>
@@ -6467,7 +6459,7 @@ is the v1.0 commitment.</p>
 <td>n/a</td>
 <td>Each cell exposes name/role/value/description via MSAA + UIA</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Command palette (§7)</td>
 <td><code>ui.palette</code>, <code>core.palette</code></td>
 <td><code>wx.SearchCtrl</code> + <code>wx.ListBox</code>;
@@ -6476,7 +6468,7 @@ is the v1.0 commitment.</p>
 <td>Recents in <code>palette-recent.json</code></td>
 <td>Combobox-style; live region for status</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Keymap (§8)</td>
 <td><code>core.keymap</code>, <code>ui.keymap_editor</code></td>
 <td>Custom chord engine; <code>wx.AcceleratorTable</code> per
@@ -6485,7 +6477,7 @@ context</td>
 <td><code>keymap.json</code>; <code>.tmp</code>+rename</td>
 <td>Capture dialog announces every keystroke</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Spell check (§6)</td>
 <td><code>core.spell.*</code></td>
 <td><code>cyhunspell</code>, custom tokeniser</td>
@@ -6493,7 +6485,7 @@ context</td>
 <td><code>personal.dic</code>, <code>&lt;doc&gt;.quill.yml</code></td>
 <td>Dedicated panel + quick-fix popup</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Find/Replace (5.7)</td>
 <td><code>ui.dialogs.find</code>, <code>core.document</code></td>
 <td><code>regex</code> module</td>
@@ -6501,7 +6493,7 @@ context</td>
 <td><code>search-history.json</code></td>
 <td>Announces structured one-liner per match</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Bookmarks (5.10)</td>
 <td><code>core.bookmarks</code></td>
 <td>pure Python; SHA-1 of path</td>
@@ -6509,7 +6501,7 @@ context</td>
 <td><code>bookmarks/&lt;hash&gt;.json</code></td>
 <td>List dialog; re-anchor on jump</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Backups + autosave (5.13, 5.39)</td>
 <td><code>core.backups</code></td>
 <td>stdlib</td>
@@ -6518,7 +6510,7 @@ context</td>
 <code>.tmp</code>+rename</td>
 <td>Recovery prompt at launch</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Read Aloud (5.25)</td>
 <td><code>platform.windows.tts</code>, <code>ui.read_aloud</code></td>
 <td>SAPI 5 via <code>comtypes</code>; OneCore via
@@ -6527,7 +6519,7 @@ Windows.Media.SpeechSynthesis WinRT</td>
 <td>n/a</td>
 <td>Uses a <em>secondary</em> voice; never blocks SR</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Open from URL (5.27)</td>
 <td><code>ui.dialogs.open_url</code>, <code>ai.safety</code></td>
 <td><code>httpx</code> async</td>
@@ -6535,7 +6527,7 @@ Windows.Media.SpeechSynthesis WinRT</td>
 <td>Temp file</td>
 <td>Consent dialog announces host + size</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>AI reading-order (5.5, 5.4 tier 3)</td>
 <td><code>ai.pipeline</code>,
 <code>ai.openai/azure/anthropic/ollama</code>,
@@ -6545,7 +6537,7 @@ Windows.Media.SpeechSynthesis WinRT</td>
 <td>Nothing stored</td>
 <td>Progress announced every 20 s</td>
 </tr>
-<tr>
+<tr class="even">
 <td>OCR (5.4)</td>
 <td><code>io.ocr</code>, <code>pytesseract</code></td>
 <td>Tesseract binary</td>
@@ -6553,7 +6545,7 @@ Windows.Media.SpeechSynthesis WinRT</td>
 <td>n/a</td>
 <td>Progress announced</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Diff/Compare (5.22)</td>
 <td><code>core.diff</code></td>
 <td>stdlib <code>difflib</code>, <code>regex</code></td>
@@ -6561,7 +6553,7 @@ Windows.Media.SpeechSynthesis WinRT</td>
 <td>n/a</td>
 <td>Diff opens as a normal document</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Notifications centre (5.35)</td>
 <td><code>core.events</code>, <code>ui.notifications</code></td>
 <td>Internal event bus</td>
@@ -6569,7 +6561,7 @@ Windows.Media.SpeechSynthesis WinRT</td>
 <td>In-memory</td>
 <td>Cell + dialog</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Sessions (5.22, 5.49)</td>
 <td><code>core.sessions</code></td>
 <td>pure Python</td>
@@ -6577,7 +6569,7 @@ Windows.Media.SpeechSynthesis WinRT</td>
 <td><code>sessions/last.json</code></td>
 <td>Prompt at launch</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Templates + snippets (5.22)</td>
 <td><code>core.templates</code></td>
 <td>pure Python</td>
@@ -6585,7 +6577,7 @@ Windows.Media.SpeechSynthesis WinRT</td>
 <td><code>%APPDATA%\Quill\templates</code>, <code>snippets/</code></td>
 <td>List dialogs</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Atomic stores (5.55)</td>
 <td><code>core.fingerprint</code>, <code>core.paths</code></td>
 <td>stdlib <code>os.replace</code></td>
@@ -6593,7 +6585,7 @@ Windows.Media.SpeechSynthesis WinRT</td>
 <td>All JSON stores</td>
 <td>Recovery announcements</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Plugin loader skeleton (v1.0; full plugin runtime v1.1)</td>
 <td><code>plugins.api</code>, <code>plugins.manifest</code></td>
 <td><code>importlib.metadata</code>, <code>jsonschema</code></td>
@@ -7208,109 +7200,109 @@ deferred to plugins (v1.1+)</h3>
 <col style="width: 33%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>Format</th>
 <th>Why deferred</th>
 <th>Target plugin</th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>Legacy Word <code>.doc</code>, PowerPoint <code>.ppt</code>, Excel
 <code>.xls</code></td>
 <td>Need headless LibreOffice for high quality; LibreOffice is a ~300 MB
 dependency</td>
 <td>LibreOffice Bridge</td>
 </tr>
-<tr>
+<tr class="even">
 <td>WordPerfect <code>.wpd</code>, Works <code>.wps</code>, Windows
 Write <code>.wri</code>, StarOffice</td>
 <td>Python bindings flaky on Windows; covered well by headless
 LibreOffice</td>
 <td>LibreOffice Bridge</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Apple iWork <code>.pages</code>, <code>.key</code>,
 <code>.numbers</code></td>
 <td>Modern iWork is a proprietary IWA archive; coverage is partial</td>
 <td>iWork Bridge (best-effort)</td>
 </tr>
-<tr>
+<tr class="even">
 <td>OneNote <code>.one</code></td>
 <td>Closed format, no stable open library</td>
 <td>OneNote Bridge via Microsoft Graph (requires sign-in)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Kindle <code>.azw3</code>, <code>.mobi</code>, FB2, LIT, LRF, PRC,
 PDB, TCR</td>
 <td>Best handled by Calibre’s conversion engine</td>
 <td>Calibre Bridge</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Kindle <code>.kfx</code></td>
 <td>DRM-protected by design; Quill will not break DRM</td>
 <td>Calibre Bridge (user must already have a DRM-stripped copy)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>DjVu</td>
 <td>Native <code>djvulibre</code> dependency; installer weight</td>
 <td>DjVu Plugin</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Comics <code>cbz</code>, <code>cbr</code></td>
 <td>RAR (<code>cbr</code>) requires non-free <code>unrar.dll</code></td>
 <td>Comics Plugin</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>PostScript <code>ps</code>, <code>eps</code></td>
 <td>Needs Ghostscript native binary</td>
 <td>PostScript Plugin</td>
 </tr>
-<tr>
+<tr class="even">
 <td>XPS, OXPS</td>
 <td>Niche; needs additional reader</td>
 <td>XPS Plugin</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>MSG, PST, MBOX</td>
 <td><code>libpff</code> works but coverage on encrypted/corporate PSTs
 is uneven</td>
 <td>Mail Bridge</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Web archives WARC, WACZ, <code>.webarchive</code></td>
 <td>Format zoo; useful but not ubiquitous</td>
 <td>Web Archive Plugin</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Parquet, Feather</td>
 <td>Niche analyst use; large native deps</td>
 <td>Data Files Plugin</td>
 </tr>
-<tr>
+<tr class="even">
 <td>EVTX, ETL</td>
 <td>Native Windows log formats; niche audience</td>
 <td>Logs Plugin</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>HEIC, AVIF, JP2</td>
 <td>Native binary dependencies (<code>pillow-heif</code>,
 <code>pillow-avif-plugin</code>)</td>
 <td>Modern Images Plugin</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Chat exports (WhatsApp, Telegram, Slack, Discord, Teams, Zoom,
 Otter, ChatGPT)</td>
 <td>Export formats churn 2–4 times per year; requires ongoing
 maintenance</td>
 <td>Chat Exports Plugin (independently versioned)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>OneNote, Evernote <code>.enex</code>, Bear, Simplenote</td>
 <td>Mixed formats; per-app quirks</td>
 <td>Notes Bridge Plugin</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Audio + transcript pair playback</td>
 <td>Needs media playback; out of scope for core editor</td>
 <td>Audio Transcript Plugin</td>
@@ -7454,47 +7446,47 @@ Enter.</p>
 <col style="width: 50%" />
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>Risk</th>
 <th>Mitigation</th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>Custom wx behaviour breaks a screen reader on a Windows update</td>
 <td>Strict policy of stock controls; CI accessibility tests; rapid patch
 process</td>
 </tr>
-<tr>
+<tr class="even">
 <td>PDF extraction quality varies wildly</td>
 <td>Layered extractors with scoring; manual escalation tiers; opt-in AI
 repair</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>AI provider API drift or pricing change</td>
 <td>Provider-agnostic interface; user supplies key</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Plugins introduce accessibility regressions</td>
 <td>Manifest must declare UI surfaces; review checklist; plugins
 disabled by default</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Custom spell engine underperforms TinySpell/Word</td>
 <td>Layered architecture; Hunspell baseline; learning loop; published
 benchmarks</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Keymap conflicts with screen-reader shortcuts</td>
 <td>Explicit detection at capture time; refuse to capture conflicting
 chords with clear explanation</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Localisation lags</td>
 <td>Ship English first; community translation site; per-language
 readiness gates</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Users expect bold and italic</td>
 <td>Clear positioning; markdown supports inline emphasis textually; v1.x
 evaluation only after stable base</td>

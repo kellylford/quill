@@ -1,14 +1,11 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
 <head>
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>announcement-beta</title>
   <style>
-    /* Default styles provided by pandoc.
-    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-    */
     html {
       color: #1a1a1a;
       background-color: #fdfdfd;
@@ -63,10 +60,6 @@
     img {
       max-width: 100%;
     }
-    svg {
-      height: auto;
-      max-width: 100%;
-    }
     h1, h2, h3, h4, h5, h6 {
       margin-top: 1.4em;
     }
@@ -91,7 +84,6 @@
       color: #606060;
     }
     code {
-      white-space: pre-wrap;
       font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
       font-size: 85%;
       margin: 0;
@@ -111,8 +103,8 @@
      overflow: visible;
     }
     hr {
+      background-color: #1a1a1a;
       border: none;
-      border-top: 1px solid #1a1a1a;
       height: 1px;
       margin: 1em 0;
     }
@@ -155,6 +147,7 @@
     #TOC a:not(:hover) {
       text-decoration: none;
     }
+    code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
     div.columns{display: flex; gap: min(4vw, 1.5em);}
     div.column{flex: auto; overflow-x: auto;}
@@ -172,7 +165,7 @@
   </style>
 </head>
 <body>
-<h1 id="announcing-quill-015-beta">Announcing Quill 0.1.5 Beta</h1>
+<h1 id="announcing-quill-0.1.5-beta">Announcing Quill 0.1.5 Beta</h1>
 <p>Quill 0.1.5 Beta is a major expansion of the QUILL experience.</p>
 <p>QUILL stands for Quality, Usable, Inclusive, Lightweight, Literate.
 This release doubles down on that promise with a broad set of
@@ -193,7 +186,7 @@ while still supporting advanced workflows:</p>
 <li>format conversion and extraction quality review</li>
 <li>local-first AI and automation helpers</li>
 </ul>
-<h2 id="complete-capability-map-for-015-beta">Complete capability map
+<h2 id="complete-capability-map-for-0.1.5-beta">Complete capability map
 for 0.1.5 Beta</h2>
 <p>The sections below list user-facing features by workflow so you can
 quickly understand the full product surface.</p>
@@ -245,6 +238,8 @@ navigation</h3>
 <li>find, find next, find previous</li>
 <li>replace and replace all</li>
 <li>wildcard and regex search modes</li>
+<li>redesigned accessible Regex Helper with presets, plain-language
+explanations, sample-text preview, and copy-pattern workflow</li>
 <li>search history and repeated search workflows</li>
 <li>find all matches summary reporting</li>
 </ul>
@@ -419,6 +414,8 @@ low-vision capability</h3>
 <li>clear state messages for long-running or risky actions</li>
 <li>discoverable help, what-can-I-do-here guidance, and keyboard
 references</li>
+<li>hardened Help menu navigation by deferring menu-state mutations
+until menu close during rapid keyboard traversal</li>
 </ul>
 <h3 id="dictation-and-voice-workflows">Dictation and voice
 workflows</h3>
@@ -427,6 +424,12 @@ workflows</h3>
 <li>Windows dictation integration</li>
 <li>dictation command toggles and control states</li>
 <li>voice-command interpretation support in supported paths</li>
+<li>bundled read-aloud fallback voices (DECtalk and eSpeak NG) for
+immediate local playback</li>
+<li>download-first voice expansion for Piper and Kokoro through explicit
+Speech Center flows</li>
+<li>voice availability announcements and onboarding previews before any
+model download</li>
 <li>watch-folder monitoring to auto-open newly dropped supported
 files</li>
 <li>watch-folder settings for folder path, subfolders, startup, and
@@ -555,7 +558,7 @@ release that makes Quill viable for:</p>
 </ul>
 <h2 id="translation-process-and-community-effort">Translation process
 and community effort</h2>
-<p>QUILL's localization direction is community-first and modeled on a
+<p>QUILL’s localization direction is community-first and modeled on a
 gettext catalog workflow (<code>POT -&gt; PO -&gt; MO</code>). The
 project is building translation as a release discipline, not as an
 afterthought.</p>
@@ -578,7 +581,7 @@ Translation Contributor Plan</a></li>
 </ul>
 <p>But the feature surface is already substantial and practical for real
 work.</p>
-<h2 id="how-to-get-the-most-from-015">How to get the most from
+<h2 id="how-to-get-the-most-from-0.1.5">How to get the most from
 0.1.5</h2>
 <ol type="1">
 <li>Start with the user guide to pick workflows that match your daily
