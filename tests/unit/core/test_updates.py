@@ -119,3 +119,45 @@ def test_parse_update_manifest_rejects_untrusted_download_host() -> None:
         assert "not trusted" in str(exc)
     else:
         raise AssertionError("Expected trusted-host validation failure")
+
+
+def test_download_release_asset_reports_streaming_progress(tmp_path, monkeypatch) -> None:
+    from quill.core import updates
+
+    body = b"x" * (200 * 1024)  # 200 KiB across multiple 64 KiB chunks
+
+    class _FakeResponse:
+        def __init__(self) -> None:
+            self.headers = {"Content-Length": str(len(body))}
+            self._offset = 0
+
+        def __enter__(self) -> _FakeResponse:
+            return self
+
+        def __exit__(self, *exc: object) -> None:
+            return None
+
+        def read(self, size: int = -1) -> bytes:
+            if size is None or size < 0:
+                chunk = body[self._offset :]
+                self._offset = len(body)
+                return chunk
+            chunk = body[self._offset : self._offset + size]
+            self._offset += len(chunk)
+            return chunk
+
+    monkeypatch.setattr(updates, "urlopen", lambda *a, **k: _FakeResponse())
+    monkeypatch.setattr(updates, "_validate_remote_url", lambda url: None)
+
+    seen: list[tuple[int, int]] = []
+    destination = tmp_path / "quill-setup.exe"
+    updates.download_release_asset(
+        "https://github.com/releases/download/x",
+        destination,
+        progress=lambda done, total: seen.append((done, total)),
+    )
+
+    assert destination.read_bytes() == body
+    assert seen[0] == (0, len(body))
+    assert seen[-1] == (len(body), len(body))
+    assert len(seen) > 2  # streamed in multiple chunks, not one read

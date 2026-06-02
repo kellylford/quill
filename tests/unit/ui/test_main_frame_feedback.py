@@ -5,7 +5,7 @@ from pathlib import Path
 import quill.ui.main_frame as main_frame_module
 from quill.core.document import Document
 from quill.core.notifications import Notification
-from quill.core.updates import UpdateManifest
+from quill.core.updates import GitHubRelease, UpdateManifest
 from quill.ui.main_frame import MainFrame
 
 
@@ -257,3 +257,58 @@ def test_check_for_updates_allows_download_without_immediate_exit(monkeypatch) -
 
     assert opened == ["https://example.com/Quill-Setup-0.1.1.exe"]
     assert frame._status_message == "Opened download page for 0.1.1"
+
+
+def test_update_check_due_throttles_recent_checks() -> None:
+    from datetime import UTC, datetime, timedelta
+
+    frame = _build_frame()
+    frame.settings.last_update_check = ""
+    assert frame._update_check_due() is True
+
+    frame.settings.last_update_check = datetime.now(UTC).isoformat()
+    assert frame._update_check_due() is False
+
+    frame.settings.last_update_check = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
+    assert frame._update_check_due() is True
+
+
+def test_skip_update_version_records_choice(monkeypatch) -> None:
+    frame = _build_frame()
+    frame.settings.skipped_update_version = ""
+    frame._announce = lambda *_args, **_kwargs: None
+    monkeypatch.setattr(main_frame_module, "save_settings", lambda _settings: None)
+
+    frame._skip_update_version("0.2.0")
+
+    assert frame.settings.skipped_update_version == "0.2.0"
+    assert frame._status_message == "Skipping update 0.2.0"
+    assert frame._notification == ("Update 0.2.0 skipped", "update")
+
+
+def test_check_for_updates_silent_honors_skipped_version(monkeypatch) -> None:
+    frame = _build_frame()
+    frame.settings.beta_updates = False
+    frame.settings.skipped_update_version = "0.2.0"
+    frame.settings.last_update_check = ""
+    monkeypatch.setattr(main_frame_module, "save_settings", lambda _settings: None)
+    monkeypatch.setattr(
+        main_frame_module,
+        "fetch_update_manifest",
+        lambda _url: (_ for _ in ()).throw(main_frame_module.URLError("offline")),
+    )
+    release = GitHubRelease(
+        version="0.2.0",
+        download_url="https://github.com/releases/download/x/Quill.exe",
+        published_at="2026-06-01",
+        notes="New",
+        prerelease=False,
+    )
+    monkeypatch.setattr(main_frame_module, "fetch_releases", lambda: [release])
+    frame._download_update_release = lambda _release: (_ for _ in ()).throw(
+        AssertionError("a skipped version must not download")
+    )
+
+    frame.check_for_updates(silent_no_update=True)
+
+    assert frame._notification == ("Update 0.2.0 available (skipped by you)", "update")

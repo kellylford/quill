@@ -201,6 +201,7 @@ parent first.
 - [ ] Spell check ignore and learn (from Spell Check)
 - [ ] Confirm item deletion (from YAML Structure Editor)
 - [ ] Regex Helper (from Tools)
+- [ ] Update downloaded (from Check for Updates, after a successful download)
 
 ## W. Startup-only dialogs
 

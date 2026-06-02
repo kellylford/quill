@@ -4,6 +4,7 @@ import html
 import json
 import os
 import re
+import sys
 import threading
 import time
 import unicodedata
@@ -1000,7 +1001,11 @@ class MainFrame:
                 task()
             except Exception:
                 self._report_startup_task_failure(label)
-        if getattr(self.settings, "auto_check_updates", False) and not self._safe_mode:
+        if (
+            getattr(self.settings, "auto_check_updates", False)
+            and not self._safe_mode
+            and self._update_check_due()
+        ):
             try:
                 self.check_for_updates(silent_no_update=True)
             except Exception:
@@ -15805,11 +15810,35 @@ class MainFrame:
             "</ul>"
         )
 
+    def _update_check_due(self, interval_hours: int = 24) -> bool:
+        """True when enough time has passed since the last startup update check.
+
+        Manual checks always run; this only throttles the silent startup check so
+        QUILL doesn't hit the network on every single launch.
+        """
+        last = str(getattr(self.settings, "last_update_check", "") or "").strip()
+        if not last:
+            return True
+        try:
+            previous = datetime.fromisoformat(last)
+        except ValueError:
+            return True
+        if previous.tzinfo is None:
+            previous = previous.replace(tzinfo=UTC)
+        return datetime.now(UTC) - previous >= timedelta(hours=interval_hours)
+
     def check_for_updates(self, silent_no_update: bool = False) -> None:
         wx = self._wx
         current_version = getattr(getattr(self, "_updates", None), "current_version", "")
         if not current_version:
             current_version = __version__ or "0.0.0"
+
+        # Record that a check ran so the startup throttle can space out auto-checks.
+        self.settings.last_update_check = datetime.now(UTC).isoformat()
+        try:
+            save_settings(self.settings)
+        except Exception:  # noqa: BLE001
+            pass
 
         # Compatibility path: honor the signed manifest updater used by
         # earlier flows and tests before consulting GitHub Releases.
@@ -15875,12 +15904,23 @@ class MainFrame:
         # The release for the user's current channel.
         target = latest_any if beta else latest_stable
         if target is not None and is_newer_version(current_version, target.version):
+            # During silent startup checks, honor a version the user chose to skip.
+            if silent_no_update and target.version == getattr(
+                self.settings, "skipped_update_version", ""
+            ):
+                self._record_notification(
+                    f"Update {target.version} available (skipped by you)", "update"
+                )
+                return
             if silent_no_update:
                 self._record_notification(f"Update {target.version} found; downloading", "update")
                 self._download_update_release(target)
                 return
-            if self._show_update_available_dialog(current_version, target):
+            action = self._show_update_available_dialog(current_version, target)
+            if action == "download":
                 self._download_update_release(target)
+            elif action == "skip":
+                self._skip_update_version(target.version)
             else:
                 self._set_status("Update deferred")
                 self._record_notification(f"Update {target.version} deferred", "update")
@@ -15932,8 +15972,11 @@ class MainFrame:
         save_settings(self.settings)
         self._set_status("Switched to the beta update channel")
         self._announce("Beta updates enabled")
-        if self._show_update_available_dialog(current_version, release):
+        action = self._show_update_available_dialog(current_version, release)
+        if action == "download":
             self._download_update_release(release)
+        elif action == "skip":
+            self._skip_update_version(release.version)
 
     def _render_html(self, markdown_text: str) -> str:
         from quill.core.browser_preview import render_preview_body
@@ -15948,15 +15991,19 @@ class MainFrame:
             self.frame, title, self._render_html(markdown_text), [("OK", self._wx.ID_OK)]
         ).show_modal()
 
-    def _show_update_available_dialog(self, current_version: str, release: GitHubRelease) -> bool:
+    def _show_update_available_dialog(self, current_version: str, release: GitHubRelease) -> str:
+        """Present an available update. Returns one of ``"download"``,
+        ``"skip"`` (don't offer this version again) or ``"later"``."""
         from quill.ui.preview_dialog import HtmlMessageDialog
 
         wx = self._wx
         channel = "Beta / prerelease" if release.prerelease else "Stable"
         notes = release.notes or "_(no release notes provided)_"
+        published = f"**Published:** {release.published_at}  \n" if release.published_at else ""
         body = self._render_html(
             f"# Update available: {release.version}\n\n"
             f"**Channel:** {channel}  \n"
+            f"{published}"
             f"**Current version:** {current_version}\n\n"
             "## Release notes\n\n" + notes
         )
@@ -15964,9 +16011,25 @@ class MainFrame:
             self.frame,
             "Check for Updates",
             body,
-            [("Later", wx.ID_CANCEL), ("Download update", wx.ID_OK)],
+            [
+                ("Skip this version", wx.ID_IGNORE),
+                ("Later", wx.ID_CANCEL),
+                ("Download update", wx.ID_OK),
+            ],
         ).show_modal()
-        return result == wx.ID_OK
+        if result == wx.ID_OK:
+            return "download"
+        if result == wx.ID_IGNORE:
+            return "skip"
+        return "later"
+
+    def _skip_update_version(self, version: str) -> None:
+        """Remember a version the user chose to skip so we stop offering it."""
+        self.settings.skipped_update_version = version
+        save_settings(self.settings)
+        self._set_status(f"Skipping update {version}")
+        self._record_notification(f"Update {version} skipped", "update")
+        self._announce(f"Update {version} skipped")
 
     def _offer_beta_switch(
         self, current_version: str, stable_release: GitHubRelease | None
@@ -16016,8 +16079,11 @@ class MainFrame:
                 "# No beta build yet\n\nNo beta (prerelease) build is available yet.",
             )
             return
-        if self._show_update_available_dialog(current_version, release):
+        action = self._show_update_available_dialog(current_version, release)
+        if action == "download":
             self._download_update_release(release)
+        elif action == "skip":
+            self._skip_update_version(release.version)
 
     def _confirm_beta_channel(self, release: GitHubRelease | None = None) -> bool:
         """HTML consent gate the user must agree to before beta updates turn on."""
@@ -16047,7 +16113,8 @@ class MainFrame:
         return result == wx.ID_YES
 
     def _download_update_release(self, release: GitHubRelease) -> None:
-        """Auto-download the release asset to <app data>/updates, off-thread.
+        """Auto-download the release asset to <app data>/updates, off-thread,
+        with accessible progress reporting and a post-download install offer.
 
         If the release has no downloadable asset, open its page instead.
         """
@@ -16068,10 +16135,25 @@ class MainFrame:
         target_dir.mkdir(parents=True, exist_ok=True)
         target = target_dir / (url.rsplit("/", 1)[-1] or f"quill-{release.version}")
         self._set_status(f"Downloading update {release.version}...")
+        self._announce(f"Downloading update {release.version}")
+
+        # Announce progress at coarse milestones so screen readers aren't flooded.
+        last_milestone = {"value": -1}
+
+        def report(done: int, total: int) -> None:
+            if total <= 0:
+                return
+            percent = int(done * 100 / total)
+            milestone = percent - (percent % 25)
+            if milestone > last_milestone["value"] and milestone <= 100:
+                last_milestone["value"] = milestone
+                if milestone in (25, 50, 75):
+                    self._wx.CallAfter(self._set_status, f"Downloading update… {milestone}%")
+                    self._wx.CallAfter(self._announce, f"Update download {milestone} percent")
 
         def worker() -> None:
             try:
-                download_release_asset(url, target)
+                download_release_asset(url, target, progress=report)
             except Exception as exc:  # noqa: BLE001
                 self._wx.CallAfter(
                     self._record_notification, f"Update download failed: {exc}", "update"
@@ -16085,8 +16167,67 @@ class MainFrame:
             )
             self._wx.CallAfter(self._set_status, f"Downloaded update {release.version}")
             self._wx.CallAfter(self._announce, f"Update {release.version} downloaded")
+            self._wx.CallAfter(self._offer_post_download_actions, release, target)
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def _offer_post_download_actions(self, release: GitHubRelease, target: Path) -> None:
+        """After a successful download, let the user install it now or reveal it
+        in the folder. Installer launch is offered only for runnable assets."""
+        from quill.ui.preview_dialog import HtmlMessageDialog
+
+        wx = self._wx
+        runnable = target.suffix.lower() in {".exe", ".msi"} and sys.platform.startswith("win")
+        buttons = [("Close", wx.ID_CANCEL), ("Open folder", wx.ID_OPEN)]
+        if runnable:
+            buttons.append(("Install now…", wx.ID_OK))
+        install_line = (
+            "Select **Install now** to close Quill and run the installer, or " if runnable else ""
+        )
+        body = self._render_html(
+            f"# Update {release.version} downloaded\n\n"
+            f"Saved to:\n\n`{target}`\n\n"
+            f"{install_line}**Open folder** to find it yourself.\n"
+        )
+        result = HtmlMessageDialog(self.frame, "Update downloaded", body, buttons).show_modal()
+        if result == wx.ID_OPEN:
+            self._reveal_in_folder(target)
+        elif result == wx.ID_OK and runnable:
+            self._launch_installer(target)
+
+    def _reveal_in_folder(self, target: Path) -> None:
+        """Reveal the downloaded file in the OS file manager."""
+        try:
+            if sys.platform.startswith("win"):
+                import subprocess
+
+                subprocess.Popen(["explorer", "/select,", str(target)])  # noqa: S603, S607
+            elif sys.platform == "darwin":
+                import subprocess
+
+                subprocess.Popen(["open", "-R", str(target)])  # noqa: S603, S607
+            else:
+                webbrowser.open(target.parent.as_uri())
+            self._set_status(f"Revealed {target.name}")
+        except Exception as exc:  # noqa: BLE001
+            self._record_notification(f"Could not open folder: {exc}", "update")
+            self._set_status("Could not open download folder")
+
+    def _launch_installer(self, target: Path) -> None:
+        """Close Quill and launch the downloaded installer (Windows)."""
+        if not self._can_close_all_documents():
+            self._set_status("Install cancelled")
+            self._record_notification("Update install cancelled before closing documents", "update")
+            return
+        try:
+            os.startfile(str(target))  # type: ignore[attr-defined]  # noqa: S606
+        except Exception as exc:  # noqa: BLE001
+            self._record_notification(f"Could not launch installer: {exc}", "update")
+            self._set_status("Could not launch installer")
+            return
+        self._record_notification(f"Launching installer {target.name}", "update")
+        self._set_status("Closing Quill for installation")
+        self.exit_app()
 
     def _open_update_download_flow(self, manifest: UpdateManifest) -> None:
         wx = self._wx

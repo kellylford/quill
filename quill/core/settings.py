@@ -98,6 +98,8 @@ class Settings:
     indent_size: int = 4
     auto_check_updates: bool = False
     beta_updates: bool = False
+    skipped_update_version: str = ""
+    last_update_check: str = ""
     recent_files_limit: int = 10
     tray_enabled: bool = False
     persistent_undo: bool = False
@@ -202,6 +204,8 @@ class Settings:
         indent_size = int(data.get("indent_size", 4))
         auto_check_updates = bool(data.get("auto_check_updates", False))
         beta_updates = bool(data.get("beta_updates", False))
+        skipped_update_version = str(data.get("skipped_update_version", "")).strip()
+        last_update_check = str(data.get("last_update_check", "")).strip()
         recent_files_limit = int(data.get("recent_files_limit", 10))
         tray_enabled = bool(data.get("tray_enabled", False))
         persistent_undo = bool(data.get("persistent_undo", False))
@@ -394,6 +398,8 @@ class Settings:
             indent_size=indent_size,
             auto_check_updates=auto_check_updates,
             beta_updates=beta_updates,
+            skipped_update_version=skipped_update_version,
+            last_update_check=last_update_check,
             recent_files_limit=recent_files_limit,
             tray_enabled=tray_enabled,
             persistent_undo=persistent_undo,

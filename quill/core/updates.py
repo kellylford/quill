@@ -6,6 +6,7 @@ import json
 import os
 import ssl
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from urllib.error import URLError
 from urllib.parse import urlparse
@@ -273,15 +274,34 @@ def _prerelease_rank(suffix: str) -> tuple[int, int]:
 
 
 def download_release_asset(
-    url: str, destination: str | os.PathLike[str], timeout: int = 60
+    url: str,
+    destination: str | os.PathLike[str],
+    timeout: int = 60,
+    progress: Callable[[int, int], None] | None = None,
 ) -> None:
-    """Download an update asset to ``destination`` (verified TLS)."""
+    """Download an update asset to ``destination`` (verified TLS).
+
+    When ``progress`` is supplied it is called as ``progress(bytes_done, total)``
+    after each chunk so callers can surface accessible download progress. ``total``
+    is ``0`` when the server does not report a Content-Length.
+    """
     _validate_remote_url(url)
     request = Request(url, headers={"User-Agent": "Quill-Updater"})
+    chunk_size = 64 * 1024
     with urlopen(request, timeout=timeout, context=_ssl_context()) as response:
-        data = response.read()
-    with open(destination, "wb") as handle:
-        handle.write(data)
+        total = int(getattr(response, "headers", {}).get("Content-Length", 0) or 0)
+        done = 0
+        if progress is not None:
+            progress(0, total)
+        with open(destination, "wb") as handle:
+            while True:
+                chunk = response.read(chunk_size)
+                if not chunk:
+                    break
+                handle.write(chunk)
+                done += len(chunk)
+                if progress is not None:
+                    progress(done, total)
 
 
 def _validate_remote_url(url: str) -> None:
