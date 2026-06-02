@@ -1749,12 +1749,19 @@ settings; round-trip and migration tests pass. (Pairs with CQ-4.)</td>
 <td>Searchable settings with per-setting reset and descriptions</td>
 <td>Settings</td>
 <td>M</td>
-<td>In progress</td>
+<td>Done</td>
 <td>A search row inside the Settings dialog jumps to the first control
 matching a query (over label, key, description, group title, and
 keywords via <code>registry.search_specs</code>); per-spec
-plain-language descriptions are carried in the registry. Per-setting
-reset buttons still to be surfaced on each control.</td>
+plain-language descriptions are carried in the registry. Every rendered
+control now has its own accessible <strong>Reset</strong> button
+(accessible name <code>Reset {label} to default</code>) that restores
+that single setting to <code>registry.default_value(key)</code> via a
+per-key writer and announces the change; the restored value is committed
+on OK with the rest of the form. Implemented in
+<code>open_general_preferences</code> (<code>writers</code> map +
+<code>_reset_one</code>/<code>_reset_button</code> helpers) covering
+bool, choice, int, float, text, and the preview-browser choice.</td>
 </tr>
 <tr>
 <td>SET-7</td>
@@ -5439,11 +5446,11 @@ CQ-16) are counted once, in their primary tier.</p>
 <td>Tier 2</td>
 <td>Flagship experience</td>
 <td>58</td>
-<td>26</td>
-<td>32</td>
+<td>27</td>
+<td>31</td>
 <td>OCR-1..5, AGENT-1, AI-7, AI-1, AI-6, AI-14, AI-19, AI-20, AI-22,
-AI-24, SET-1..7, SHARE-1..3, CTX-1, DICT-2, FEAT-19, WATCH-5..7, FLAG-3,
-DLG-1</td>
+AI-24, SET-1..5, SET-7, SHARE-1..3, CTX-1, DICT-2, FEAT-19, WATCH-5..7,
+FLAG-3, DLG-1</td>
 </tr>
 <tr>
 <td>Tier 3</td>
@@ -5484,8 +5491,8 @@ CQ-14, CQ-23, CQ-24, LINUX-2</td>
 <td><strong>Total</strong></td>
 <td>All tiers</td>
 <td><strong>180</strong></td>
-<td><strong>54</strong></td>
-<td><strong>126</strong></td>
+<td><strong>55</strong></td>
+<td><strong>125</strong></td>
 <td></td>
 </tr>
 </tbody>
@@ -5500,6 +5507,31 @@ note), and A11Y-1 (announcement grammar). The GATE-3/CQ-7 cleanup also
 incidentally cleared the <code>quill/core</code> and
 <code>quill/io</code> portion of the TYPE-1..8 zone, though those formal
 rows stay open until each is individually verified and closed.</p>
+<h4 id="per-setting-reset-buttons-completed-set-6">2026-06-04:
+Per-setting Reset buttons completed SET-6</h4>
+<p>Code shipped. Every control in the tabbed Settings dialog now carries
+its own accessible <strong>Reset</strong> button, closing SET-6.</p>
+<ul>
+<li><code>open_general_preferences</code> gained a <code>writers</code>
+map (mirroring the existing <code>readers</code> map) plus
+<code>_reset_one</code> and <code>_reset_button</code> helpers. Each
+rendered control — bool, choice, int, float, text, and the special
+preview-browser choice — gets a compact <strong>Reset</strong> button
+whose accessible name is <code>Reset {label} to default</code>. Pressing
+it restores that single setting to
+<code>registry.default_value(key)</code> and announces the change via
+the status line; the restored value is committed on OK alongside the
+rest of the form, so it follows the same apply-on-OK model as every
+other edit (no surprise immediate persistence).</li>
+<li>This complements the existing whole-dialog Reset to Factory Defaults
+and the per-spec plain-language descriptions and search, completing
+SET-6’s “every setting has a per-setting reset” clause. Quality gates
+green: ruff format and check clean, the settings dialog and registry
+unit suites pass; <code>main</code> stays green. Tier 2 moves to 27 of
+58 done (31 remaining), total 55 of 180. SET-7 stays In progress pending
+only the admin pre-tune schema reference doc (DOC-7); SET-1..5 remain In
+progress.</li>
+</ul>
 <h4
 id="watch-profiles-shipped-end-to-end-and-the-top-level-menu-editor-landed">2026-06-03:
 Watch Profiles shipped end to end, and the top-level Menu Editor

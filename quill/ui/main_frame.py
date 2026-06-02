@@ -9758,6 +9758,9 @@ class MainFrame:
         # stored (normalized) value. Index maps key -> (page_index, control) so
         # the search box can jump straight to a matching control.
         readers: dict[str, Callable[[], object]] = {}
+        # writers set a rendered control back to a given stored value; used by
+        # the per-setting Reset buttons (SET-6) to restore a single default.
+        writers: dict[str, Callable[[object], None]] = {}
         control_index: dict[str, tuple[int, object]] = {}
         ai_enabled_cb = None  # special-cased: not a Settings field
         collected: dict[str, object] = {}
@@ -9782,7 +9785,7 @@ class MainFrame:
             notebook = wx.Notebook(dialog)
             notebook.SetName("Settings categories")
 
-            def _add_field_row(parent_panel, sizer, label: str, control) -> None:
+            def _add_field_row(parent_panel, sizer, label: str, control, reset=None) -> None:
                 row = wx.BoxSizer(wx.HORIZONTAL)
                 row.Add(
                     wx.StaticText(parent_panel, label=label),
@@ -9791,10 +9794,27 @@ class MainFrame:
                     8,
                 )
                 row.Add(control, 1, wx.EXPAND)
+                if reset is not None:
+                    row.Add(reset, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 8)
                 sizer.Add(row, 0, wx.EXPAND | wx.ALL, 6)
+
+            def _reset_one(key: str) -> None:
+                writer = writers.get(key)
+                if writer is None:
+                    return
+                writer(registry.default_value(key))
+                spec = registry.find_spec(key)
+                self._set_status(f"Reset {spec.label if spec else key} to default")
+
+            def _reset_button(parent_panel, spec):
+                button = wx.Button(parent_panel, label="Reset", style=wx.BU_EXACTFIT)
+                button.SetName(f"Reset {spec.label} to default")
+                button.Bind(wx.EVT_BUTTON, lambda _e, k=spec.key: _reset_one(k))
+                return button
 
             def _make_control(parent_panel, sizer, spec, page_index: int) -> None:
                 current = registry.get_value(self.settings, spec.key)
+                reset_btn = _reset_button(parent_panel, spec)
                 # preview_browser is stored as text but is best chosen from the
                 # list of installed browsers.
                 if spec.key == "preview_browser":
@@ -9804,9 +9824,12 @@ class MainFrame:
                     )
                     choice.SetName(spec.label)
                     choice.SetStringSelection(browser_choice_label_for_value(str(current)))
-                    _add_field_row(parent_panel, sizer, spec.label, choice)
+                    _add_field_row(parent_panel, sizer, spec.label, choice, reset_btn)
                     readers[spec.key] = lambda c=choice: browser_choice_value_for_label(
                         c.GetStringSelection() or "System default browser"
+                    )
+                    writers[spec.key] = lambda v, c=choice: c.SetStringSelection(
+                        browser_choice_label_for_value(str(v))
                     )
                     control_index[spec.key] = (page_index, choice)
                     return
@@ -9815,8 +9838,12 @@ class MainFrame:
                     cb.SetValue(bool(current))
                     if spec.description:
                         cb.SetName(f"{spec.label}. {spec.description}")
-                    sizer.Add(cb, 0, wx.ALL, 6)
+                    bool_row = wx.BoxSizer(wx.HORIZONTAL)
+                    bool_row.Add(cb, 1, wx.ALIGN_CENTER_VERTICAL)
+                    bool_row.Add(reset_btn, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 8)
+                    sizer.Add(bool_row, 0, wx.EXPAND | wx.ALL, 6)
                     readers[spec.key] = lambda c=cb: bool(c.GetValue())
+                    writers[spec.key] = lambda v, c=cb: c.SetValue(bool(v))
                     control_index[spec.key] = (page_index, cb)
                     if spec.key == "beta_updates":
 
@@ -9833,9 +9860,12 @@ class MainFrame:
                     choice = wx.Choice(parent_panel, choices=labels)
                     choice.SetName(spec.label)
                     choice.SetStringSelection(label_for_value.get(str(current), labels[0]))
-                    _add_field_row(parent_panel, sizer, spec.label, choice)
+                    _add_field_row(parent_panel, sizer, spec.label, choice, reset_btn)
                     readers[spec.key] = lambda c=choice, m=value_for_label, d=str(current): m.get(
                         c.GetStringSelection(), d
+                    )
+                    writers[spec.key] = lambda v, c=choice, m=label_for_value, ls=labels: (
+                        c.SetStringSelection(m.get(str(v), ls[0]))
                     )
                     control_index[spec.key] = (page_index, choice)
                     return
@@ -9845,8 +9875,9 @@ class MainFrame:
                         spin.SetRange(int(spec.minimum), int(spec.maximum))
                     spin.SetValue(int(current))
                     spin.SetName(spec.label)
-                    _add_field_row(parent_panel, sizer, spec.label, spin)
+                    _add_field_row(parent_panel, sizer, spec.label, spin, reset_btn)
                     readers[spec.key] = lambda c=spin: int(c.GetValue())
+                    writers[spec.key] = lambda v, c=spin: c.SetValue(int(v))
                     control_index[spec.key] = (page_index, spin)
                     return
                 if spec.kind == "float":
@@ -9855,16 +9886,18 @@ class MainFrame:
                         spin.SetRange(float(spec.minimum), float(spec.maximum))
                     spin.SetValue(float(current))
                     spin.SetName(spec.label)
-                    _add_field_row(parent_panel, sizer, spec.label, spin)
+                    _add_field_row(parent_panel, sizer, spec.label, spin, reset_btn)
                     readers[spec.key] = lambda c=spin: float(c.GetValue())
+                    writers[spec.key] = lambda v, c=spin: c.SetValue(float(v))
                     control_index[spec.key] = (page_index, spin)
                     return
                 # text
                 text = wx.TextCtrl(parent_panel)
                 text.SetValue(str(current))
                 text.SetName(spec.label)
-                _add_field_row(parent_panel, sizer, spec.label, text)
+                _add_field_row(parent_panel, sizer, spec.label, text, reset_btn)
                 readers[spec.key] = lambda c=text: str(c.GetValue())
+                writers[spec.key] = lambda v, c=text: c.SetValue(str(v))
                 control_index[spec.key] = (page_index, text)
 
             page_index = 0
