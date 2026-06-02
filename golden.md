@@ -447,7 +447,7 @@ This table is the execution source of truth. Update Status as work progresses. S
 | NAV-4 | Go to anything jumper | Navigation | L | Todo | One index of landmarks with type-ahead jump; bound to the QUILL key plus G. |
 | NAV-5 | Heading level and position announcements | Navigation | S | Done | `heading_context_at` (in `heading_organizer.py`) reports a heading's level, 1-based ordinal, total count, and title by line match; `_navigate_heading` announces "Moved to next/previous heading, H<level>, <ordinal> of <total>: <title>" for both Markdown and HTML. Core and UI tests cover level/ordinal/title, leading-whitespace lines, off-heading None, and HTML. |
 | SEL-1 | Bind and announce structural selections | Selection | S | Done | `select_line`, `select_paragraph`, and `select_block` announce scope and word count through the shared announcement grammar (`Selected line, 3 words.`), pluralized correctly for the singular case. UI tests cover line, paragraph, and the singular-word path. |
-| SEL-2 | Expand and shrink selection by structure | Selection | M | Todo | Selection grows and shrinks by semantic unit with announced scope at each step. |
+| SEL-2 | Expand and shrink selection by structure | Selection | M | Done | `expand_selection` grows the selection through word, line, sentence, paragraph, block, then whole document, announcing the new scope and word count at each step; `shrink_selection` walks back down a remembered stack. Core `expand_selection`/`word_span` plus `edit.expand_selection`/`edit.shrink_selection` commands; core and UI tests cover strict growth, the document ceiling, and stack-based shrink. |
 | SEL-3 | Scope-aware selection actions surface | Selection | M | Todo | With a selection active, the QUILL key offers scope-aware actions. |
 | QK-2 | QUILL key guided panel or overlay | QUILL key | L | Todo | A non-modal, screen-reader-friendly guide lists follow-on keys grouped by purpose. |
 | QK-9 | QUILL key plus question mark cheat sheet and per-mode help | QUILL key | M | Todo | QUILL key plus question mark shows the full, live cheat sheet of every follow-on key grouped by purpose, reflecting the active keymap and profile; pressing question mark inside any sub-mode (for example QUILL key plus N then question mark) lists only that mode's keys with current bindings and live counts; the surface is fully keyboard and screen-reader navigable; a test verifies the keys shown match the active bindings. |
@@ -1121,7 +1121,7 @@ This table tracks how many of the backlog IDs each tier names are still open. It
 | Tier | Scope | Total items | Done | Remaining | Open item IDs |
 | --- | --- | --- | --- | --- | --- |
 | Tier 1 | Protect users and unlock the team | 23 | 23 | 0 | (complete) |
-| Tier 2 | Flagship experience | 38 | 6 | 32 | QK-2, QK-9, NAV-1, NAV-4, SEL-2, SEL-3, AGENT-1, AI-7, AI-1, AI-6, AI-13, AI-15, AI-17, AI-14, AI-16, SET-1..7, FEAT-19, WATCH-1..7, FLAG-3, FLAG-4 |
+| Tier 2 | Flagship experience | 38 | 7 | 31 | QK-2, QK-9, NAV-1, NAV-4, SEL-3, AGENT-1, AI-7, AI-1, AI-6, AI-13, AI-15, AI-17, AI-14, AI-16, SET-1..7, FEAT-19, WATCH-1..7, FLAG-3, FLAG-4 |
 | Tier 3 | GLOW accessibility engine | 8 | 0 | 8 | GLOW-1..7, WATCH-8 |
 | Tier 4 | Structural health and performance | 29 | 0 | 29 | CQ-16, CQ-1, GATE-11, TYPE-1..8, CQ-18, PERF-1..3, PERF-9..14, GATE-10, SEC-6, SEC-7, SEC-8, SEC-14..17 |
 | Tier 5 | BITS Whisperer transcription | 28 | 0 | 28 | BW-1..10, WATCH-9, NAV-10, AI-11, AI-12, AI-18, FEAT-12..18, LINUX-1, ECO-1, L10N-1, COLLAB-1 |

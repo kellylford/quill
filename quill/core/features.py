@@ -599,6 +599,8 @@ def feature_for_command(command_id: str) -> str:
         "edit.exchange_point_mark": "core.edit",
         "edit.list_marks": "core.edit",
         "edit.select_block": "core.edit",
+        "edit.expand_selection": "core.edit",
+        "edit.shrink_selection": "core.edit",
         "edit.select_to_start_of_line": "core.edit",
         "edit.select_to_end_of_line": "core.edit",
         "edit.select_to_start_of_document": "core.edit",

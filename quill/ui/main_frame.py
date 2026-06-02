@@ -275,7 +275,7 @@ from quill.core.recovery import (
 )
 from quill.core.search import SearchOptions, SearchPatternError, find_matches, replace_all
 from quill.core.search_history import add_search_term, load_search_history
-from quill.core.selection import block_span, line_span, paragraph_span
+from quill.core.selection import block_span, expand_selection, line_span, paragraph_span
 from quill.core.sessions import (
     active_index_from_session,
     add_recent_session,
@@ -2112,6 +2112,18 @@ class MainFrame:
             "Select Block",
             self.select_block,
             None,
+        )
+        self.commands.register(
+            "edit.expand_selection",
+            "Expand Selection",
+            self.expand_selection,
+            self._binding_for("edit.expand_selection"),
+        )
+        self.commands.register(
+            "edit.shrink_selection",
+            "Shrink Selection",
+            self.shrink_selection,
+            self._binding_for("edit.shrink_selection"),
         )
         self.commands.register(
             "edit.select_to_start_of_line",
@@ -17005,6 +17017,44 @@ class MainFrame:
 
         words = len(text[start:end].split())
         self._set_status(format_announcement("Selected", scope, count=words, unit="word"))
+
+    def expand_selection(self) -> None:
+        """Grow the selection to the next structural unit, announcing scope (SEL-2)."""
+        text = self.editor.GetValue()
+        start, end = self.editor.GetSelection()
+        if start == end:
+            start = end = self.editor.GetInsertionPoint()
+        result = expand_selection(text, start, end)
+        if result is None:
+            self._set_status("Selection already spans the whole document")
+            return
+        new_start, new_end, scope = result
+        stack = getattr(self, "_selection_expand_stack", None)
+        if stack is None:
+            stack = []
+            self._selection_expand_stack = stack
+        stack.append((start, end))
+        self.editor.SetFocus()
+        self.editor.SetSelection(new_start, new_end)
+        self._announce_selection_scope(scope, text, new_start, new_end)
+
+    def shrink_selection(self) -> None:
+        """Shrink the selection to the previously expanded unit (SEL-2)."""
+        stack = getattr(self, "_selection_expand_stack", None)
+        if not stack:
+            self._set_status("No selection to shrink")
+            return
+        previous_start, previous_end = stack.pop()
+        text = self.editor.GetValue()
+        self.editor.SetFocus()
+        self.editor.SetSelection(previous_start, previous_end)
+        if previous_start == previous_end:
+            self._set_status("Shrank selection")
+            return
+        words = len(text[previous_start:previous_end].split())
+        from quill.core.announcements import format_announcement
+
+        self._set_status(format_announcement("Shrank", "selection", count=words, unit="word"))
 
     def select_to_start_of_line(self) -> None:
         text = self.editor.GetValue()

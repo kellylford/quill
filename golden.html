@@ -1431,9 +1431,15 @@ paragraph, and the singular-word path.</td>
 <td>Expand and shrink selection by structure</td>
 <td>Selection</td>
 <td>M</td>
-<td>Todo</td>
-<td>Selection grows and shrinks by semantic unit with announced scope at
-each step.</td>
+<td>Done</td>
+<td><code>expand_selection</code> grows the selection through word,
+line, sentence, paragraph, block, then whole document, announcing the
+new scope and word count at each step; <code>shrink_selection</code>
+walks back down a remembered stack. Core
+<code>expand_selection</code>/<code>word_span</code> plus
+<code>edit.expand_selection</code>/<code>edit.shrink_selection</code>
+commands; core and UI tests cover strict growth, the document ceiling,
+and stack-based shrink.</td>
 </tr>
 <tr>
 <td>SEL-3</td>
@@ -4892,11 +4898,11 @@ CQ-16) are counted once, in their primary tier.</p>
 <td>Tier 2</td>
 <td>Flagship experience</td>
 <td>38</td>
-<td>6</td>
-<td>32</td>
-<td>QK-2, QK-9, NAV-1, NAV-4, SEL-2, SEL-3, AGENT-1, AI-7, AI-1, AI-6,
-AI-13, AI-15, AI-17, AI-14, AI-16, SET-1..7, FEAT-19, WATCH-1..7,
-FLAG-3, FLAG-4</td>
+<td>7</td>
+<td>31</td>
+<td>QK-2, QK-9, NAV-1, NAV-4, SEL-3, AGENT-1, AI-7, AI-1, AI-6, AI-13,
+AI-15, AI-17, AI-14, AI-16, SET-1..7, FEAT-19, WATCH-1..7, FLAG-3,
+FLAG-4</td>
 </tr>
 <tr>
 <td>Tier 3</td>

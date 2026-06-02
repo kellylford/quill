@@ -340,6 +340,44 @@ def test_select_line_announces_singular_word() -> None:
     assert statuses == ["Selected line, 1 word."]
 
 
+def test_expand_selection_grows_and_announces_scope() -> None:
+    text = "alpha beta gamma\n\nsecond paragraph\n"
+    frame = _build_frame(text, insertion_point=2)
+    frame.editor.SetSelection(2, 2)
+    statuses: list[str] = []
+    frame._set_status = statuses.append  # type: ignore[method-assign]
+
+    frame.expand_selection()
+
+    assert frame.editor.GetSelection() != (2, 2)
+    assert statuses and statuses[-1].startswith("Selected ")
+
+
+def test_shrink_selection_restores_previous_span() -> None:
+    text = "alpha beta gamma\n\nsecond paragraph\n"
+    frame = _build_frame(text, insertion_point=2)
+    frame.editor.SetSelection(2, 2)
+    frame.expand_selection()
+    expanded = frame.editor.GetSelection()
+    frame.expand_selection()
+    assert frame.editor.GetSelection() != expanded
+
+    frame.shrink_selection()
+
+    assert frame.editor.GetSelection() == expanded
+
+
+def test_shrink_selection_with_empty_stack_reports() -> None:
+    text = "alpha beta\n"
+    frame = _build_frame(text, insertion_point=0)
+    statuses: list[str] = []
+    frame._set_status = statuses.append  # type: ignore[method-assign]
+
+    frame.shrink_selection()
+
+    assert statuses == ["No selection to shrink"]
+
+
 def test_persistent_undo_steps_across_history() -> None:
     frame = _build_frame("one", insertion_point=0)
     frame.settings = type(
