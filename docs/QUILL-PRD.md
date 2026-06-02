@@ -2215,11 +2215,53 @@ A folding model designed for screen-reader users: folded ranges are summarised a
 - Overrides are scoped: they only apply while the document has focus, never global.
 - A small lock icon appears in the document name status-bar cell (announced as `keymap override active`) whenever an override is in effect.
 
+### 5.50a Settings home: registry-driven tabbed preferences
+
+Quill 1.0 ships a unified, accessible Settings dialog (`Ctrl+,`) that serves as the single front door for all application configuration:
+
+- **Registry-driven architecture**: All settings are defined in `quill/core/settings_registry.py` with specifications for type (bool, choice, int, float, text), default value, validation, and plain-language descriptions.
+
+- **Tabbed organization**: One accessible `wx.Notebook` page per registry group:
+  - General (QUILL key, Quick Nav, autosave, announcements)
+  - Editing (autoformat, selection, word prediction, snippets)
+  - Navigation (wrap, bookmarks, structural movement)
+  - Accessibility (verbosity, contrast, keyboard trap detection)
+  - Read Aloud (voice, rate, pitch, sentence pause)
+  - AI (provider, model, connection, external engines)
+  - Transcription (speech models, provider configuration)
+  - Watch Folders (poll interval, defaults, per-profile settings)
+  - Updates (check frequency, channel, skipped versions)
+
+- **Per-setting reset**: Every rendered control has its own accessible **Reset** button (accessible name "Reset {label} to default") that restores just that setting to its registry default.
+
+- **Searchable**: A search field jumps to the first matching control by label, key, description, group title, or keyword.
+
+- **Live application**: Changes apply immediately when the dialog closes via OK; Cancel discards all changes.
+
+- **Feature-aware**: Settings for disabled features are hidden or clearly marked unavailable.
+
+This consolidates what were previously scattered toggles in the Tools menu into one keyboard- and screen-reader-navigable surface.
+
 ### 5.51 Settings export, import, and partitioned reset
 
-- `Settings → Export…` writes a single zip containing settings, keymap, templates, snippets, personal dictionary, saved searches, and bookmarks. API keys are excluded; the user is told so explicitly in the dialog.
-- `Settings → Import…` previews every change in a stock `wx.ListBox` and requires Enter to commit. Conflicts (e.g. a keymap rebind that contradicts the current keymap) are flagged inline.
-- `Settings → Reset to Defaults…` opens a partitioned reset dialog with checkboxes for: Keymap, Appearance, Spell-check learning, Templates and snippets, Recent files, Bookmarks, Everything. Never silent; every reset shows a confirmation listing what will be lost.
+Quill 1.0 ships a unified export/import/backup system through two modes:
+
+- **Tools → Customize → Export and Back Up...** opens an accessible dialog with two modes:
+  - **Share a profile (privacy-clean)**: exports a `.quillprofile` file containing only shareable, non-sensitive configuration (settings groups, features/profile, keymap when customized, snippets, macros, watch profiles, personal dictionary, and writing-style models). Private sections (API keys, recent files, device paths, licenses) are automatically excluded and disabled in the checklist.
+  - **Back up everything**: exports a `.quillbackup` file containing the full state including private data for personal restore.
+
+- **Tools → Customize → Import or Restore...** opens an accessible dialog that:
+  - Opens either a `.quillprofile` or `.quillbackup` file
+  - Shows a screen-reader-pageable preview of contents with a privacy note
+  - Lets users select which sections to apply via checkboxes
+  - Provides automatic rollback if any section fails
+  - Announces dependency resolution (e.g., "Enabled X to satisfy a feature dependency")
+  - Merges `.quillprofile` imports (overlays keymap, snippets, macros; adds watch profiles when absent)
+  - Replaces stores wholesale for `.quillbackup` imports
+
+- The package format is versioned (schema_version 1), human-readable, and includes a manifest with kind, name, source version, sorted contents, and ISO timestamp.
+
+- **Settings → Reset to Defaults...** (accessible via the Settings dialog) resets individual settings to factory defaults with per-setting reset buttons, or resets entire configuration groups with confirmation.
 
 ### 5.52 Document fingerprint
 

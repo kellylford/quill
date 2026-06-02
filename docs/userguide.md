@@ -612,6 +612,26 @@ These tools help review the editor experience itself, the current document's lin
 - **Export Keymap...**
 - **Import Keymap...**
 - **Reset Keymap**
+- **Export and Back Up...**
+- **Import or Restore...**
+
+**Export and Back Up** (`Tools -> Customize -> Export and Back Up...`) lets you share your configuration or create full backups:
+
+- **Share a profile (privacy-clean)**: Exports a `.quillprofile` file containing only shareable, non-sensitive configuration. This includes settings groups, features/profile, keymap (when customized), snippets, macros, watch profiles, personal dictionary, and writing-style models. Private sections like API keys, recent files, device paths, and licenses are automatically excluded and disabled in the checklist.
+
+- **Back up everything**: Exports a `.quillbackup` file containing your full state, including private data, for personal restore.
+
+**Import or Restore** (`Tools -> Customize -> Import or Restore...`) lets you apply shared profiles or restore backups:
+
+- Opens either a `.quillprofile` or `.quillbackup` file
+- Shows a screen-reader-pageable preview of contents with a privacy note
+- Lets you select which sections to apply via checkboxes
+- Provides automatic rollback if any section fails
+- Announces dependency resolution (e.g., "Enabled X to satisfy a feature dependency")
+- Merges `.quillprofile` imports (overlays keymap, snippets, macros; adds watch profiles when absent)
+- Replaces stores wholesale for `.quillbackup` imports
+
+This unified export/import system makes it easy to share your setup with colleagues, migrate to a new machine, or restore from a backup.
 
 ### Window
 
@@ -954,7 +974,28 @@ If the current status bar is too busy or not informative enough, change it. You 
 
 ### Settings you can change today
 
-Quill's current settings and customization surface covers the things you are most likely to want to tune every day.
+Quill 1.0 ships a unified **Settings dialog** (`Ctrl+,`) that serves as the single front door for all application configuration. This registry-driven, accessible tabbed interface replaces what were previously scattered toggles throughout the Tools menu.
+
+**Organization**: The Settings dialog uses one accessible `wx.Notebook` tab per configuration group:
+
+- **General**: QUILL key, Quick Nav, autosave, announcements, status page behavior
+- **Editing**: autoformat (smart quotes, dashes), selection, word prediction, snippet triggers
+- **Navigation**: wrap navigation, bookmarks, structural movement
+- **Accessibility**: verbosity levels, contrast validation, keyboard trap detection
+- **Read Aloud**: voice selection, rate, pitch, sentence pause
+- **AI**: provider, model, connection settings, external engines
+- **Transcription**: speech models, provider configuration (BITS Whisperer)
+- **Watch Folders**: poll interval, defaults, per-profile automation settings
+- **Updates**: check frequency, update channel, skipped versions
+
+**Key features**:
+
+- **Per-setting reset**: Every control has its own accessible **Reset** button (accessible name "Reset {label} to default") that restores just that setting to its default value
+- **Searchable**: A search field jumps to the first matching control by label, key, description, group title, or keyword
+- **Live application**: Changes apply immediately when you close the dialog with OK; Cancel discards all changes
+- **Feature-aware**: Settings for disabled features are hidden or clearly marked unavailable
+
+**What you can configure**:
 
 - theme behavior, including dark mode
 - soft wrap
@@ -969,8 +1010,16 @@ Quill's current settings and customization surface covers the things you are mos
 - active keyboard pack
 - custom keybindings through the keymap editor
 - status-bar order and status-bar visibility
+- QUILL key timeout and browse mode behavior
+- announcement verbosity and specific announcement toggles
+- Quick Nav debounce, minimum characters, and element inclusion
+- autosave interval and announcement throttle
+- autoformat rules (smart quotes, dashes)
+- confirm destructive actions
+- default new document format and export preset
+- watch folder polling and automation profiles
 
-Some of these live in the View menu for quick toggling. Others live in **Profiles and Features...**, **Status Bar Settings...**, **Keymap Editor...**, and the related customization commands under **Tools**.
+Some settings still live in the View menu for quick toggling. Most configuration now lives in the Settings dialog (`Ctrl+,`), with specialized managers for collections like **Profiles and Features...**, **Status Bar Settings...**, **Keymap Editor...**, **Snippet Manager**, and **Watch Folder Settings** under **Tools → Customize**.
 
 ## Trust, Recovery, Sessions, and Safety
 
