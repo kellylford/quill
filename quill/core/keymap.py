@@ -159,6 +159,7 @@ _PACK_LABELS: dict[str, str] = {
     "navigate.go_to_line": "Go To Line",
     "navigate.go_to_page": "Go To Page",
     "navigate.list_bookmarks": "List Bookmarks",
+    "navigate.quick_nav": "Quick Nav (Go to Anything)",
     "navigate.next_region": "Next Region",
     "navigate.next_structure": "Next Structure",
     "navigate.heading_organizer": "Heading Organizer",

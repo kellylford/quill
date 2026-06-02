@@ -2140,3 +2140,62 @@ def test_prompt_table_shape_reprompts_invalid_values() -> None:
         "Insert Table: Rows and columns must be whole numbers.",
         "Insert Table: Rows must be between 1 and 50.",
     ]
+
+
+def _quick_nav_context() -> dict[str, object]:
+    return {
+        "headings_by_level": {1: [0], 2: [8]},
+        "links": [20],
+        "lists": [],
+        "list_items": [],
+        "tables": [],
+        "block_quotes": [],
+        "bookmarks": [],
+        "code_blocks": [],
+    }
+
+
+def test_open_quick_nav_jumps_to_chosen_item() -> None:
+    frame = _build_frame("# Title\n## Section\n[link](url)\n")
+    frame._browse_navigation_context = lambda: _quick_nav_context()  # type: ignore[method-assign]
+    frame._present_quick_nav = lambda items: items[0]  # type: ignore[method-assign]
+    jumps: list[tuple[int, str]] = []
+    frame._jump_to = lambda position, message: jumps.append((position, message))  # type: ignore[method-assign]
+    frame.open_quick_nav()
+    assert jumps
+    assert jumps[0][0] == 0
+
+
+def test_open_quick_nav_cancel_sets_status() -> None:
+    frame = _build_frame("# Title\n")
+    frame._browse_navigation_context = lambda: _quick_nav_context()  # type: ignore[method-assign]
+    frame._present_quick_nav = lambda items: None  # type: ignore[method-assign]
+    statuses: list[str] = []
+    frame._set_status = lambda message: statuses.append(message)  # type: ignore[method-assign]
+    frame.open_quick_nav()
+    assert any("cancel" in status.lower() for status in statuses)
+
+
+def test_open_quick_nav_reports_when_no_elements() -> None:
+    frame = _build_frame("plain text without landmarks\n")
+    frame._browse_navigation_context = lambda: {  # type: ignore[method-assign]
+        "headings_by_level": {},
+        "links": [],
+        "lists": [],
+        "list_items": [],
+        "tables": [],
+        "block_quotes": [],
+        "bookmarks": [],
+        "code_blocks": [],
+    }
+    statuses: list[str] = []
+    frame._set_status = lambda message: statuses.append(message)  # type: ignore[method-assign]
+    presented: list[object] = []
+    frame._present_quick_nav = lambda items: presented.append(items)  # type: ignore[method-assign]
+    frame.open_quick_nav()
+    assert any("no navigable" in status.lower() for status in statuses)
+    assert presented == []
+
+
+def test_quick_nav_command_mapped_to_navigation_feature() -> None:
+    assert feature_for_command("navigate.quick_nav") == "core.navigate"

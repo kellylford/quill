@@ -239,3 +239,15 @@ def test_browse_mode_question_mark_shows_browse_cheat_sheet_and_stays() -> None:
     assert frame._help_shown[0][0] == MODE_BROWSE  # type: ignore[attr-defined]
     # Three links in the stubbed context surface as a live count.
     assert "(3)" in frame._help_shown[0][1]  # type: ignore[attr-defined]
+
+
+def test_prefix_then_g_opens_quick_nav() -> None:
+    # NAV-4: the QUILL key prefix then G opens Quick Nav / Go to Anything.
+    frame = _build_frame()
+    opened: list[str] = []
+    frame.open_quick_nav = lambda: opened.append("nav")  # type: ignore[method-assign]
+    frame._handle_quill_key_mode_event(_Event(_BACKTICK, ctrl=True, shift=True))
+    handled = frame._handle_quill_key_mode_event(_Event(ord("G")))
+    assert handled is True
+    assert opened == ["nav"]
+    assert frame._quill_key_mode_active is False

@@ -235,6 +235,14 @@ from quill.core.onboarding import (
 )
 from quill.core.outline import OutlineEntry, extract_outline_entries
 from quill.core.paths import app_data_dir, ensure_app_directories
+from quill.core.quick_nav import (
+    NavItem,
+    build_nav_index,
+    filter_nav_items,
+    nav_category,
+    nav_item_display,
+    nav_type_summary,
+)
 from quill.core.quill_key_help import (
     MODE_BROWSE,
     MODE_PREFIX,
@@ -2143,6 +2151,12 @@ class MainFrame:
             "Selection Actions",
             self.quill_key_selection_actions,
             self._binding_for("edit.selection_actions"),
+        )
+        self.commands.register(
+            "navigate.quick_nav",
+            "Quick Nav (Go to Anything)",
+            self.open_quick_nav,
+            self._binding_for("navigate.quick_nav"),
         )
         self.commands.register(
             "edit.select_to_start_of_line",
@@ -5292,6 +5306,18 @@ class MainFrame:
                     self._refresh_statusbar()
                     self.quill_key_selection_actions()
                     return True
+                # NAV-4: the QUILL key then G opens Quick Nav / Go to Anything.
+                if (
+                    not event.ControlDown()
+                    and not event.AltDown()
+                    and not event.ShiftDown()
+                    and key_code in (ord("G"), ord("g"))
+                ):
+                    self._quill_key_prefix_pending = False
+                    self._quill_key_prefix_started_at = 0.0
+                    self._refresh_statusbar()
+                    self.open_quick_nav()
+                    return True
                 self._quill_key_prefix_pending = False
                 self._quill_key_prefix_started_at = 0.0
                 self._refresh_statusbar()
@@ -5299,10 +5325,11 @@ class MainFrame:
             if self._quill_key_prefix_matches(event):
                 self._quill_key_prefix_pending = True
                 self._quill_key_prefix_started_at = time.monotonic()
-                message = "QUILL key prefix active. Press N for browse mode"
+                message = "QUILL key prefix active. Press N for browse mode, G to go to anything"
                 if self._has_active_selection():
                     message = (
-                        "QUILL key prefix active. Press N for browse mode, A for selection actions"
+                        "QUILL key prefix active. Press N for browse mode, G to go to anything, "
+                        "A for selection actions"
                     )
                 self._set_status_quiet(message)
                 self._refresh_statusbar()
@@ -11444,6 +11471,117 @@ class MainFrame:
             self._set_status("Outline navigation cancelled")
             return
         self._jump_to(selected.position, "Moved to heading")
+
+    def open_quick_nav(self) -> None:
+        """Open the unified Quick Nav / Go to Anything surface (NAV-1, NAV-4).
+
+        Builds one index of navigable landmarks (headings, links, lists, list
+        items, tables, block quotes, bookmarks, code blocks) and presents it with
+        a category filter that shows counts (NAV-1) and a type-ahead jump field
+        (NAV-4). Selecting an entry jumps to it.
+        """
+        text = self.editor.GetValue()
+        context = self._browse_navigation_context()
+        items = build_nav_index(text, context)
+        if not items:
+            self._set_status("No navigable elements found")
+            return
+        selected = self._present_quick_nav(items)
+        if not isinstance(selected, NavItem):
+            self._set_status("Quick Nav cancelled")
+            return
+        self._jump_to(selected.position, f"Moved to {nav_category(selected.kind).lower()}")
+
+    def _present_quick_nav(self, items: list[NavItem]) -> NavItem | None:
+        """Show the Quick Nav dialog and return the chosen item, or None."""
+        wx = self._wx
+        dialog = wx.Dialog(
+            self.frame,
+            title="Quick Nav",
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+            size=(640, 640),
+        )
+        chosen: dict[str, NavItem | None] = {"item": None}
+        try:
+            panel = wx.Panel(dialog)
+            inner = wx.BoxSizer(wx.VERTICAL)
+            inner.Add(
+                wx.StaticText(
+                    panel,
+                    label=(
+                        "Type to filter. Choose a category to narrow by type. "
+                        "Enter jumps to the selected element."
+                    ),
+                ),
+                0,
+                wx.ALL | wx.EXPAND,
+                8,
+            )
+            search = wx.TextCtrl(panel)
+            inner.Add(search, 0, wx.ALL | wx.EXPAND, 8)
+            summary = nav_type_summary(items)
+            category_labels = [f"All ({len(items)})"] + [
+                f"{name} ({count})" for name, count in summary
+            ]
+            category_values: list[str | None] = [None] + [name for name, _ in summary]
+            category_box = wx.ListBox(panel, choices=category_labels)
+            category_box.SetSelection(0)
+            inner.Add(category_box, 0, wx.ALL | wx.EXPAND, 8)
+            results = wx.ListBox(panel)
+            inner.Add(results, 1, wx.ALL | wx.EXPAND, 8)
+            go_button = wx.Button(panel, id=wx.ID_OK, label="Go")
+            cancel_button = wx.Button(panel, id=wx.ID_CANCEL, label="Cancel")
+            buttons = wx.StdDialogButtonSizer()
+            buttons.AddButton(go_button)
+            buttons.AddButton(cancel_button)
+            buttons.Realize()
+            inner.Add(buttons, 0, wx.ALL | wx.EXPAND, 8)
+            panel.SetSizer(inner)
+            outer = wx.BoxSizer(wx.VERTICAL)
+            outer.Add(panel, 1, wx.EXPAND)
+            dialog.SetSizer(outer)
+
+            filtered: list[NavItem] = []
+
+            def refresh() -> None:
+                nonlocal filtered
+                index = category_box.GetSelection()
+                category = category_values[index] if 0 <= index < len(category_values) else None
+                filtered = filter_nav_items(items, search.GetValue(), category)
+                results.Set([nav_item_display(item) for item in filtered])
+                if filtered:
+                    results.SetSelection(0)
+
+            def on_change(_event: object) -> None:
+                refresh()
+
+            def on_activate(_event: object) -> None:
+                index = results.GetSelection()
+                if 0 <= index < len(filtered):
+                    chosen["item"] = filtered[index]
+                    dialog.EndModal(wx.ID_OK)
+
+            search.Bind(wx.EVT_TEXT, on_change)
+            category_box.Bind(wx.EVT_LISTBOX, on_change)
+            results.Bind(wx.EVT_LISTBOX_DCLICK, on_activate)
+            go_button.SetDefault()
+            dialog.SetEscapeId(wx.ID_CANCEL)
+            refresh()
+            call_after = getattr(wx, "CallAfter", None)
+            if callable(call_after):
+                call_after(search.SetFocus)
+            else:
+                search.SetFocus()
+            if dialog.ShowModal() == wx.ID_OK:
+                if chosen["item"] is None:
+                    index = results.GetSelection()
+                    if 0 <= index < len(filtered):
+                        chosen["item"] = filtered[index]
+                return chosen["item"]
+            return None
+        finally:
+            dialog.Destroy()
+            self.editor.SetFocus()
 
     def open_heading_organizer(self) -> None:
         markup_kind = infer_markup_kind(self.document.path)

@@ -496,6 +496,7 @@ def feature_for_command(command_id: str) -> str:
         "navigate.set_bookmark": "core.navigate",
         "navigate.go_to_bookmark": "core.navigate",
         "navigate.list_bookmarks": "core.navigate",
+        "navigate.quick_nav": "core.navigate",
         "tools.word_count": "core.analysis",
         "tools.spell_check_dialog": "core.spellcheck",
         "tools.next_misspelling": "core.spellcheck",

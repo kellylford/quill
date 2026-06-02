@@ -445,9 +445,9 @@ This table is the execution source of truth. Update Status as work progresses. S
 | PERF-2 | Background preload of thesaurus | Performance | S | Todo | First lookup does not stall; perf test added. |
 | PERF-3 | Cache synthesized TTS audio | Performance | M | Todo | Identical sentences are not re-rendered; measurable latency reduction; test or benchmark added. |
 | PERF-9 | Performance budget suite | Performance | M | Todo | Startup, first spell check, first thesaurus, and Quick Nav prewarm have budgets enforced in CI. |
-| NAV-1 | Unified Quick Nav panel | Navigation | L | Todo | Panel lists element types with counts and previews; fully keyboard and screen-reader operable. |
+| NAV-1 | Unified Quick Nav panel | Navigation | L | Done | Delivered as one unified surface with NAV-4 (`open_quick_nav`): a category list shows each element type with its live count, and the results list shows previews; fully keyboard and screen-reader operable. Built on the shared, fully unit-tested `quill/core/quick_nav.py` index. |
 | NAV-2 | Consistent directional and wrapping Quick Nav | Navigation | M | Todo | Every element type supports next and previous with announced wrap. |
-| NAV-4 | Go to anything jumper | Navigation | L | Todo | One index of landmarks with type-ahead jump; bound to the QUILL key plus G. |
+| NAV-4 | Go to anything jumper | Navigation | L | Done | One index of landmarks (headings, links, lists, list items, tables, block quotes, bookmarks, code blocks) with a type-ahead filter and category narrowing, bound to the QUILL key plus G (and the `navigate.quick_nav` command). Selecting an entry jumps to it. Shares the `quill/core/quick_nav.py` index with NAV-1. |
 | NAV-5 | Heading level and position announcements | Navigation | S | Done | `heading_context_at` (in `heading_organizer.py`) reports a heading's level, 1-based ordinal, total count, and title by line match; `_navigate_heading` announces "Moved to next/previous heading, H<level>, <ordinal> of <total>: <title>" for both Markdown and HTML. Core and UI tests cover level/ordinal/title, leading-whitespace lines, off-heading None, and HTML. |
 | SEL-1 | Bind and announce structural selections | Selection | S | Done | `select_line`, `select_paragraph`, and `select_block` announce scope and word count through the shared announcement grammar (`Selected line, 3 words.`), pluralized correctly for the singular case. UI tests cover line, paragraph, and the singular-word path. |
 | SEL-2 | Expand and shrink selection by structure | Selection | M | Done | `expand_selection` grows the selection through word, line, sentence, paragraph, block, then whole document, announcing the new scope and word count at each step; `shrink_selection` walks back down a remembered stack. Core `expand_selection`/`word_span` plus `edit.expand_selection`/`edit.shrink_selection` commands; core and UI tests cover strict growth, the document ceiling, and stack-based shrink. |
@@ -1152,12 +1152,12 @@ This table tracks how many of the backlog IDs each tier names are still open. It
 | Tier | Scope | Total items | Done | Remaining | Open item IDs |
 | --- | --- | --- | --- | --- | --- |
 | Tier 1 | Protect users and unlock the team | 23 | 23 | 0 | (complete) |
-| Tier 2 | Flagship experience | 58 | 11 | 47 | NAV-1, NAV-4, OCR-1..5, AGENT-1, AI-7, AI-1, AI-6, AI-13, AI-15, AI-17, AI-14, AI-16, AI-19..24, SET-1..7, SHARE-1..3, CTX-1, DICT-1..3, FEAT-19, WATCH-1..7, FLAG-3, FLAG-4, DLG-1 |
+| Tier 2 | Flagship experience | 58 | 13 | 45 | OCR-1..5, AGENT-1, AI-7, AI-1, AI-6, AI-13, AI-15, AI-17, AI-14, AI-16, AI-19..24, SET-1..7, SHARE-1..3, CTX-1, DICT-1..3, FEAT-19, WATCH-1..7, FLAG-3, FLAG-4, DLG-1 |
 | Tier 3 | GLOW accessibility engine | 8 | 0 | 8 | GLOW-1..7, WATCH-8 |
 | Tier 4 | Structural health and performance | 30 | 9 | 21 | CQ-16, CQ-1, DLG-2, GATE-11, PERF-1..3, PERF-9..14, GATE-10, SEC-6, SEC-7, SEC-8, SEC-14..17 |
 | Tier 5 | BITS Whisperer transcription | 28 | 0 | 28 | BW-1..10, WATCH-9, NAV-10, AI-11, AI-12, AI-18, FEAT-12..18, LINUX-1, ECO-1, L10N-1, COLLAB-1 |
 | Tier 6 | Documentation and learning surface | 33 | 0 | 33 | DOC-14..17, DOC-11, DOC-12, DOC-1..8, POD-1..5, TUT-1..7, CQ-11..15, CQ-23, CQ-24, LINUX-2 |
-| **Total** | All tiers | **180** | **34** | **146** | |
+| **Total** | All tiers | **180** | **36** | **144** | |
 
 Completed outside the formal tier lists (cross-cutting protections and quality work that the tiers reference only by theme): SEC-3 (OCR language allowlist), SEC-5 (verified TLS everywhere), GATE-1 (pre-commit), PERF-8 (documented scoped type-check), and A11Y-1 (announcement grammar). The GATE-3/CQ-7 cleanup also incidentally cleared the `quill/core` and `quill/io` portion of the TYPE-1..8 zone, though those formal rows stay open until each is individually verified and closed.
 
