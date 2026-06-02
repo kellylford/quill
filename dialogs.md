@@ -44,7 +44,11 @@ or the command palette (`Ctrl+Shift+P`).
 
 ## B. Application settings
 
-- [ ] General Preferences: `Ctrl+,`
+- [ ] Settings (tabbed, registry-driven): `Ctrl+,` then `General`
+- [ ] Settings search jumps to first matching control (within Settings)
+- [ ] Export settings to `.qsf` (button within Settings)
+- [ ] Import settings from `.qsf` (button within Settings)
+- [ ] Reset to Factory Defaults (button within Settings)
 - [ ] Command Palette: `Ctrl+Shift+P`
 
 ## C. Navigate
