@@ -1605,23 +1605,29 @@ the disabled-feature path, and a happy-path conversion.</td>
 <td>QUILL key guided panel or overlay</td>
 <td>QUILL key</td>
 <td>L</td>
-<td>Todo</td>
-<td>A non-modal, screen-reader-friendly guide lists follow-on keys
-grouped by purpose.</td>
+<td>Done</td>
+<td>A screen-reader-friendly guide lists follow-on keys grouped by
+purpose, rendered from the shared
+<code>quill/core/quill_key_help.py</code> cheat-sheet builder into an
+accessible read-only dialog (outer sizer, EXPAND, default Close, Escape,
+focus returned to the editor). Shares one source of truth with
+QK-9.</td>
 </tr>
 <tr>
 <td>QK-9</td>
 <td>QUILL key plus question mark cheat sheet and per-mode help</td>
 <td>QUILL key</td>
 <td>M</td>
-<td>Todo</td>
-<td>QUILL key plus question mark shows the full, live cheat sheet of
-every follow-on key grouped by purpose, reflecting the active keymap and
-profile; pressing question mark inside any sub-mode (for example QUILL
-key plus N then question mark) lists only that mode’s keys with current
-bindings and live counts; the surface is fully keyboard and
-screen-reader navigable; a test verifies the keys shown match the active
-bindings.</td>
+<td>Done</td>
+<td>QUILL key plus question mark shows the live cheat sheet of follow-on
+keys grouped by purpose, reflecting the active keymap (resolved through
+<code>_binding_for</code>) and live element counts from the browse
+navigation cache; pressing question mark while the prefix is pending
+shows the prefix keys, and inside browse mode shows the browse keys
+without leaving browse mode. <code>?</code> is recognized directly and
+as Shift+/. Core builder is UI-agnostic and fully unit-tested
+(<code>test_quill_key_help.py</code>); UI wiring is covered in
+<code>test_main_frame_quill_key.py</code>.</td>
 </tr>
 <tr>
 <td>QK-5</td>
@@ -5312,11 +5318,11 @@ CQ-16) are counted once, in their primary tier.</p>
 <td>Tier 2</td>
 <td>Flagship experience</td>
 <td>58</td>
-<td>9</td>
-<td>49</td>
-<td>QK-2, QK-9, NAV-1, NAV-4, OCR-1..5, AGENT-1, AI-7, AI-1, AI-6,
-AI-13, AI-15, AI-17, AI-14, AI-16, AI-19..24, SET-1..7, SHARE-1..3,
-CTX-1, DICT-1..3, FEAT-19, WATCH-1..7, FLAG-3, FLAG-4, DLG-1</td>
+<td>11</td>
+<td>47</td>
+<td>NAV-1, NAV-4, OCR-1..5, AGENT-1, AI-7, AI-1, AI-6, AI-13, AI-15,
+AI-17, AI-14, AI-16, AI-19..24, SET-1..7, SHARE-1..3, CTX-1, DICT-1..3,
+FEAT-19, WATCH-1..7, FLAG-3, FLAG-4, DLG-1</td>
 </tr>
 <tr>
 <td>Tier 3</td>
@@ -5357,8 +5363,8 @@ CQ-23, CQ-24, LINUX-2</td>
 <td><strong>Total</strong></td>
 <td>All tiers</td>
 <td><strong>180</strong></td>
-<td><strong>32</strong></td>
-<td><strong>148</strong></td>
+<td><strong>34</strong></td>
+<td><strong>146</strong></td>
 <td></td>
 </tr>
 </tbody>

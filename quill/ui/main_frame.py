@@ -235,6 +235,13 @@ from quill.core.onboarding import (
 )
 from quill.core.outline import OutlineEntry, extract_outline_entries
 from quill.core.paths import app_data_dir, ensure_app_directories
+from quill.core.quill_key_help import (
+    MODE_BROWSE,
+    MODE_PREFIX,
+    build_cheat_sheet,
+    format_cheat_sheet,
+    summarize_cheat_sheet,
+)
 from quill.core.read_aloud import (
     ReadAloudController,
     ReadAloudUnavailableError,
@@ -5247,6 +5254,13 @@ class MainFrame:
                     self._quill_key_prefix_started_at = 0.0
                     self._refresh_statusbar()
                     return True
+                # QK-9: question mark after the prefix shows the prefix cheat sheet.
+                if self._event_is_help_key(event):
+                    self._quill_key_prefix_pending = False
+                    self._quill_key_prefix_started_at = 0.0
+                    self._refresh_statusbar()
+                    self._show_quill_key_cheat_sheet(MODE_PREFIX)
+                    return True
                 # QK-5: a second press of the QUILL key locks a sticky browse
                 # mode that ignores the timeout until Escape.
                 if self._quill_key_prefix_matches(event):
@@ -5310,6 +5324,12 @@ class MainFrame:
 
         if self._quill_key_prefix_matches(event):
             self._exit_quill_key_mode("Exited QUILL browse mode")
+            return True
+
+        # QK-9: question mark inside browse mode shows the browse cheat sheet
+        # for the active keymap without leaving browse mode.
+        if self._event_is_help_key(event):
+            self._show_quill_key_cheat_sheet(MODE_BROWSE)
             return True
 
         action = self._quill_key_action_for_event(event)
@@ -5519,6 +5539,107 @@ class MainFrame:
             )
             return
         runner()
+
+    def _event_is_help_key(self, event: object) -> bool:
+        """Return True when the event is a question mark (cheat-sheet request)."""
+        key_code = event.GetKeyCode()
+        if key_code == ord("?"):
+            return True
+        # '?' is Shift+'/' on most layouts; wx reports the '/' virtual key.
+        return bool(event.ShiftDown()) and key_code == ord("/")
+
+    def _quill_key_help_counts(self) -> dict[str, int]:
+        """Build live element counts for the QUILL key cheat sheet."""
+        try:
+            context = self._browse_navigation_context()
+        except Exception:
+            return {}
+        headings_by_level = context.get("headings_by_level") or {}
+        counts: dict[str, int] = {}
+        total_headings = 0
+        for level in range(1, 7):
+            positions = headings_by_level.get(level) or []
+            counts[f"heading_level_{level}"] = len(positions)
+            total_headings += len(positions)
+        counts["headings"] = total_headings
+        counts["links"] = len(context.get("links") or [])
+        counts["lists"] = len(context.get("lists") or [])
+        counts["list_items"] = len(context.get("list_items") or [])
+        counts["tables"] = len(context.get("tables") or [])
+        counts["block_quotes"] = len(context.get("block_quotes") or [])
+        counts["bookmarks"] = len(context.get("bookmarks") or [])
+        counts["code_blocks"] = len(context.get("code_blocks") or [])
+        counts["paragraphs"] = len(context.get("paragraph_spans") or [])
+        counts["sentences"] = len(context.get("sentence_spans") or [])
+        return counts
+
+    def _build_quill_key_cheat_sheet(self, mode: str) -> tuple[object, ...]:
+        counts = self._quill_key_help_counts() if mode == MODE_BROWSE else {}
+        return build_cheat_sheet(
+            mode=mode,
+            binding_lookup=self._binding_for,
+            counts=counts,
+            selection_active=self._has_active_selection(),
+            quill_key_label="QUILL key",
+        )
+
+    def _show_quill_key_cheat_sheet(self, mode: str) -> None:
+        """Announce and present the live QUILL key cheat sheet (QK-2, QK-9)."""
+        groups = self._build_quill_key_cheat_sheet(mode)
+        self._announce(summarize_cheat_sheet(groups))
+        self._present_quill_key_help(mode, format_cheat_sheet(groups))
+
+    def _present_quill_key_help(self, mode: str, text: str) -> None:
+        """Show the cheat sheet in an accessible, read-only dialog."""
+        wx = self._wx
+        title = "QUILL Key Help" if mode == MODE_BROWSE else "QUILL Key Prefix Help"
+        dialog = wx.Dialog(
+            self.frame,
+            title=title,
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+            size=(560, 560),
+        )
+        try:
+            panel = wx.Panel(dialog)
+            inner = wx.BoxSizer(wx.VERTICAL)
+            inner.Add(
+                wx.StaticText(
+                    panel,
+                    label=(
+                        "Follow-on keys for the QUILL key, grouped by purpose. "
+                        "Counts show how many of each element are in this document."
+                    ),
+                ),
+                0,
+                wx.ALL | wx.EXPAND,
+                8,
+            )
+            review = wx.TextCtrl(
+                panel,
+                value=text,
+                style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_DONTWRAP,
+            )
+            inner.Add(review, 1, wx.ALL | wx.EXPAND, 8)
+            close_button = wx.Button(panel, id=wx.ID_OK, label="Close")
+            buttons = wx.StdDialogButtonSizer()
+            buttons.AddButton(close_button)
+            buttons.Realize()
+            inner.Add(buttons, 0, wx.ALL | wx.EXPAND, 8)
+            panel.SetSizer(inner)
+            outer = wx.BoxSizer(wx.VERTICAL)
+            outer.Add(panel, 1, wx.EXPAND)
+            dialog.SetSizer(outer)
+            close_button.SetDefault()
+            dialog.SetEscapeId(wx.ID_OK)
+            call_after = getattr(wx, "CallAfter", None)
+            if callable(call_after):
+                call_after(review.SetFocus)
+            else:
+                review.SetFocus()
+            dialog.ShowModal()
+        finally:
+            dialog.Destroy()
+            self.editor.SetFocus()
 
     def _quill_feedback(
         self, message: str, *, status_message: str | None = None, sound_kind: str | None = None

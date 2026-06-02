@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 from types import SimpleNamespace
 
+from quill.core.quill_key_help import MODE_BROWSE, MODE_PREFIX
 from quill.ui.main_frame import MainFrame
 
 
@@ -177,3 +178,64 @@ def test_prefix_then_a_without_selection_does_not_open_actions() -> None:
 
     assert opened == []
 
+
+def _wire_help_stubs(frame: MainFrame) -> MainFrame:
+    """Stub the dependencies the cheat sheet needs, leaving the real builder."""
+    frame._announcements = []  # type: ignore[attr-defined]
+    frame._announce = frame._announcements.append  # type: ignore[method-assign]
+    frame._binding_for = lambda command_id: None  # type: ignore[method-assign]
+    frame._help_shown = []  # type: ignore[attr-defined]
+    frame._present_quill_key_help = (  # type: ignore[method-assign]
+        lambda mode, text: frame._help_shown.append((mode, text))
+    )
+    frame._browse_navigation_context = lambda: {  # type: ignore[method-assign]
+        "headings_by_level": {1: [0], 2: [10, 20]},
+        "links": [1, 2, 3],
+        "lists": [],
+        "list_items": [],
+        "tables": [],
+        "block_quotes": [],
+        "bookmarks": [],
+        "code_blocks": [],
+        "paragraph_spans": [0],
+        "sentence_spans": [0],
+    }
+    return frame
+
+
+def test_prefix_then_question_mark_shows_prefix_cheat_sheet() -> None:
+    # QK-9: question mark after the prefix opens the prefix cheat sheet.
+    frame = _build_frame()
+    _wire_help_stubs(frame)
+    frame._handle_quill_key_mode_event(_Event(_BACKTICK, ctrl=True, shift=True))
+    handled = frame._handle_quill_key_mode_event(_Event(ord("?")))
+    assert handled is True
+    assert frame._quill_key_prefix_pending is False
+    assert len(frame._help_shown) == 1  # type: ignore[attr-defined]
+    assert frame._help_shown[0][0] == MODE_PREFIX  # type: ignore[attr-defined]
+    assert any(  # type: ignore[attr-defined]
+        "QUILL key help" in note for note in frame._announcements
+    )
+
+
+def test_question_mark_via_shift_slash_is_recognized() -> None:
+    frame = _build_frame()
+    _wire_help_stubs(frame)
+    frame._handle_quill_key_mode_event(_Event(_BACKTICK, ctrl=True, shift=True))
+    handled = frame._handle_quill_key_mode_event(_Event(ord("/"), shift=True))
+    assert handled is True
+    assert frame._help_shown[0][0] == MODE_PREFIX  # type: ignore[attr-defined]
+
+
+def test_browse_mode_question_mark_shows_browse_cheat_sheet_and_stays() -> None:
+    # QK-2/QK-9: inside browse mode, question mark shows the browse cheat sheet
+    # with live counts and does not leave browse mode.
+    frame = _build_frame()
+    _wire_help_stubs(frame)
+    frame._enter_quill_key_mode()
+    handled = frame._handle_quill_key_mode_event(_Event(ord("?")))
+    assert handled is True
+    assert frame._quill_key_mode_active is True
+    assert frame._help_shown[0][0] == MODE_BROWSE  # type: ignore[attr-defined]
+    # Three links in the stubbed context surface as a live count.
+    assert "(3)" in frame._help_shown[0][1]  # type: ignore[attr-defined]
