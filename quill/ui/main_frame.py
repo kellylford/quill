@@ -14744,6 +14744,7 @@ class MainFrame:
             try:
                 progress_state["result"] = ocr_image(
                     image_path,
+                    engine=getattr(self.settings, "ocr_engine", "auto"),
                     on_progress=lambda message: progress_state.__setitem__("message", message),
                     cancel_requested=cancel_requested.is_set,
                 )

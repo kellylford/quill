@@ -45,7 +45,7 @@ DECTALK_RELEASE_ZIP_URL = (
     "https://github.com/dectalk/dectalk/releases/download/2023-10-30/vs2022.zip"
 )
 
-DEFAULT_BUNDLED_DEPENDENCY_GROUPS = ("ui", "spellcheck")
+DEFAULT_BUNDLED_DEPENDENCY_GROUPS = ("ui", "spellcheck", "ocr")
 
 
 def main() -> int:

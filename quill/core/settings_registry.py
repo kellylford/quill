@@ -367,6 +367,21 @@ SETTING_SPECS: tuple[SettingSpec, ...] = (
     ),
     # --- Accessibility -----------------------------------------------------
     SettingSpec(
+        "ocr_engine",
+        "OCR engine",
+        "accessibility",
+        "choice",
+        "Which engine recognizes text in images. Automatic prefers the built-in "
+        "Windows engine and falls back to Tesseract when it is installed.",
+        choices=(
+            ("auto", "Automatic"),
+            ("windows", "Windows (built-in)"),
+            ("tesseract", "Tesseract"),
+        ),
+        feature_id="core.ocr",
+        keywords=("ocr", "image", "text", "tesseract", "windows", "recognition"),
+    ),
+    SettingSpec(
         "quick_nav_debounce_ms",
         "Quick Nav debounce (milliseconds)",
         "navigation",

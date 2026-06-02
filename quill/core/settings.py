@@ -186,6 +186,8 @@ class Settings:
     announcement_throttle_ms: int = 0
     read_aloud_sentence_pause_ms: int = 0
     dictation_sensitivity: int = 50
+    # OCR-2: image-to-text engine selection
+    ocr_engine: str = "auto"
     # SET-3: tunable verbosity and announcements
     announcement_verbosity: str = "normal"
     announce_wrap: bool = True
@@ -420,6 +422,10 @@ class Settings:
             data.get("read_aloud_sentence_pause_ms", 0), 0, 0, 2000
         )
         dictation_sensitivity = _clamp_int(data.get("dictation_sensitivity", 50), 50, 0, 100)
+        # OCR-2: image-to-text engine selection
+        ocr_engine = str(data.get("ocr_engine", "auto")).strip().lower()
+        if ocr_engine not in {"auto", "windows", "tesseract"}:
+            ocr_engine = "auto"
         # SET-3: verbosity and announcements
         announcement_verbosity = str(data.get("announcement_verbosity", "normal")).strip().lower()
         if announcement_verbosity not in {"minimal", "normal", "verbose"}:
@@ -549,6 +555,7 @@ class Settings:
             announcement_throttle_ms=announcement_throttle_ms,
             read_aloud_sentence_pause_ms=read_aloud_sentence_pause_ms,
             dictation_sensitivity=dictation_sensitivity,
+            ocr_engine=ocr_engine,
             announcement_verbosity=announcement_verbosity,
             announce_wrap=announce_wrap,
             announce_counts=announce_counts,

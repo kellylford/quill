@@ -419,6 +419,50 @@ class AiAction(_BaseAction):
 
 
 @dataclass(slots=True)
+class OcrAction(_BaseAction):
+    """Built-in action: OCR an arriving image into an editable text file (OCR-5).
+
+    Gated by the ``core.ocr`` feature and offline by default, so it carries no
+    ``requires_consent`` (OCR never leaves the machine). Recognition is
+    delegated to an injected ``on_ocr`` handler that returns the recognized
+    text for an image path, keeping the platform/WinRT details out of core.
+    """
+
+    action_id: str = "ocr"
+    label: str = "OCR image to text"
+    description: str = "Recognize text in each arriving image and save it as a text file."
+    required_feature_id: str = "core.ocr"
+    on_ocr: Callable[[Path], str] | None = None
+    output_suffix: str = ".txt"
+
+    def validate(self, options: Mapping[str, object]) -> list[str]:  # noqa: ARG002
+        if self.on_ocr is None:
+            return ["No OCR engine is configured for this action."]
+        return []
+
+    def preview(self, item: WatchItem, options: Mapping[str, object]) -> str:  # noqa: ARG002
+        return f"Recognize text in {item.source_path.name} and save it next to the image (offline)."
+
+    def run(self, item: WatchItem, options: Mapping[str, object]) -> WatchActionOutcome:  # noqa: ARG002
+        if self.on_ocr is None:
+            return WatchActionOutcome.failed("No OCR engine is configured for this action.")
+        try:
+            text = self.on_ocr(item.source_path)
+        except Exception as error:  # surfaced as a failed outcome
+            logger.exception("OCR watch action failed for %s", item.source_path)
+            return WatchActionOutcome.failed(str(error))
+        target = item.source_path.with_suffix(self.output_suffix)
+        body = text if text.endswith("\n") else text + "\n"
+        try:
+            target.write_text(body, encoding="utf-8")
+        except OSError as error:
+            return WatchActionOutcome.failed(f"Could not write recognized text: {error}")
+        return WatchActionOutcome.done(
+            f"Recognized text from {item.source_path.name}", result_path=target
+        )
+
+
+@dataclass(slots=True)
 class UnavailableAction(_BaseAction):
     """Placeholder for an action whose engine has not landed yet (WATCH-8/9).
 
@@ -544,6 +588,7 @@ def default_registry(
     on_convert: Callable[[Path, str], Path] | None = None,
     on_run_macro: Callable[[Path, str], None] | None = None,
     on_ai: Callable[[Path, Mapping[str, object]], WatchActionOutcome] | None = None,
+    on_ocr: Callable[[Path], str] | None = None,
     sandbox_runner: Callable[..., object] | None = None,
 ) -> WatchActionRegistry:
     """Build a registry pre-populated with the built-in actions and placeholders."""
@@ -555,6 +600,7 @@ def default_registry(
     registry.register(RunMacroAction(on_run_macro=on_run_macro))
     registry.register(RunPythonTransformAction(runner=sandbox_runner))
     registry.register(AiAction(on_ai=on_ai))
+    registry.register(OcrAction(on_ocr=on_ocr))
     registry.register(
         UnavailableAction(
             action_id="glow_audit",
@@ -584,6 +630,7 @@ __all__ = [
     "ConvertAction",
     "CopyAction",
     "MoveAction",
+    "OcrAction",
     "OpenAction",
     "RunMacroAction",
     "RunPythonTransformAction",

@@ -38,6 +38,12 @@ spellcheck = ["pyenchant>=3.3.0"]
 # a GGUF model (e.g. Phi-4-mini Q4) goes in <app data>/models or QUILL_LLAMA_MODEL.
 ai = ["llama-cpp-python>=0.3.23"]
 dictation = ["SpeechRecognition>=3.16.1"]
+# Native Windows OCR (OCR-1): a thin pip wheel projecting the Windows.Media.Ocr
+# WinRT APIs that ship inside Windows 10/11. The OCR engine itself is a built-in
+# OS component, so end users install nothing extra — bundling this wheel makes
+# the zero-install Windows backend available; Tesseract (OCR-2) stays a separate
+# opt-in install for users who choose it.
+ocr = ["winsdk>=1.0.0b10; sys_platform == 'win32'"]
 pages = ["keynote-parser>=1.0", "markitdown[all]>=0.1.0"]
 # macOS build + runtime. py2app 0.28.x is incompatible with setuptools >= 80
 # (the build aborts with "install_requires is no longer supported"), so pin it.

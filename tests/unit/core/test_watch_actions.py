@@ -14,6 +14,7 @@ from quill.core.watch_actions import (
     ConvertAction,
     CopyAction,
     MoveAction,
+    OcrAction,
     OpenAction,
     RunMacroAction,
     RunPythonTransformAction,
@@ -397,3 +398,42 @@ def test_dry_run_flags_missing_consent(tmp_path: Path) -> None:
 def test_dry_run_unknown_action() -> None:
     registry = WatchActionRegistry()
     assert "Unknown" in registry.dry_run("nope", _item(Path("x.txt")))
+
+
+def test_ocr_action_registered_in_default_registry() -> None:
+    registry = default_registry()
+    action = registry.get("ocr")
+    assert action is not None
+    assert action.required_feature_id == "core.ocr"
+    assert getattr(action, "requires_consent", False) is False  # OCR is offline
+
+
+def test_ocr_action_skipped_when_feature_off(tmp_path: Path) -> None:
+    source = tmp_path / "scan.png"
+    source.write_bytes(b"fake")
+    called: list[Path] = []
+    registry = WatchActionRegistry(feature_enabled=lambda fid: fid != "core.ocr")
+    registry.register(OcrAction(on_ocr=lambda p: called.append(p) or "text"))
+    outcome = registry.run("ocr", _item(source))
+    assert outcome.status == OUTCOME_SKIPPED
+    assert called == []  # handler never invoked when the feature is off
+
+
+def test_ocr_action_happy_path_writes_text_file(tmp_path: Path) -> None:
+    source = tmp_path / "scan.png"
+    source.write_bytes(b"fake")
+    registry = WatchActionRegistry()
+    registry.register(OcrAction(on_ocr=lambda _p: "Recognized words"))
+    outcome = registry.run("ocr", _item(source))
+    assert outcome.status == OUTCOME_DONE
+    target = source.with_suffix(".txt")
+    assert target.read_text(encoding="utf-8") == "Recognized words\n"
+    assert outcome.result_path == target
+
+
+def test_ocr_action_without_handler_fails() -> None:
+    registry = WatchActionRegistry()
+    registry.register(OcrAction())
+    outcome = registry.run("ocr", _item(Path("scan.png")))
+    assert outcome.status == OUTCOME_FAILED
+    assert "ocr engine" in outcome.message.lower()

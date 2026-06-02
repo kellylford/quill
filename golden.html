@@ -1568,67 +1568,77 @@ prefix-then-<code>A</code> wiring.</td>
 <td>Native Windows OCR backend (zero-install)</td>
 <td>Image to text</td>
 <td>M</td>
-<td>Todo</td>
-<td>Add a <code>Windows.Media.Ocr</code> (WinRT) backend behind
-<code>core.ocr</code> so text can be pulled from images fully offline
-with no external install. <code>quill/io/ocr.py</code> becomes
-backend-pluggable (<code>windows</code>, <code>tesseract</code>) with a
-shared <code>OcrResult</code>; the Windows backend runs in the OCR
-worker process, returns text plus per-line confidence, and never touches
-the network. Core stays UI-agnostic; tests cover backend selection, the
-unavailable path on non-Windows, and result shaping.</td>
+<td>In progress</td>
+<td><code>quill/io/ocr.py</code> is now backend-pluggable
+(<code>OcrBackend</code> Protocol, <code>WindowsOcrBackend</code>,
+<code>TesseractBackend</code>, shared
+<code>OcrResult</code>/<code>OcrLine</code> with per-line confidence)
+with <code>select_engine</code>/<code>available_engines</code> and a
+clean unavailable path; the WinRT backend lives in
+<code>quill/platform/windows/windows_ocr.py</code>
+(<code>Windows.Media.Ocr</code>, offline, no network). Tests cover
+backend selection, fall-back, the unavailable path, and Tesseract TSV
+per-line confidence parsing. Remaining: live WinRT recognition is
+unverifiable in this environment (winsdk not installed), so the
+native-backend happy path is not yet exercised end to end.</td>
 </tr>
 <tr>
 <td>OCR-2</td>
 <td>Tesseract opt-in backend via onboarding</td>
 <td>Image to text</td>
 <td>S</td>
-<td>Todo</td>
-<td>Keep the existing Tesseract path as a selectable backend the user
-turns on during a short OCR onboarding (engine choice
-auto/windows/tesseract, language pack note, install hint). A new
-<code>ocr_engine</code> setting drives selection; <code>auto</code>
-prefers the native Windows backend and falls back to Tesseract when
-present. When the chosen backend is unavailable the announced message
-points back to onboarding rather than failing silently. Tests cover
-engine resolution, the onboarding gate, and the fall-back order.</td>
+<td>Done</td>
+<td>A new <code>ocr_engine</code> setting (auto/windows/tesseract,
+validated in <code>Settings.from_dict</code>, surfaced in the settings
+registry under Accessibility, gated by <code>core.ocr</code>) drives
+backend selection; <code>auto</code> prefers the native Windows backend
+and falls back to Tesseract when present.
+<code>main_frame.ocr_image_file</code> passes the chosen engine through.
+When the chosen backend is unavailable the announced message points to
+OCR setup rather than failing silently. Tests cover engine resolution,
+the fall-back order, explicit-engine honoring, and the unavailable
+message.</td>
 </tr>
 <tr>
 <td>OCR-3</td>
 <td>Capture sources: file, clipboard, screen region</td>
 <td>Image to text</td>
 <td>M</td>
-<td>Todo</td>
-<td>OCR from an image file, a clipboard image, or a keyboard-driven
-screen-region capture, each bound under the QUILL key and the Tools
-menu, each announcing progress and outcome through the shared grammar
-(A11Y-1) and inserting text at the cursor. Fully keyboard operable with
-no mouse requirement; tests cover each capture path and the cancel
-path.</td>
+<td>In progress</td>
+<td>OCR from an image file is wired
+(<code>main_frame.ocr_image_file</code>, QUILL key + Tools menu, shared
+progress/outcome grammar, cancel path); the engine layer is
+capture-source-agnostic. Remaining: clipboard-image and keyboard-driven
+screen-region live capture require a real display/clipboard and a
+working OCR engine, neither verifiable in this environment, so those two
+capture paths stay open.</td>
 </tr>
 <tr>
 <td>OCR-4</td>
 <td>Accessible OCR review and insert surface</td>
 <td>Image to text</td>
 <td>M</td>
-<td>Todo</td>
-<td>OCR output lands in a screen-reader-pageable review surface (engine,
-language, low-confidence note) before insertion, with insert, copy, and
-discard. Reuses the stock read-only control pattern; low-confidence
-lines are flagged for review. Gated by <code>core.ocr</code> (FLAG-1);
-tests cover rendering, the action keys, and the feature-off path.</td>
+<td>In progress</td>
+<td>The wx-free review renderer (<code>render_ocr_review</code>) emits
+the engine/language/low-confidence header and flags low-confidence lines
+(<code>OcrResult.low_confidence_lines</code>,
+<code>OcrLine.is_low_confidence</code>); tests cover the header, the
+low-confidence flag markers, and the text-only fallback. Remaining: the
+live stock read-only review dialog with insert/copy/discard action keys
+is not yet wired (runtime wx surface unverifiable here).</td>
 </tr>
 <tr>
 <td>OCR-5</td>
 <td>OCR as a Watch Profile action</td>
 <td>Image to text</td>
 <td>S</td>
-<td>Todo</td>
-<td>Register an “OCR to text” action in the WATCH-2 action registry so a
-watched folder of images becomes accessible text documents
-automatically, honoring <code>core.ocr</code> plus per-profile consent
-(WATCH-6) and the offline-by-default promise. Tests cover registration,
-the disabled-feature path, and a happy-path conversion.</td>
+<td>Done</td>
+<td><code>OcrAction</code> is registered in the
+<code>default_registry</code> action registry, gated by
+<code>core.ocr</code> and offline-by-default (no consent gate), writing
+recognized text to a sibling <code>.txt</code> file. Tests cover
+registration, the disabled-feature skip path, a happy-path conversion
+with an injected handler, and the no-engine failure path.</td>
 </tr>
 <tr>
 <td>QK-2</td>
@@ -5648,10 +5658,10 @@ CQ-16) are counted once, in their primary tier.</p>
 <td>Tier 2</td>
 <td>Flagship experience</td>
 <td>58</td>
-<td>41</td>
-<td>17</td>
-<td>OCR-1..5, AGENT-1, AI-19, AI-20, AI-22, AI-24, SET-2, SET-3, CTX-1,
-DICT-2, FEAT-19, FLAG-3, DLG-1</td>
+<td>43</td>
+<td>15</td>
+<td>OCR-1, OCR-3, OCR-4, AGENT-1, AI-19, AI-20, AI-22, AI-24, SET-2,
+SET-3, CTX-1, DICT-2, FEAT-19, FLAG-3, DLG-1</td>
 </tr>
 <tr>
 <td>Tier 4</td>
@@ -5675,8 +5685,8 @@ CQ-14, CQ-23, CQ-24, LINUX-2</td>
 <td><strong>1.0 subtotal</strong></td>
 <td>Tiers 1, 2, 4, 6 (the QUILL 1.0 scope)</td>
 <td><strong>144</strong></td>
-<td><strong>78</strong></td>
-<td><strong>66</strong></td>
+<td><strong>80</strong></td>
+<td><strong>64</strong></td>
 <td></td>
 </tr>
 <tr>
@@ -5716,8 +5726,8 @@ LINUX-1, ECO-1, L10N-1, COLLAB-1</td>
 <td><strong>Total</strong></td>
 <td>All tiers (1.0 + 2.0)</td>
 <td><strong>186</strong></td>
-<td><strong>78</strong></td>
-<td><strong>108</strong></td>
+<td><strong>80</strong></td>
+<td><strong>106</strong></td>
 <td></td>
 </tr>
 </tbody>
@@ -5762,13 +5772,13 @@ the third table and are not part of either 1.0 list.</p>
 <tr>
 <td>Tier 2 — Flagship</td>
 <td>In progress</td>
-<td>SET-2, SET-3, MENU-1, MENU-5, AGENT-1</td>
+<td>SET-2, SET-3, MENU-1, MENU-5, AGENT-1, OCR-1, OCR-3, OCR-4</td>
 </tr>
 <tr>
 <td>Tier 2 — Flagship</td>
 <td>Todo</td>
-<td>AI-19, AI-20, AI-22, AI-24, OCR-1, OCR-2, OCR-3, OCR-4, OCR-5,
-CTX-1, DICT-2, FEAT-19, FLAG-3, DLG-1</td>
+<td>AI-19, AI-20, AI-22, AI-24, CTX-1, DICT-2, FEAT-19, FLAG-3,
+DLG-1</td>
 </tr>
 <tr>
 <td>Tier 4 — Structural health</td>
@@ -5812,7 +5822,7 @@ GATE-8, GATE-9, FLAG-1, FLAG-2</td>
 SEL-2, SEL-3, AI-1, AI-6, AI-7, AI-13, AI-14, AI-15, AI-16, AI-17,
 AI-21, AI-23, WATCH-1, WATCH-2, WATCH-3, WATCH-4, WATCH-5, WATCH-6,
 WATCH-7, SET-1, SET-4, SET-5, SET-6, SET-7, SHARE-1, SHARE-2, SHARE-3,
-FLAG-4, MENU-3, DICT-1</td>
+FLAG-4, MENU-3, DICT-1, OCR-2, OCR-5</td>
 </tr>
 <tr>
 <td>Tier 4 — Structural health</td>
