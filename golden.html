@@ -2099,7 +2099,7 @@ persistence.</td>
 <td>Watch safety, consent, and resource governance</td>
 <td>Features</td>
 <td>M</td>
-<td>Todo</td>
+<td>In progress</td>
 <td>Networked and AI watch actions stay opt-in per profile under the
 no-silent-network promise (AI-5): nothing reaches a cloud without
 explicit per-profile consent, and provider, model, and scope are shown.
@@ -2108,7 +2108,22 @@ SEC-9) prevent a runaway folder from overwhelming the machine;
 termination is announced. A dry-run preview shows exactly what a profile
 would do before it is armed. The atomic claim from WATCH-3 prevents
 double-processing. Tests cover the consent gate, the resource cap,
-dry-run, and the claim.</td>
+dry-run, and the claim. The <code>core</code> layer now enforces the
+consent gate (<code>WatchActionRegistry.run</code> returns an announced
+<code>skipped</code> outcome for any <code>requires_consent</code>
+action — currently the AI action — until the profile carries explicit
+<code>options["consent"] is True</code>) and exposes a side-effect-free
+<code>WatchActionRegistry.dry_run(...)</code> that returns a
+plain-language preview of what a profile would do (or the reason it
+would not: unknown action, disabled feature, invalid options, or missing
+consent). The sandboxed Python transform action honors a clamped
+wall-clock timeout shared with SEC-9, and the single-threaded worker
+already serializes processing (concurrency of one). Tests cover the
+consent gate (skipped without consent, runs with consent), dry-run
+(runnable preview, invalid options, missing consent, unknown action).
+Remaining: the per-profile consent UI that shows provider/model/scope
+before arming, surfacing the dry-run preview in the profile manager, and
+announcing resource-cap termination.</td>
 </tr>
 <tr>
 <td>WATCH-7</td>
@@ -2123,7 +2138,30 @@ saved Python transform (sandboxed, SEC-9), and consented AI actions
 (summarize, tag, rewrite to a style) via the assistant. Each action
 validates its options, announces its outcome, and routes failures to the
 queue’s failed state with a clear reason. Tests cover each action’s
-happy path and its failure path.</td>
+happy path and its failure path. The full action set now ships in
+<code>quill/core/watch_actions.py</code> and registers through
+<code>default_registry</code>: <code>OpenAction</code>,
+<code>MoveAction</code>, the new <code>CopyAction</code> (copy to a
+destination, original left in place), <code>ConvertAction</code> (export
+to a chosen format via a caller-supplied IO/Pandoc handler),
+<code>RunMacroAction</code> (open and replay a named macro via a
+caller-supplied editor handler), <code>RunPythonTransformAction</code>
+(read the file’s text, run a saved transform through the SEC-9 sandbox
+with a clamped timeout, write the result in place or to a suffixed
+file), and the consent-gated <code>AiAction</code>
+(summarize/tag/rewrite via a caller-supplied handler, refused until
+per-profile consent). Each validates its options, returns
+<code>done</code>/<code>failed</code> outcomes that route through the
+queue’s lifecycle, and offers a <code>preview</code> for dry-run
+(WATCH-6). Open, Move, Copy, and the sandboxed Python transform are
+fully functional; Convert, Run macro, and consented AI are implemented
+and unit-tested at the registry seam and wired through
+<code>WatchService</code>/<code>default_registry</code>, awaiting the UI
+to supply their handlers (the same callback pattern
+<code>OpenAction</code> already uses). Tests cover each action’s happy
+and failure paths (copy, convert with/without handler, macro, Python
+transform success/failure/suffixed output, AI consent gate and
+modes).</td>
 </tr>
 <tr>
 <td>FEAT-16</td>
@@ -5625,15 +5663,15 @@ the third table and are not part of either 1.0 list.</p>
 <tr>
 <td>Tier 2 — Flagship</td>
 <td>In progress</td>
-<td>SET-1, SET-2, SET-3, SET-4, SET-7, WATCH-5, WATCH-7, MENU-1,
-MENU-5</td>
+<td>SET-1, SET-2, SET-3, SET-4, SET-7, WATCH-5, WATCH-6, WATCH-7,
+MENU-1, MENU-5</td>
 </tr>
 <tr>
 <td>Tier 2 — Flagship</td>
 <td>Todo</td>
 <td>AGENT-1, AI-1, AI-6, AI-7, AI-14, AI-19, AI-20, AI-22, AI-24, OCR-1,
 OCR-2, OCR-3, OCR-4, OCR-5, SET-5, SHARE-1, SHARE-2, SHARE-3, CTX-1,
-DICT-2, FEAT-19, WATCH-6, FLAG-3, DLG-1</td>
+DICT-2, FEAT-19, FLAG-3, DLG-1</td>
 </tr>
 <tr>
 <td>Tier 4 — Structural health</td>
@@ -5737,6 +5775,65 @@ note), and A11Y-1 (announcement grammar). The GATE-3/CQ-7 cleanup also
 incidentally cleared the <code>quill/core</code> and
 <code>quill/io</code> portion of the TYPE-1..8 zone, though those formal
 rows stay open until each is individually verified and closed.</p>
+<h4
+id="watch-6-and-watch-7-advanced-in-core-running-totals-reconciled-to-the-tracker">2026-06-04:
+WATCH-6 and WATCH-7 advanced in core; running totals reconciled to the
+tracker</h4>
+<p>Code shipped in <code>quill/core</code> (wx-free), and the
+State-of-the-union counts were reconciled so the per-entry running
+totals stop disagreeing with the tier tracker.</p>
+<ul>
+<li>WATCH-7 grew its full built-in action set in
+<code>quill/core/watch_actions.py</code>: alongside the shipped Open and
+Move actions, the registry now carries <code>CopyAction</code> (copy to
+a destination, original left in place), <code>ConvertAction</code>
+(export to a chosen format through a caller-supplied IO/Pandoc handler),
+<code>RunMacroAction</code> (replay a named macro through a
+caller-supplied editor handler), <code>RunPythonTransformAction</code>
+(read the file’s text, run a saved transform through the SEC-9 sandbox
+with a clamped timeout, write the result in place or to a suffixed
+file), and the consent-gated <code>AiAction</code>
+(summarize/tag/rewrite through a caller-supplied handler). Each
+validates its options, returns
+<code>done</code>/<code>failed</code>/<code>skipped</code> outcomes that
+route through the queue lifecycle, and offers a <code>preview</code>.
+Open, Move, Copy, and the sandboxed Python transform are fully
+functional; Convert, Run macro, and consented AI are implemented and
+unit-tested at the registry seam and wired through
+<code>WatchService</code>/<code>default_registry</code>, awaiting the UI
+to supply their handlers (the same callback pattern Open already uses).
+WATCH-7 stays <strong>In progress</strong>.</li>
+<li>WATCH-6 moved from Todo to <strong>In progress</strong>. The consent
+gate now lives in <code>WatchActionRegistry.run</code> (any
+<code>requires_consent</code> action — today the AI action — returns an
+announced <code>skipped</code> outcome until the profile carries
+explicit <code>options["consent"] is True</code>, honoring AI-5’s
+no-silent-network promise), and a side-effect-free
+<code>WatchActionRegistry.dry_run(...)</code> returns a plain-language
+preview of what a profile would do or the reason it would not (unknown
+action, disabled feature, invalid options, missing consent). The
+sandboxed Python transform honors a clamped wall-clock cap shared with
+SEC-9, and the single-threaded worker already serializes processing
+(concurrency of one). Remaining for WATCH-6: the per-profile consent UI
+that shows provider/model/scope, surfacing the dry-run preview in the
+profile manager, and announcing resource-cap termination. Twenty new
+core tests cover the five actions plus the consent gate and dry-run;
+<code>test_watch_actions.py</code> is 34 passing and the full
+<code>-k watch</code> core suite is 93 passing. ruff format and check
+clean.</li>
+<li>Count reconciliation: WATCH-6/WATCH-7 are In progress, not Done, so
+no row closed and the <strong>done count is unchanged</strong>. The
+authoritative current count is the tier-completion tracker at the top of
+this section: <strong>64 of 144 done in the QUILL 1.0 scope (80
+remaining), and 64 of 186 across all tiers (122 remaining)</strong>. The
+trailing “total N of 180” figures in the older log entries below (47,
+48, 50, 54, 55) predate two events — the AX-A..F additions that took the
+all-tier pool from 180 to 186, and the tracker reconciliation noted in
+the deferral note (which corrected a previous Total of 55/125 that did
+not match the per-tier sums). Those historical entries are left as-is as
+a point-in-time record; the tracker table is canonical going
+forward.</li>
+</ul>
 <h4 id="per-setting-reset-buttons-completed-set-6">2026-06-04:
 Per-setting Reset buttons completed SET-6</h4>
 <p>Code shipped. Every control in the tabbed Settings dialog now carries

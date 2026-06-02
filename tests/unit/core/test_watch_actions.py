@@ -10,8 +10,13 @@ from quill.core.watch_actions import (
     OUTCOME_DONE,
     OUTCOME_FAILED,
     OUTCOME_SKIPPED,
+    AiAction,
+    ConvertAction,
+    CopyAction,
     MoveAction,
     OpenAction,
+    RunMacroAction,
+    RunPythonTransformAction,
     UnavailableAction,
     WatchAction,
     WatchActionOutcome,
@@ -167,9 +172,228 @@ def test_run_guards_against_action_crash() -> None:
 def test_default_registry_has_builtins_and_placeholders() -> None:
     registry = default_registry(on_open=lambda _p: None)
     ids = {action.action_id for action in registry.actions()}
-    assert {"open", "move", "glow_audit", "bw_transcribe"} <= ids
+    assert {
+        "open",
+        "move",
+        "copy",
+        "convert",
+        "run_macro",
+        "run_python",
+        "ai",
+        "glow_audit",
+        "bw_transcribe",
+    } <= ids
 
 
 def test_actions_satisfy_protocol() -> None:
     for action in (OpenAction(), MoveAction(), UnavailableAction(action_id="x", label="X")):
         assert isinstance(action, WatchAction)
+
+
+def test_copy_action_copies_and_keeps_original(tmp_path: Path) -> None:
+    source = tmp_path / "in" / "doc.txt"
+    source.parent.mkdir()
+    source.write_text("hi", encoding="utf-8")
+    dest = tmp_path / "out"
+    dest.mkdir()
+    registry = WatchActionRegistry()
+    registry.register(CopyAction())
+    outcome = registry.run("copy", _item(source), {"destination": str(dest)})
+    assert outcome.status == OUTCOME_DONE
+    assert source.exists()  # original left in place
+    assert (dest / "doc.txt").read_text(encoding="utf-8") == "hi"
+    assert outcome.result_path == dest / "doc.txt"
+
+
+def test_copy_action_missing_destination_fails() -> None:
+    registry = WatchActionRegistry()
+    registry.register(CopyAction())
+    outcome = registry.run("copy", _item(Path("x.txt")), {"destination": ""})
+    assert outcome.status == OUTCOME_FAILED
+    assert "destination" in outcome.message.lower()
+
+
+def test_convert_action_invokes_handler(tmp_path: Path) -> None:
+    source = tmp_path / "doc.md"
+    source.write_text("# hi", encoding="utf-8")
+    produced = tmp_path / "doc.html"
+    produced.write_text("<h1>hi</h1>", encoding="utf-8")
+    seen: list[tuple[Path, str]] = []
+
+    def fake_convert(path: Path, fmt: str) -> Path:
+        seen.append((path, fmt))
+        return produced
+
+    registry = WatchActionRegistry()
+    registry.register(ConvertAction(on_convert=fake_convert))
+    outcome = registry.run("convert", _item(source), {"target_format": "html"})
+    assert outcome.status == OUTCOME_DONE
+    assert seen == [(source, "html")]
+    assert outcome.result_path == produced
+
+
+def test_convert_action_without_handler_fails() -> None:
+    registry = WatchActionRegistry()
+    registry.register(ConvertAction())
+    outcome = registry.run("convert", _item(Path("x.md")), {"target_format": "html"})
+    assert outcome.status == OUTCOME_FAILED
+    assert "handler" in outcome.message.lower()
+
+
+def test_convert_action_missing_format_fails() -> None:
+    registry = WatchActionRegistry()
+    registry.register(ConvertAction(on_convert=lambda p, f: p))
+    outcome = registry.run("convert", _item(Path("x.md")), {})
+    assert outcome.status == OUTCOME_FAILED
+    assert "format" in outcome.message.lower()
+
+
+def test_run_macro_action_invokes_handler(tmp_path: Path) -> None:
+    source = tmp_path / "doc.txt"
+    source.write_text("hi", encoding="utf-8")
+    seen: list[tuple[Path, str]] = []
+    registry = WatchActionRegistry()
+    registry.register(RunMacroAction(on_run_macro=lambda p, n: seen.append((p, n))))
+    outcome = registry.run("run_macro", _item(source), {"macro_name": "Tidy"})
+    assert outcome.status == OUTCOME_DONE
+    assert seen == [(source, "Tidy")]
+
+
+def test_run_macro_action_requires_name() -> None:
+    registry = WatchActionRegistry()
+    registry.register(RunMacroAction(on_run_macro=lambda p, n: None))
+    outcome = registry.run("run_macro", _item(Path("x.txt")), {})
+    assert outcome.status == OUTCOME_FAILED
+    assert "macro" in outcome.message.lower()
+
+
+class _FakeSandboxResult:
+    def __init__(self, *, succeeded: bool, result: str = "", error: str = "") -> None:
+        self.succeeded = succeeded
+        self.result = result
+        self.stdout = result
+        self.stderr = error
+        self.error = error
+
+
+def test_python_transform_writes_result_in_place(tmp_path: Path) -> None:
+    source = tmp_path / "doc.txt"
+    source.write_text("hello", encoding="utf-8")
+
+    def fake_runner(code: str, *, document_text: str, timeout_seconds: float):
+        assert document_text == "hello"
+        return _FakeSandboxResult(succeeded=True, result=document_text.upper())
+
+    registry = WatchActionRegistry()
+    registry.register(RunPythonTransformAction(runner=fake_runner))
+    outcome = registry.run("run_python", _item(source), {"code": "result = document_text.upper()"})
+    assert outcome.status == OUTCOME_DONE
+    assert source.read_text(encoding="utf-8") == "HELLO"
+    assert outcome.result_path == source
+
+
+def test_python_transform_writes_to_suffixed_file(tmp_path: Path) -> None:
+    source = tmp_path / "doc.txt"
+    source.write_text("hello", encoding="utf-8")
+
+    def fake_runner(code: str, *, document_text: str, timeout_seconds: float):
+        return _FakeSandboxResult(succeeded=True, result="new")
+
+    registry = WatchActionRegistry()
+    registry.register(RunPythonTransformAction(runner=fake_runner))
+    outcome = registry.run(
+        "run_python", _item(source), {"code": "result = 'new'", "output_suffix": ".out"}
+    )
+    assert outcome.status == OUTCOME_DONE
+    assert source.read_text(encoding="utf-8") == "hello"  # original untouched
+    assert (tmp_path / "doc.out.txt").read_text(encoding="utf-8") == "new"
+
+
+def test_python_transform_failure_surfaces_error(tmp_path: Path) -> None:
+    source = tmp_path / "doc.txt"
+    source.write_text("hello", encoding="utf-8")
+
+    def fake_runner(code: str, *, document_text: str, timeout_seconds: float):
+        return _FakeSandboxResult(succeeded=False, error="boom")
+
+    registry = WatchActionRegistry()
+    registry.register(RunPythonTransformAction(runner=fake_runner))
+    outcome = registry.run("run_python", _item(source), {"code": "result = 1"})
+    assert outcome.status == OUTCOME_FAILED
+    assert "boom" in outcome.message
+
+
+def test_python_transform_requires_code() -> None:
+    registry = WatchActionRegistry()
+    registry.register(RunPythonTransformAction(runner=lambda *a, **k: None))
+    outcome = registry.run("run_python", _item(Path("x.txt")), {})
+    assert outcome.status == OUTCOME_FAILED
+    assert "transform" in outcome.message.lower()
+
+
+def test_ai_action_skipped_without_consent(tmp_path: Path) -> None:
+    source = tmp_path / "doc.txt"
+    source.write_text("hi", encoding="utf-8")
+    called: list[Path] = []
+
+    def fake_ai(path: Path, options) -> WatchActionOutcome:
+        called.append(path)
+        return WatchActionOutcome.done("summarized")
+
+    registry = WatchActionRegistry()
+    registry.register(AiAction(on_ai=fake_ai))
+    outcome = registry.run("ai", _item(source), {"mode": "summarize"})
+    assert outcome.status == OUTCOME_SKIPPED
+    assert "consent" in outcome.message.lower()
+    assert called == []  # handler never invoked without consent
+
+
+def test_ai_action_runs_with_consent(tmp_path: Path) -> None:
+    source = tmp_path / "doc.txt"
+    source.write_text("hi", encoding="utf-8")
+
+    def fake_ai(path: Path, options) -> WatchActionOutcome:
+        return WatchActionOutcome.done(f"{options['mode']} done")
+
+    registry = WatchActionRegistry()
+    registry.register(AiAction(on_ai=fake_ai))
+    outcome = registry.run("ai", _item(source), {"mode": "summarize", "consent": True})
+    assert outcome.status == OUTCOME_DONE
+    assert outcome.message == "summarize done"
+
+
+def test_ai_action_invalid_mode_fails() -> None:
+    registry = WatchActionRegistry()
+    registry.register(AiAction(on_ai=lambda p, o: WatchActionOutcome.done()))
+    outcome = registry.run("ai", _item(Path("x.txt")), {"mode": "nope", "consent": True})
+    assert outcome.status == OUTCOME_FAILED
+    assert "mode" in outcome.message.lower()
+
+
+def test_dry_run_describes_runnable_action(tmp_path: Path) -> None:
+    dest = tmp_path / "out"
+    dest.mkdir()
+    registry = WatchActionRegistry()
+    registry.register(MoveAction())
+    preview = registry.dry_run("move", _item(tmp_path / "doc.txt"), {"destination": str(dest)})
+    assert "doc.txt" in preview
+    assert str(dest) in preview
+
+
+def test_dry_run_reports_invalid_options() -> None:
+    registry = WatchActionRegistry()
+    registry.register(MoveAction())
+    preview = registry.dry_run("move", _item(Path("doc.txt")), {"destination": ""})
+    assert preview.lower().startswith("would not run")
+
+
+def test_dry_run_flags_missing_consent(tmp_path: Path) -> None:
+    registry = WatchActionRegistry()
+    registry.register(AiAction(on_ai=lambda p, o: WatchActionOutcome.done()))
+    preview = registry.dry_run("ai", _item(tmp_path / "doc.txt"), {"mode": "summarize"})
+    assert "consent" in preview.lower()
+
+
+def test_dry_run_unknown_action() -> None:
+    registry = WatchActionRegistry()
+    assert "Unknown" in registry.dry_run("nope", _item(Path("x.txt")))

@@ -39,6 +39,9 @@ class WatchService:
         data_dir: Path,
         feature_enabled: Callable[[str], bool] | None = None,
         on_open: Callable[[Path], None] | None = None,
+        on_convert: Callable[[Path, str], Path] | None = None,
+        on_run_macro: Callable[[Path, str], None] | None = None,
+        on_ai: Callable[[Path, object], object] | None = None,
         queue_listener: Callable[[str, QueueItem | None], None] | None = None,
         registry: WatchActionRegistry | None = None,
     ) -> None:
@@ -53,7 +56,11 @@ class WatchService:
             listener=queue_listener,
         )
         self.registry = registry or default_registry(
-            feature_enabled=feature_enabled, on_open=on_open
+            feature_enabled=feature_enabled,
+            on_open=on_open,
+            on_convert=on_convert,
+            on_run_macro=on_run_macro,
+            on_ai=on_ai,  # type: ignore[arg-type]
         )
         self.manager = WatchManager(self.queue)
         self.worker = WatchWorker(

@@ -78,9 +78,13 @@ class WatchAction(Protocol):
     action_id: str
     label: str
     required_feature_id: str
+    requires_consent: bool
 
     def describe(self) -> str:
         """Return a plain-language sentence describing what the action does."""
+
+    def preview(self, item: WatchItem, options: Mapping[str, object]) -> str:
+        """Return what running the action on ``item`` would do, without side effects."""
 
     def validate(self, options: Mapping[str, object]) -> list[str]:
         """Return a list of human-readable problems with ``options`` (empty if valid)."""
@@ -97,9 +101,13 @@ class _BaseAction:
     label: str = ""
     required_feature_id: str = ""
     description: str = ""
+    requires_consent: bool = False
 
     def describe(self) -> str:
         return self.description
+
+    def preview(self, item: WatchItem, options: Mapping[str, object]) -> str:  # noqa: ARG002
+        return self.describe()
 
     def validate(self, options: Mapping[str, object]) -> list[str]:  # noqa: ARG002
         return []
@@ -165,6 +173,249 @@ class MoveAction(_BaseAction):
             logger.exception("Move watch action failed for %s", item.source_path)
             return WatchActionOutcome.failed(str(error))
         return WatchActionOutcome.done(f"Moved to {target.name}", result_path=Path(moved))
+
+    def preview(self, item: WatchItem, options: Mapping[str, object]) -> str:
+        destination = str(options.get("destination", "")).strip() or "the chosen folder"
+        return f"Move {item.source_path.name} into {destination}."
+
+
+@dataclass(slots=True)
+class CopyAction(_BaseAction):
+    """Built-in action: copy each file to a destination, leaving the original (WATCH-7)."""
+
+    action_id: str = "copy"
+    label: str = "Copy to folder"
+    description: str = (
+        "Copy each detected file into a chosen destination folder, leaving the original in place."
+    )
+
+    def validate(self, options: Mapping[str, object]) -> list[str]:
+        destination = str(options.get("destination", "")).strip()
+        if not destination:
+            return ["Choose a destination folder for copied files."]
+        if not Path(destination).expanduser().is_dir():
+            return [f"Destination folder does not exist: {destination}"]
+        return []
+
+    def preview(self, item: WatchItem, options: Mapping[str, object]) -> str:
+        destination = str(options.get("destination", "")).strip() or "the chosen folder"
+        return f"Copy {item.source_path.name} into {destination}."
+
+    def run(self, item: WatchItem, options: Mapping[str, object]) -> WatchActionOutcome:
+        problems = self.validate(options)
+        if problems:
+            return WatchActionOutcome.failed(problems[0])
+        destination = Path(str(options.get("destination", "")).strip()).expanduser()
+        target = destination / item.source_path.name
+        try:
+            copied = shutil.copy2(str(item.source_path), str(target))
+        except Exception as error:  # surfaced as a failed outcome
+            logger.exception("Copy watch action failed for %s", item.source_path)
+            return WatchActionOutcome.failed(str(error))
+        return WatchActionOutcome.done(f"Copied to {target.name}", result_path=Path(copied))
+
+
+@dataclass(slots=True)
+class ConvertAction(_BaseAction):
+    """Built-in action: export each file to a chosen format via a handler (WATCH-7).
+
+    The conversion itself is performed by a caller-supplied callback (which wires
+    in the IO writers and the bundled Pandoc), keeping this action UI-agnostic.
+    The callback receives the source path and the target format id and returns
+    the path of the converted file.
+    """
+
+    action_id: str = "convert"
+    label: str = "Convert to another format"
+    description: str = "Export each detected file to a chosen format."
+    on_convert: Callable[[Path, str], Path] | None = None
+
+    def validate(self, options: Mapping[str, object]) -> list[str]:
+        if self.on_convert is None:
+            return ["No conversion handler is configured for this action."]
+        target_format = str(options.get("target_format", "")).strip()
+        if not target_format:
+            return ["Choose a target format for converted files."]
+        return []
+
+    def preview(self, item: WatchItem, options: Mapping[str, object]) -> str:
+        target_format = str(options.get("target_format", "")).strip() or "the chosen format"
+        return f"Convert {item.source_path.name} to {target_format}."
+
+    def run(self, item: WatchItem, options: Mapping[str, object]) -> WatchActionOutcome:
+        problems = self.validate(options)
+        if problems:
+            return WatchActionOutcome.failed(problems[0])
+        assert self.on_convert is not None
+        target_format = str(options.get("target_format", "")).strip()
+        try:
+            result = self.on_convert(item.source_path, target_format)
+        except Exception as error:  # surfaced as a failed outcome
+            logger.exception("Convert watch action failed for %s", item.source_path)
+            return WatchActionOutcome.failed(str(error))
+        result_path = Path(result) if result else None
+        name = result_path.name if result_path else target_format
+        return WatchActionOutcome.done(f"Converted to {name}", result_path=result_path)
+
+
+@dataclass(slots=True)
+class RunMacroAction(_BaseAction):
+    """Built-in action: open each file and run a saved macro over it (WATCH-7, FEAT-7).
+
+    Macros replay editor command ids, so the actual replay is delegated to a
+    caller-supplied handler that owns the editor; this action stays wx-free.
+    """
+
+    action_id: str = "run_macro"
+    label: str = "Run a macro"
+    description: str = "Open each detected file and run a saved macro over it."
+    on_run_macro: Callable[[Path, str], None] | None = None
+
+    def validate(self, options: Mapping[str, object]) -> list[str]:
+        if self.on_run_macro is None:
+            return ["No macro handler is configured for this action."]
+        macro_name = str(options.get("macro_name", "")).strip()
+        if not macro_name:
+            return ["Choose a macro to run."]
+        return []
+
+    def preview(self, item: WatchItem, options: Mapping[str, object]) -> str:
+        macro_name = str(options.get("macro_name", "")).strip() or "the chosen macro"
+        return f"Run macro '{macro_name}' on {item.source_path.name}."
+
+    def run(self, item: WatchItem, options: Mapping[str, object]) -> WatchActionOutcome:
+        problems = self.validate(options)
+        if problems:
+            return WatchActionOutcome.failed(problems[0])
+        assert self.on_run_macro is not None
+        macro_name = str(options.get("macro_name", "")).strip()
+        try:
+            self.on_run_macro(item.source_path, macro_name)
+        except Exception as error:  # surfaced as a failed outcome
+            logger.exception("Run-macro watch action failed for %s", item.source_path)
+            return WatchActionOutcome.failed(str(error))
+        return WatchActionOutcome.done(f"Ran macro '{macro_name}' on {item.source_path.name}")
+
+
+@dataclass(slots=True)
+class RunPythonTransformAction(_BaseAction):
+    """Built-in action: run a saved, sandboxed Python transform on each file (WATCH-7, SEC-9).
+
+    The transform reads the file's text as ``document_text`` and sets ``result``;
+    the sandbox enforces import and wall-clock limits. The sandbox runner is
+    injectable so tests need not spawn a subprocess.
+    """
+
+    action_id: str = "run_python"
+    label: str = "Run a Python transform"
+    description: str = "Run a saved, sandboxed Python transform over each detected file's text."
+    runner: Callable[..., object] | None = None
+    default_timeout_seconds: float = 5.0
+
+    def _resolve_runner(self) -> Callable[..., object]:
+        if self.runner is not None:
+            return self.runner
+        from .python_sandbox import run_python_sandbox
+
+        return run_python_sandbox
+
+    def validate(self, options: Mapping[str, object]) -> list[str]:
+        code = str(options.get("code", "")).strip()
+        if not code:
+            return ["Provide the Python transform code to run."]
+        return []
+
+    def preview(self, item: WatchItem, options: Mapping[str, object]) -> str:  # noqa: ARG002
+        return f"Run the saved Python transform over {item.source_path.name} (sandboxed)."
+
+    def run(self, item: WatchItem, options: Mapping[str, object]) -> WatchActionOutcome:
+        problems = self.validate(options)
+        if problems:
+            return WatchActionOutcome.failed(problems[0])
+        code = str(options.get("code", ""))
+        try:
+            text = item.source_path.read_text(encoding="utf-8")
+        except OSError as error:
+            return WatchActionOutcome.failed(f"Could not read file: {error}")
+        raw_timeout = options.get("timeout_seconds", self.default_timeout_seconds)
+        try:
+            timeout_seconds = max(0.1, float(raw_timeout))  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            timeout_seconds = self.default_timeout_seconds
+        runner = self._resolve_runner()
+        try:
+            result = runner(code, document_text=text, timeout_seconds=timeout_seconds)
+        except Exception as error:  # surfaced as a failed outcome
+            logger.exception("Python transform watch action failed for %s", item.source_path)
+            return WatchActionOutcome.failed(str(error))
+        if not getattr(result, "succeeded", False):
+            message = (
+                getattr(result, "error", "")
+                or getattr(result, "stderr", "")
+                or "The transform did not complete."
+            )
+            return WatchActionOutcome.failed(message)
+        output = getattr(result, "result", "") or getattr(result, "stdout", "")
+        suffix = str(options.get("output_suffix", "")).strip()
+        if suffix:
+            target = item.source_path.with_name(
+                item.source_path.stem + suffix + item.source_path.suffix
+            )
+        else:
+            target = item.source_path
+        try:
+            target.write_text(output, encoding="utf-8")
+        except OSError as error:
+            return WatchActionOutcome.failed(f"Could not write transformed file: {error}")
+        return WatchActionOutcome.done(f"Transformed {item.source_path.name}", result_path=target)
+
+
+@dataclass(slots=True)
+class AiAction(_BaseAction):
+    """Built-in action: run a consented AI action over each file (WATCH-7, AI-5, WATCH-6).
+
+    Marked ``requires_consent`` so the registry refuses to run it until the
+    profile carries explicit per-profile consent (``options["consent"] is True``),
+    honoring the no-silent-network rule. The AI call itself is delegated to a
+    caller-supplied handler that returns a finished outcome.
+    """
+
+    action_id: str = "ai"
+    label: str = "Run an AI action"
+    description: str = (
+        "Run a consented AI action (summarize, tag, or rewrite) over each detected file."
+    )
+    requires_consent: bool = True
+    on_ai: Callable[[Path, Mapping[str, object]], WatchActionOutcome] | None = None
+
+    def validate(self, options: Mapping[str, object]) -> list[str]:
+        if self.on_ai is None:
+            return ["No AI handler is configured for this action."]
+        mode = str(options.get("mode", "")).strip().lower()
+        if mode not in {"summarize", "tag", "rewrite"}:
+            return ["Choose an AI mode: summarize, tag, or rewrite."]
+        return []
+
+    def preview(self, item: WatchItem, options: Mapping[str, object]) -> str:
+        mode = str(options.get("mode", "")).strip().lower() or "the chosen AI action"
+        return (
+            f"Run the AI {mode} action on {item.source_path.name} "
+            "(requires consent; sends content to the AI provider)."
+        )
+
+    def run(self, item: WatchItem, options: Mapping[str, object]) -> WatchActionOutcome:
+        problems = self.validate(options)
+        if problems:
+            return WatchActionOutcome.failed(problems[0])
+        assert self.on_ai is not None
+        try:
+            outcome = self.on_ai(item.source_path, options)
+        except Exception as error:  # surfaced as a failed outcome
+            logger.exception("AI watch action failed for %s", item.source_path)
+            return WatchActionOutcome.failed(str(error))
+        if not isinstance(outcome, WatchActionOutcome):
+            return WatchActionOutcome.failed("AI handler returned an invalid result.")
+        return outcome
 
 
 @dataclass(slots=True)
@@ -247,6 +498,10 @@ class WatchActionRegistry:
                 f"The feature for action '{action.label}' is turned off."
             )
         opts: Mapping[str, object] = options or {}
+        if getattr(action, "requires_consent", False) and not bool(opts.get("consent")):
+            return WatchActionOutcome.skipped(
+                f"Action '{action.label}' needs per-profile consent before it can run."
+            )
         problems = action.validate(opts)
         if problems:
             return WatchActionOutcome.failed(problems[0])
@@ -256,16 +511,50 @@ class WatchActionRegistry:
             logger.exception("Watch action %s crashed for %s", action_id, item.source_path)
             return WatchActionOutcome.failed(str(error))
 
+    def dry_run(
+        self,
+        action_id: str,
+        item: WatchItem,
+        options: Mapping[str, object] | None = None,
+    ) -> str:
+        """Describe what running ``action_id`` for ``item`` would do, with no side effects.
+
+        Returns the action's preview when it would run, or a plain-language reason
+        it would not (unknown id, disabled feature, invalid options, or missing
+        consent). Powers a profile's dry-run preview (WATCH-6).
+        """
+        action = self.get(action_id)
+        if action is None:
+            return f"Unknown watch action: {action_id}"
+        if not self.is_feature_enabled(action):
+            return f"The feature for action '{action.label}' is turned off, so nothing would run."
+        opts: Mapping[str, object] = options or {}
+        problems = action.validate(opts)
+        if problems:
+            return f"Would not run: {problems[0]}"
+        if getattr(action, "requires_consent", False) and not bool(opts.get("consent")):
+            return f"Would not run: action '{action.label}' needs per-profile consent first."
+        return action.preview(item, opts)
+
 
 def default_registry(
     *,
     feature_enabled: Callable[[str], bool] | None = None,
     on_open: Callable[[Path], None] | None = None,
+    on_convert: Callable[[Path, str], Path] | None = None,
+    on_run_macro: Callable[[Path, str], None] | None = None,
+    on_ai: Callable[[Path, Mapping[str, object]], WatchActionOutcome] | None = None,
+    sandbox_runner: Callable[..., object] | None = None,
 ) -> WatchActionRegistry:
     """Build a registry pre-populated with the built-in actions and placeholders."""
     registry = WatchActionRegistry(feature_enabled=feature_enabled)
     registry.register(OpenAction(on_open=on_open))
     registry.register(MoveAction())
+    registry.register(CopyAction())
+    registry.register(ConvertAction(on_convert=on_convert))
+    registry.register(RunMacroAction(on_run_macro=on_run_macro))
+    registry.register(RunPythonTransformAction(runner=sandbox_runner))
+    registry.register(AiAction(on_ai=on_ai))
     registry.register(
         UnavailableAction(
             action_id="glow_audit",
@@ -291,8 +580,13 @@ __all__ = [
     "OUTCOME_DONE",
     "OUTCOME_FAILED",
     "OUTCOME_SKIPPED",
+    "AiAction",
+    "ConvertAction",
+    "CopyAction",
     "MoveAction",
     "OpenAction",
+    "RunMacroAction",
+    "RunPythonTransformAction",
     "UnavailableAction",
     "WatchAction",
     "WatchActionOutcome",
