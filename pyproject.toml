@@ -110,6 +110,10 @@ select = ["E", "F", "I", "UP", "B"]
 "scripts/build_windows_distribution.py" = ["E501"]
 "scripts/local_ai_editing_proof.py" = ["E501"]
 "tests/unit/core/ai/test_foundation_models.py" = ["E402", "E501"]
+# This test asserts the exact long Inno Setup script lines emitted by
+# scripts/build_windows_distribution.py (which itself carries the same E501
+# ignore); wrapping the literal installer directives would obscure the match.
+"tests/unit/scripts/test_build_windows_distribution.py" = ["E501"]
 # py2app requires patching finalize_options before importing the platform
 # shell-integration module, so that import is deliberately late.
 "setup_macos.py" = ["E402"]

@@ -720,7 +720,8 @@ class ReadAloudController:
         if normalized_engine == "openvoice":
             if not openvoice_consent:
                 raise ReadAloudUnavailableError(
-                    "OpenVoice requires explicit consent before use. Enable consent in Speech settings."
+                    "OpenVoice requires explicit consent before use. "
+                    "Enable consent in Speech settings."
                 )
             if discover_openvoice_executable(openvoice_executable) is None:
                 raise ReadAloudUnavailableError("OpenVoice executable was not found")
@@ -930,7 +931,8 @@ class ReadAloudController:
         source = next((path for path in candidates if path.exists()), None)
         if source is None:
             raise ReadAloudUnavailableError(
-                "DECtalk dictionary dtalk_us.dic was not found. Configure dictionary path in Speech settings."
+                "DECtalk dictionary dtalk_us.dic was not found. "
+                "Configure dictionary path in Speech settings."
             )
         if source.resolve() == target.resolve():
             return
@@ -965,7 +967,8 @@ class ReadAloudController:
             exit_code = process.wait(timeout=2)
             if exit_code != 0 and not (self._stop_event.is_set() or self._pause_event.is_set()):
                 raise ReadAloudUnavailableError(
-                    f"DECtalk exited with code {exit_code}. Check executable and dictionary settings."
+                    f"DECtalk exited with code {exit_code}. "
+                    "Check executable and dictionary settings."
                 )
         finally:
             self._active_process = None

@@ -3166,9 +3166,16 @@ P2 quality, typing, performance, IO, docs, tests (new)</h4>
 <td>Resolve ruff debt across quill, tests, scripts</td>
 <td>Code quality</td>
 <td>S</td>
-<td>Todo</td>
-<td>The 113 plus 36 ruff findings are fixed or explicitly justified;
-ruff is clean in continuous integration.</td>
+<td>Done</td>
+<td>All ruff findings across <code>quill</code>, <code>tests</code>, and
+<code>scripts</code> are fixed or explicitly justified. The final E501
+backlog (43 lines: 27 in
+<code>main_frame.py</code>/<code>read_aloud.py</code> wrapped via
+implicit string concatenation, 16 inherent installer-script literals
+given a documented per-file ignore mirroring the script under test) is
+cleared, so <code>ruff check .</code> runs with no
+<code>--ignore E501</code> in CI or pre-commit. Format, full lint, and
+scoped mypy are clean; full suite 739 passed.</td>
 </tr>
 <tr>
 <td>CQ-19</td>
@@ -3245,64 +3252,73 @@ constant.</td>
 <td>Type <code>ipc.py</code> handle and guard fcntl</td>
 <td>Typing</td>
 <td>S</td>
-<td>Todo</td>
-<td>mypy clean for <code>ipc.py</code> in the strict zone.</td>
+<td>Done</td>
+<td><code>mypy quill/core/ipc.py</code> reports no issues in the strict
+zone (typed file-lock handles, fcntl attr guards from CQ-7).</td>
 </tr>
 <tr>
 <td>TYPE-2</td>
 <td>Annotate <code>bw_speech.py</code></td>
 <td>Typing</td>
 <td>S</td>
-<td>Todo</td>
-<td>mypy clean for <code>bw_speech.py</code>.</td>
+<td>Done</td>
+<td><code>mypy quill/core/bw_speech.py</code> reports no issues in the
+strict zone.</td>
 </tr>
 <tr>
 <td>TYPE-3</td>
 <td>Fix <code>read_aloud.py</code> kokoro ignore</td>
 <td>Typing</td>
 <td>S</td>
-<td>Todo</td>
-<td>mypy clean for the kokoro import.</td>
+<td>Done</td>
+<td><code>mypy quill/core/read_aloud.py</code> reports no issues; the
+kokoro import is covered by the <code>ignore_missing_imports</code>
+override.</td>
 </tr>
 <tr>
 <td>TYPE-4</td>
 <td>Annotate <code>dictation.py</code> recognizer</td>
 <td>Typing</td>
 <td>S</td>
-<td>Todo</td>
-<td>mypy clean for <code>dictation.py</code>.</td>
+<td>Done</td>
+<td><code>mypy quill/core/dictation.py</code> reports no issues in the
+strict zone.</td>
 </tr>
 <tr>
 <td>TYPE-5</td>
 <td>Annotate <code>io/pages.py</code></td>
 <td>Typing</td>
 <td>S</td>
-<td>Todo</td>
-<td>mypy clean for <code>pages.py</code>.</td>
+<td>Done</td>
+<td><code>mypy quill/io/pages.py</code> reports no issues in the strict
+zone.</td>
 </tr>
 <tr>
 <td>TYPE-6</td>
 <td>Annotate <code>io/structured.py</code> and add openpyxl stubs</td>
 <td>Typing</td>
 <td>S</td>
-<td>Todo</td>
-<td>mypy clean for <code>structured.py</code> (with BUG-6).</td>
+<td>Done</td>
+<td><code>mypy quill/io/structured.py</code> reports no issues; openpyxl
+is covered by the <code>ignore_missing_imports</code> override.</td>
 </tr>
 <tr>
 <td>TYPE-7</td>
 <td>Type the llama.cpp backend handle</td>
 <td>Typing</td>
 <td>S</td>
-<td>Todo</td>
-<td>mypy clean for <code>llama_cpp_backend.py</code>.</td>
+<td>Done</td>
+<td><code>mypy quill/core/ai/llama_cpp_backend.py</code> reports no
+issues in the strict zone.</td>
 </tr>
 <tr>
 <td>TYPE-8</td>
 <td>Annotate <code>ai/assistant.py</code></td>
 <td>Typing</td>
 <td>S</td>
-<td>Todo</td>
-<td>mypy clean for <code>ai/assistant.py</code>.</td>
+<td>Done</td>
+<td><code>mypy quill/core/ai/assistant.py</code> reports no issues in
+the strict zone.</td>
 </tr>
 <tr>
 <td>PERF-10</td>
@@ -4991,10 +5007,10 @@ FLAG-3, FLAG-4</td>
 <td>Tier 4</td>
 <td>Structural health and performance</td>
 <td>29</td>
-<td>0</td>
-<td>29</td>
-<td>CQ-16, CQ-1, GATE-11, TYPE-1..8, CQ-18, PERF-1..3, PERF-9..14,
-GATE-10, SEC-6, SEC-7, SEC-8, SEC-14..17</td>
+<td>9</td>
+<td>20</td>
+<td>CQ-16, CQ-1, GATE-11, PERF-1..3, PERF-9..14, GATE-10, SEC-6, SEC-7,
+SEC-8, SEC-14..17</td>
 </tr>
 <tr>
 <td>Tier 5</td>
@@ -5018,8 +5034,8 @@ CQ-23, CQ-24, LINUX-2</td>
 <td><strong>Total</strong></td>
 <td>All tiers</td>
 <td><strong>164</strong></td>
-<td><strong>21</strong></td>
-<td><strong>143</strong></td>
+<td><strong>30</strong></td>
+<td><strong>134</strong></td>
 <td></td>
 </tr>
 </tbody>

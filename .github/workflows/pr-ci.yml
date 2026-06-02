@@ -30,11 +30,12 @@ jobs:
         run: |
           ruff format --check .
       - name: Lint
-        # E501 (line-length) cleanup is tracked under CQ-18 in Tier 4 and is
-        # excluded here so the gate reflects what is already clean; every other
-        # rule (undefined names, imports, bugbear, pyupgrade) is enforced.
+        # CQ-18 complete: line-length (E501) is now clean across first-party
+        # source, so the full rule set is enforced with no exclusions. The only
+        # remaining E501 exceptions are deliberate per-file ignores (installer
+        # script literals) declared in pyproject.toml.
         run: |
-          ruff check . --ignore E501
+          ruff check .
 
   unit-tests:
     # GATE-5: the full suite must pass and coverage of quill/core and quill/io

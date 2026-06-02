@@ -733,7 +733,7 @@ These extend the section 14 tracker. Priorities follow the same scheme. The conf
 
 | ID | Item | Area | Size | Status | Acceptance criteria |
 | --- | --- | --- | --- | --- | --- |
-| CQ-18 | Resolve ruff debt across quill, tests, scripts | Code quality | S | Todo | The 113 plus 36 ruff findings are fixed or explicitly justified; ruff is clean in continuous integration. |
+| CQ-18 | Resolve ruff debt across quill, tests, scripts | Code quality | S | Done | All ruff findings across `quill`, `tests`, and `scripts` are fixed or explicitly justified. The final E501 backlog (43 lines: 27 in `main_frame.py`/`read_aloud.py` wrapped via implicit string concatenation, 16 inherent installer-script literals given a documented per-file ignore mirroring the script under test) is cleared, so `ruff check .` runs with no `--ignore E501` in CI or pre-commit. Format, full lint, and scoped mypy are clean; full suite 739 passed. |
 | CQ-19 | Verify and harden atomic write on Windows | Code quality | S | Todo | Writes use `os.replace` with retry on transient `PermissionError`; a test simulates contention. |
 | CQ-20 | Define version pre-release ordering | Code quality | S | Todo | Release-candidate ordering is intentional and documented; test covers it. |
 | CQ-21 | Guard TOML parsing in compliance | Code quality | S | Todo | A corrupted `pyproject.toml` produces a clear error, not a silent abort. |
@@ -742,14 +742,14 @@ These extend the section 14 tracker. Priorities follow the same scheme. The conf
 | CQ-24 | Read Aloud backend fallback tests | Code quality | M | Todo | Each backend and the fallback order is tested with stubs. |
 | CQ-25 | Add dependency lockfile and CI timeouts | Build | M | Todo | Dependencies are pinned for release runs; long commands have timeouts. |
 | CQ-26 | Make the embeddable Python hash configurable | Build | S | Todo | The Windows build reads the expected hash from config, not a code constant. |
-| TYPE-1 | Type `ipc.py` handle and guard fcntl | Typing | S | Todo | mypy clean for `ipc.py` in the strict zone. |
-| TYPE-2 | Annotate `bw_speech.py` | Typing | S | Todo | mypy clean for `bw_speech.py`. |
-| TYPE-3 | Fix `read_aloud.py` kokoro ignore | Typing | S | Todo | mypy clean for the kokoro import. |
-| TYPE-4 | Annotate `dictation.py` recognizer | Typing | S | Todo | mypy clean for `dictation.py`. |
-| TYPE-5 | Annotate `io/pages.py` | Typing | S | Todo | mypy clean for `pages.py`. |
-| TYPE-6 | Annotate `io/structured.py` and add openpyxl stubs | Typing | S | Todo | mypy clean for `structured.py` (with BUG-6). |
-| TYPE-7 | Type the llama.cpp backend handle | Typing | S | Todo | mypy clean for `llama_cpp_backend.py`. |
-| TYPE-8 | Annotate `ai/assistant.py` | Typing | S | Todo | mypy clean for `ai/assistant.py`. |
+| TYPE-1 | Type `ipc.py` handle and guard fcntl | Typing | S | Done | `mypy quill/core/ipc.py` reports no issues in the strict zone (typed file-lock handles, fcntl attr guards from CQ-7). |
+| TYPE-2 | Annotate `bw_speech.py` | Typing | S | Done | `mypy quill/core/bw_speech.py` reports no issues in the strict zone. |
+| TYPE-3 | Fix `read_aloud.py` kokoro ignore | Typing | S | Done | `mypy quill/core/read_aloud.py` reports no issues; the kokoro import is covered by the `ignore_missing_imports` override. |
+| TYPE-4 | Annotate `dictation.py` recognizer | Typing | S | Done | `mypy quill/core/dictation.py` reports no issues in the strict zone. |
+| TYPE-5 | Annotate `io/pages.py` | Typing | S | Done | `mypy quill/io/pages.py` reports no issues in the strict zone. |
+| TYPE-6 | Annotate `io/structured.py` and add openpyxl stubs | Typing | S | Done | `mypy quill/io/structured.py` reports no issues; openpyxl is covered by the `ignore_missing_imports` override. |
+| TYPE-7 | Type the llama.cpp backend handle | Typing | S | Done | `mypy quill/core/ai/llama_cpp_backend.py` reports no issues in the strict zone. |
+| TYPE-8 | Annotate `ai/assistant.py` | Typing | S | Done | `mypy quill/core/ai/assistant.py` reports no issues in the strict zone. |
 | PERF-10 | Stream and cache Read Aloud audio | Performance | M | Todo | Long-document synthesis does not spike memory; identical sentences are cached. |
 | PERF-11 | Cap or stream spreadsheet reads | Performance | S | Todo | Large sheets do not exhaust memory; a row cap or streaming applies. |
 | PERF-12 | Stream DOCX and PPTX off the UI thread | Performance | M | Todo | Large office files do not block the UI thread. |
@@ -1129,10 +1129,10 @@ This table tracks how many of the backlog IDs each tier names are still open. It
 | Tier 1 | Protect users and unlock the team | 23 | 23 | 0 | (complete) |
 | Tier 2 | Flagship experience | 43 | 7 | 36 | QK-2, QK-9, NAV-1, NAV-4, SEL-3, OCR-1..5, AGENT-1, AI-7, AI-1, AI-6, AI-13, AI-15, AI-17, AI-14, AI-16, SET-1..7, FEAT-19, WATCH-1..7, FLAG-3, FLAG-4 |
 | Tier 3 | GLOW accessibility engine | 8 | 0 | 8 | GLOW-1..7, WATCH-8 |
-| Tier 4 | Structural health and performance | 29 | 0 | 29 | CQ-16, CQ-1, GATE-11, TYPE-1..8, CQ-18, PERF-1..3, PERF-9..14, GATE-10, SEC-6, SEC-7, SEC-8, SEC-14..17 |
+| Tier 4 | Structural health and performance | 29 | 9 | 20 | CQ-16, CQ-1, GATE-11, PERF-1..3, PERF-9..14, GATE-10, SEC-6, SEC-7, SEC-8, SEC-14..17 |
 | Tier 5 | BITS Whisperer transcription | 28 | 0 | 28 | BW-1..10, WATCH-9, NAV-10, AI-11, AI-12, AI-18, FEAT-12..18, LINUX-1, ECO-1, L10N-1, COLLAB-1 |
 | Tier 6 | Documentation and learning surface | 33 | 0 | 33 | DOC-14..17, DOC-11, DOC-12, DOC-1..8, POD-1..5, TUT-1..7, CQ-11..15, CQ-23, CQ-24, LINUX-2 |
-| **Total** | All tiers | **164** | **21** | **143** | |
+| **Total** | All tiers | **164** | **30** | **134** | |
 
 Completed outside the formal tier lists (cross-cutting protections and quality work that the tiers reference only by theme): SEC-3 (OCR language allowlist), SEC-5 (verified TLS everywhere), GATE-1 (pre-commit), PERF-8 (documented scoped type-check), and A11Y-1 (announcement grammar). The GATE-3/CQ-7 cleanup also incidentally cleared the `quill/core` and `quill/io` portion of the TYPE-1..8 zone, though those formal rows stay open until each is individually verified and closed.
 

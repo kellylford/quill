@@ -5312,7 +5312,11 @@ class MainFrame:
             self._refresh_statusbar()
             return
         self._quill_feedback(
-            "QUILL browse mode active. A links, L lists, I list items, T tables, Q block quotes, B bookmarks, apostrophe code blocks, C table of contents, P paragraphs, S sentences, H headings, 1 through 6 heading levels, right bracket skips forward past list or table, left bracket skips backward, Shift+Escape refreshes cache, Escape exits.",
+            "QUILL browse mode active. A links, L lists, I list items, T tables, "
+            "Q block quotes, B bookmarks, apostrophe code blocks, C table of contents, "
+            "P paragraphs, S sentences, H headings, 1 through 6 heading levels, "
+            "right bracket skips forward past list or table, left bracket skips backward, "
+            "Shift+Escape refreshes cache, Escape exits.",
             status_message="QUILL browse mode active",
             sound_kind="enter",
         )
@@ -8307,7 +8311,8 @@ class MainFrame:
                     "*.toml;*.xml;*.csv;*.tsv;*.ipynb;*.sqlite;*.db;*.doc;*.docx;*.ppt;*.pptx;*.epub;*.pages;*.pdf;*.odt;*.rtf)|"
                     "*.txt;*.md;*.html;"
                     "*.htm;*.xhtml;*.json;*.yaml;*.yml;*.toml;*.xml;*.csv;*.tsv;"
-                    "*.ipynb;*.sqlite;*.db;*.doc;*.docx;*.ppt;*.pptx;*.epub;*.pages;*.pdf;*.odt;*.rtf|All files (*.*)|*.*"
+                    "*.ipynb;*.sqlite;*.db;*.doc;*.docx;*.ppt;*.pptx;*.epub;*.pages;"
+                    "*.pdf;*.odt;*.rtf|All files (*.*)|*.*"
                 ),
                 style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
             ) as dialog:
@@ -8419,7 +8424,8 @@ class MainFrame:
         self.editor.SetInsertionPoint(target)
         self.editor.SetSelection(target, target)
         self._set_status(
-            f"Moved cursor to line {line if line is not None else 1}, column {column if column is not None else 1}"
+            f"Moved cursor to line {line if line is not None else 1}, "
+            f"column {column if column is not None else 1}"
         )
 
     def _cursor_position_for_line_column(
@@ -10180,7 +10186,8 @@ class MainFrame:
             "## Links\n\n" + md_links(self._ABOUT_LINKS) + "\n\n"
             "## Contributors on GitHub\n\n" + md_links(self._ABOUT_GITHUB_LINKS) + "\n\n"
             "## Dependencies and attributions\n\n"
-            "The tables below are generated from declared project metadata and installed package metadata. "
+            "The tables below are generated from declared project metadata and "
+            "installed package metadata. "
             "They include dependency versions, licenses, and upstream links.\n\n"
             "### Declared dependencies\n\n" + dependency_table + "\n\n"
             "### Bundled components and data sources\n\n" + bundled_table + "\n\n"
@@ -10268,10 +10275,12 @@ class MainFrame:
 
         return (
             "<h1 id='whisperer-about'>BITS Whisperer and Quill</h1>"
-            "<p>The future is bright. BITS Whisperer patterns are being evaluated for selective adoption "
+            "<p>The future is bright. BITS Whisperer patterns are being evaluated "
+            "for selective adoption "
             "inside Quill to improve accessibility, reliability, and creative flow.</p>"
             "<h2 id='what-is-coming'>What Is Coming</h2>"
-            "<p>Quill will progressively absorb proven ideas from BITS Whisperer in focused phases, "
+            "<p>Quill will progressively absorb proven ideas from BITS Whisperer "
+            "in focused phases, "
             "while preserving Quill's writing-first experience.</p>"
             "<h2 id='roadmap'>Integration Roadmap</h2>"
             "<table>"
@@ -10287,7 +10296,8 @@ class MainFrame:
             "<h2 id='experience-principles'>Experience Principles</h2>"
             "<table>"
             "<caption>User experience principles guiding the integration</caption>"
-            "<thead><tr><th scope='col'>Principle</th><th scope='col'>How it applies</th></tr></thead>"
+            "<thead><tr><th scope='col'>Principle</th>"
+            "<th scope='col'>How it applies</th></tr></thead>"
             f"<tbody>{principles_html}</tbody>"
             "</table>"
             "<h2 id='next-steps'>Next Steps</h2>"
@@ -13369,7 +13379,8 @@ class MainFrame:
                 return
             self.settings.read_aloud_openvoice_rate = v
             consent = self._show_message_box(
-                "OpenVoice can apply advanced voice style transforms. Enable this only if you consent\n"
+                "OpenVoice can apply advanced voice style transforms. "
+                "Enable this only if you consent\n"
                 "to advanced style processing workflows for this machine.",
                 _TITLE,
                 wx.YES_NO | wx.ICON_QUESTION,
@@ -13811,7 +13822,8 @@ class MainFrame:
             f"faster-whisper engine: {'Ready' if ok else 'Not installed'}",
             engine_status,
             "",
-            "This is a phased rollout. Additional BITS Whisperer capabilities will arrive gradually.",
+            "This is a phased rollout. Additional BITS Whisperer capabilities "
+            "will arrive gradually.",
         ]
         self._show_message_box("\n".join(status), "BITS Whisperer Speech Models", self._wx.OK)
         self._set_status("BITS Whisperer speech model status shown")
@@ -13940,7 +13952,8 @@ class MainFrame:
         lines.extend(f"- {step}" for step in readiness.next_steps)
         lines.append("")
         lines.append(
-            "Providers are staged intentionally in this phase; runtime provider routing remains gated."
+            "Providers are staged intentionally in this phase; "
+            "runtime provider routing remains gated."
         )
         self._show_message_box("\n".join(lines), "BITS Whisperer Providers", self._wx.OK)
         self._set_status("BITS Whisperer provider status shown")
@@ -14135,7 +14148,8 @@ class MainFrame:
             f"<li>Configured provider: {html.escape(str(snapshot['provider_name']))}</li>"
             f"<li>Speech model mode: {html.escape(str(snapshot['speech_model_mode']))}</li>"
             f"<li>Configured speech model: {html.escape(str(snapshot['speech_model_id']))}</li>"
-            f"<li>Downloaded whisper models: {snapshot['downloaded_model_count']} of {snapshot['available_model_count']}</li>"
+            f"<li>Downloaded whisper models: {snapshot['downloaded_model_count']} "
+            f"of {snapshot['available_model_count']}</li>"
             "</ul>"
         )
 
@@ -15027,7 +15041,8 @@ class MainFrame:
             )
         if not bw_download_rows:
             bw_download_rows.append(
-                "<tr><td colspan='5'>No BITS Whisperer model downloads have run in this session.</td></tr>"
+                "<tr><td colspan='5'>No BITS Whisperer model downloads "
+                "have run in this session.</td></tr>"
             )
 
         task_rows: list[str] = []
@@ -15057,7 +15072,8 @@ class MainFrame:
 
         return (
             "<h1 id='status-page'>Quill Application Status</h1>"
-            "<p>This page reports current runtime status for features, speech setup, and background downloads/tasks.</p>"
+            "<p>This page reports current runtime status for features, speech setup, "
+            "and background downloads/tasks.</p>"
             "<h2 id='runtime-overview'>Runtime Overview</h2>"
             "<table>"
             "<caption>Current runtime summary</caption>"
@@ -15106,12 +15122,16 @@ class MainFrame:
             f"<tbody>{''.join(feature_rows)}</tbody></table>"
             "<h2 id='recommended-actions'>Recommended Actions</h2>"
             "<ul>"
-            "<li>Open BITS Whisperer &gt; Providers &gt; Provider Center for staged onboarding guidance.</li>"
-            "<li>Open BITS Whisperer &gt; Speech Models to choose recommended or manual model setup.</li>"
+            "<li>Open BITS Whisperer &gt; Providers &gt; Provider Center "
+            "for staged onboarding guidance.</li>"
+            "<li>Open BITS Whisperer &gt; Speech Models to choose "
+            "recommended or manual model setup.</li>"
             "<li>Open AI &gt; Speech &gt; Settings to configure engine-specific paths.</li>"
             "<li>Open AI &gt; Speech &gt; Voice to preview voices and variants.</li>"
-            "<li>Open AI &gt; Speech &gt; Generate Audio to run asynchronous speech output jobs.</li>"
-            "<li>Open Tools &gt; Support &gt; Show Notifications for detailed alerts and outcomes.</li>"
+            "<li>Open AI &gt; Speech &gt; Generate Audio to run "
+            "asynchronous speech output jobs.</li>"
+            "<li>Open Tools &gt; Support &gt; Show Notifications for "
+            "detailed alerts and outcomes.</li>"
             "</ul>"
         )
 
@@ -16402,7 +16422,8 @@ class MainFrame:
 
         intro_html = (
             "<h1 id='insert-link-title' tabindex='-1'>Insert Link</h1>"
-            "<p>Enter the text to display and the destination URL. Then tab to the buttons below.</p>"
+            "<p>Enter the text to display and the destination URL. "
+            "Then tab to the buttons below.</p>"
         )
 
         html_pane = wxhtml.HtmlWindow(dialog)
@@ -16410,7 +16431,8 @@ class MainFrame:
             "<!doctype html><html><head><meta charset='utf-8'>"
             "<meta name='viewport' content='width=device-width, initial-scale=1'>"
             "<style>body{font-family:Segoe UI,Arial,sans-serif;line-height:1.5;margin:12px 14px;}"
-            "h1{margin:0 0 .5rem 0;} p{margin:0 0 .75rem 0;} :focus{outline:2px solid Highlight;}</style>"
+            "h1{margin:0 0 .5rem 0;} p{margin:0 0 .75rem 0;} "
+            ":focus{outline:2px solid Highlight;}</style>"
             "</head><body>"
             f"{intro_html}"
             "</body></html>"
@@ -19641,7 +19663,8 @@ class MainFrame:
         dialog = wx.RichMessageDialog(
             self.frame,
             "Start guided setup now?\n\n"
-            "Choose Yes to continue through profile, AI, assistant, speech, and watch folder setup.",
+            "Choose Yes to continue through profile, AI, assistant, speech, "
+            "and watch folder setup.",
             "Startup Wizard",
             wx.YES_NO | wx.ICON_QUESTION,
         )
@@ -19761,7 +19784,8 @@ class MainFrame:
 
         return (
             "<h1 id='startup-wizard'>Startup Wizard</h1>"
-            "<p>This guided setup prepares Quill for your preferred writing, AI, and speech experience.</p>"
+            "<p>This guided setup prepares Quill for your preferred writing, "
+            "AI, and speech experience.</p>"
             "<h2 id='progress'>Current Setup Progress</h2>"
             "<table>"
             "<caption>Wizard setup status</caption>"
@@ -19779,10 +19803,12 @@ class MainFrame:
             "<li>Every step uses keyboard-first dialogs with clear announcements.</li>"
             "<li>You can cancel any step and rerun Startup Wizard from the Help menu.</li>"
             "<li>No speech downloads occur without explicit confirmation.</li>"
-            "<li>BITS Whisperer onboarding changes setup defaults only; runtime routing remains staged.</li>"
+            "<li>BITS Whisperer onboarding changes setup defaults only; "
+            "runtime routing remains staged.</li>"
             "</ul>"
             "<h2 id='where-next'>After Wizard</h2>"
-            "<p>Open Help > Status Page (HTML Preview) to monitor task activity, feature state, and speech setup health.</p>"
+            "<p>Open Help > Status Page (HTML Preview) to monitor task activity, "
+            "feature state, and speech setup health.</p>"
         )
 
     def _show_bw_onboarding(self, force: bool) -> None:
@@ -19923,7 +19949,8 @@ class MainFrame:
         wx = self._wx
         start_setup = self._show_message_box(
             "Set up speech engines now?\n\n"
-            "You can download/configure DECtalk, eSpeak-NG, Piper, Kokoro, MeloTTS, Chatterbox, and OpenVoice.\n"
+            "You can download/configure DECtalk, eSpeak-NG, Piper, Kokoro, "
+            "MeloTTS, Chatterbox, and OpenVoice.\n"
             "You can always change these later in AI > Speech > Settings.",
             "Speech Setup",
             wx.ICON_QUESTION | wx.YES_NO,
