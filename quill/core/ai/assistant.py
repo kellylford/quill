@@ -95,10 +95,33 @@ _OPERATION_PROMPTS: dict[str, str] = {
 def make_default_backend() -> AIBackend:
     """Pick the best available backend for this platform.
 
-    macOS with Apple Intelligence -> Foundation Models (on-device); otherwise
-    (Windows, Linux, or macOS without Apple Intelligence) -> llama.cpp CPU.
+    When the user has configured an AI connection (AI-13), the selected provider
+    actually responds: a saved connection that is not "off" and reports itself
+    available routes generation to ``ProviderChatBackend``. Otherwise generation
+    falls back to the bundled on-device model: macOS with Apple Intelligence ->
+    Foundation Models; everywhere else -> llama.cpp CPU.
     """
     import sys
+
+    # Honor an explicitly configured provider first (AI-13). The presence of the
+    # connection file marks a deliberate user choice; an unconfigured install has
+    # no file and falls through to the bundled local backend.
+    try:
+        from quill.core.assistant_ai import (
+            assistant_connection_path,
+            load_assistant_connection_settings,
+        )
+
+        if assistant_connection_path().exists():
+            settings = load_assistant_connection_settings()
+            if settings.provider.strip().lower() != "off":
+                from quill.core.ai.provider_backend import ProviderChatBackend
+
+                backend = ProviderChatBackend(settings)
+                if backend.is_available()[0]:
+                    return backend
+    except Exception:  # noqa: BLE001 - any failure falls back to the local model
+        pass
 
     if sys.platform == "darwin":
         try:

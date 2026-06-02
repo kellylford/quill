@@ -57,6 +57,12 @@ _REVIEWED_EGRESS: dict[str, str] = {
         "User-initiated model discovery from the AI Connection dialog (Verify "
         "Connection / List Models). HTTPS uses a verified context."
     ),
+    "core/assistant_ai.py::_post_chat": (
+        "AI generation against the user's explicitly configured provider (AI-13). "
+        "Only runs when the user has set up an AI connection and invokes an "
+        "assistant action; HTTPS uses a verified context and cloud endpoints are "
+        "HTTPS-enforced by _validate_endpoint_security."
+    ),
     "core/ai/model_manager.py::_download": (
         "User-initiated local AI model download; verified TLS for HTTPS, visible progress callback."
     ),

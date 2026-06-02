@@ -4369,12 +4369,18 @@ review (from section 18.4 and 18.5)</h5>
 <td>Wire configured providers to a real chat backend</td>
 <td>AI</td>
 <td>L</td>
-<td>Todo</td>
-<td>A provider-aware AIBackend routes generation to the selected
-provider (OpenAI/OpenRouter/custom and Azure via chat-completions,
+<td>Done</td>
+<td><code>generate_assistant_response</code> in
+<code>assistant_ai.py</code> routes generation to the selected provider
+(OpenAI/OpenRouter/custom/Azure/ollama_cloud via chat-completions,
 Claude via messages, Gemini via generateContent, local Ollama via
-/api/chat); selecting a cloud or Ollama provider actually changes who
-responds, verified by tests. This is the top AI fix.</td>
+/api/chat); <code>ProviderChatBackend</code> adapts it to the
+<code>AIBackend</code> interface, and <code>make_default_backend</code>
+returns it whenever a saved connection exists and is not Off and reports
+available, so selecting a cloud or Ollama provider actually changes who
+responds. Reuses the endpoint-security check, verified TLS,
+retry/backoff, and error taxonomy; new egress registered in the GATE-9
+audit. Verified by mocked-network tests.</td>
 </tr>
 <tr>
 <td>AI-14</td>
@@ -4391,31 +4397,39 @@ cleanly.</td>
 <td>Provider-specific correctness</td>
 <td>AI</td>
 <td>M</td>
-<td>Todo</td>
-<td>Azure targets a deployment (UI distinguishes deployment from model);
-Claude sends required max_tokens; Gemini uses its own request/response
-adapter; OpenRouter can send attribution headers; Ollama chat uses
-/api/chat.</td>
+<td>Done</td>
+<td>Azure targets a deployment in the URL
+(<code>/openai/deployments/&lt;deploy&gt;/chat/completions?api-version=...</code>)
+and omits the model from the body; Claude sends the required max_tokens;
+Gemini uses its own contents/generateContent request and parser;
+OpenRouter sends HTTP-Referer and X-Title attribution headers; Ollama
+chat uses /api/chat with stream=false. Each is covered by a contract
+test.</td>
 </tr>
 <tr>
 <td>AI-16</td>
 <td>Per-provider contract tests</td>
 <td>AI</td>
 <td>M</td>
-<td>Todo</td>
-<td>Recorded or mocked request/response tests cover each provider with
-no live network in CI; a provider schema change fails the build instead
-of silently breaking generation.</td>
+<td>Done</td>
+<td><code>test_provider_chat.py</code> covers each provider’s request
+shape (endpoint, body, headers) and response parsing with mocked
+request/response and no live network; a provider schema change fails the
+build instead of silently breaking generation.</td>
 </tr>
 <tr>
 <td>AI-17</td>
 <td>Extend the error taxonomy to the chat path</td>
 <td>AI</td>
 <td>S</td>
-<td>Todo</td>
-<td>The existing auth/forbidden/rate-limited/warming-up/timeout
-categories produce the same cause-specific, screen-reader-friendly
-messages for generation as they do for model listing.</td>
+<td>Done</td>
+<td>The chat path
+(<code>_post_chat</code>/<code>generate_assistant_response</code>)
+reuses the same
+auth/forbidden/rate-limited/warming-up/timeout/unreachable categories
+and cause-specific, screen-reader-friendly messages as model listing,
+with the same bounded warm-up retry; verified by 401/503/URLError
+tests.</td>
 </tr>
 <tr>
 <td>AI-18</td>
@@ -5325,11 +5339,11 @@ CQ-16) are counted once, in their primary tier.</p>
 <td>Tier 2</td>
 <td>Flagship experience</td>
 <td>58</td>
-<td>13</td>
-<td>45</td>
-<td>OCR-1..5, AGENT-1, AI-7, AI-1, AI-6, AI-13, AI-15, AI-17, AI-14,
-AI-16, AI-19..24, SET-1..7, SHARE-1..3, CTX-1, DICT-1..3, FEAT-19,
-WATCH-1..7, FLAG-3, FLAG-4, DLG-1</td>
+<td>17</td>
+<td>41</td>
+<td>OCR-1..5, AGENT-1, AI-7, AI-1, AI-6, AI-14, AI-19..24, SET-1..7,
+SHARE-1..3, CTX-1, DICT-1..3, FEAT-19, WATCH-1..7, FLAG-3, FLAG-4,
+DLG-1</td>
 </tr>
 <tr>
 <td>Tier 3</td>
@@ -5370,8 +5384,8 @@ CQ-23, CQ-24, LINUX-2</td>
 <td><strong>Total</strong></td>
 <td>All tiers</td>
 <td><strong>180</strong></td>
-<td><strong>36</strong></td>
-<td><strong>144</strong></td>
+<td><strong>40</strong></td>
+<td><strong>140</strong></td>
 <td></td>
 </tr>
 </tbody>

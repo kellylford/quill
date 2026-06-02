@@ -781,3 +781,203 @@ def _delete_api_key_from_credential_manager() -> None:
         delete_generic_credential(_ASSISTANT_CREDENTIAL_TARGET)
     except OSError:
         return
+
+
+# --- Chat generation (AI-13, AI-15, AI-17) --------------------------------
+#
+# A configured cloud or Ollama provider must actually produce the response,
+# instead of generation silently falling back to the bundled local model. These
+# functions build the per-provider request, parse the per-provider response, and
+# reuse the same endpoint-security check, verified TLS context, retry/backoff,
+# and error taxonomy as model listing so the chat path reports the same
+# cause-specific, screen-reader-friendly messages.
+
+_DEFAULT_MAX_TOKENS = 1024
+# Providers whose chat API is OpenAI chat-completions compatible.
+_OPENAI_COMPATIBLE = frozenset({"openai", "openrouter", "custom", "ollama_cloud"})
+
+
+def chat_endpoint(provider: str, host: str, model: str) -> str:
+    """Return the chat endpoint URL for a provider (pure; no network)."""
+    normalized = provider.strip().lower()
+    host = host.rstrip("/")
+    if normalized == "claude":
+        return f"{host}/v1/messages"
+    if normalized == "gemini":
+        return f"{host}/v1beta/models/{quote(model)}:generateContent"
+    if normalized == "azure_openai":
+        # Azure targets a *deployment* in the path, not a model in the body.
+        version = quote("2024-10-21")
+        return f"{host}/openai/deployments/{quote(model)}/chat/completions?api-version={version}"
+    if normalized == "ollama":
+        return f"{host}/api/chat"
+    return f"{host}/v1/chat/completions"
+
+
+def build_chat_body(
+    provider: str, model: str, prompt: str, *, max_tokens: int = _DEFAULT_MAX_TOKENS
+) -> dict[str, object]:
+    """Return the JSON request body for a provider's chat API (pure)."""
+    normalized = provider.strip().lower()
+    user_message = {"role": "user", "content": prompt}
+    if normalized == "claude":
+        # Claude requires an explicit max_tokens.
+        return {
+            "model": model,
+            "max_tokens": max_tokens,
+            "messages": [user_message],
+        }
+    if normalized == "gemini":
+        return {"contents": [{"role": "user", "parts": [{"text": prompt}]}]}
+    if normalized == "ollama":
+        return {"model": model, "messages": [user_message], "stream": False}
+    if normalized == "azure_openai":
+        # The deployment is in the URL, so the body omits the model.
+        return {"messages": [user_message], "max_tokens": max_tokens}
+    return {"model": model, "messages": [user_message], "max_tokens": max_tokens}
+
+
+def build_chat_headers(provider: str, host: str, api_key: str) -> dict[str, str]:
+    """Return chat request headers, including OpenRouter attribution (pure)."""
+    headers = _build_auth_headers(provider, host, api_key)
+    if provider.strip().lower() == "openrouter":
+        # Optional attribution headers OpenRouter uses for app ranking.
+        headers.setdefault("HTTP-Referer", "https://github.com/Community-Access/quill")
+        headers.setdefault("X-Title", "QUILL")
+    return headers
+
+
+def parse_chat_response(provider: str, payload: object) -> str | None:
+    """Extract the response text from a provider's chat payload (pure)."""
+    if not isinstance(payload, dict):
+        return None
+    normalized = provider.strip().lower()
+    if normalized == "claude":
+        content = payload.get("content")
+        if isinstance(content, list):
+            text = "".join(
+                str(block.get("text", "")) for block in content if isinstance(block, dict)
+            ).strip()
+            return text or None
+        return None
+    if normalized == "gemini":
+        candidates = payload.get("candidates")
+        if isinstance(candidates, list) and candidates:
+            first = candidates[0]
+            if isinstance(first, dict):
+                content = first.get("content")
+                if isinstance(content, dict):
+                    parts = content.get("parts")
+                    if isinstance(parts, list):
+                        text = "".join(
+                            str(part.get("text", "")) for part in parts if isinstance(part, dict)
+                        ).strip()
+                        return text or None
+        return None
+    if normalized == "ollama":
+        message = payload.get("message")
+        if isinstance(message, dict):
+            text = str(message.get("content", "")).strip()
+            return text or None
+        response = payload.get("response")
+        if isinstance(response, str):
+            return response.strip() or None
+        return None
+    # OpenAI-compatible: openai, openrouter, custom, ollama_cloud, azure_openai.
+    choices = payload.get("choices")
+    if isinstance(choices, list) and choices:
+        first = choices[0]
+        if isinstance(first, dict):
+            message = first.get("message")
+            if isinstance(message, dict):
+                text = str(message.get("content", "")).strip()
+                return text or None
+            text_value = first.get("text")
+            if isinstance(text_value, str):
+                return text_value.strip() or None
+    return None
+
+
+def _post_chat(
+    endpoint: str,
+    headers: dict[str, str],
+    body: bytes,
+    provider: str,
+    *,
+    timeout_seconds: float,
+) -> tuple[str | None, _FetchError | None]:
+    request = Request(endpoint, data=body, headers=headers, method="POST")
+    try:
+        with urlopen(request, timeout=timeout_seconds, context=_context_for(endpoint)) as response:
+            payload = json.loads(response.read().decode("utf-8", errors="replace"))
+    except HTTPError as exc:
+        category = _category_for_status(exc.code)
+        return None, _FetchError(
+            category,
+            _message_for_category(category, endpoint=endpoint, status_code=exc.code),
+            exc.code,
+        )
+    except URLError as exc:
+        category = _category_for_url_error(exc)
+        return None, _FetchError(
+            category, _message_for_category(category, endpoint=endpoint, reason=exc.reason)
+        )
+    except TimeoutError:
+        return None, _FetchError("timeout", _message_for_category("timeout", endpoint=endpoint))
+    except json.JSONDecodeError:
+        return None, _FetchError(
+            "bad_response", _message_for_category("bad_response", endpoint=endpoint)
+        )
+    text = parse_chat_response(provider, payload)
+    if text is None:
+        return None, _FetchError(
+            "bad_response", _message_for_category("bad_response", endpoint=endpoint)
+        )
+    return text, None
+
+
+def generate_assistant_response(
+    settings: AssistantConnectionSettings,
+    api_key: str,
+    prompt: str,
+    *,
+    max_tokens: int = _DEFAULT_MAX_TOKENS,
+    timeout_seconds: float = 60.0,
+    max_attempts: int = 3,
+) -> tuple[str | None, str | None]:
+    """Generate a chat response from the configured provider.
+
+    Returns ``(text, error)``: on success ``text`` is the response and ``error``
+    is ``None``; on failure ``text`` is ``None`` and ``error`` is a cause-specific
+    message from the shared taxonomy.
+    """
+    provider = settings.provider.strip().lower()
+    if provider == "off":
+        return None, "The AI provider is set to Off."
+    host = (settings.host or "").strip().rstrip("/") or default_host_for_provider(provider)
+    policy_error = _validate_endpoint_security(provider, host)
+    if policy_error:
+        return None, policy_error
+    model = (settings.model or "").strip() or default_model_for_provider(provider)
+    endpoint = chat_endpoint(provider, host, model)
+    headers = build_chat_headers(provider, host, api_key)
+    body = json.dumps(build_chat_body(provider, model, prompt, max_tokens=max_tokens)).encode(
+        "utf-8"
+    )
+
+    last_error: _FetchError | None = None
+    attempts = max(1, max_attempts)
+    for attempt in range(attempts):
+        text, error = _post_chat(endpoint, headers, body, provider, timeout_seconds=timeout_seconds)
+        if error is None:
+            return text, None
+        last_error = error
+        if error.category not in _RETRYABLE_CATEGORIES:
+            break
+        if attempt + 1 < attempts:
+            backoff = _RETRY_BACKOFF_SECONDS[min(attempt, len(_RETRY_BACKOFF_SECONDS) - 1)]
+            time.sleep(backoff)
+
+    if last_error is None:
+        return None, "Could not reach AI endpoint."
+    return None, last_error.message
