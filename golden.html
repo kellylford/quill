@@ -4930,7 +4930,7 @@ the too-few-turns and failed/blank-summary no-op paths.</td>
 <td>Language-agnostic stdio/JSON boundary for external engines</td>
 <td>AI</td>
 <td>M</td>
-<td>Todo</td>
+<td>In progress</td>
 <td>Derived from Pi’s RPC/JSON integration design (see
 <code>pi.md</code>), and the architectural keystone for adopting any
 non-Python engine from a Python app. Define one consented,
@@ -4939,7 +4939,31 @@ local subprocess speaking JSONL or MCP on stdio — spawned on demand,
 covered by the GATE-9 egress audit, with a clean unavailable path. This
 is the same boundary the Accessibility Agents work (<code>aa.md</code>)
 needs for its optional Node backend, so building it once de-risks both.
-Adopt the pattern, not the package.</td>
+Adopt the pattern, not the package. <strong>Delivered:</strong>
+<code>quill/core/ai/external_engine.py</code> is a complete, wx-free,
+strict-typed boundary. A master consent switch and a per-engine
+<code>enabled</code> flag are both <strong>off by default</strong> and
+persist under <code>&lt;app data&gt;/ai/external-engines.json</code>.
+<code>probe_engine</code> decides availability with a human reason
+(master off, engine off, no command, missing program);
+<code>run_request</code> spawns the configured program on demand, writes
+one JSONL request line to stdin, reads one JSONL response from stdout,
+and maps every ordinary failure (disabled, missing executable, non-zero
+exit, invalid JSON, timeout, engine-reported <code>error</code>) to a
+structured <code>EngineResult</code> with
+<code>ok</code>/<code>unavailable</code>/<code>error</code> — it never
+raises for the expected failure modes, giving callers the required clean
+unavailable path. The subprocess runner is injectable, so the boundary
+is fully tested (10 tests) without spawning real processes. The boundary
+is local-only (pipes, no sockets); QUILL opens no network connection, so
+it adds no new site to the GATE-9
+<code>urlopen</code>/<code>urlretrieve</code> egress inventory, and the
+off-by-default consent gate is the structural control. ruff + strict
+mypy clean. <strong>In progress (honest):</strong> the engine and
+consent/persistence layer are complete and tested, but no concrete
+external engine is shipped and the Settings UI to enable engines and
+configure their command is not yet wired, so this row stays In
+progress.</td>
 </tr>
 </tbody>
 </table>
@@ -5879,12 +5903,12 @@ the third table and are not part of either 1.0 list.</p>
 <td>Tier 2 — Flagship</td>
 <td>In progress</td>
 <td>SET-2, SET-3, MENU-1, MENU-5, AGENT-1, OCR-1, OCR-3, OCR-4, CTX-1,
-DICT-2, FEAT-19, DLG-1, AI-20, AI-22</td>
+DICT-2, FEAT-19, DLG-1, AI-20, AI-22, AI-24</td>
 </tr>
 <tr>
 <td>Tier 2 — Flagship</td>
 <td>Todo</td>
-<td>AI-19, AI-24</td>
+<td>AI-19</td>
 </tr>
 <tr>
 <td>Tier 4 — Structural health</td>
