@@ -2096,89 +2096,86 @@ and extends FEAT-9.</td>
 <td>Per-profile configuration and Settings group</td>
 <td>Features</td>
 <td>L</td>
-<td>In progress</td>
+<td>Done</td>
 <td>An accessible manager creates, edits, duplicates, enables, and
 deletes profiles. Each profile configures its folder, filters (suffix
 set, name patterns, min size and age, include-subfolders), action plus
-action options, schedule (always, interval, or quiet-hours window), and
-post-action handling (leave in place, move to a processed folder, or
-delete). A dedicated <strong>Watch Folders</strong> Settings group now
-holds the six global watch defaults (enable, default folder,
-include-subfolders, process-existing, auto-start, poll interval) and
-auto-renders in the tabbed dialog with per-setting reset, search, and
-export/import; the poll interval is clamped 2-300 s. Validation is live
-and errors are announced; the whole surface is keyboard and
-screen-reader navigable. Tests cover create/edit/delete, validation, and
-persistence.</td>
+action options, schedule (always, a daily active window, or a
+quiet-hours window), and post-action handling (leave in place, move to a
+processed folder, or delete). A dedicated <strong>Watch Folders</strong>
+Settings group holds the six global watch defaults (enable, default
+folder, include-subfolders, process-existing, auto-start, poll interval)
+and auto-renders in the tabbed dialog with per-setting reset, search,
+and export/import; the poll interval is clamped 2-300 s. The
+<strong>Edit Watch Profile</strong> dialog now exposes the full
+per-profile surface — suffixes and name patterns (comma lists), min size
+and age spinners, a schedule-mode chooser with start/end hour-and-minute
+spinners, per-action option controls (convert target, macro name,
+sandboxed Python code/suffix/timeout, AI mode), and a dry-run preview —
+all keyboard and screen-reader navigable with live, announced
+validation. <code>core.watch_profiles</code> carries
+<code>name_patterns</code> and
+<code>schedule_mode</code>/<code>schedule_start_minute</code>/<code>schedule_end_minute</code>,
+normalizes and validates them, and gates polling with
+<code>profile_is_active</code> (window and midnight-wrapping
+quiet-hours). Tests cover create/edit/delete, validation, persistence,
+name-pattern matching, schedule activeness, and the UI surface
+contract.</td>
 </tr>
 <tr>
 <td>WATCH-6</td>
 <td>Watch safety, consent, and resource governance</td>
 <td>Features</td>
 <td>M</td>
-<td>In progress</td>
+<td>Done</td>
 <td>Networked and AI watch actions stay opt-in per profile under the
 no-silent-network promise (AI-5): nothing reaches a cloud without
-explicit per-profile consent, and provider, model, and scope are shown.
-Wall-clock and concurrency caps (shared with the Python sandbox limits,
-SEC-9) prevent a runaway folder from overwhelming the machine;
-termination is announced. A dry-run preview shows exactly what a profile
-would do before it is armed. The atomic claim from WATCH-3 prevents
-double-processing. Tests cover the consent gate, the resource cap,
-dry-run, and the claim. The <code>core</code> layer now enforces the
+explicit per-profile consent, and the active provider/model and scope
+are shown in the profile editor before arming. Wall-clock and
+concurrency caps (shared with the Python sandbox limits, SEC-9) prevent
+a runaway folder from overwhelming the machine; a cap termination is now
+announced distinctly (“Watch stopped … it exceeded the time limit and
+was terminated to protect your machine”) rather than as a plain failure.
+A dry-run preview, surfaced by a <strong>Preview (dry run)</strong>
+button in the profile editor, shows exactly what a profile would do (or
+why it would not) before it is armed. The atomic claim from WATCH-3
+prevents double-processing. The <code>core</code> layer enforces the
 consent gate (<code>WatchActionRegistry.run</code> returns an announced
 <code>skipped</code> outcome for any <code>requires_consent</code>
 action — currently the AI action — until the profile carries explicit
 <code>options["consent"] is True</code>) and exposes a side-effect-free
-<code>WatchActionRegistry.dry_run(...)</code> that returns a
-plain-language preview of what a profile would do (or the reason it
-would not: unknown action, disabled feature, invalid options, or missing
-consent). The sandboxed Python transform action honors a clamped
-wall-clock timeout shared with SEC-9, and the single-threaded worker
-already serializes processing (concurrency of one). Tests cover the
-consent gate (skipped without consent, runs with consent), dry-run
-(runnable preview, invalid options, missing consent, unknown action).
-Remaining: the per-profile consent UI that shows provider/model/scope
-before arming, surfacing the dry-run preview in the profile manager, and
-announcing resource-cap termination.</td>
+<code>WatchActionRegistry.dry_run(...)</code>. Tests cover the consent
+gate (skipped without consent, runs with consent), dry-run (runnable
+preview, invalid options, missing consent, unknown action), the
+resource-cap classifier and its distinct announcement, and the atomic
+claim.</td>
 </tr>
 <tr>
 <td>WATCH-7</td>
 <td>Built-in watch actions</td>
 <td>Features</td>
 <td>M</td>
-<td>In progress</td>
-<td>Ship the core action set on top of WATCH-2: Open, Convert or export
-to a chosen format (via the existing IO and Pandoc paths),
-Move/copy/archive to a destination, Run a named macro (FEAT-7), Run a
-saved Python transform (sandboxed, SEC-9), and consented AI actions
-(summarize, tag, rewrite to a style) via the assistant. Each action
-validates its options, announces its outcome, and routes failures to the
-queue’s failed state with a clear reason. Tests cover each action’s
-happy path and its failure path. The full action set now ships in
-<code>quill/core/watch_actions.py</code> and registers through
-<code>default_registry</code>: <code>OpenAction</code>,
-<code>MoveAction</code>, the new <code>CopyAction</code> (copy to a
-destination, original left in place), <code>ConvertAction</code> (export
-to a chosen format via a caller-supplied IO/Pandoc handler),
-<code>RunMacroAction</code> (open and replay a named macro via a
-caller-supplied editor handler), <code>RunPythonTransformAction</code>
-(read the file’s text, run a saved transform through the SEC-9 sandbox
-with a clamped timeout, write the result in place or to a suffixed
-file), and the consent-gated <code>AiAction</code>
-(summarize/tag/rewrite via a caller-supplied handler, refused until
-per-profile consent). Each validates its options, returns
-<code>done</code>/<code>failed</code> outcomes that route through the
-queue’s lifecycle, and offers a <code>preview</code> for dry-run
-(WATCH-6). Open, Move, Copy, and the sandboxed Python transform are
-fully functional; Convert, Run macro, and consented AI are implemented
-and unit-tested at the registry seam and wired through
-<code>WatchService</code>/<code>default_registry</code>, awaiting the UI
-to supply their handlers (the same callback pattern
-<code>OpenAction</code> already uses). Tests cover each action’s happy
-and failure paths (copy, convert with/without handler, macro, Python
-transform success/failure/suffixed output, AI consent gate and
-modes).</td>
+<td>Done</td>
+<td>The core action set ships on top of WATCH-2 and is fully wired into
+the UI: Open, Convert/export to a chosen format (via the existing IO and
+Pandoc paths), Move/copy/archive to a destination, Run a named macro
+(FEAT-7), Run a saved Python transform (sandboxed, SEC-9), and consented
+AI actions (summarize, tag, rewrite) via the assistant.
+<code>quill/core/watch_actions.py</code> registers
+<code>OpenAction</code>, <code>MoveAction</code>,
+<code>CopyAction</code>, <code>ConvertAction</code>,
+<code>RunMacroAction</code>, <code>RunPythonTransformAction</code>, and
+the consent-gated <code>AiAction</code> through
+<code>default_registry</code>; <code>MainFrame</code> now supplies the
+real handlers (<code>_watch_convert_file</code> runs Pandoc off the UI
+thread and writes the result, <code>_watch_run_macro</code> marshals
+macro replay onto the UI thread, <code>_watch_run_ai</code> honors the
+AI on/off switch and writes a sidecar so the editor is never
+overwritten). Each action validates its options, announces its outcome,
+and routes failures to the queue’s failed state with a clear reason,
+including the distinct resource-cap termination announcement. Tests
+cover each action’s happy and failure paths at the registry seam plus
+the UI handler wiring and behaviour.</td>
 </tr>
 <tr>
 <td>FEAT-16</td>
@@ -5584,11 +5581,11 @@ CQ-16) are counted once, in their primary tier.</p>
 <td>Tier 2</td>
 <td>Flagship experience</td>
 <td>58</td>
-<td>29</td>
-<td>29</td>
+<td>32</td>
+<td>26</td>
 <td>OCR-1..5, AGENT-1, AI-7, AI-1, AI-6, AI-14, AI-19, AI-20, AI-22,
-AI-24, SET-1..4, SET-7, SHARE-1..2, CTX-1, DICT-2, FEAT-19, WATCH-5..7,
-FLAG-3, DLG-1</td>
+AI-24, SET-1..4, SET-7, SHARE-1..2, CTX-1, DICT-2, FEAT-19, FLAG-3,
+DLG-1</td>
 </tr>
 <tr>
 <td>Tier 4</td>
@@ -5699,8 +5696,8 @@ the third table and are not part of either 1.0 list.</p>
 <tr>
 <td>Tier 2 — Flagship</td>
 <td>In progress</td>
-<td>SET-1, SET-2, SET-3, SET-4, SET-7, SHARE-1, SHARE-2, WATCH-5,
-WATCH-6, WATCH-7, MENU-1, MENU-5, AGENT-1</td>
+<td>SET-1, SET-2, SET-3, SET-4, SET-7, SHARE-1, SHARE-2, MENU-1, MENU-5,
+AGENT-1</td>
 </tr>
 <tr>
 <td>Tier 2 — Flagship</td>
@@ -5748,8 +5745,8 @@ GATE-8, GATE-9, FLAG-1, FLAG-2</td>
 <td>Tier 2 — Flagship</td>
 <td>QK-1, QK-2, QK-3, QK-4, QK-5, QK-9, NAV-1, NAV-4, NAV-5, SEL-1,
 SEL-2, SEL-3, AI-13, AI-15, AI-16, AI-17, AI-21, AI-23, WATCH-1,
-WATCH-2, WATCH-3, WATCH-4, SET-5, SET-6, SHARE-3, FLAG-4, MENU-3,
-DICT-1</td>
+WATCH-2, WATCH-3, WATCH-4, WATCH-5, WATCH-6, WATCH-7, SET-5, SET-6,
+SHARE-3, FLAG-4, MENU-3, DICT-1</td>
 </tr>
 <tr>
 <td>Tier 4 — Structural health</td>
@@ -5811,6 +5808,71 @@ note), and A11Y-1 (announcement grammar). The GATE-3/CQ-7 cleanup also
 incidentally cleared the <code>quill/core</code> and
 <code>quill/io</code> portion of the TYPE-1..8 zone, though those formal
 rows stay open until each is individually verified and closed.</p>
+<h4
+id="watch-profiles-finished-watch-5-watch-6-and-watch-7-landed-done-end-to-end">2026-06-06:
+Watch Profiles finished — WATCH-5, WATCH-6, and WATCH-7 landed Done end
+to end</h4>
+<p>The three open Watch Profiles items moved from In progress to
+<strong>Done</strong>, completing the accessible automation hub (a
+folder, an action, a queue) end to end across <code>core</code>,
+<code>io</code>, and the wxPython UI.</p>
+<ul>
+<li><strong>WATCH-5 (Done):</strong>
+<code>quill/core/watch_profiles.py</code> gained per-profile
+<code>name_patterns</code> (fnmatch globs) and a schedule
+(<code>schedule_mode</code> of always, a daily active window, or a
+midnight-wrapping quiet-hours window, plus start/end minute-of-day), all
+normalized, validated (a zero-width window is rejected), and
+round-tripped through <code>to_dict</code>/<code>from_dict</code>;
+<code>profile_is_active(...)</code> gates the poll loop. The
+<strong>Edit Watch Profile</strong> dialog was rebuilt to expose the
+full surface — suffix and name-pattern comma lists, min-size and min-age
+spinners, a schedule-mode chooser with hour/minute spinners, per-action
+option controls (convert target, macro name, sandboxed Python
+code/suffix/timeout, AI mode), and a <strong>Preview (dry run)</strong>
+button — all stock-control, keyboard, and screen-reader navigable with
+announced validation. Parenting stays panel to panel-sizer to root per
+the dialog contract.</li>
+<li><strong>WATCH-6 (Done):</strong> the per-profile AI consent control
+now shows the active provider/model and scope
+(<code>_watch_ai_consent_detail</code> reads the resolved model spec)
+before arming; the dry-run preview is surfaced via the editor’s Preview
+button (<code>registry.dry_run(...)</code>, side-effect-free); and a
+resource-cap termination is announced distinctly —
+<code>_on_watch_queue_event</code> classifies a SEC-9 sandbox wall-clock
+kill (“Execution timed out”) via
+<code>_watch_message_is_resource_cap</code> and announces “Watch stopped
+… it exceeded the time limit and was terminated to protect your machine”
+instead of a plain failure. The consent gate and atomic claim were
+already enforced in <code>core</code>.</li>
+<li><strong>WATCH-7 (Done):</strong> <code>MainFrame</code> now supplies
+the real built-in action handlers the registry was awaiting —
+<code>_watch_convert_file</code> (Pandoc off the UI thread, writes the
+converted file), <code>_watch_run_macro</code> (marshals macro replay
+onto the UI thread), and <code>_watch_run_ai</code> (honors the AI
+on/off switch, writes a <code>.{mode}.md</code> sidecar so the editor is
+never overwritten) — wired into <code>WatchService</code> via
+<code>on_convert</code>/<code>on_run_macro</code>/<code>on_ai</code>.
+Open, Move, Copy, and sandboxed Python were already functional; the
+action set is now complete end to end.</li>
+<li>Tests: the core schedule/name-pattern and active-window behaviour is
+covered in <code>tests/unit/core/test_watch_profiles.py</code>; the UI
+wiring, handlers, filters/schedule/per-action/consent/dry-run surface,
+the resource-cap classifier, and the distinct cap-termination
+announcement are covered in
+<code>tests/unit/ui/test_main_frame_watch_service.py</code>. The full
+<code>tests/unit/core</code> and <code>tests/unit/ui</code> suites are
+green (971 passed, 2 skipped), the accessibility suite passes, and the
+UI public-surface characterization snapshot was refreshed.</li>
+<li>Counts: WATCH-5, WATCH-6, and WATCH-7 close, moving Tier 2 to
+<strong>32 of 58 done (26 remaining)</strong> and the QUILL 1.0 scope to
+<strong>69 of 144 done (75 remaining)</strong>. Quality gates: ruff
+format/check clean on all touched files, strict mypy clean on the
+touched <code>quill/core</code> modules (<code>watch_profiles.py</code>,
+<code>watch_actions.py</code>), and the menu and dialog (A11Y-4)
+contract guards pass. <code>dialogs.md</code> gained a row for the
+<strong>Preview (dry run)</strong> result dialog.</li>
+</ul>
 <h4
 id="settingssharing-set-5-and-share-3-landed-done-share-1-and-share-2-dialogs-landed-in-progress">2026-06-06:
 Settings/sharing — SET-5 and SHARE-3 landed Done; SHARE-1 and SHARE-2

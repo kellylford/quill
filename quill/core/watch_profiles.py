@@ -13,12 +13,14 @@ This module is UI-framework-agnostic: no ``wx`` imports.
 
 from __future__ import annotations
 
+import fnmatch
 import logging
 import threading
 import time
 import uuid
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 
 from .watch_queue import WatchQueue
@@ -31,12 +33,22 @@ _DEFAULT_POLL_SECONDS = 5
 _MIN_POLL_SECONDS = 2
 _MAX_POLL_SECONDS = 300
 _MIN_FILE_AGE_SECONDS = 2.0
+_MINUTES_PER_DAY = 24 * 60
 
 #: Post-action handling for a source file once its action succeeds.
 POST_LEAVE = "leave"
 POST_MOVE = "move"
 POST_DELETE = "delete"
 _POST_ACTIONS = frozenset({POST_LEAVE, POST_MOVE, POST_DELETE})
+
+#: Schedule mode controlling *when* a profile's poller is active.
+#: ``always`` polls continuously; ``window`` polls only inside a daily
+#: time-of-day window (the active interval); ``quiet_hours`` polls
+#: continuously except inside the window (the quiet interval).
+SCHED_ALWAYS = "always"
+SCHED_WINDOW = "window"
+SCHED_QUIET = "quiet_hours"
+_SCHEDULE_MODES = frozenset({SCHED_ALWAYS, SCHED_WINDOW, SCHED_QUIET})
 
 _DEFAULT_SUFFIXES = (
     ".txt",
@@ -64,6 +76,15 @@ def _clean_suffix(suffix: str) -> str:
     return suffix
 
 
+def _clean_pattern(pattern: str) -> str:
+    return pattern.strip()
+
+
+def _clamp_minute(value: object) -> int:
+    minute = _as_int(value, 0)
+    return max(0, min(_MINUTES_PER_DAY - 1, minute))
+
+
 @dataclass(frozen=True, slots=True)
 class WatchProfile:
     """One named watch rule binding a folder to a single action."""
@@ -75,9 +96,13 @@ class WatchProfile:
     include_subfolders: bool = False
     process_existing: bool = False
     suffixes: tuple[str, ...] = _DEFAULT_SUFFIXES
+    name_patterns: tuple[str, ...] = ()
     min_size_bytes: int = 1
     min_age_seconds: float = _MIN_FILE_AGE_SECONDS
     poll_interval_seconds: int = _DEFAULT_POLL_SECONDS
+    schedule_mode: str = SCHED_ALWAYS
+    schedule_start_minute: int = 0
+    schedule_end_minute: int = 0
     action_id: str = "open"
     action_options: dict[str, object] = field(default_factory=dict)
     post_action: str = POST_LEAVE
@@ -87,7 +112,11 @@ class WatchProfile:
         interval = int(self.poll_interval_seconds or _DEFAULT_POLL_SECONDS)
         interval = max(_MIN_POLL_SECONDS, min(_MAX_POLL_SECONDS, interval))
         suffixes = tuple(dict.fromkeys(s for s in (_clean_suffix(x) for x in self.suffixes) if s))
+        patterns = tuple(
+            dict.fromkeys(p for p in (_clean_pattern(x) for x in self.name_patterns) if p)
+        )
         post = self.post_action if self.post_action in _POST_ACTIONS else POST_LEAVE
+        mode = self.schedule_mode if self.schedule_mode in _SCHEDULE_MODES else SCHED_ALWAYS
         return WatchProfile(
             profile_id=self.profile_id or uuid.uuid4().hex,
             name=str(self.name).strip() or "Untitled profile",
@@ -96,9 +125,13 @@ class WatchProfile:
             include_subfolders=bool(self.include_subfolders),
             process_existing=bool(self.process_existing),
             suffixes=suffixes or _DEFAULT_SUFFIXES,
+            name_patterns=patterns,
             min_size_bytes=max(0, int(self.min_size_bytes)),
             min_age_seconds=max(0.0, float(self.min_age_seconds)),
             poll_interval_seconds=interval,
+            schedule_mode=mode,
+            schedule_start_minute=_clamp_minute(self.schedule_start_minute),
+            schedule_end_minute=_clamp_minute(self.schedule_end_minute),
             action_id=str(self.action_id).strip() or "open",
             action_options=dict(self.action_options),
             post_action=post,
@@ -119,6 +152,11 @@ class WatchProfile:
                 problems.append("Choose a destination folder for processed files.")
             elif not Path(destination).expanduser().is_dir():
                 problems.append(f"Destination folder does not exist: {destination}")
+        if (
+            normalized.schedule_mode in {SCHED_WINDOW, SCHED_QUIET}
+            and normalized.schedule_start_minute == normalized.schedule_end_minute
+        ):
+            problems.append("Choose a start and end time that differ for the schedule window.")
         return problems
 
     def to_dict(self) -> dict[str, object]:
@@ -130,9 +168,13 @@ class WatchProfile:
             "include_subfolders": self.include_subfolders,
             "process_existing": self.process_existing,
             "suffixes": list(self.suffixes),
+            "name_patterns": list(self.name_patterns),
             "min_size_bytes": self.min_size_bytes,
             "min_age_seconds": self.min_age_seconds,
             "poll_interval_seconds": self.poll_interval_seconds,
+            "schedule_mode": self.schedule_mode,
+            "schedule_start_minute": self.schedule_start_minute,
+            "schedule_end_minute": self.schedule_end_minute,
             "action_id": self.action_id,
             "action_options": dict(self.action_options),
             "post_action": self.post_action,
@@ -146,6 +188,11 @@ class WatchProfile:
             suffixes = tuple(str(s) for s in suffixes_raw)
         else:
             suffixes = _DEFAULT_SUFFIXES
+        patterns_raw = raw.get("name_patterns")
+        if isinstance(patterns_raw, (list, tuple)):
+            patterns = tuple(str(p) for p in patterns_raw)
+        else:
+            patterns = ()
         options_raw = raw.get("action_options")
         options = dict(options_raw) if isinstance(options_raw, dict) else {}
         return cls(
@@ -156,9 +203,13 @@ class WatchProfile:
             include_subfolders=bool(raw.get("include_subfolders", False)),
             process_existing=bool(raw.get("process_existing", False)),
             suffixes=suffixes,
+            name_patterns=patterns,
             min_size_bytes=_as_int(raw.get("min_size_bytes"), 1),
             min_age_seconds=_as_float(raw.get("min_age_seconds"), _MIN_FILE_AGE_SECONDS),
             poll_interval_seconds=_as_int(raw.get("poll_interval_seconds"), _DEFAULT_POLL_SECONDS),
+            schedule_mode=str(raw.get("schedule_mode", SCHED_ALWAYS)),
+            schedule_start_minute=_as_int(raw.get("schedule_start_minute"), 0),
+            schedule_end_minute=_as_int(raw.get("schedule_end_minute"), 0),
             action_id=str(raw.get("action_id", "open")),
             action_options=options,
             post_action=str(raw.get("post_action", POST_LEAVE)),
@@ -195,12 +246,17 @@ def iter_matching_files(profile: WatchProfile, *, now: float | None = None) -> I
         return
     moment = time.time() if now is None else now
     suffixes = set(profile.suffixes)
+    patterns = profile.name_patterns
     pattern = "**/*" if profile.include_subfolders else "*"
     candidates: list[Path] = []
     for candidate in folder.glob(pattern):
         if not candidate.is_file():
             continue
         if candidate.suffix.lower() not in suffixes:
+            continue
+        if patterns and not any(
+            fnmatch.fnmatch(candidate.name.lower(), pat.lower()) for pat in patterns
+        ):
             continue
         try:
             stat = candidate.stat()
@@ -213,6 +269,41 @@ def iter_matching_files(profile: WatchProfile, *, now: float | None = None) -> I
         candidates.append(candidate)
     candidates.sort(key=lambda path: path.name.lower())
     yield from candidates
+
+
+def _within_window(minute: int, start: int, end: int) -> bool:
+    """Return True when ``minute`` falls in the daily window ``[start, end)``.
+
+    Supports windows that wrap past midnight (``start > end``), e.g. 22:00-07:00.
+    A zero-width window (``start == end``) is treated as empty.
+    """
+    if start == end:
+        return False
+    if start < end:
+        return start <= minute < end
+    return minute >= start or minute < end
+
+
+def profile_is_active(profile: WatchProfile, *, now: datetime | None = None) -> bool:
+    """Return whether ``profile``'s schedule permits polling at ``now``.
+
+    ``always`` is always active. ``window`` is active only inside the daily
+    time-of-day window. ``quiet_hours`` is active everywhere except inside the
+    window. The poller consults this before each scan so a profile stays armed
+    but dormant outside its schedule.
+    """
+    normalized = profile.normalized()
+    mode = normalized.schedule_mode
+    if mode == SCHED_ALWAYS:
+        return True
+    moment = datetime.now() if now is None else now
+    minute = moment.hour * 60 + moment.minute
+    inside = _within_window(
+        minute, normalized.schedule_start_minute, normalized.schedule_end_minute
+    )
+    if mode == SCHED_WINDOW:
+        return inside
+    return not inside
 
 
 class WatchManager:
@@ -294,8 +385,9 @@ class WatchManager:
                 logger.exception("Watch prescan failed for profile %s", profile.profile_id)
         while not stop_event.is_set():
             try:
-                for path in iter_matching_files(profile):
-                    self._queue.enqueue(path, profile.profile_id, profile.action_id)
+                if profile_is_active(profile):
+                    for path in iter_matching_files(profile):
+                        self._queue.enqueue(path, profile.profile_id, profile.action_id)
             except Exception:  # isolated failure: log and keep polling
                 logger.exception("Watch scan failed for profile %s", profile.profile_id)
             stop_event.wait(float(profile.poll_interval_seconds))
@@ -305,8 +397,12 @@ __all__ = [
     "POST_DELETE",
     "POST_LEAVE",
     "POST_MOVE",
+    "SCHED_ALWAYS",
+    "SCHED_QUIET",
+    "SCHED_WINDOW",
     "SCHEMA_VERSION",
     "WatchManager",
     "WatchProfile",
     "iter_matching_files",
+    "profile_is_active",
 ]

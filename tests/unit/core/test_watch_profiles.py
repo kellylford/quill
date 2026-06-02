@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import time
+from datetime import datetime
 from pathlib import Path
 
 from quill.core.watch_profiles import (
     POST_LEAVE,
     POST_MOVE,
+    SCHED_QUIET,
+    SCHED_WINDOW,
     WatchManager,
     WatchProfile,
     iter_matching_files,
+    profile_is_active,
 )
 from quill.core.watch_queue import STATE_QUEUED, WatchQueue
 
@@ -94,6 +98,69 @@ def test_iter_matching_files_subfolders(tmp_path: Path) -> None:
     deep = WatchProfile(folder_path=str(tmp_path), suffixes=(".txt",), include_subfolders=True)
     assert list(iter_matching_files(flat)) == []
     assert [p.name for p in iter_matching_files(deep)] == ["deep.txt"]
+
+
+def test_iter_matching_files_applies_name_patterns(tmp_path: Path) -> None:
+    _make_old_file(tmp_path / "report-jan.txt")
+    _make_old_file(tmp_path / "report-feb.txt")
+    _make_old_file(tmp_path / "notes.txt")
+    profile = WatchProfile(
+        folder_path=str(tmp_path),
+        suffixes=(".txt",),
+        name_patterns=("report-*",),
+        min_size_bytes=1,
+    )
+    names = {p.name for p in iter_matching_files(profile)}
+    assert names == {"report-jan.txt", "report-feb.txt"}
+
+
+def test_name_patterns_round_trip(tmp_path: Path) -> None:
+    profile = WatchProfile(
+        folder_path=str(tmp_path),
+        name_patterns=(" *.LOG ", "draft-*"),
+    ).normalized()
+    assert profile.name_patterns == ("*.LOG", "draft-*")
+    restored = WatchProfile.from_dict(profile.to_dict())
+    assert restored.name_patterns == ("*.LOG", "draft-*")
+
+
+def test_schedule_always_is_active() -> None:
+    profile = WatchProfile().normalized()
+    assert profile_is_active(profile, now=datetime(2026, 6, 2, 3, 0))
+
+
+def test_schedule_window_active_only_inside() -> None:
+    # Active window 09:00-17:00.
+    profile = WatchProfile(
+        schedule_mode=SCHED_WINDOW,
+        schedule_start_minute=9 * 60,
+        schedule_end_minute=17 * 60,
+    ).normalized()
+    assert profile_is_active(profile, now=datetime(2026, 6, 2, 12, 0))
+    assert not profile_is_active(profile, now=datetime(2026, 6, 2, 8, 0))
+    assert not profile_is_active(profile, now=datetime(2026, 6, 2, 17, 0))
+
+
+def test_schedule_quiet_hours_wraps_midnight() -> None:
+    # Quiet 22:00-07:00 (wraps midnight): dormant inside, active outside.
+    profile = WatchProfile(
+        schedule_mode=SCHED_QUIET,
+        schedule_start_minute=22 * 60,
+        schedule_end_minute=7 * 60,
+    ).normalized()
+    assert not profile_is_active(profile, now=datetime(2026, 6, 2, 23, 30))
+    assert not profile_is_active(profile, now=datetime(2026, 6, 2, 2, 0))
+    assert profile_is_active(profile, now=datetime(2026, 6, 2, 12, 0))
+
+
+def test_schedule_window_zero_width_is_invalid() -> None:
+    profile = WatchProfile(
+        folder_path=".",
+        schedule_mode=SCHED_WINDOW,
+        schedule_start_minute=600,
+        schedule_end_minute=600,
+    )
+    assert any("schedule window" in p.lower() for p in profile.validate())
 
 
 def _wait_until(predicate, timeout: float = 3.0) -> bool:

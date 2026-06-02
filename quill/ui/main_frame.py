@@ -9,11 +9,11 @@ import threading
 import time
 import unicodedata
 import webbrowser
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 from urllib.error import URLError
 from uuid import uuid4
 
@@ -402,11 +402,16 @@ from quill.core.voice_commands import (
     resolve_voice_command,
     split_text_delta,
 )
+from quill.core.watch_actions import WatchActionOutcome, WatchItem
 from quill.core.watch_profiles import (
     POST_DELETE,
     POST_LEAVE,
     POST_MOVE,
+    SCHED_ALWAYS,
+    SCHED_QUIET,
+    SCHED_WINDOW,
     WatchProfile,
+    iter_matching_files,
 )
 from quill.core.watch_queue import (
     STATE_DONE,
@@ -910,6 +915,9 @@ class MainFrame:
             data_dir=app_data_dir(),
             feature_enabled=self._feature_enabled,
             on_open=lambda path: self._wx.CallAfter(self._on_watch_file_opened, path),
+            on_convert=self._watch_convert_file,
+            on_run_macro=self._watch_run_macro,
+            on_ai=self._watch_run_ai,
             queue_listener=lambda event, item: self._wx.CallAfter(
                 self._on_watch_queue_event,
                 event,
@@ -10760,9 +10768,7 @@ class MainFrame:
             self._show_message_box(str(exc), "Export", wx.ICON_ERROR | wx.OK)
             self._set_status("Export failed")
             return
-        self._set_status(
-            f"Saved {label} with {len(selected_ids)} section(s) to {target.name}"
-        )
+        self._set_status(f"Saved {label} with {len(selected_ids)} section(s) to {target.name}")
 
     def open_share_import_dialog(self) -> None:
         """SHARE-2: Import a profile or restore a backup, with preview and undo.
@@ -15924,6 +15930,41 @@ class MainFrame:
             process_existing.SetName("Process existing files on start")
             panel_sizer.Add(process_existing, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
+            # --- Filters (WATCH-5) ---
+            suffix_row = wx.BoxSizer(wx.HORIZONTAL)
+            suffix_label = wx.StaticText(panel, label="File types (comma separated)")
+            suffix_input = wx.TextCtrl(panel, value=", ".join(base.suffixes))
+            suffix_input.SetName("File type suffixes, comma separated")
+            suffix_row.Add(suffix_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+            suffix_row.Add(suffix_input, 1, wx.EXPAND)
+            panel_sizer.Add(suffix_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            pattern_row = wx.BoxSizer(wx.HORIZONTAL)
+            pattern_label = wx.StaticText(panel, label="Name patterns (comma separated)")
+            pattern_input = wx.TextCtrl(panel, value=", ".join(base.name_patterns))
+            pattern_input.SetName("File name patterns, comma separated")
+            pattern_row.Add(pattern_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+            pattern_row.Add(pattern_input, 1, wx.EXPAND)
+            panel_sizer.Add(pattern_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            size_row = wx.BoxSizer(wx.HORIZONTAL)
+            size_label = wx.StaticText(panel, label="Minimum size (bytes)")
+            size_input = wx.SpinCtrl(panel, min=0, max=1_000_000_000, initial=base.min_size_bytes)
+            size_input.SetName("Minimum file size in bytes")
+            size_row.Add(size_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+            size_row.Add(size_input, 0)
+            panel_sizer.Add(size_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            age_row = wx.BoxSizer(wx.HORIZONTAL)
+            age_label = wx.StaticText(panel, label="Minimum age (seconds)")
+            age_input = wx.SpinCtrlDouble(
+                panel, min=0.0, max=3600.0, inc=0.5, initial=base.min_age_seconds
+            )
+            age_input.SetName("Minimum file age in seconds")
+            age_row.Add(age_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+            age_row.Add(age_input, 0)
+            panel_sizer.Add(age_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
             interval_row = wx.BoxSizer(wx.HORIZONTAL)
             interval_label = wx.StaticText(panel, label="Poll interval (seconds)")
             interval_input = wx.SpinCtrl(panel, min=2, max=300, initial=base.poll_interval_seconds)
@@ -15931,6 +15972,47 @@ class MainFrame:
             interval_row.Add(interval_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
             interval_row.Add(interval_input, 0)
             panel_sizer.Add(interval_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            # --- Schedule (WATCH-5) ---
+            sched_modes = [SCHED_ALWAYS, SCHED_WINDOW, SCHED_QUIET]
+            sched_labels = [
+                "Always active",
+                "Active only during a daily window",
+                "Active except during quiet hours",
+            ]
+            sched_row = wx.BoxSizer(wx.HORIZONTAL)
+            sched_label = wx.StaticText(panel, label="Schedule")
+            sched_choice = wx.Choice(panel, choices=sched_labels)
+            sched_choice.SetName("Schedule mode")
+            sched_choice.SetSelection(
+                sched_modes.index(base.schedule_mode) if base.schedule_mode in sched_modes else 0
+            )
+            sched_row.Add(sched_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+            sched_row.Add(sched_choice, 1, wx.EXPAND)
+            panel_sizer.Add(sched_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            start_h, start_m = divmod(base.schedule_start_minute, 60)
+            end_h, end_m = divmod(base.schedule_end_minute, 60)
+            time_row = wx.BoxSizer(wx.HORIZONTAL)
+            time_row.Add(
+                wx.StaticText(panel, label="From"), 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4
+            )
+            start_hour = wx.SpinCtrl(panel, min=0, max=23, initial=start_h)
+            start_hour.SetName("Schedule start hour")
+            start_minute = wx.SpinCtrl(panel, min=0, max=59, initial=start_m)
+            start_minute.SetName("Schedule start minute")
+            time_row.Add(start_hour, 0, wx.RIGHT, 2)
+            time_row.Add(start_minute, 0, wx.RIGHT, 12)
+            time_row.Add(
+                wx.StaticText(panel, label="to"), 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4
+            )
+            end_hour = wx.SpinCtrl(panel, min=0, max=23, initial=end_h)
+            end_hour.SetName("Schedule end hour")
+            end_minute = wx.SpinCtrl(panel, min=0, max=59, initial=end_m)
+            end_minute.SetName("Schedule end minute")
+            time_row.Add(end_hour, 0, wx.RIGHT, 2)
+            time_row.Add(end_minute, 0)
+            panel_sizer.Add(time_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
             available = list(self._watch_service.registry.available_actions())
             action_ids = [action.action_id for action in available]
@@ -15959,6 +16041,113 @@ class MainFrame:
             action_dest_row.Add(action_dest_browse, 0)
             panel_sizer.Add(action_dest_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
+            # --- Per-action options (WATCH-7) ---
+            convert_formats = ["markdown", "html", "plain"]
+            convert_labels = ["Markdown", "HTML", "Plain text"]
+            convert_row = wx.BoxSizer(wx.HORIZONTAL)
+            convert_row.Add(
+                wx.StaticText(panel, label="Convert to"),
+                0,
+                wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+                8,
+            )
+            convert_choice = wx.Choice(panel, choices=convert_labels)
+            convert_choice.SetName("Convert target format")
+            current_fmt = str(base.action_options.get("target_format", "")).strip().lower()
+            convert_choice.SetSelection(
+                convert_formats.index(current_fmt) if current_fmt in convert_formats else 0
+            )
+            convert_row.Add(convert_choice, 1, wx.EXPAND)
+            panel_sizer.Add(convert_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            macro_names = sorted(getattr(getattr(self, "macros", None), "macros", {}) or {})
+            macro_row = wx.BoxSizer(wx.HORIZONTAL)
+            macro_row.Add(
+                wx.StaticText(panel, label="Macro to run"),
+                0,
+                wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+                8,
+            )
+            macro_input = wx.ComboBox(
+                panel,
+                value=str(base.action_options.get("macro_name", "")),
+                choices=macro_names,
+            )
+            macro_input.SetName("Macro name to run")
+            macro_row.Add(macro_input, 1, wx.EXPAND)
+            panel_sizer.Add(macro_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            panel_sizer.Add(
+                wx.StaticText(panel, label="Python transform (sandboxed)"),
+                0,
+                wx.LEFT | wx.RIGHT,
+                8,
+            )
+            python_code = wx.TextCtrl(
+                panel,
+                value=str(base.action_options.get("code", "")),
+                style=wx.TE_MULTILINE,
+                size=(-1, 80),
+            )
+            python_code.SetName("Python transform code")
+            panel_sizer.Add(python_code, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+            py_opts_row = wx.BoxSizer(wx.HORIZONTAL)
+            py_opts_row.Add(
+                wx.StaticText(panel, label="Output suffix"),
+                0,
+                wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+                4,
+            )
+            python_suffix = wx.TextCtrl(
+                panel, value=str(base.action_options.get("output_suffix", ""))
+            )
+            python_suffix.SetName("Python transform output suffix")
+            py_opts_row.Add(python_suffix, 1, wx.EXPAND | wx.RIGHT, 12)
+            py_opts_row.Add(
+                wx.StaticText(panel, label="Timeout (s)"),
+                0,
+                wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+                4,
+            )
+            python_timeout = wx.SpinCtrlDouble(
+                panel,
+                min=0.1,
+                max=60.0,
+                inc=0.5,
+                initial=float(base.action_options.get("timeout_seconds", 5.0) or 5.0),
+            )
+            python_timeout.SetName("Python transform timeout in seconds")
+            py_opts_row.Add(python_timeout, 0)
+            panel_sizer.Add(py_opts_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            ai_modes = ["summarize", "tag", "rewrite"]
+            ai_labels = ["Summarize", "Tag", "Rewrite"]
+            ai_row = wx.BoxSizer(wx.HORIZONTAL)
+            ai_row.Add(
+                wx.StaticText(panel, label="AI action"),
+                0,
+                wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+                8,
+            )
+            ai_choice = wx.Choice(panel, choices=ai_labels)
+            ai_choice.SetName("AI action mode")
+            current_ai = str(base.action_options.get("mode", "")).strip().lower()
+            ai_choice.SetSelection(ai_modes.index(current_ai) if current_ai in ai_modes else 0)
+            ai_row.Add(ai_choice, 1, wx.EXPAND)
+            panel_sizer.Add(ai_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+            consent_detail = self._watch_ai_consent_detail()
+            consent = wx.CheckBox(
+                panel,
+                label="I consent to send this folder's files to the AI model",
+            )
+            consent.SetValue(bool(base.action_options.get("consent", False)))
+            consent.SetName("AI consent for this profile")
+            panel_sizer.Add(consent, 0, wx.LEFT | wx.RIGHT, 8)
+            consent_text = wx.StaticText(panel, label=consent_detail)
+            consent_text.SetName("AI consent details")
+            panel_sizer.Add(consent_text, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
             post_choices = ["Leave file in place", "Move to folder", "Delete file"]
             post_values = [POST_LEAVE, POST_MOVE, POST_DELETE]
             post_row = wx.BoxSizer(wx.HORIZONTAL)
@@ -15982,6 +16171,10 @@ class MainFrame:
             post_dest_row.Add(post_dest_browse, 0)
             panel_sizer.Add(post_dest_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
+            preview_button = wx.Button(panel, label="Pre&view (dry run)")
+            preview_button.SetName("Preview the action without changing files")
+            panel_sizer.Add(preview_button, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
             def _pick_folder(target: object) -> None:
                 with wx.DirDialog(
                     dialog,
@@ -15992,9 +16185,91 @@ class MainFrame:
                     if self._show_modal_dialog(picker, title) == wx.ID_OK:
                         target.SetValue(picker.GetPath())
 
+            def _selected_action_id() -> str:
+                index = action_choice.GetSelection()
+                return action_ids[index] if 0 <= index < len(action_ids) else base.action_id
+
+            def _collect_options(action_id: str) -> dict[str, object]:
+                options: dict[str, object] = {}
+                if action_id in {"move", "copy"}:
+                    destination = action_dest_input.GetValue().strip()
+                    if destination:
+                        options["destination"] = destination
+                elif action_id == "convert":
+                    fmt_index = convert_choice.GetSelection()
+                    options["target_format"] = convert_formats[fmt_index if fmt_index >= 0 else 0]
+                elif action_id == "run_macro":
+                    macro_name = macro_input.GetValue().strip()
+                    if macro_name:
+                        options["macro_name"] = macro_name
+                elif action_id == "run_python":
+                    code = python_code.GetValue()
+                    if code.strip():
+                        options["code"] = code
+                    suffix = python_suffix.GetValue().strip()
+                    if suffix:
+                        options["output_suffix"] = suffix
+                    options["timeout_seconds"] = float(python_timeout.GetValue())
+                elif action_id == "ai":
+                    ai_index = ai_choice.GetSelection()
+                    options["mode"] = ai_modes[ai_index if ai_index >= 0 else 0]
+                    options["consent"] = bool(consent.GetValue())
+                return options
+
+            def _build_profile() -> WatchProfile:
+                action_id = _selected_action_id()
+                post_index = post_choice.GetSelection()
+                post_action = (
+                    post_values[post_index] if 0 <= post_index < len(post_values) else POST_LEAVE
+                )
+                sched_index = sched_choice.GetSelection()
+                schedule_mode = (
+                    sched_modes[sched_index]
+                    if 0 <= sched_index < len(sched_modes)
+                    else SCHED_ALWAYS
+                )
+                suffixes = tuple(
+                    part.strip() for part in suffix_input.GetValue().split(",") if part.strip()
+                )
+                name_patterns = tuple(
+                    part.strip() for part in pattern_input.GetValue().split(",") if part.strip()
+                )
+                return WatchProfile(
+                    profile_id=base.profile_id,
+                    name=name_input.GetValue().strip() or "Untitled profile",
+                    enabled=bool(enabled.GetValue()),
+                    folder_path=path_input.GetValue().strip(),
+                    include_subfolders=bool(include_subfolders.GetValue()),
+                    process_existing=bool(process_existing.GetValue()),
+                    suffixes=suffixes,
+                    name_patterns=name_patterns,
+                    min_size_bytes=int(size_input.GetValue()),
+                    min_age_seconds=float(age_input.GetValue()),
+                    poll_interval_seconds=int(interval_input.GetValue()),
+                    action_id=action_id,
+                    action_options=_collect_options(action_id),
+                    schedule_mode=schedule_mode,
+                    schedule_start_minute=int(start_hour.GetValue()) * 60
+                    + int(start_minute.GetValue()),
+                    schedule_end_minute=int(end_hour.GetValue()) * 60 + int(end_minute.GetValue()),
+                    post_action=post_action,
+                    post_action_destination=post_dest_input.GetValue().strip(),
+                ).normalized()
+
+            def _on_preview(_event: object) -> None:
+                candidate = _build_profile()
+                sample = self._watch_dry_run_sample(candidate)
+                preview = self._watch_service.registry.dry_run(
+                    candidate.action_id,
+                    WatchItem(source_path=sample, profile_id=candidate.profile_id),
+                    candidate.action_options,
+                )
+                self._show_message_box(preview, "Dry-run preview", wx.ICON_INFORMATION | wx.OK)
+
             path_browse.Bind(wx.EVT_BUTTON, lambda _event: _pick_folder(path_input))
             action_dest_browse.Bind(wx.EVT_BUTTON, lambda _event: _pick_folder(action_dest_input))
             post_dest_browse.Bind(wx.EVT_BUTTON, lambda _event: _pick_folder(post_dest_input))
+            preview_button.Bind(wx.EVT_BUTTON, _on_preview)
 
             panel.SetSizer(panel_sizer)
             ok_cancel = dialog.CreateButtonSizer(wx.OK | wx.CANCEL)
@@ -16007,36 +16282,7 @@ class MainFrame:
             if self._show_modal_dialog(dialog, title) != wx.ID_OK:
                 return None
 
-            action_index = action_choice.GetSelection()
-            action_id = (
-                action_ids[action_index] if 0 <= action_index < len(action_ids) else base.action_id
-            )
-            action_options: dict[str, object] = {}
-            destination = action_dest_input.GetValue().strip()
-            if action_id == "move" and destination:
-                action_options["destination"] = destination
-            post_index = post_choice.GetSelection()
-            post_action = (
-                post_values[post_index] if 0 <= post_index < len(post_values) else POST_LEAVE
-            )
-
-            updated = WatchProfile(
-                profile_id=base.profile_id,
-                name=name_input.GetValue().strip() or "Untitled profile",
-                enabled=bool(enabled.GetValue()),
-                folder_path=path_input.GetValue().strip(),
-                include_subfolders=bool(include_subfolders.GetValue()),
-                process_existing=bool(process_existing.GetValue()),
-                suffixes=base.suffixes,
-                min_size_bytes=base.min_size_bytes,
-                min_age_seconds=base.min_age_seconds,
-                poll_interval_seconds=int(interval_input.GetValue()),
-                action_id=action_id,
-                action_options=action_options,
-                post_action=post_action,
-                post_action_destination=post_dest_input.GetValue().strip(),
-            ).normalized()
-
+            updated = _build_profile()
             problems = updated.validate()
             if problems:
                 self._show_message_box(
@@ -16046,6 +16292,34 @@ class MainFrame:
                 )
                 return None
             return updated
+
+    def _watch_ai_consent_detail(self) -> str:
+        """Plain-language description of where AI watch actions send content (WATCH-6)."""
+        try:
+            from quill.core.ai.model_manager import load_model_choice, resolve_spec
+
+            spec = resolve_spec(load_model_choice())
+            return (
+                f"AI actions send each file's text to your selected model "
+                f"({spec.name}). This runs only when consent is ticked."
+            )
+        except Exception:  # noqa: BLE001 - never block the dialog on this lookup
+            return (
+                "AI actions send each file's text to your selected AI model. "
+                "This runs only when consent is ticked."
+            )
+
+    def _watch_dry_run_sample(self, profile: WatchProfile) -> Path:
+        """Pick a representative file for a dry-run preview without side effects."""
+        folder = Path(profile.folder_path) if profile.folder_path else None
+        if folder is not None and folder.is_dir():
+            try:
+                for candidate in iter_matching_files(profile):
+                    return candidate
+            except Exception:  # noqa: BLE001 - preview must never raise
+                pass
+            return folder / "example-file.txt"
+        return Path("example-file.txt")
 
     def _show_watch_folder_onboarding(self, force: bool) -> None:
         wx = self._wx
@@ -16080,11 +16354,138 @@ class MainFrame:
             source = getattr(item, "source_path", "")
             name = Path(source).name if source else "a file"
             message = getattr(item, "message", "") or "unknown error"
+            if self._watch_message_is_resource_cap(message):
+                # WATCH-6: a runaway action that hit the shared SEC-9 wall-clock
+                # cap is terminated; announce the termination distinctly so the
+                # user understands the machine was protected, not that their
+                # transform merely errored.
+                self._record_notification(
+                    f"Watch stopped {name}: it exceeded the time limit and was "
+                    "terminated to protect your machine.",
+                    "speech",
+                )
+                self._set_status(f"Watch stopped {name}: time limit exceeded")
+                return
             self._record_notification(
                 f"Watch failed for {name}: {message}",
                 "speech",
             )
             self._set_status(f"Watch failed for {name}")
+
+    @staticmethod
+    def _watch_message_is_resource_cap(message: str) -> bool:
+        """Return True when a failed watch item was terminated for a resource cap.
+
+        The SEC-9 Python sandbox reports a wall-clock kill as "Execution timed
+        out"; surface any timeout/limit phrasing as a resource-cap termination
+        so WATCH-6 can announce it distinctly (WATCH-6).
+        """
+        lowered = (message or "").lower()
+        return any(
+            phrase in lowered
+            for phrase in ("timed out", "timeout", "time limit", "exceeded", "resource cap")
+        )
+
+    # WATCH-7: built-in action handlers supplied to the watch action registry.
+    # These run on the watch worker thread, so file I/O is done directly here
+    # (the io layer is UI-agnostic) and any editor work is marshalled to the UI
+    # thread via wx.CallAfter.
+    _WATCH_CONVERT_KINDS: ClassVar[dict[str, tuple[str, str]]] = {
+        "markdown": ("markdown", ".md"),
+        "md": ("markdown", ".md"),
+        "gfm": ("markdown", ".md"),
+        "html": ("html", ".html"),
+        "htm": ("html", ".html"),
+        "plain": ("plain", ".txt"),
+        "text": ("plain", ".txt"),
+        "txt": ("plain", ".txt"),
+    }
+
+    def _watch_convert_file(self, path: Path, target_format: str) -> Path:
+        """Convert a detected file to ``target_format`` via Pandoc (WATCH-7).
+
+        Runs on the watch worker thread. Returns the written output path so the
+        queue can report and optionally open the result.
+        """
+        key = (target_format or "").strip().lower()
+        mapping = self._WATCH_CONVERT_KINDS.get(key)
+        if mapping is None:
+            raise ValueError(
+                f"Unsupported convert target '{target_format}'. Use markdown, html, or plain text."
+            )
+        output_kind, suffix = mapping
+        result = convert_document_with_pandoc(path, output_kind)
+        target = path.with_suffix(suffix)
+        if target == path:
+            target = path.with_name(f"{path.stem}.converted{suffix}")
+        target.write_text(result.text, encoding="utf-8")
+        return target
+
+    def _watch_run_macro(self, path: Path, macro_name: str) -> None:
+        """Open a detected file and replay a saved macro over it (WATCH-7).
+
+        Macro replay mutates the editor, so it must happen on the UI thread; the
+        worker thread marshals it through wx.CallAfter and returns immediately.
+        """
+        call_after = getattr(self._wx, "CallAfter", None)
+        if callable(call_after):
+            call_after(self._watch_run_macro_ui, path, macro_name)
+        else:  # pragma: no cover - fallback for headless test stubs
+            self._watch_run_macro_ui(path, macro_name)
+
+    def _watch_run_macro_ui(self, path: Path, macro_name: str) -> None:
+        try:
+            self.open_file(path, record_recent=True, refresh_existing=False)
+        except Exception:
+            self._set_status(f"Watch folder could not open {path.name}")
+            return
+        macros = getattr(self, "macros", None)
+        if macros is None or macro_name not in getattr(macros, "macros", {}):
+            self._set_status(f"Macro {macro_name} is no longer available")
+            return
+        try:
+            macros.play_macro(macro_name, self.commands.run)
+        except KeyError:
+            self._set_status(f"Macro {macro_name} is no longer available")
+            return
+        self._set_status(f"Ran macro {macro_name} on {path.name}")
+
+    def _watch_run_ai(self, path: Path, options: Mapping[str, object]) -> WatchActionOutcome:
+        """Run a consented AI action over a detected file (WATCH-7, AI-5, WATCH-6).
+
+        Runs on the watch worker thread. Honors the AI on/off switch and writes
+        the result to a sidecar file so nothing in the editor is overwritten.
+        """
+        from quill.core.ai.model_manager import load_ai_enabled
+
+        if not load_ai_enabled():
+            return WatchActionOutcome.skipped(
+                "AI is turned off. Enable it in the AI menu to use this action."
+            )
+        mode = str(options.get("mode", "")).strip().lower()
+        if mode not in {"summarize", "tag", "rewrite"}:
+            return WatchActionOutcome.failed("Choose an AI mode: summarize, tag, or rewrite.")
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError as error:
+            return WatchActionOutcome.failed(f"Could not read file: {error}")
+        assistant = self._get_assistant()
+        try:
+            if mode in {"summarize", "rewrite"}:
+                result = assistant.transform(mode, text)
+            else:  # tag
+                result = assistant.ask(
+                    "Read the following document and return a short, comma-separated "
+                    "list of topical tags that describe it. Return only the tags:\n\n" + text
+                )
+        except Exception as error:  # surfaced as a failed outcome
+            return WatchActionOutcome.failed(str(error))
+        target = path.with_name(f"{path.stem}.{mode}.md")
+        try:
+            target.write_text(result, encoding="utf-8")
+        except OSError as error:
+            return WatchActionOutcome.failed(f"Could not write AI result: {error}")
+        return WatchActionOutcome.done(f"AI {mode} written to {target.name}", result_path=target)
 
     def _refresh_voice_command_aliases(self) -> None:
         self._voice_command_aliases = build_voice_command_aliases(

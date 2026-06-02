@@ -190,6 +190,7 @@ parent first.
 
 - [ ] Add or Edit Watch Profile (from Watch Folder Profiles)
 - [ ] Browse for folder (from Add or Edit Watch Profile)
+- [ ] Watch profile dry-run preview (from Add or Edit Watch Profile, Preview (dry run) button)
 - [ ] Select font for HTML headings (from Heading Organizer)
 - [ ] Rename list item (from List Manager)
 - [ ] New list item (from List Manager)
