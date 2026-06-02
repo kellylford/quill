@@ -1084,7 +1084,9 @@ The highest user-impact features: the reasons a blind writer would choose and re
 
 Why second: this is where user love is won. It comes right after the protections so the flagship is built on a safe, gated base.
 
-#### Tier 3: GLOW, the accessibility engine inside QUILL (second strategic priority)
+#### Tier 3: GLOW, the accessibility engine inside QUILL (deferred to QUILL 2.0)
+
+> Status (2026-06-02): deferred to **QUILL 2.0**. GLOW remains the second strategic priority and the design below stands, but it is no longer part of the 1.0 milestone; it ships as a 2.0 headline once the shared `quill-glow-core` engine is green. The axe-core / Accessibility Agents workstream (AX-A through AX-F) depends on this engine and is deferred with it.
 
 Per the build directive, GLOW comes before transcription: it deepens QUILL's core mission of accessible documents and reuses a proven engine.
 
@@ -1106,7 +1108,9 @@ Not flashy, but what lets the product stay excellent as it grows.
 
 Why fourth: high leverage but mostly invisible to users, so it follows the work that wins user love, while the cheap protective parts of it already happened in Tier 1.
 
-#### Tier 5: BITS Whisperer transcription (the second distinctive engine)
+#### Tier 5: BITS Whisperer transcription (deferred to QUILL 2.0)
+
+> Status (2026-06-02): deferred to **QUILL 2.0**. BITS Whisperer is the second distinctive engine and the integration plan below stands, but it is no longer part of the 1.0 milestone.
 
 Transcription is the second proven engine QUILL absorbs, and with the tier swap it now precedes documentation so the docs can describe a product whose transcription is already built. BITS Whisperer (`s:\code\bw`) is production-ready (875 tests passing, CI green, a framework-agnostic core with no `wx` imports), so unlike GLOW there is no engine-repo fix to do first — this tier is pure, clean integration.
 
@@ -1154,11 +1158,60 @@ This table tracks how many of the backlog IDs each tier names are still open. It
 | --- | --- | --- | --- | --- | --- |
 | Tier 1 | Protect users and unlock the team | 23 | 23 | 0 | (complete) |
 | Tier 2 | Flagship experience | 58 | 27 | 31 | OCR-1..5, AGENT-1, AI-7, AI-1, AI-6, AI-14, AI-19, AI-20, AI-22, AI-24, SET-1..5, SET-7, SHARE-1..3, CTX-1, DICT-2, FEAT-19, WATCH-5..7, FLAG-3, DLG-1 |
-| Tier 3 | GLOW accessibility engine | 8 | 0 | 8 | GLOW-1..7, WATCH-8 |
 | Tier 4 | Structural health and performance | 30 | 11 | 19 | CQ-16, CQ-1, DLG-2, GATE-11, PERF-1..3, PERF-9..14, GATE-10, SEC-6, SEC-7, SEC-8, SEC-14, SEC-17 |
-| Tier 5 | BITS Whisperer transcription | 28 | 0 | 28 | BW-1..10, WATCH-9, NAV-10, AI-11, AI-12, AI-18, FEAT-12..18, LINUX-1, ECO-1, L10N-1, COLLAB-1 |
 | Tier 6 | Documentation and learning surface | 33 | 3 | 30 | DOC-14..17, DOC-11, DOC-12, DOC-1..8, POD-1..5, TUT-1..7, CQ-11, CQ-14, CQ-23, CQ-24, LINUX-2 |
-| **Total** | All tiers | **180** | **55** | **125** | |
+| **1.0 subtotal** | Tiers 1, 2, 4, 6 (the QUILL 1.0 scope) | **144** | **64** | **80** | |
+| Tier 3 (2.0) | GLOW accessibility engine — deferred to QUILL 2.0 | 8 | 0 | 8 | GLOW-1..7, WATCH-8 |
+| Tier 5 (2.0) | BITS Whisperer transcription — deferred to QUILL 2.0 | 28 | 0 | 28 | BW-1..10, WATCH-9, NAV-10, AI-11, AI-12, AI-18, FEAT-12..18, LINUX-1, ECO-1, L10N-1, COLLAB-1 |
+| AX (2.0) | Accessibility Agents / axe-core engine — deferred to QUILL 2.0 | 6 | 0 | 6 | AX-A..F |
+| **2.0 subtotal** | GLOW + BITS Whisperer + axe-core | **42** | **0** | **42** | |
+| **Total** | All tiers (1.0 + 2.0) | **186** | **64** | **122** | |
+
+> Deferral note (2026-06-02): per maintainer direction, the GLOW accessibility
+> engine (Tier 3, including the WATCH-8 GLOW watch action), the BITS Whisperer
+> transcription suite (Tier 5, including the WATCH-9 transcribe watch action), and
+> the Accessibility Agents / axe-core workstream (AX-A through AX-F) are all moved
+> out of the 1.0 milestone and into **QUILL 2.0**. The Done/Remaining columns were
+> reconciled to the per-tier sums (the previous Total of 55/125 did not match the
+> rows); going forward the totals are internally consistent. QUILL 1.0 ships when
+> the 1.0 subtotal reaches zero remaining.
+
+#### Feature status by tier (the two living lists)
+
+These two tables are the at-a-glance companion to the per-area item tables above:
+every feature in the 1.0 scope appears in exactly one of them, grouped by tier.
+When an item closes, move its ID from **Work in progress** to **Completed** in the
+same change, so both lists stay a truthful snapshot. The canonical per-item detail
+(acceptance text and evidence) always lives in the per-area tables higher up; these
+two are the watch lists. Items deferred to QUILL 2.0 (GLOW, BITS Whisperer,
+axe-core) are tracked separately in the third table and are not part of either 1.0
+list.
+
+**Work in progress (QUILL 1.0 — open items)**
+
+| Tier | Status | Feature IDs |
+| --- | --- | --- |
+| Tier 2 — Flagship | In progress | SET-1, SET-7, WATCH-5, WATCH-7, MENU-1, MENU-5 |
+| Tier 2 — Flagship | Todo | AGENT-1, AI-1, AI-6, AI-7, AI-14, AI-19, AI-20, AI-22, AI-24, OCR-1, OCR-2, OCR-3, OCR-4, OCR-5, SET-2, SET-3, SET-4, SET-5, SHARE-1, SHARE-2, SHARE-3, CTX-1, DICT-2, FEAT-19, WATCH-6, FLAG-3, DLG-1 |
+| Tier 4 — Structural health | Todo | CQ-1, CQ-16, DLG-2, GATE-10, GATE-11, PERF-1, PERF-2, PERF-3, PERF-9, PERF-10, PERF-11, PERF-12, PERF-13, PERF-14, SEC-6, SEC-7, SEC-8, SEC-14, SEC-17 |
+| Tier 6 — Documentation | Todo | DOC-1, DOC-2, DOC-3, DOC-4, DOC-5, DOC-6, DOC-7, DOC-8, DOC-11, DOC-12, DOC-14, DOC-15, DOC-16, DOC-17, POD-1, POD-2, POD-3, POD-4, POD-5, TUT-1, TUT-2, TUT-3, TUT-4, TUT-5, TUT-6, TUT-7, CQ-11, CQ-23, CQ-24, LINUX-2 |
+
+**Completed (QUILL 1.0 — Done)**
+
+| Tier | Feature IDs |
+| --- | --- |
+| Tier 1 — Protect users | BUG-1, BUG-2, BUG-3, BUG-4, BUG-5, BUG-6, BUG-7, SEC-1, SEC-10, SEC-11, SEC-13, GATE-1, GATE-2, GATE-3, GATE-4, GATE-5, GATE-6, GATE-7, GATE-8, GATE-9, FLAG-1, FLAG-2 |
+| Tier 2 — Flagship | QK-1, QK-2, QK-3, QK-4, QK-5, QK-9, NAV-1, NAV-4, NAV-5, SEL-1, SEL-2, SEL-3, AI-13, AI-15, AI-16, AI-17, AI-21, AI-23, WATCH-1, WATCH-2, WATCH-3, WATCH-4, SET-6, FLAG-4, MENU-3, DICT-1 |
+| Tier 4 — Structural health | CQ-7, CQ-12, CQ-13, CQ-14, CQ-15, CQ-17, CQ-18, CQ-19, CQ-20, CQ-21, CQ-22, PERF-8, SEC-4, SEC-15, SEC-16, TYPE-1, TYPE-2, TYPE-3, TYPE-4, TYPE-5, TYPE-6, TYPE-7, TYPE-8 |
+
+**Deferred to QUILL 2.0 (not in the 1.0 lists)**
+
+| Workstream | Feature IDs | Why deferred |
+| --- | --- | --- |
+| GLOW accessibility engine (Tier 3) | GLOW-1, GLOW-2, GLOW-3, GLOW-4, GLOW-5, GLOW-6, GLOW-7, WATCH-8 | Cross-repo engine integration; lands as a 2.0 headline once the shared `quill-glow-core` engine is green. |
+| BITS Whisperer transcription (Tier 5) | BW-1, BW-2, BW-3, BW-4, BW-5, BW-6, BW-7, BW-8, BW-9, BW-10, WATCH-9 | The second distinctive engine; a clean 2.0 integration after the 1.0 flagship ships. |
+| Accessibility Agents / axe-core (AX) | AX-A, AX-B, AX-C, AX-D, AX-E, AX-F | Builds on the GLOW engine and report surface, so it follows GLOW into 2.0. |
+| Tier 5 stretch explorations | NAV-10, AI-11, AI-12, AI-18, FEAT-12, FEAT-13, FEAT-14, FEAT-15, FEAT-16, FEAT-17, FEAT-18, LINUX-1, ECO-1, L10N-1, COLLAB-1 | Post-1.0 breadth, chosen with beta feedback in 2.0. |
 
 Completed outside the formal tier lists (cross-cutting protections and quality work that the tiers reference only by theme): SEC-2 (path-escape guard for persistence writes), SEC-3 (OCR language allowlist), SEC-4 (documented and validated cwd safety for safe_subprocess), SEC-5 (verified TLS everywhere), GATE-1 (pre-commit), PERF-8 (documented scoped type-check), CQ-17 (thread-safety invariants note), and A11Y-1 (announcement grammar). The GATE-3/CQ-7 cleanup also incidentally cleared the `quill/core` and `quill/io` portion of the TYPE-1..8 zone, though those formal rows stay open until each is individually verified and closed.
 
@@ -1218,7 +1271,13 @@ A grounded read of the three integration repos (`s:\code\quill-glow-core`, `s:\c
 
 Tier swap: per the standing request, BITS Whisperer transcription moves to Tier 5 and documentation to Tier 6, so the docs land last and describe a product that is already GLOW-native and transcription-capable, reusing the `s:\code\bw\docs` material. The roadmap prose (section 23), the tier tracker, and the WATCH cross-references were all updated. Backlog totals moved 156 -> 159 (GLOW-6 counted, GLOW-7 new, BW-10 counted). Execution is authorized for Tiers 2 through 6 end to end, keeping `main` green throughout.
 
-#### Bookmark: Accessibility Agents integration (research, pending decision)
+#### Bookmark: Accessibility Agents integration (research, deferred to QUILL 2.0)
+
+> Decision (2026-06-02): deferred to **QUILL 2.0**. The axe-core / Accessibility
+> Agents workstream (AX-A through AX-F) builds on the GLOW engine and report
+> surface, and GLOW is itself a 2.0 item, so this whole workstream follows GLOW
+> into 2.0. The research and design below stand; nothing here is part of the 1.0
+> milestone, and the tier-renumbering it describes does not apply to 1.0.
 
 A research evaluation of the Community Access "Accessibility Agents" project
 (`s:\code\agents`, MIT-licensed) is written up in full in [aa.md](aa.md) at the
