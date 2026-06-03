@@ -110,8 +110,33 @@ def test_ocr3_clipboard_and_screen_capture_methods_exist() -> None:
     assert "def ocr_clipboard_image(self) -> None:" in source
     assert "def ocr_screen_capture(self) -> None:" in source
     # Both capture sources funnel through the shared threaded review pipeline.
-    assert "def _run_ocr_on_path(self, image_path: Path, *, confirm: bool) -> None:" in source
+    assert "def _run_ocr_on_path(" in source
+    assert "confirm: bool, structured: bool = False" in source
     assert "self._run_ocr_on_path(image_path, confirm=False)" in source
+
+
+def test_shell2_structured_ocr_runs_assistant_structure_transform() -> None:
+    """SHELL-2: the structured verb reflows OCR text via the assistant.
+
+    The worker thread runs ``transform("structure", ...)`` when an assistant is
+    available and degrades to plain OCR otherwise, so the verb never hard-fails.
+    """
+    source = _image_mixin_source()
+
+    assert "def _apply_ocr_structuring(" in source
+    assert 'assistant.transform("structure"' in source
+    assert "structure_skip" in source
+    # The structured flag flows into the review pipeline.
+    assert "if structured and ocr_result.text.strip():" in source
+
+
+def test_shell2_handle_shell_request_passes_structured_for_structured_verb() -> None:
+    """``ocr-structured`` requests reach _run_ocr_on_path with structured=True."""
+    main_frame = (
+        Path(__file__).parent.parent.parent.parent / "quill" / "ui" / "main_frame.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'structured=action == "ocr-structured"' in main_frame
 
 
 def test_ocr3_capture_uses_windows_capture_helper() -> None:

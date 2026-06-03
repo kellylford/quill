@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>zfix2</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<h1 id="zfix2-exact-path-to-golden-done-on-every-tier-2-feature">zfix2 —
+Exact path to “golden” (Done) on every Tier 2 feature</h1>
+<p>Status as of 2026-06-03. After this session’s work, <strong>Tier 2
+stands at 57 of 60 Done</strong>. Three items remain open, all genuinely
+blocked on something that cannot be produced or verified from this
+environment (no live AI provider endpoint, no Windows 11
+packaged-install cycle). Each is honestly “In progress” or “Todo” in
+<code>golden.md</code> — none is faked Done.</p>
+<p>This document is the precise, file-by-file checklist of what
+<strong>you</strong> (on a real Windows 11 machine with live provider
+credentials) must do to drive each remaining item to verified Done.
+Nothing here is hand-waving: every step names the file, function, and
+acceptance test.</p>
+<hr />
+<h2 id="summary-table">Summary table</h2>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+</colgroup>
+<thead>
+<tr>
+<th>ID</th>
+<th>Title</th>
+<th>State now</th>
+<th>What’s already built &amp; tested</th>
+<th>What only you can finish</th>
+<th>Effort</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AI-19</td>
+<td>Accessible subscription sign-in (OAuth device flow)</td>
+<td>In progress</td>
+<td>The full RFC 8628 device-flow state machine
+(<code>device_login.py</code>), fully unit-tested with an injected
+poster</td>
+<td>Real HTTPS poster, consent dialog, DPAPI token storage, AIBackend
+wiring, live end-to-end run</td>
+<td>M</td>
+</tr>
+<tr>
+<td>SHELL-2</td>
+<td>Structured-Markdown OCR verb (AI pass)</td>
+<td>In progress</td>
+<td>The assistant <code>structure</code> operation +
+<code>_apply_ocr_structuring</code> worker wiring, unit + contract
+tested</td>
+<td>One live-key run to verify quality/threading on real OCR output;
+quality tuning</td>
+<td>S</td>
+</tr>
+<tr>
+<td>SHELL-3</td>
+<td>Windows 11 modern context menu (IExplorerCommand)</td>
+<td>Todo</td>
+<td>The classic Explorer verb path (SHELL-1) ships and is
+verifiable</td>
+<td>A compiled <code>IExplorerCommand</code> COM handler + sparse MSIX
+package + installer registration + real install/uninstall
+verification</td>
+<td>M–L</td>
+</tr>
+</tbody>
+</table>
+<p>When all three reach Done, <strong>Tier 2 is golden (60/60)</strong>
+and the QUILL 1.0 subtotal drops by three remaining.</p>
+<hr />
+<h2 id="ai-19-accessible-subscription-sign-in-no-pasted-api-key">AI-19 —
+Accessible subscription sign-in (no pasted API key)</h2>
+<h3 id="what-already-exists-do-not-rebuild">What already exists (do not
+rebuild)</h3>
+<ul>
+<li><code>quill/core/ai/device_login.py</code> — a complete, wx-free,
+strict-typed OAuth 2.0 Device Authorization Grant (RFC 8628) state
+machine. Public API:
+<ul>
+<li><code>DeviceFlowConfig</code>, <code>DeviceCodeGrant</code>,
+<code>PollResult</code> (frozen dataclasses).</li>
+<li><code>request_device_code(config, *, poster)</code> — starts the
+flow.</li>
+<li><code>poll_once(config, grant, *, poster)</code> — classifies one
+poll into pending / slow_down / authorized / denied / expired /
+error.</li>
+<li><code>run_device_login(...)</code> — drives the full polling loop
+honoring <code>interval</code>, backing off on <code>slow_down</code>,
+stopping at <code>expires_in</code>.</li>
+<li><code>announce_device_code(grant)</code> — the screen-reader
+instruction string.</li>
+<li><code>describe_login_result(result)</code> — the spoken
+outcome.</li>
+<li>Every network exchange is an <strong>injected</strong>
+<code>poster</code>, so the engine is already tested without a live
+endpoint (7 tests) and adds no new egress site.</li>
+</ul></li>
+<li><code>quill/platform/windows/credential_manager.py</code> —
+DPAPI-backed Windows Credential Manager storage already exists:
+<ul>
+<li><code>credential_manager_available()</code>,
+<code>load_generic_credential(target_name)</code>,
+<code>save_generic_credential(...)</code>,
+<code>delete_generic_credential(target_name)</code>,
+<code>StoredCredential</code>.</li>
+</ul></li>
+<li><code>quill/core/assistant_ai.py</code> —
+<code>AssistantConnectionSettings</code> (the saved provider connection,
+including <code>api_key</code>),
+<code>load_assistant_connection_settings()</code>, and
+<code>_build_auth_headers(provider, host, api_key)</code> is where the
+credential is consumed for outbound requests.</li>
+</ul>
+<h3 id="exact-remaining-work-windows-live-provider-only">Exact remaining
+work (Windows + live provider only)</h3>
+<ol type="1">
+<li><p><strong>Real HTTPS poster.</strong> Add a
+<code>urlopen</code>-based poster (TLS-verified) that satisfies the
+<code>Poster</code> protocol in <code>device_login.py</code>. Put it in
+a new <code>quill/platform/windows/</code> or
+<code>quill/core/ai/</code> module (keep <code>device_login.py</code>
+itself poster-free so the GATE-9 egress inventory stays explicit —
+register the new <code>urlopen</code> site in the egress audit).</p>
+<ul>
+<li>Acceptance: a unit test that the poster issues a POST with the
+correct <code>application/x-www-form-urlencoded</code> body and parses a
+JSON reply; TLS verification is on (no
+<code>ssl._create_unverified_context</code>).</li>
+</ul></li>
+<li><p><strong>Consent / progress dialog
+<code>DeviceLoginDialog</code></strong> in <code>quill/ui/</code>.</p>
+<ul>
+<li>Shows: the device code, the verification URL, and the expiry; an
+“Open in browser” button; an “I’ve authorized — continue” button; a
+Cancel path. Must follow the A11Y-4 dialog contract (outer sizer,
+default button, <code>Destroy</code> on close, focus return to
+editor).</li>
+<li>Speaks <code>announce_device_code(grant)</code> on open and
+<code>describe_login_result(...)</code> on completion.</li>
+<li>Acceptance: a source-contract test (the cloud-safe bar) asserting
+the dialog uses <code>show_modal_dialog</code>, shows code/URL/expiry,
+and wires the three buttons; add a row to <code>dialogs.md</code> with
+the menu path that opens it.</li>
+</ul></li>
+<li><p><strong>DPAPI token storage.</strong> On <code>authorized</code>,
+persist the returned token via
+<code>save_generic_credential(target_name="Quill/&lt;provider&gt;/oauth", ...)</code>.
+Never log the token; never write it to the JSON connection file in
+plaintext.</p>
+<ul>
+<li>Acceptance: round-trip test through the credential manager (save →
+load → delete) under a <code>target_name</code> namespaced per
+provider.</li>
+</ul></li>
+<li><p><strong>AIBackend wiring.</strong> Teach
+<code>assistant_ai.py</code> / the provider backend to resolve
+credentials as: device-login token (if present in DPAPI) → else pasted
+<code>api_key</code>. The provider must then send the device-login token
+in <code>_build_auth_headers</code>.</p>
+<ul>
+<li>Acceptance: a unit test that, given a stored device-login token and
+an empty pasted key, the auth header carries the token; given both, the
+device-login token wins (or whatever precedence you choose — document
+it).</li>
+</ul></li>
+<li><p><strong>Surface the entry point.</strong> Add a “Sign in with
+your <provider> account” button to the AI provider configuration surface
+(the assistant setup) that launches the flow. Gate behind
+<code>FeatureManager</code> like every other AI surface.</p></li>
+<li><p><strong>Live end-to-end verification</strong> (the actual
+blocker). On a real Windows machine with a provider that genuinely
+offers an OAuth <strong>device authorization grant</strong> for API
+access:</p>
+<ul>
+<li>Start the flow → QUILL shows the code + URL → you authorize in the
+browser → QUILL polls and retrieves the token → the token is used for
+subsequent AI requests → <strong>no pasted key required</strong>.</li>
+<li>Confirm the whole flow is keyboard- and screen-reader-accessible at
+every step (NVDA/JAWS/Narrator parity).</li>
+<li><strong>Reality check:</strong> confirm your target provider
+actually exposes a public device-authorization endpoint for API tokens.
+Several major API providers do <strong>not</strong> (they issue API keys
+from a dashboard instead). If yours doesn’t, AI-19 cannot be honestly
+closed against that provider — pick one that does (or keep the engine
+ready and mark AI-19 Done only once one real provider validates
+it).</li>
+</ul></li>
+</ol>
+<h3 id="done-definition-for-ai-19">Done definition for AI-19</h3>
+<p>A blind user signs in with an existing subscription via the device
+flow, with no visible 51-character secret, the token is stored in DPAPI,
+and at least one real provider serves AI responses using that token —
+all keyboard/screen-reader accessible and registered in the GATE-9
+egress audit.</p>
+<hr />
+<h2
+id="shell-2-structured-markdown-ocr-verb-ai-structuring-pass">SHELL-2 —
+Structured-Markdown OCR verb (AI structuring pass)</h2>
+<h3 id="what-already-exists-built-and-tested-this-session">What already
+exists (built and tested this session)</h3>
+<ul>
+<li><code>quill/core/ai/assistant.py</code> — new <code>structure</code>
+operation in <code>_OPERATION_PROMPTS</code>: reflows raw OCR text into
+clean Markdown (joins scan-broken lines, groups paragraphs, infers
+headings/lists/tables) and <strong>forbids</strong> summarizing, adding,
+or inventing content. Reuses the existing chunking, <code>_wrap</code>,
+and backend, so large scans are handled. Unit-tested in
+<code>tests/unit/core/ai/test_structure_operation.py</code>
+(registration, OCR text reaches the model, the no-summarize
+instruction).</li>
+<li><code>quill/ui/main_frame_image.py</code> —
+<code>_run_ocr_on_path(..., structured: bool = False)</code> and a new
+<code>_apply_ocr_structuring(...)</code> helper that, <strong>inside the
+existing OCR worker thread</strong> (off the UI thread, sharing the
+progress dialog), structures the recognized text via the assistant when
+one is available and reports available, and otherwise degrades safely to
+plain OCR with a status note saying why. The review dialog title and the
+insert status line reflect whether the structured pass ran.</li>
+<li><code>quill/ui/main_frame.py</code> —
+<code>_handle_shell_request</code> passes
+<code>structured=action == "ocr-structured"</code>.</li>
+<li>Source-contract tests in
+<code>tests/unit/ui/test_ocr_review_dialog.py</code> assert the worker
+wiring and the structured-verb dispatch.</li>
+</ul>
+<h3 id="exact-remaining-work-needs-a-live-ai-key">Exact remaining work
+(needs a live AI key)</h3>
+<ol type="1">
+<li><strong>One live run.</strong> On Windows with a configured,
+available assistant backend: right-click an image/PDF → “OCR with Quill
+(structured Markdown)”. Confirm the recognized text comes back as
+structured Markdown (headings/lists/paragraphs), inserted into the
+editor, with the “Structured OCR text inserted” status.</li>
+<li><strong>Quality tuning.</strong> Inspect the output on harder inputs
+— multi-column PDFs, tables, headers/footers, page numbers. If the model
+summarizes or drops content, tighten the <code>structure</code> prompt
+in <code>_OPERATION_PROMPTS</code> (it is the single source of truth)
+and re-run. No code path changes needed — only the prompt string.</li>
+<li><strong>Threading/latency check.</strong> Confirm the off-thread
+<code>assistant.transform(...)</code> call is thread-safe with your
+backend and that the progress dialog stays responsive (the worker
+already runs off the UI thread; verify no backend requires UI-thread
+affinity). If a backend needs main-thread marshaling, route the
+structuring call through <code>wx.CallAfter</code>-bounded handoff
+instead.</li>
+</ol>
+<h3 id="done-definition-for-shell-2">Done definition for SHELL-2</h3>
+<p>The structured verb produces faithful structured Markdown from real
+OCR output on a live backend, with no content loss, responsive UI, and
+accessible status announcements. Then flip SHELL-2 to Done in
+<code>golden.md</code> (tracker + both living lists + a dated
+activity-log entry) and regenerate <code>golden.html</code>.</p>
+<hr />
+<h2
+id="shell-3-windows-11-modern-context-menu-iexplorercommand-installer">SHELL-3
+— Windows 11 modern context menu (IExplorerCommand) + installer</h2>
+<h3 id="what-already-exists">What already exists</h3>
+<ul>
+<li><code>quill/platform/windows/shell_integration.py</code> — the
+<strong>classic</strong> (pre-Win11)
+<code>HKCU\Software\Classes\SystemFileAssociations\&lt;ext&gt;\shell\Quill.&lt;verb&gt;</code>
+verb path ships in SHELL-1 and is buildable and verifiable locally. On
+Windows 11 these verbs appear under “Show more options” (the legacy
+menu).</li>
+</ul>
+<h3 id="why-this-cant-be-finished-from-here">Why this can’t be finished
+from here</h3>
+<p>The Windows 11 <strong>primary</strong> context menu (the non-“Show
+more options” menu) only shows verbs provided by a registered
+<code>IExplorerCommand</code> COM handler packaged in a sparse/MSIX
+package. That requires a compiled in-proc COM component and a real
+package install — none of which a pure-Python repo can produce or verify
+in this environment.</p>
+<h3 id="exact-remaining-work-real-windows-11-packaging-toolchain">Exact
+remaining work (real Windows 11 + packaging toolchain)</h3>
+<ol type="1">
+<li><p><strong>Build the <code>IExplorerCommand</code> handler.</strong>
+A compiled in-proc COM server (C++/WinRT or Rust, or a packaged .NET COM
+component) that implements <code>IExplorerCommand</code> (and
+<code>IExplorerCommandState</code> / <code>IEnumExplorerCommand</code>
+for the submenu). It must surface the <strong>same</strong> verbs as the
+core registry — drive its labels/actions from
+<code>quill/core/shell_verbs.py</code>
+(<code>default_shell_verbs()</code>, <code>verb_for_action</code>,
+<code>verbs_for_extension</code>) so there is exactly one source of
+truth. Each invoked verb launches
+<code>quill --action &lt;verb&gt; "&lt;path&gt;"</code> (reuse
+<code>verb_launcher_command(action)</code> from
+<code>shell_integration.py</code>).</p>
+<ul>
+<li>Submenu shape: a top “Send to Quill” flyout enumerating Open / OCR /
+OCR structured Markdown / Read aloud, filtered by file extension via
+<code>verbs_for_extension</code>.</li>
+</ul></li>
+<li><p><strong>Sparse package + registration.</strong> Author a sparse
+MSIX package manifest that declares the <code>IExplorerCommand</code>
+handler under the relevant <code>windows.fileTypeAssociation</code> /
+<code>desktop4:FileExplorerContextMenus</code> extension, and
+register/unregister it on install/uninstall.</p></li>
+<li><p><strong>Installer wiring.</strong> Wire the package
+register/unregister into the QUILL installer
+(<code>installer/quill.iss</code> and/or
+<code>scripts/build_windows_distribution.py</code>) so a normal install
+adds the modern menu and uninstall removes it cleanly. Keep the
+classic-menu fallback for non-packaged/portable installs.</p></li>
+<li><p><strong>Live install/uninstall verification.</strong> On Windows
+11: install → confirm the verbs appear in the <strong>primary</strong>
+right-click menu (not just “Show more options”) for the correct file
+types → run each verb → confirm uninstall removes them with no orphaned
+registry/package state. Confirm keyboard and Narrator accessibility of
+the menu entries.</p></li>
+</ol>
+<h3 id="done-definition-for-shell-3">Done definition for SHELL-3</h3>
+<p>QUILL’s “Send to Quill” verbs appear in the Windows 11 primary
+context menu via a registered <code>IExplorerCommand</code>, driven by
+the same <code>shell_verbs.py</code> registry, installed and removed
+cleanly by the installer, and verified on a real Win11 box. Then flip
+SHELL-3 to Done in <code>golden.md</code> and regenerate
+<code>golden.html</code>.</p>
+<hr />
+<h2 id="per-change-discipline-reminder-applies-to-all-three">Per-change
+discipline reminder (applies to all three)</h2>
+<ul>
+<li>Format then lint only the <strong>specific</strong> changed files:
+<code>ruff format &lt;files&gt;</code>,
+<code>ruff check &lt;files&gt;</code>. Do not run whole-tree format (it
+reflows unrelated drift).</li>
+<li>Strict <code>mypy</code> on any changed <code>quill/core</code> /
+<code>quill/io</code> file — must report “Success: no issues found”;
+those layers stay wx-free.</li>
+<li>Add at least one behavior test (or source-contract test where wx
+can’t load) per change; keep the targeted <code>pytest</code>
+green.</li>
+<li>After editing <code>golden.md</code>: update the <strong>tracker
+totals</strong>, <strong>both living lists</strong>, and add a
+<strong>dated activity-log entry</strong>, then regenerate
+<code>golden.html</code> with
+<code>pandoc -s golden.md -o golden.html</code> and commit both
+together.</li>
+<li>New user-facing dialog (e.g. <code>DeviceLoginDialog</code>) → add a
+row to <code>dialogs.md</code>.</li>
+<li>New public <code>MainFrame</code> method → regenerate the surface
+fixture with <code>python -m quill.tools.ui_surface --write</code>.</li>
+<li>Stage <strong>specific files only</strong>. Never
+<code>git add -A</code>.</li>
+</ul>
+</body>
+</html>

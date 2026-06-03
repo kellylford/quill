@@ -96,13 +96,21 @@ class ImageCaptureMixin:
         self._set_status("Reading screen capture...")
         self._run_ocr_on_path(image_path, confirm=False)
 
-    def _run_ocr_on_path(self, image_path: Path, *, confirm: bool) -> None:
+    def _run_ocr_on_path(
+        self, image_path: Path, *, confirm: bool, structured: bool = False
+    ) -> None:
         """Run OCR on ``image_path`` off-thread and show the review dialog.
 
         Shared by the file, clipboard, and screen-capture OCR entry points
         (OCR-3). When ``confirm`` is true the user is asked to approve the local
         OCR run first (the file path keeps its original confirmation); capture
         sources skip the prompt because the user already chose to capture.
+
+        When ``structured`` is true (the "OCR with Quill (structured Markdown)"
+        shell verb, SHELL-2), the recognized text is reflowed into structured
+        Markdown by the configured assistant in the same worker thread. If no
+        assistant is available the plain OCR text is used and the status note
+        says so, so the verb always degrades safely.
         """
         wx = self._wx
         from quill.io.ocr import (
@@ -126,16 +134,20 @@ class ImageCaptureMixin:
             "done": False,
             "error": None,
             "result": None,
+            "structured": False,
         }
         cancel_requested = threading.Event()
 
         def run_ocr() -> None:
             try:
-                progress_state["result"] = ocr_image(
+                ocr_result = ocr_image(
                     image_path,
                     on_progress=lambda message: progress_state.__setitem__("message", message),
                     cancel_requested=cancel_requested.is_set,
                 )
+                if structured and ocr_result.text.strip():
+                    self._apply_ocr_structuring(ocr_result, progress_state)
+                progress_state["result"] = ocr_result
             except OcrCancelledError as exc:
                 progress_state["error"] = exc
             except (OcrUnavailableError, OcrFailedError) as exc:
@@ -189,7 +201,10 @@ class ImageCaptureMixin:
         from quill.ui.ocr_review_dialog import OcrReviewDialog
 
         rendered_text = render_ocr_review(ocr_result)
-        review_dialog = OcrReviewDialog(self.frame, "OCR Review", rendered_text)
+        was_structured = bool(progress_state.get("structured"))
+        structure_skip = progress_state.get("structure_skip")
+        review_title = "OCR Review (structured Markdown)" if was_structured else "OCR Review"
+        review_dialog = OcrReviewDialog(self.frame, review_title, rendered_text)
         choice = review_dialog.show_modal(
             announce=self._announce,
             enter_region=self._enter_region,
@@ -201,7 +216,15 @@ class ImageCaptureMixin:
             pos = self.editor.GetInsertionPoint()
             self.editor.WriteText(ocr_result.text)
             self.editor.SetInsertionPoint(pos + len(ocr_result.text))
-            self._set_status(f"OCR text inserted ({ocr_result.engine})")
+            if was_structured:
+                self._set_status(f"Structured OCR text inserted ({ocr_result.engine})")
+            elif structure_skip:
+                self._set_status(
+                    f"OCR text inserted, structuring skipped: {structure_skip} "
+                    f"({ocr_result.engine})"
+                )
+            else:
+                self._set_status(f"OCR text inserted ({ocr_result.engine})")
         elif choice == OcrReviewDialog.ID_COPY:
             # Copy to clipboard
             if wx.TheClipboard.Open():
@@ -216,6 +239,37 @@ class ImageCaptureMixin:
 
         # Return focus to the editor
         self.editor.SetFocus()
+
+    def _apply_ocr_structuring(self, ocr_result: object, progress_state: dict[str, object]) -> None:
+        """Reflow OCR text into structured Markdown via the assistant (SHELL-2).
+
+        Runs inside the OCR worker thread, so the network/model call stays off
+        the UI thread and shares the existing progress dialog. Best-effort: any
+        missing or unavailable assistant, or any transform failure, leaves the
+        plain OCR text in place and records why in ``progress_state`` so the
+        status line can tell the user the structured pass was skipped.
+        """
+        assistant = getattr(self, "_assistant", None)
+        if assistant is None:
+            progress_state["structure_skip"] = "no assistant configured"
+            return
+        try:
+            available, reason = assistant.is_available()
+        except Exception as exc:  # noqa: BLE001 - degrade to plain OCR
+            progress_state["structure_skip"] = str(exc)
+            return
+        if not available:
+            progress_state["structure_skip"] = reason or "assistant unavailable"
+            return
+        progress_state["message"] = "Structuring recognized text..."
+        try:
+            structured_text = assistant.transform("structure", ocr_result.text)
+        except Exception as exc:  # noqa: BLE001 - degrade to plain OCR
+            progress_state["structure_skip"] = str(exc)
+            return
+        if structured_text and structured_text.strip():
+            ocr_result.text = structured_text
+            progress_state["structured"] = True
 
     def _pick_image_source(self, title: str) -> Path | None:
         """Ask where the image comes from and return a path, or ``None``.

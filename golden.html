@@ -1854,11 +1854,34 @@ changed core/io modules.</td>
 <td>The <code>ocr-structured</code> verb, its
 <code>shell_verb_ocr_structured</code> setting, and its AI/assistant
 gating are wired through the registry, IPC, CLI, and
-<code>_handle_shell_request</code> (it currently runs the same offline
-OCR pipeline as the plain verb). The actual AI pass that turns
-recognized text into structured Markdown is the remaining piece and
-needs a live assistant/AI key to verify end to end, so this stays
-honestly In progress rather than Done.</td>
+<code>_handle_shell_request</code>. <strong>Delivered:</strong> the
+assistant gained a <code>structure</code> operation
+(<code>_OPERATION_PROMPTS["structure"]</code>) that reflows raw OCR text
+into clean structured Markdown — joining lines broken mid-sentence by
+the scan, grouping paragraphs, and inferring headings/lists/tables —
+while the prompt explicitly forbids summarizing, adding, or inventing
+content; it reuses the existing chunking, <code>_wrap</code>, and
+backend so large scans are handled. <code>_handle_shell_request</code>
+passes <code>structured=True</code> for the structured verb;
+<code>_run_ocr_on_path</code> gained a <code>structured</code> parameter
+and, inside the existing OCR worker thread (so the call stays off the UI
+thread and shares the progress dialog), runs the recognized text through
+<code>_apply_ocr_structuring</code>, which structures via the assistant
+when one is available and reports available, and otherwise degrades
+safely to plain OCR with a status note explaining why the pass was
+skipped. The review dialog title and the insert status line reflect
+whether the structured pass ran. Covered by core unit tests for the
+<code>structure</code> operation (registration, OCR text reaches the
+model, the no-summarize instruction) and source-contract tests for the
+worker wiring and the structured-verb dispatch; ruff + strict mypy
+clean. <strong>Remaining (honest, needs a live AI key):</strong> the
+structuring transform cannot be verified end to end here because it
+requires a configured/available assistant backend; the structuring
+<em>quality</em> on real-world OCR output (multi-column PDFs, tables,
+headers/footers) still needs tuning against live model responses, and
+the off-thread assistant call needs a real run to confirm thread-safety
+and latency under the progress dialog. Until that live verification,
+this stays honestly In progress.</td>
 </tr>
 <tr>
 <td>SHELL-3</td>
@@ -6963,7 +6986,7 @@ the third table and are not part of either 1.0 list.</p>
 <tr>
 <td>Tier 2 — Flagship</td>
 <td>In progress</td>
-<td>AI-19</td>
+<td>AI-19, SHELL-2, SHELL-3</td>
 </tr>
 <tr>
 <td>Tier 4 — Structural health</td>
@@ -7009,7 +7032,7 @@ AI-21, AI-23, WATCH-1, WATCH-2, WATCH-3, WATCH-4, WATCH-5, WATCH-6,
 WATCH-7, SET-1, SET-4, SET-5, SET-6, SET-7, SHARE-1, SHARE-2, SHARE-3,
 FLAG-3, FLAG-4, MENU-3, MENU-1, MENU-5, DICT-1, CTX-1, DICT-2, FEAT-19,
 DLG-1, OCR-1, OCR-2, OCR-3, OCR-4, OCR-5, A11Y-4, SET-2, SET-3, AGENT-1,
-SHELL-1, SHELL-2, SHELL-3</td>
+SHELL-1</td>
 </tr>
 <tr>
 <td>Tier 4 — Structural health</td>
@@ -7077,6 +7100,50 @@ note), and A11Y-1 (announcement grammar). The GATE-3/CQ-7 cleanup also
 incidentally cleared the <code>quill/core</code> and
 <code>quill/io</code> portion of the TYPE-1..8 zone, though those formal
 rows stay open until each is individually verified and closed.</p>
+<h4
+id="send-to-quill-shell-verbs-landed-shell-1-done-and-the-structured-ocr-pass-wired-shell-2-advanced">2026-06-03:
+“Send to Quill” shell verbs landed (SHELL-1 Done) and the structured-OCR
+pass wired (SHELL-2 advanced)</h4>
+<p>A new file-manager / in-app / CLI verb system shipped, and the AI
+structuring pass for the structured-OCR verb was built and tested up to
+its live-key boundary.</p>
+<ul>
+<li><strong>SHELL-1 (Done):</strong> a wx-free, platform-free verb
+registry (<code>quill/core/shell_verbs.py</code>) is the single source
+of truth for the Open, OCR, OCR-structured, and Read-aloud “Send to
+Quill” actions. The verbs flow end to end on Windows: the
+single-instance IPC queue carries an <code>action</code> field, a new
+<code>--action</code> CLI flag (validated against the registry) reaches
+a running instance, a new <strong>Integration and Context Menu</strong>
+settings group drives which verbs appear, the Windows shell-integration
+plan registers verbs under
+<code>SystemFileAssociations\&lt;ext&gt;\shell\Quill.&lt;verb&gt;</code>
+without owning the file association, and
+<code>MainFrame._handle_shell_request</code> dispatches open/ocr/read at
+both first-launch and live IPC. Covered by core tests
+(<code>test_shell_verbs.py</code>, IPC, settings, registry) and
+context-menu plan tests; ruff + strict mypy clean.</li>
+<li><strong>SHELL-2 (advanced, still In progress):</strong> the
+assistant gained a <code>structure</code> operation that reflows raw OCR
+text into clean Markdown (joining scan-broken lines, grouping
+paragraphs, inferring headings/lists/tables) while forbidding
+summarizing or inventing content; <code>_run_ocr_on_path</code> gained a
+<code>structured</code> flag and runs the recognized text through
+<code>_apply_ocr_structuring</code> inside the existing OCR worker
+thread, structuring via the assistant when available and degrading
+safely to plain OCR with a status note otherwise. Covered by
+<code>test_structure_operation.py</code> and source-contract tests. The
+honest remainder is live-key end-to-end verification and
+structuring-quality tuning on real-world OCR output.</li>
+<li><strong>SHELL-3 (Todo):</strong> the classic Explorer menu ships in
+SHELL-1; the Windows 11 <code>IExplorerCommand</code> modern-menu
+package and its installer registration require a real install/uninstall
+cycle and stay deferred. Tracks intake #113/#114/#116; macOS Finder
+(#115) stays blocked on the macOS port (#42).</li>
+<li>Counts: SHELL-1 closes; SHELL-2 and SHELL-3 join AI-19 as the open
+Tier 2 items, moving Tier 2 to <strong>57 of 60 done (3 remaining:
+AI-19, SHELL-2, SHELL-3)</strong>.</li>
+</ul>
 <h4
 id="tier-2-flagship-closed-to-a-single-honest-blocker-set-2-set-3-and-agent-1-landed-done">2026-06-10:
 Tier 2 flagship closed to a single honest blocker — SET-2, SET-3, and

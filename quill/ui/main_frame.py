@@ -6085,7 +6085,7 @@ class MainFrame(ImageCaptureMixin, BrowseModeMixin, EdSharpActionsMixin, EdSharp
         action = str(getattr(candidate, "action", "open") or "open").strip().lower()
         path = candidate.path
         if action in {"ocr", "ocr-structured"}:
-            self._run_ocr_on_path(path, confirm=False)
+            self._run_ocr_on_path(path, confirm=False, structured=action == "ocr-structured")
             return
         if action == "read":
             self.open_file(path, line=candidate.line, column=candidate.column)

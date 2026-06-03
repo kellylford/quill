@@ -89,6 +89,12 @@ _OPERATION_PROMPTS: dict[str, str] = {
     "Return only the corrected text:\n\n{text}",
     "shorten": "Make the following text more concise while keeping its meaning. "
     "Return only the shortened text:\n\n{text}",
+    "structure": "The following is raw text recognized from an image or PDF by OCR. "
+    "Reflow it into clean, well-structured Markdown: join lines that were broken "
+    "mid-sentence by the scan, group paragraphs, and infer headings, lists, and "
+    "tables from the layout where they are obvious. Preserve all of the original "
+    "wording and meaning exactly — do not summarize, add, or invent content. "
+    "Return only the Markdown, with no preamble:\n\n{text}",
 }
 
 
