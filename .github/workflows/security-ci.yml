@@ -74,7 +74,10 @@ jobs:
 
   banned-patterns:
     # GATE-4: fail on bare 'wx.' in main_frame, raw ET.fromstring outside
-    # safe_xml, and any weakening of ruff's undefined-name/redefinition rules.
+    # safe_xml, any weakening of ruff's undefined-name/redefinition rules, and
+    # any dialog surface that is not registered + classified in the committed
+    # dialog registry snapshot (A11Y-4 / DLG-3 'magical' dialog gate -- run
+    # 'python -m quill.tools.dialog_inventory --write' to register a new dialog).
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6

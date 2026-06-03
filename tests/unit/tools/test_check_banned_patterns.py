@@ -6,6 +6,7 @@ from pathlib import Path
 from quill.tools.check_banned_patterns import (
     _BareWxVisitor,
     _check_dialog_contract,
+    _check_dialog_registry,
     _check_raw_xml,
     find_violations,
 )
@@ -126,3 +127,9 @@ def test_with_dialog_form_is_exempt_from_destroy(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     assert _check_dialog_contract([module]) == []
+
+
+def test_dialog_registry_cross_check_is_clean() -> None:
+    # Every dialog surface in source is registered and classified in the
+    # committed snapshot; the live tree must have zero registry violations.
+    assert _check_dialog_registry() == []

@@ -1467,12 +1467,41 @@ alongside CQ-1.</td>
 enhanced-native) wxPython constructs</td>
 <td>Code quality</td>
 <td>XL</td>
-<td>Todo</td>
+<td>In progress</td>
 <td>The flagship Tier 4 refactor, done first. Folds in and supersedes
-issue #73 (and #72). Every single dialog across <code>quill/ui/*</code>
-is reviewed, and any custom-drawn or hand-rolled dialog that
-<em>could</em> conform to a standard surface is converted to one of
-<strong>two</strong> sanctioned kinds: <strong>native</strong>
+issue #73 (and #72). <strong>Delivered (enforcement engine, zfix.md
+Phase 0 + Phase 1):</strong> the authoritative dialog estate is now
+generated from source, not a checklist —
+<code>quill/tools/dialog_inventory.py</code> AST-scans all of
+<code>quill/**/*.py</code> and records every dialog <em>surface</em>
+(each <code>wx.Dialog(...)</code>, every stock wx dialog, and every
+<code>show_web_form(...)</code> call — <strong>154</strong> surfaces
+today: 100 <code>native</code>, 49 <code>hardened_custom</code>, 5
+<code>web</code>) under a stable, line-independent key
+(<code>&lt;module&gt;::&lt;enclosing_qualname&gt;::&lt;kind&gt;</code>)
+with its sanctioned classification. The committed registry snapshot
+<code>tests/unit/ui/fixtures/dialog_inventory.json</code> is enforced by
+two gates: <code>tests/unit/ui/test_dialog_inventory.py</code> (fails on
+any new/moved/removed/reclassified dialog or unsanctioned surface) and a
+new registry cross-check inside the GATE-4 A11Y-4 banned-pattern gate
+(<code>_check_dialog_registry</code> in
+<code>quill/tools/check_banned_patterns.py</code>, run in Security CI)
+that fails the build on any unregistered or misclassified dialog. Adding
+a dialog now <em>forces</em> it into the registry via a deliberate
+<code>python -m quill.tools.dialog_inventory --write</code>, whose
+classification is reviewed in the diff — the “magical” gating from
+zfix.md. <code>.github/copilot-instructions.md</code> gains a “Dialog
+Excellence Mandates” block + Dialog Change Checklist encoding this.
+<strong>Remaining (honest, zfix.md Phases 2–8):</strong> the per-dialog
+conversion waves (simple→native, enhanced-native standardization, web
+standardization, startup/onboarding hardening, assistant/AI
+consolidation), CQ-16 characterization expansion, and the manual
+NVDA/JAWS/Narrator SR pass across <code>dialogs.md</code> are not yet
+done and require a live Windows screen-reader runtime; this item stays
+In progress until those land. Every single dialog across
+<code>quill/ui/*</code> is reviewed, and any custom-drawn or hand-rolled
+dialog that <em>could</em> conform to a standard surface is converted to
+one of <strong>two</strong> sanctioned kinds: <strong>native</strong>
 (<code>wx.MessageDialog</code>/<code>wx.MessageBox</code> for confirms,
 saves, and simple messages) or the existing <strong>accessible web
 surfaces</strong> (<code>AccessibleChatView</code> for input,
@@ -7116,6 +7145,58 @@ note), and A11Y-1 (announcement grammar). The GATE-3/CQ-7 cleanup also
 incidentally cleared the <code>quill/core</code> and
 <code>quill/io</code> portion of the TYPE-1..8 zone, though those formal
 rows stay open until each is individually verified and closed.</p>
+<h4
+id="dlg-3-dialog-estate-made-source-of-truth-and-machine-gated-enforcement-engine-landed">2026-06-03:
+DLG-3 dialog estate made source-of-truth and machine-gated (enforcement
+engine landed)</h4>
+<p>The flagship Tier 4 dialog refactor’s enforcement engine (zfix.md
+Phase 0 + Phase 1) shipped: QUILL’s dialog estate is now generated from
+source and gated, so no dialog can ship unregistered, unclassified, or
+on a bespoke surface.</p>
+<ul>
+<li><strong>Authoritative registry from source:</strong>
+<code>quill/tools/dialog_inventory.py</code> AST-scans all of
+<code>quill/**/*.py</code> and records every dialog <em>surface</em> —
+each <code>wx.Dialog(...)</code>, every stock wx dialog
+(<code>wx.MessageDialog</code>/<code>RichMessageDialog</code>/<code>MessageBox</code>/choosers/text/file/dir
+pickers/progress/about), and every <code>show_web_form(...)</code> call
+— under a stable, line-independent key
+(<code>&lt;module&gt;::&lt;enclosing_qualname&gt;::&lt;kind&gt;</code>,
+with <code>#n</code> for repeats) and its sanctioned classification. The
+first scan inventoried <strong>154</strong> surfaces
+(<strong>100</strong> <code>native</code>, <strong>49</strong>
+<code>hardened_custom</code>, <strong>5</strong> <code>web</code>),
+committed to
+<code>tests/unit/ui/fixtures/dialog_inventory.json</code>.</li>
+<li><strong>Two gates make it un-regressable:</strong>
+<code>tests/unit/ui/test_dialog_inventory.py</code> (four tests) fails
+on any new/moved/removed/reclassified dialog or unsanctioned surface,
+and a new <code>_check_dialog_registry</code> cross-check inside the
+GATE-4 A11Y-4 banned-pattern gate
+(<code>quill/tools/check_banned_patterns.py</code>, run in Security CI)
+fails the build on any unregistered or misclassified dialog. Adding a
+dialog now <em>forces</em> a deliberate
+<code>python -m quill.tools.dialog_inventory --write</code>, whose
+classification is reviewed in the diff — the “magical” gating zfix.md
+asked for.</li>
+<li><strong>Instructions hardened:</strong>
+<code>.github/copilot-instructions.md</code> gained a “Dialog Excellence
+Mandates” block (seven non-negotiable rules) and a Dialog Change
+Checklist, plus the source-of-truth rule that a scan/registry
+disagreement means the work is incomplete.</li>
+<li>ruff + strict mypy clean on the new/changed tools; the
+banned-pattern gate reports no violations; 16 dialog-gate tests
+pass.</li>
+<li><strong>Honest remainder:</strong> this is the enforcement engine
+only. The per-dialog conversion waves (zfix.md Phases 2–8 —
+simple→native, enhanced-native standardization, web standardization,
+startup/onboarding hardening, assistant/AI consolidation), CQ-16
+characterization expansion, and the manual NVDA/JAWS/Narrator pass
+across <code>dialogs.md</code> require a live Windows screen-reader
+runtime and are <strong>not</strong> done, so DLG-3 moves Todo →
+<strong>In progress</strong> (not Done). Tier 4 counts are unchanged
+(DLG-3 stays in the not-done bucket).</li>
+</ul>
 <h4
 id="send-to-quill-shell-verbs-landed-shell-1-done-and-the-structured-ocr-pass-wired-shell-2-advanced">2026-06-03:
 “Send to Quill” shell verbs landed (SHELL-1 Done) and the structured-OCR

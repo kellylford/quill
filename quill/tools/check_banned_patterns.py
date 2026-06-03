@@ -35,6 +35,14 @@ caused real bugs in Quill:
    ``wx.MessageDialog`` / ``SingleChoiceDialog`` / ``TextEntryDialog``, or the
    web ``show_web_form``).
 
+5. Dialog registry cross-check (A11Y-4 / DLG-3). Every dialog surface found in
+   source must be present, with a matching classification, in the committed
+   dialog registry snapshot (``quill.tools.dialog_inventory``). A new or moved
+   dialog that has not been registered with
+   ``python -m quill.tools.dialog_inventory --write`` fails the gate, so no
+   dialog can ship unregistered or unclassified (the "magical" gating from
+   ``zfix.md``).
+
 Run directly (``python -m quill.tools.check_banned_patterns``) or via pytest
 (``tests/unit/tools/test_check_banned_patterns.py``). Exit code is non-zero when
 any violation is found.
@@ -47,6 +55,12 @@ import sys
 import tomllib
 from collections.abc import Iterable
 from pathlib import Path
+
+from quill.tools.dialog_inventory import (
+    SURFACES,
+    load_snapshot,
+    scan_dialog_surfaces,
+)
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _MAIN_FRAME = _REPO_ROOT / "quill" / "ui" / "main_frame.py"
@@ -251,6 +265,52 @@ def _check_dialog_contract(paths: Iterable[Path]) -> list[Violation]:
     return violations
 
 
+def _check_dialog_registry() -> list[Violation]:
+    """Every source dialog surface must be registered and classified.
+
+    Cross-checks the live source scan against the committed dialog registry
+    snapshot (``quill.tools.dialog_inventory``). A dialog surface that is new,
+    moved to a different scope, or reclassified -- and therefore absent from the
+    snapshot -- fails the gate until the author runs
+    ``python -m quill.tools.dialog_inventory --write`` and reviews the diff.
+    """
+    snapshot = load_snapshot()
+    violations: list[Violation] = []
+    for surface in scan_dialog_surfaces():
+        path = _REPO_ROOT / surface.module
+        registered = snapshot.get(surface.key)
+        if registered is None:
+            violations.append(
+                Violation(
+                    path,
+                    surface.line,
+                    f"unregistered dialog surface '{surface.key}'; run "
+                    "'python -m quill.tools.dialog_inventory --write' to "
+                    "register and classify it (A11Y-4 dialog registry)",
+                )
+            )
+        elif registered != surface.surface:
+            violations.append(
+                Violation(
+                    path,
+                    surface.line,
+                    f"dialog '{surface.key}' is classified '{registered}' in the "
+                    f"registry but scans as '{surface.surface}'; regenerate the "
+                    "snapshot (A11Y-4 dialog registry)",
+                )
+            )
+        elif surface.surface not in SURFACES:
+            violations.append(
+                Violation(
+                    path,
+                    surface.line,
+                    f"dialog '{surface.key}' has unsanctioned surface "
+                    f"'{surface.surface}' (A11Y-4 dialog registry)",
+                )
+            )
+    return violations
+
+
 def _check_ruff_config() -> list[Violation]:
     pyproject = _REPO_ROOT / "pyproject.toml"
     data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
@@ -272,6 +332,7 @@ def find_violations() -> list[Violation]:
     violations.extend(_check_bare_wx(_MAIN_FRAME))
     violations.extend(_check_raw_xml(sorted(_PACKAGE_ROOT.rglob("*.py"))))
     violations.extend(_check_dialog_contract(sorted(_UI_ROOT.rglob("*.py"))))
+    violations.extend(_check_dialog_registry())
     violations.extend(_check_ruff_config())
     return violations
 

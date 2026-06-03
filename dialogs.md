@@ -16,6 +16,16 @@ How to use this file:
   update the matching row in the same change. See the contributor rule in
   `.github/copilot-instructions.md` ("Keep dialogs.md current").
 
+This manual checklist is the human companion to the machine-enforced dialog
+registry. The authoritative, source-of-truth inventory of every dialog *surface*
+is generated from code by `quill/tools/dialog_inventory.py` and committed as
+`tests/unit/ui/fixtures/dialog_inventory.json`; the A11Y-4 banned-pattern gate
+and `tests/unit/ui/test_dialog_inventory.py` fail the build if any dialog is
+unregistered, unclassified, or on a bespoke surface. Regenerate the snapshot with
+`python -m quill.tools.dialog_inventory --write` whenever you add, move, or
+remove a dialog. See "Dialog Excellence Mandates" in the copilot instructions.
+
+
 What "passes" means for every dialog (the A11Y-4 contract):
 
 1. It opens from the listed command or menu path.

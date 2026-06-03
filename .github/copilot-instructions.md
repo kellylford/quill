@@ -153,3 +153,65 @@ that opens it. It must stay a faithful, complete map of the shipped dialogs.
   the outcome of a manual regression pass and are ticked by a human tester.
 - The checklist is the manual companion to the A11Y-4 machine-enforced dialog
   contract guard; keep both in mind when touching dialog construction.
+
+## Dialog Excellence Mandates (DLG-3, machine-enforced)
+
+Every dialog in QUILL is governed by a source-of-truth registry generated from
+code, not from a checklist. The authoritative inventory is produced by
+`quill/tools/dialog_inventory.py`, which scans all of `quill/**/*.py` via AST and
+records every dialog *surface* (each `wx.Dialog(...)`, stock wx dialog, and
+`show_web_form(...)` invocation) under a stable, line-independent key
+(`<module>::<enclosing_qualname>::<kind>`) with its sanctioned classification:
+
+- `native` — stock wx dialogs (`wx.MessageDialog`, `wx.RichMessageDialog`,
+  `wx.MessageBox`, choosers, text/file/dir pickers, progress, about). Native-first
+  is the default for confirms, choices, simple text, and file/folder selection.
+- `web` — sanctioned accessible web surfaces (`show_web_form`).
+- `hardened_custom` — a raw `wx.Dialog(...)` base (the only allowed bespoke base).
+
+The committed registry snapshot is
+`tests/unit/ui/fixtures/dialog_inventory.json`. Two gates enforce it:
+
+1. `tests/unit/ui/test_dialog_inventory.py` fails if the live source scan and the
+   snapshot disagree (new, moved, removed, or reclassified dialog) or if any
+   surface carries an unsanctioned classification.
+2. The A11Y-4 banned-pattern gate (`quill/tools/check_banned_patterns.py`, run in
+   Security CI) cross-checks every scanned dialog surface against the snapshot and
+   fails on any unregistered or misclassified dialog.
+
+These rules are non-negotiable for any dialog change:
+
+1. **No unregistered dialogs**: after adding, moving, or removing a dialog, run
+   `python -m quill.tools.dialog_inventory --write` and stage
+   `tests/unit/ui/fixtures/dialog_inventory.json`. Review the diff — a new key
+   appearing with the wrong classification means the dialog uses a non-sanctioned
+   surface and must be reworked, not rubber-stamped.
+2. **No bespoke surface drift**: only `native`, `web`, or `hardened_custom`
+   surfaces are allowed. Do not introduce a new dialog framework or a non-`wx`
+   modal surface.
+3. **No unlabeled controls**: every actionable control has an explicit accessible
+   name.
+4. **No implicit defaults**: every modal has an explicit default action (Enter)
+   and Escape/close behavior; route modal show through the `dialog_contract`
+   helpers (`apply_modal_ids`, `show_modal_dialog`).
+5. **No focus ambiguity**: set deterministic initial focus on open and return
+   focus to the initiating editor/control on close.
+6. **No lifecycle leaks**: a raw `wx.Dialog(...)` must `Destroy()` (or use the
+   `with wx.Dialog(...)` form); button sizers use `wx.EXPAND`, never
+   `wx.ALIGN_RIGHT`.
+7. **No silent regressions**: add at least one focused source-contract or behavior
+   test per dialog bug class.
+
+Dialog Change Checklist (every dialog PR):
+
+- [ ] `dialog_inventory.json` snapshot regenerated and staged
+- [ ] `dialogs.md` updated (new row, binding, or nested/startup note)
+- [ ] classification reviewed (`native` / `web` / `hardened_custom`)
+- [ ] A11Y-4 banned-pattern gate and `test_dialog_inventory.py` pass
+- [ ] targeted dialog test added/updated
+- [ ] manual SR/keyboard verification logged for shipped dialogs
+
+Source-of-truth rule: before closing any dialog work item, run
+`python -m quill.tools.dialog_inventory`; if the scan and the committed registry
+disagree, the work is incomplete regardless of checklist status.
+
