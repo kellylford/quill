@@ -1174,23 +1174,6 @@ A great product is not done until people can learn it — and per the tier swap,
 - Test breadth: CQ-11 through CQ-16, CQ-23, CQ-24, the IO matrix, and the sandbox policy suite. Value: confidence that everything documented actually works. Outcome: durable quality.
 - Breadth and exploration (folded in here as the final reach): NAV-10 (symbol navigation), AI-11 (local grounded answers), AI-12 (evaluation harness), AI-18 (optional GitHub Copilot SDK provider, only if beta users ask), FEAT-12 through FEAT-18, LINUX-2 (accessible Linux to the product bar), ECO-1 (plugin capability, signing, marketplace), L10N-1 (full UI and docs localization), and COLLAB-1 (accessible asynchronous review and sharing). Value: new reach and polish. Outcome: a growing product shaped by real user feedback, with nothing of substance left below best-in-class.
 
-#### 2.0 competitive parity plan (Notepad++ benchmark, adapted for QUILL)
-
-This plan captures the highest-value competitive gaps identified in the Notepad++ comparison and folds them into QUILL 2.0 without violating QUILL's accessibility and trust principles.
-
-1. **Search at project scale (COMP-1).** Deliver a first-class Find in Folder and Workspace Search flow so technical writers and developer users can search and replace across real projects without leaving QUILL. The key requirement is not just speed; it is accessibility stability: results must be reviewable by ear, keyboard traversal must never lose context, and operation summaries must announce exactly what changed.
-2. **Workspace depth, not just session recall (COMP-2).** Expand existing session support into an explicit workspace model with named sets, folder trees, and project groups, including reliable restore announcements. This is the core context-switching parity move: users should reopen "what I was working on" in one action with deterministic focus and state restoration.
-3. **Plugin lifecycle parity, but safer than competitors (COMP-3).** Build a complete plugin management lifecycle that users can operate fully by keyboard and screen reader, while preserving QUILL's stricter consent and capability boundaries. The bar is functional parity with Notepad++ plugin administration plus stronger security posture (permission prompts, provenance, rollback, and safe-mode fallback).
-4. **Encoding conversion as an explicit workflow (COMP-4).** Close the known encoding gap by adding convert flows, loss-risk preview, and reversible outcomes, not just open or reload choices. This targets legacy-document and mixed-encoding workflows where blind users currently need external tools to recover text safely.
-5. **Macro power-user maturity (COMP-5).** Move macros from basic utility to a robust automation surface with naming, descriptions, repeat controls, import/export, and deterministic replay behavior. The objective is a "safe automation" model where productivity gains do not come at the cost of unpredictable edits or silent failures.
-6. **Two-pane editing for review-heavy workflows (COMP-6).** Add optional split editing that remains stock-control and announcement-correct, enabling side-by-side review and synchronized navigation. This is specifically scoped for compare and revision tasks and must preserve QUILL's no-focus-chaos rule.
-
-Intentional non-goal in this parity plan: **multi-caret and rectangular editing remain out of scope** for QUILL's primary interaction model, because they conflict with screen-reader navigation patterns and the plain, predictable edit-field-first philosophy.
-
-Why sixth: essential for greatness, but it should describe a product that is already built, safe, delightful, and feature-complete, so it follows everything it documents.
-
-Why last: valuable but not required for a great, trustworthy 1.0; the transcription suite and the stretch items are best chosen with beta evidence in hand, and the build directive explicitly places transcription after QUILL, hardening, and GLOW.
-
 #### EdSharp feature parity (delivered in QUILL 1.0)
 
 > Status (2026-06-09): **delivered**. Originally captured as a QUILL 2.0 backlog
@@ -1246,7 +1229,7 @@ format work — is listed as EDS-1 through EDS-21 below, all delivered in 1.0.
 | Watch folders, feature profiles, onboarding | No | Yes | QUILL only |
 | Cross-screen-reader announcement engine, DPAPI secrets | Partial (direct SR speech) | Yes (NVDA/JAWS/Narrator parity) | QUILL parity+ |
 
-**EdSharp parity backlog (QUILL 2.0 candidates)**
+**EdSharp parity items (all delivered in QUILL 1.0)**
 
 | ID | Item | Area | Size | Status | Acceptance criteria |
 | --- | --- | --- | --- | --- | --- |
@@ -1297,6 +1280,23 @@ Keymap Editor, and the Tools > EdSharp Tools submenu. The two large EdSharp
 categories QUILL omits, RTF *live* word processing and JScript.NET scripting,
 remain deliberate scope choices rather than backlog items (see the RTF note above;
 EDS-21 delivers RTF only as an io-layer file format).
+
+#### 2.0 competitive parity plan (Notepad++ benchmark, adapted for QUILL)
+
+This plan captures the highest-value competitive gaps identified in the Notepad++ comparison and folds them into QUILL 2.0 without violating QUILL's accessibility and trust principles.
+
+1. **Search at project scale (COMP-1).** Deliver a first-class Find in Folder and Workspace Search flow so technical writers and developer users can search and replace across real projects without leaving QUILL. The key requirement is not just speed; it is accessibility stability: results must be reviewable by ear, keyboard traversal must never lose context, and operation summaries must announce exactly what changed.
+2. **Workspace depth, not just session recall (COMP-2).** Expand existing session support into an explicit workspace model with named sets, folder trees, and project groups, including reliable restore announcements. This is the core context-switching parity move: users should reopen "what I was working on" in one action with deterministic focus and state restoration.
+3. **Plugin lifecycle parity, but safer than competitors (COMP-3).** Build a complete plugin management lifecycle that users can operate fully by keyboard and screen reader, while preserving QUILL's stricter consent and capability boundaries. The bar is functional parity with Notepad++ plugin administration plus stronger security posture (permission prompts, provenance, rollback, and safe-mode fallback).
+4. **Encoding conversion as an explicit workflow (COMP-4).** Close the known encoding gap by adding convert flows, loss-risk preview, and reversible outcomes, not just open or reload choices. This targets legacy-document and mixed-encoding workflows where blind users currently need external tools to recover text safely.
+5. **Macro power-user maturity (COMP-5).** Move macros from basic utility to a robust automation surface with naming, descriptions, repeat controls, import/export, and deterministic replay behavior. The objective is a "safe automation" model where productivity gains do not come at the cost of unpredictable edits or silent failures.
+6. **Two-pane editing for review-heavy workflows (COMP-6).** Add optional split editing that remains stock-control and announcement-correct, enabling side-by-side review and synchronized navigation. This is specifically scoped for compare and revision tasks and must preserve QUILL's no-focus-chaos rule.
+
+Intentional non-goal in this parity plan: **multi-caret and rectangular editing remain out of scope** for QUILL's primary interaction model, because they conflict with screen-reader navigation patterns and the plain, predictable edit-field-first philosophy.
+
+Why sixth: essential for greatness, but it should describe a product that is already built, safe, delightful, and feature-complete, so it follows everything it documents.
+
+Why last: valuable but not required for a great, trustworthy 1.0; the transcription suite and the stretch items are best chosen with beta evidence in hand, and the build directive explicitly places transcription after QUILL, hardening, and GLOW.
 
 ### 24. The development mindset in one paragraph
 
