@@ -1762,7 +1762,7 @@ class MainFrame(ImageCaptureMixin, BrowseModeMixin, EdSharpActionsMixin, EdSharp
         )
         self.commands.register(
             "whisperer.capability_matrix",
-            "BITS Whisperer Capability Matrix (HTML Preview)",
+            "BITS Whisperer Capability Matrix",
             self.show_bw_capability_matrix_page,
             None,
             feature_id="core.bw_insights",
@@ -2121,13 +2121,13 @@ class MainFrame(ImageCaptureMixin, BrowseModeMixin, EdSharpActionsMixin, EdSharp
         )
         self.commands.register(
             "whisperer.about",
-            "About BITS Whisperer (HTML Preview)",
+            "About BITS Whisperer",
             self.show_whisperer_about_page,
             None,
         )
         self.commands.register(
             "help.status_page",
-            "Status Page (HTML Preview)",
+            "Status Page",
             self.show_help_status_page,
             None,
         )
@@ -3633,7 +3633,7 @@ class MainFrame(ImageCaptureMixin, BrowseModeMixin, EdSharpActionsMixin, EdSharp
         whisperer_menu = wx.Menu()
         whisperer_menu.Append(
             self._id_whisperer_about,
-            self._menu_label("&About Whisperer (HTML Preview)...", "whisperer.about"),
+            self._menu_label("&About Whisperer...", "whisperer.about"),
         )
         whisperer_menu.Append(
             self._id_profile_onboarding,
@@ -3725,7 +3725,7 @@ class MainFrame(ImageCaptureMixin, BrowseModeMixin, EdSharpActionsMixin, EdSharp
         )
         bw_rollout_menu.Append(
             self._id_bw_capability_matrix,
-            self._menu_label("&Capability Matrix (HTML Preview)", "whisperer.capability_matrix"),
+            self._menu_label("&Capability Matrix", "whisperer.capability_matrix"),
         )
         whisperer_menu.AppendSubMenu(bw_rollout_menu, "&Rollout")
         # BITS Whisperer is deferred to QUILL 2.0; the master `core.bw_whisperer`
@@ -3899,7 +3899,7 @@ class MainFrame(ImageCaptureMixin, BrowseModeMixin, EdSharpActionsMixin, EdSharp
         )
         help_menu.Append(
             self._id_help_status_page,
-            self._menu_label("Status &Page (HTML Preview)", "help.status_page"),
+            self._menu_label("Status &Page", "help.status_page"),
         )
         help_menu.Append(
             self._id_why_dont_i_see_feature,
@@ -11613,7 +11613,7 @@ class MainFrame(ImageCaptureMixin, BrowseModeMixin, EdSharpActionsMixin, EdSharp
             "<h2 id='next-steps'>Next Steps</h2>"
             "<ol>"
             "<li>Use Startup Wizard to configure profile, AI, and speech foundation.</li>"
-            "<li>Use Status Page to monitor tasks, speech downloads, and feature state.</li>"
+            "<li>Use Status Page to check on downloads, speech, and what's turned on.</li>"
             "<li>Iterate in small, accessible milestones with clear release notes.</li>"
             "</ol>"
             "<p>It all starts with a whisper that glows and writes with a magical Quill.</p>"
@@ -22267,8 +22267,8 @@ class MainFrame(ImageCaptureMixin, BrowseModeMixin, EdSharpActionsMixin, EdSharp
             "runtime routing remains staged.</li>"
             "</ul>"
             "<h2 id='where-next'>After Wizard</h2>"
-            "<p>Open Help > Status Page (HTML Preview) to monitor task activity, "
-            "feature state, and speech setup health.</p>"
+            "<p>You're all set. To check on downloads, speech, and what's "
+            "turned on, open Help &gt; Status Page.</p>"
         )
 
     def _show_bw_onboarding(self, force: bool) -> None:
