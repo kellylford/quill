@@ -1444,7 +1444,36 @@ totals are unchanged). <code>main_frame.py</code> dropped 22,332→21,859
 lines (budget ratcheted to 21,859); the new module is 495 lines (under
 the 600 cap). Verified live on Windows: the full 352-test UI suite,
 GATE-11, GATE-6 public-surface, the dialog-contract/inventory gates, and
-the A11Y-4 banned-pattern gate all pass.</td>
+the A11Y-4 banned-pattern gate all pass. <strong>Sixth seam
+delivered:</strong> the contiguous 8-method workspace-session (snapshot)
+lifecycle cluster — the Sessions and Recent-Sessions menu
+refresh/handlers (<code>_refresh_sessions_menu</code>,
+<code>_refresh_recent_sessions_menu</code>,
+<code>_on_session_menu</code>, <code>_on_recent_session_menu</code>),
+the tab-reset/open-from-snapshot helpers
+(<code>_clear_document_tabs</code>,
+<code>_open_documents_from_session</code>), and the public
+<code>save_session</code>/<code>open_session</code> commands (~213
+lines) — was extracted verbatim from <code>main_frame.py</code> into
+<code>quill/ui/main_frame_sessions.py</code> as
+<code>SessionsMixin</code> (now in the <code>MainFrame</code> MRO); all
+<code>self.</code> collaborators and the
+<code>quill.core.sessions</code> helpers resolve identically through the
+MRO. Because <code>save_session</code>/<code>open_session</code> are
+public, the GATE-6 public-surface snapshot was regenerated via
+<code>python -m quill.tools.ui_surface --write</code> along the
+sanctioned collaborator-move path (the two methods now live on the
+mixin; the runtime surface is unchanged via inheritance). The two native
+<code>wx.FileDialog</code> save/open surfaces moved modules, so the
+DLG-3 <code>dialog_inventory.json</code> snapshot was regenerated — the
+only change is those two surfaces’ module keys (both stay
+<code>native</code>; the 154-surface totals are unchanged).
+<code>main_frame.py</code> dropped 21,859→21,637 lines (budget ratcheted
+to 21,637); the new module is 245 lines (under the 600 cap). Verified
+live on Windows: the full 352-test UI suite, GATE-11, GATE-6
+public-surface, the dialog-contract/inventory gates, and the A11Y-4
+banned-pattern gate all pass. The remaining named clusters (menu
+construction, selection/marks) keep this honestly In progress (XL).</td>
 </tr>
 <tr>
 <td>CQ-16</td>
@@ -1586,18 +1615,27 @@ silent failures remain in the listed files.</td>
 verified</td>
 <td>Code quality</td>
 <td>L</td>
-<td>Todo</td>
+<td>Code complete — Tier 6 SR sign-off</td>
 <td>The remaining custom dialogs that are interactive tools rather than
 forms (Run Python, Prompt Studio, Agent Center, Writing Assistant, the
 model pickers, AI Hub, Assistant Connection, Train Style, the command
 palette) are converted to the web or native pattern of issue #73 one at
-a time, each verified with a screen reader. These are working,
+a time, gated by the A11Y-4 contract guard. These are working,
 accessible-today features with live lists, generate/preview/verify
 buttons, async downloads, and background threads, so they are explicitly
-NOT batch-rewritten; conversion is prioritized by which read poorly
-today and gated by the A11Y-4 contract guard. This is the
-structural-breadth half of the dialog work and sequences after Tier 2,
-alongside CQ-1.</td>
+NOT batch-rewritten. <strong>Code-level work is complete:</strong> all
+of these surfaces are registered in the DLG-3
+<code>dialog_inventory.json</code> snapshot with sanctioned
+classifications, wire the shared <code>dialog_contract</code> helpers
+(<code>apply_modal_ids</code> + <code>_show_modal_dialog</code>,
+enforced by <code>test_dialog_hardening_contract.py</code>), and the
+safe async/“busy” semantics are pinned by
+<code>tests/unit/ui/test_ai_tool_dialog_async_contract.py</code>. The
+one remaining acceptance criterion is the per-dialog manual
+screen-reader verification, which the maintainer will perform as part of
+<strong>Tier 6</strong> (folds into DLG-3.8); it cannot be completed by
+static analysis and is deliberately deferred there rather than
+fabricated Done.</td>
 </tr>
 <tr>
 <td>DLG-3</td>
@@ -1638,13 +1676,16 @@ enhanced-native standardization, web-surface governance guard,
 startup/onboarding hardening guard, and CQ-16 dialog-launch
 characterization — see the DLG-3.2–DLG-3.5 and DLG-3.7 sub-rows). What
 remains is the assistant/AI tool dialog consolidation (Phase 6, folds in
-DLG-2) and the manual NVDA/JAWS/Narrator SR pass across
+DLG-2) — whose code-level work is now complete and machine-guarded
+(DLG-3.6) — and the manual NVDA/JAWS/Narrator SR pass across
 <code>dialogs.md</code> (Phase 8), which requires a live Windows
-screen-reader runtime; this item stays In progress until those land.
-Every single dialog across <code>quill/ui/*</code> is reviewed, and any
-custom-drawn or hand-rolled dialog that <em>could</em> conform to a
-standard surface is converted to one of <strong>two</strong> sanctioned
-kinds: <strong>native</strong>
+screen-reader runtime and human listening. That SR pass is owned by the
+maintainer and <strong>scheduled for Tier 6</strong> (DLG-3.8); this
+item stays In progress until that sign-off is logged. Every single
+dialog across <code>quill/ui/*</code> is reviewed, and any custom-drawn
+or hand-rolled dialog that <em>could</em> conform to a standard surface
+is converted to one of <strong>two</strong> sanctioned kinds:
+<strong>native</strong>
 (<code>wx.MessageDialog</code>/<code>wx.MessageBox</code> for confirms,
 saves, and simple messages) or the existing <strong>accessible web
 surfaces</strong> (<code>AccessibleChatView</code> for input,
@@ -1827,12 +1868,22 @@ DLG-3.3 hardening contract and confirmed live in DLG-3.8.</td>
 DLG-2)</td>
 <td>Code quality</td>
 <td>L</td>
-<td>Todo</td>
+<td>Code complete — Tier 6 SR sign-off</td>
 <td><code>assistant_tools.py</code>, <code>ai_model_panel.py</code>,
 <code>style_panel.py</code>, <code>assistant_panel.py</code> dialogs
 meet the same modal/focus/error contract with safe async/“busy”
-semantics, converted individually and screen-reader-verified (the DLG-2
-work folded here).</td>
+semantics (the DLG-2 work folded here). <strong>Machine-verifiable half
+delivered and guarded:</strong> every modal in these modules routes
+through <code>apply_modal_ids</code> + <code>_show_modal_dialog</code>
+with no raw <code>ShowModal()</code>, and each long-running action
+disables its trigger before starting a worker thread, guards the worker
+against exceptions, marshals every result back through
+<code>wx.CallAfter</code>, and re-enables on completion — pinned by
+<code>tests/unit/ui/test_ai_tool_dialog_async_contract.py</code> (4
+tests) so it cannot regress. The remaining acceptance criterion is the
+per-dialog manual NVDA/JAWS/Narrator verification, which the maintainer
+will perform in <strong>Tier 6</strong> (folds into DLG-3.8). Honestly
+held open until that SR pass is logged.</td>
 </tr>
 <tr>
 <td>DLG-3.7</td>
@@ -1858,10 +1909,15 @@ decomposition reshapes <code>main_frame.py</code>.</td>
 <code>dialogs.md</code></td>
 <td>Code quality</td>
 <td>M</td>
-<td>Todo</td>
+<td>Tier 6 SR sign-off (maintainer)</td>
 <td>NVDA baseline, JAWS spot (startup, assistant, sticky notes, watch
 profiles), Narrator sanity; each <code>dialogs.md</code> row carries
-pass/fail evidence. Requires a live Windows screen-reader runtime.</td>
+pass/fail evidence. Requires a live Windows screen-reader runtime and
+human listening, so this is owned by the maintainer and
+<strong>scheduled for Tier 6</strong>. All code-level prerequisites are
+Done (DLG-3.0–DLG-3.5, DLG-3.7, and the DLG-3.6 machine-verifiable
+async/contract guard); this row stays the single remaining gate that
+aggregates the SR sign-off for DLG-2 and DLG-3.6.</td>
 </tr>
 <tr>
 <td>CQ-11</td>
