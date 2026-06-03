@@ -1064,9 +1064,19 @@ failure aborts with a clear message.</td>
 <td>Gate plugin loading behind off-by-default experimental flag</td>
 <td>Security</td>
 <td>S</td>
-<td>Todo</td>
+<td>Done</td>
 <td>No third-party plugin loads in a default build; flag is documented
-as experimental.</td>
+as experimental. <strong>Delivered:</strong>
+<code>quill/plugins/__init__.py</code> exposes
+<code>third_party_plugins_enabled(features)</code> and
+<code>load_plugins(features)</code>, which return no plugins unless the
+<code>core.third_party_plugins</code> feature is enabled. That feature
+is defined <code>locked_off=True</code> (maturity
+<code>experimental</code>) in <code>quill/core/features.py</code>, so a
+default 1.0 build never loads third-party plugin code into the process.
+Tests in <code>tests/unit/core/test_plugins.py</code> cover the
+locked-off default (empty load), the gate helper, and the enabled
+path.</td>
 </tr>
 <tr>
 <td>SEC-9</td>
@@ -1348,14 +1358,30 @@ lines) was extracted verbatim from <code>main_frame.py</code> into
 <code>quill/ui/main_frame_browse.py</code> as
 <code>BrowseModeMixin</code>, which <code>MainFrame</code> now inherits;
 calls resolve identically through the MRO so behavior is unchanged.
-<code>main_frame.py</code> dropped 23,332 to 22,877 lines and the
-GATE-11 budget ratcheted with it; the move is proven behavior-identical
-by the existing main_frame UI suite and the unchanged public-surface
-characterization fixture (all moved methods are private). The mixin
-pattern is now established for the remaining clusters (menu
+<strong>Second seam delivered:</strong> the four selection-scoped AI
+writing actions plus their three private helpers were extracted into
+<code>quill/ui/main_frame_ai_actions.py</code> as
+<code>AiActionsMixin</code> (now in the <code>MainFrame</code> MRO);
+because these are public methods, the GATE-6 public-surface snapshot was
+regenerated via <code>python -m quill.tools.ui_surface --write</code>
+along the sanctioned collaborator-move path, and the runtime surface is
+unchanged via inheritance. In the same pass two oversized
+<code>quill/core</code> modules were decomposed to satisfy GATE-11 by
+extraction (never by raising a budget):
+<code>settings_registry.py</code> (984→158 lines) moved its
+<code>SettingSpec</code>/<code>SettingGroup</code>/<code>SETTING_*</code>
+data tables into a new <code>settings_specs.py</code> (re-exported), and
+<code>settings.py</code> (642→570 lines) moved
+<code>STATUS_BAR_ITEMS</code> and the status-bar value normalizers into
+a new <code>settings_normalizers.py</code> (re-exported).
+<code>main_frame.py</code> is now 22,866 lines and every touched GATE-11
+budget ratcheted down with the change; all moves are proven
+behavior-identical by the main_frame UI suite, the regenerated
+characterization fixture, and the core settings/registry suites. The
+mixin pattern is now established for the remaining clusters (menu
 construction, QUILL key/Quick Nav, selection/marks, file/session
-lifecycle, status bar, AI actions), so this stays honestly In progress
-(XL) until those land.</td>
+lifecycle, status bar), so this stays honestly In progress (XL) until
+those land.</td>
 </tr>
 <tr>
 <td>CQ-16</td>
@@ -3307,9 +3333,22 @@ and validates <code>cwd</code> is an existing directory (with
 <td>Forget key command and shared-account note</td>
 <td>Security</td>
 <td>S</td>
-<td>Todo</td>
+<td>Done</td>
 <td>A command clears both secret stores and announces; limitation
-documented.</td>
+documented. <strong>Delivered:</strong>
+<code>clear_assistant_api_key()</code> in
+<code>quill/core/assistant_ai.py</code> removes the key from both
+persistence layers (the Windows Credential Manager entry and the
+DPAPI-protected fallback file) and reports whether a key was present.
+<code>MainFrame._forget_assistant_api_key</code> adds a <strong>Forget
+API Key</strong> item to the AI menu that confirms
+(<code>wx.YES_NO | wx.ICON_WARNING</code>), clears both stores, and
+announces the outcome (“forgotten” vs “no stored key”); the
+shared-account caveat is in the confirm copy. Tests:
+<code>tests/unit/core/test_assistant_ai.py</code> (both-store clear,
+present/absent) and
+<code>tests/unit/ui/test_main_frame_forget_key.py</code> (menu item
+present, bound, handler clears both stores).</td>
 </tr>
 <tr>
 <td>AI-1</td>
@@ -4206,10 +4245,27 @@ test asserts no secret leaks.</td>
 <td>Python sandbox memory and CPU limits</td>
 <td>Security</td>
 <td>M</td>
-<td>Todo</td>
+<td>Done</td>
 <td>Runaway transforms are terminated by memory and wall-clock limits;
 payload is not exposed via the environment where avoidable; test
-included. (Extends SEC-9.)</td>
+included. (Extends SEC-9.) <strong>Delivered:</strong>
+<code>run_python_sandbox(...)</code> in
+<code>quill/core/python_sandbox.py</code> now delivers the user payload
+as a base64-encoded JSON blob over the child’s stdin
+(<code>input=</code>) instead of an environment variable, and forwards
+only a minimal env allowlist. The bootstrap applies resource limits
+before running user code: on Windows a Job Object caps process memory
+(<code>JOBOBJECT_EXTENDED_LIMIT_INFORMATION</code> with
+<code>JOB_OBJECT_LIMIT_PROCESS_MEMORY</code>, kernel32 functions
+declared with explicit <code>restype</code>/<code>argtypes</code> so the
+64-bit HANDLE is not truncated); on POSIX <code>setrlimit</code> caps
+<code>RLIMIT_AS</code> and <code>RLIMIT_CPU</code>. A new
+<code>memory_limit_mb</code> parameter (default 512) and a CPU budget of
+<code>timeout + 1s</code> are passed in the payload. Tests (6) in
+<code>tests/unit/core/test_python_sandbox.py</code> assert the payload
+is delivered via stdin (never <code>QUILL_SANDBOX_PAYLOAD</code> in
+env), the payload carries the resource limits, and — on Windows — a 64
+MB cap actually fails a ~60 M-int allocation.</td>
 </tr>
 <tr>
 <td>SEC-15</td>
@@ -4243,9 +4299,20 @@ tests.</td>
 <td>Document or escape shell-integration command</td>
 <td>Security</td>
 <td>S</td>
-<td>Todo</td>
+<td>Done</td>
 <td>The registry command path is documented as internal-only or escaped
-if user input is ever accepted.</td>
+if user input is ever accepted. <strong>Delivered:</strong>
+<code>verb_launcher_command(action)</code> in
+<code>quill/platform/windows/shell_integration.py</code> carries a
+SEC-17 security contract docstring stating the returned string is
+written verbatim into the Windows registry as a shell command and must
+never embed untrusted free-form input. The executable is derived from
+<code>sys.executable</code> (never user-supplied), and
+<code>action</code> is validated against the closed
+<code>verb_actions()</code> registry — an unknown action raises
+<code>ValueError</code> rather than reaching the registry. Tests in
+<code>tests/unit/core/test_shell_integration.py</code> cover the
+validated command shape and the rejection of an unknown action.</td>
 </tr>
 </tbody>
 </table>
@@ -7229,10 +7296,10 @@ CQ-16) are counted once, in their primary tier.</p>
 <td>Tier 4</td>
 <td>Structural health and performance</td>
 <td>31</td>
-<td>12</td>
-<td>19</td>
-<td>DLG-3, CQ-16, CQ-1, DLG-2, PERF-1..3, PERF-9..14, GATE-10, SEC-6,
-SEC-7, SEC-8, SEC-14, SEC-17</td>
+<td>16</td>
+<td>15</td>
+<td>DLG-3, CQ-16, CQ-1, DLG-2, PERF-1..3, PERF-9..14, GATE-10,
+SEC-6</td>
 </tr>
 <tr>
 <td>Tier 6</td>
@@ -7247,8 +7314,8 @@ CQ-14, CQ-23, CQ-24, LINUX-2</td>
 <td><strong>1.0 subtotal</strong></td>
 <td>Tiers 1, 2, 4, 6 (the QUILL 1.0 scope)</td>
 <td><strong>148</strong></td>
-<td><strong>95</strong></td>
-<td><strong>53</strong></td>
+<td><strong>99</strong></td>
+<td><strong>49</strong></td>
 <td></td>
 </tr>
 <tr>
@@ -7296,8 +7363,8 @@ LINUX-1, ECO-1, L10N-1, COLLAB-1</td>
 <td><strong>Total</strong></td>
 <td>All tiers (1.0 + 2.0)</td>
 <td><strong>211</strong></td>
-<td><strong>116</strong></td>
-<td><strong>95</strong></td>
+<td><strong>120</strong></td>
+<td><strong>91</strong></td>
 <td></td>
 </tr>
 </tbody>
@@ -7348,8 +7415,7 @@ the third table and are not part of either 1.0 list.</p>
 <td>Tier 4 — Structural health</td>
 <td>In progress / Todo</td>
 <td>DLG-3, CQ-1 (in progress), CQ-16, DLG-2, GATE-10, PERF-1, PERF-2,
-PERF-3, PERF-9, PERF-10, PERF-11, PERF-12, PERF-13, PERF-14, SEC-6,
-SEC-7, SEC-8, SEC-14, SEC-17</td>
+PERF-3, PERF-9, PERF-10, PERF-11, PERF-12, PERF-13, PERF-14, SEC-6</td>
 </tr>
 <tr>
 <td>Tier 6 — Documentation</td>
@@ -7393,8 +7459,9 @@ SHELL-1</td>
 <tr>
 <td>Tier 4 — Structural health</td>
 <td>CQ-7, CQ-12, CQ-13, CQ-14, CQ-15, CQ-17, CQ-18, CQ-19, CQ-20, CQ-21,
-CQ-22, GATE-11, PERF-8, SEC-4, SEC-15, SEC-16, TYPE-1, TYPE-2, TYPE-3,
-TYPE-4, TYPE-5, TYPE-6, TYPE-7, TYPE-8</td>
+CQ-22, GATE-11, PERF-8, SEC-4, SEC-7, SEC-8, SEC-14, SEC-15, SEC-16,
+SEC-17, TYPE-1, TYPE-2, TYPE-3, TYPE-4, TYPE-5, TYPE-6, TYPE-7,
+TYPE-8</td>
 </tr>
 <tr>
 <td>EdSharp parity (delivered in 1.0)</td>
