@@ -59,8 +59,10 @@ def test_ocr_review_dialog_uses_show_modal_dialog() -> None:
 
 
 def test_main_frame_wires_ocr_review_dialog() -> None:
-    """MainFrame's ocr_image_file method uses OcrReviewDialog and render_ocr_review."""
-    source_path = Path(__file__).parent.parent.parent.parent / "quill" / "ui" / "main_frame.py"
+    """The ocr_image_file method uses OcrReviewDialog and render_ocr_review."""
+    source_path = (
+        Path(__file__).parent.parent.parent.parent / "quill" / "ui" / "main_frame_image.py"
+    )
     source = source_path.read_text(encoding="utf-8")
 
     # Check that main_frame imports and uses OcrReviewDialog
@@ -71,8 +73,10 @@ def test_main_frame_wires_ocr_review_dialog() -> None:
 
 
 def test_main_frame_handles_insert_copy_discard_actions() -> None:
-    """MainFrame's ocr_image_file method handles Insert, Copy, and Discard actions."""
-    source_path = Path(__file__).parent.parent.parent.parent / "quill" / "ui" / "main_frame.py"
+    """The ocr_image_file method handles Insert, Copy, and Discard actions."""
+    source_path = (
+        Path(__file__).parent.parent.parent.parent / "quill" / "ui" / "main_frame_image.py"
+    )
     source = source_path.read_text(encoding="utf-8")
 
     # Check that the three actions are handled
@@ -82,10 +86,61 @@ def test_main_frame_handles_insert_copy_discard_actions() -> None:
 
 
 def test_main_frame_returns_focus_to_editor() -> None:
-    """MainFrame's ocr_image_file method returns focus to the editor after the dialog."""
-    source_path = Path(__file__).parent.parent.parent.parent / "quill" / "ui" / "main_frame.py"
+    """The ocr_image_file method returns focus to the editor after the dialog."""
+    source_path = (
+        Path(__file__).parent.parent.parent.parent / "quill" / "ui" / "main_frame_image.py"
+    )
     source = source_path.read_text(encoding="utf-8")
 
     # Check that focus is returned to the editor
     # Look for the pattern after the OCR review dialog section
     assert "self.editor.SetFocus()" in source
+
+
+def _image_mixin_source() -> str:
+    return (
+        Path(__file__).parent.parent.parent.parent / "quill" / "ui" / "main_frame_image.py"
+    ).read_text(encoding="utf-8")
+
+
+def test_ocr3_clipboard_and_screen_capture_methods_exist() -> None:
+    """OCR-3 adds clipboard and screen-capture OCR entry points to the mixin."""
+    source = _image_mixin_source()
+
+    assert "def ocr_clipboard_image(self) -> None:" in source
+    assert "def ocr_screen_capture(self) -> None:" in source
+    # Both capture sources funnel through the shared threaded review pipeline.
+    assert "def _run_ocr_on_path(self, image_path: Path, *, confirm: bool) -> None:" in source
+    assert "self._run_ocr_on_path(image_path, confirm=False)" in source
+
+
+def test_ocr3_capture_uses_windows_capture_helper() -> None:
+    """The capture paths use the offline Windows screen-capture helper (OCR-3)."""
+    source = _image_mixin_source()
+
+    assert "from quill.platform.windows.screen_capture import" in source
+    assert "capture_clipboard_image" in source
+    assert "capture_screen" in source
+    # The empty-clipboard case is handled gracefully rather than crashing.
+    assert "ClipboardImageEmpty" in source
+    assert "ScreenCaptureError" in source
+
+
+def test_ocr3_commands_are_wired_in_main_frame() -> None:
+    """The two OCR-3 commands are registered, menued, and event-bound."""
+    main_frame = (
+        Path(__file__).parent.parent.parent.parent / "quill" / "ui" / "main_frame.py"
+    ).read_text(encoding="utf-8")
+
+    # Command registration
+    assert '"tools.ocr_clipboard"' in main_frame
+    assert '"tools.ocr_screen"' in main_frame
+    assert "self.ocr_clipboard_image," in main_frame
+    assert "self.ocr_screen_capture," in main_frame
+    # Menu items
+    assert '"tools.ocr_clipboard"' in main_frame
+    assert "self._id_ocr_clipboard" in main_frame
+    assert "self._id_ocr_screen" in main_frame
+    # Event bindings
+    assert "self.ocr_clipboard_image()" in main_frame
+    assert "self.ocr_screen_capture()" in main_frame

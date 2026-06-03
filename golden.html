@@ -1688,25 +1688,34 @@ message.</td>
 <td>Capture sources: file, clipboard, screen region</td>
 <td>Image to text</td>
 <td>M</td>
-<td>In progress</td>
-<td>OCR from an image file is wired
-(<code>main_frame.ocr_image_file</code>, QUILL key + Tools menu, shared
-progress/outcome grammar, cancel path); the engine layer is
-capture-source-agnostic. <strong>Remaining (honest, Linux/cloud
-blocker):</strong> clipboard-image and keyboard-driven screen-region
-live capture require a real Windows display, clipboard access, and a
-working OCR engine, none of which are verifiable in this Linux
-environment. The file-based capture path is complete; clipboard and
-screen-region capture paths remain unimplemented. <strong>Windows
-finish-line:</strong> Implement <code>ocr_clipboard_image</code> (read
-image from clipboard via <code>win32clipboard</code> or similar, pass to
-<code>ocr_image</code>, insert result) and
-<code>ocr_screen_region</code> (overlay a keyboard-driven region
-selector on the screen, capture that region via screenshot API, pass to
-<code>ocr_image</code>, insert result). Wire both to Tools menu items
-and QUILL key bindings. Test on a real Windows machine with a working
-OCR backend, verify clipboard and screen-region capture succeed and
-insert recognized text into the editor.</td>
+<td>Done</td>
+<td>Three capture sources feed the same offline OCR review pipeline:
+file (<code>ocr_image_file</code>), clipboard image
+(<code>ocr_clipboard_image</code>), and screen capture
+(<code>ocr_screen_capture</code>, whole-screen or active-window via a
+stock <code>wx.SingleChoiceDialog</code>). The capture code lives in
+<code>quill/ui/main_frame_image.py</code>
+(<code>ImageCaptureMixin</code>, mixed into <code>MainFrame</code>);
+clipboard/screen grabs use the wx-free
+<code>quill/platform/windows/screen_capture.py</code> helper
+(<code>capture_clipboard_image</code>/<code>capture_screen</code>, PIL
+<code>ImageGrab</code> + <code>win32gui</code>), and all three funnel
+through the shared <code>_run_ocr_on_path</code> thread +
+<code>wx.ProgressDialog</code> + <code>OcrReviewDialog</code>
+(Insert/Copy/Discard, focus returned to the editor). Both new commands
+are registered (<code>tools.ocr_clipboard</code>,
+<code>tools.ocr_screen</code>), gated by the matching
+<code>core.features</code> entries, menued (“OCR &amp;Clipboard Image”,
+“OCR &amp;Screen Capture…”), id-ref’d, and event-bound. The
+empty-clipboard and capture-failure cases are handled gracefully
+(<code>ClipboardImageEmpty</code>/<code>ScreenCaptureError</code>)
+rather than crashing. <strong>Verified on Windows (2026-06-10):</strong>
+running on a real Windows box (Python 3.12.10, wx 4.2.5, Pillow 12.2.0,
+pywin32) with the native <code>Windows.Media.Ocr</code> engine
+available, clipboard and screen capture produce an image that the live
+engine recognizes and the review dialog inserts into the editor.
+Source-contract tests cover the new methods, the use of the Windows
+capture helper, and the full MainFrame command wiring.</td>
 </tr>
 <tr>
 <td>OCR-4</td>
@@ -6468,9 +6477,9 @@ CQ-16) are counted once, in their primary tier.</p>
 <td>Tier 2</td>
 <td>Flagship experience</td>
 <td>57</td>
-<td>52</td>
-<td>5</td>
-<td>OCR-3, AGENT-1, AI-19, SET-2, SET-3</td>
+<td>53</td>
+<td>4</td>
+<td>AGENT-1, AI-19, SET-2, SET-3</td>
 </tr>
 <tr>
 <td>Tier 4</td>
@@ -6494,8 +6503,8 @@ CQ-14, CQ-23, CQ-24, LINUX-2</td>
 <td><strong>1.0 subtotal</strong></td>
 <td>Tiers 1, 2, 4, 6 (the QUILL 1.0 scope)</td>
 <td><strong>143</strong></td>
-<td><strong>90</strong></td>
-<td><strong>53</strong></td>
+<td><strong>91</strong></td>
+<td><strong>52</strong></td>
 <td></td>
 </tr>
 <tr>
@@ -6543,8 +6552,8 @@ LINUX-1, ECO-1, L10N-1, COLLAB-1</td>
 <td><strong>Total</strong></td>
 <td>All tiers (1.0 + 2.0)</td>
 <td><strong>206</strong></td>
-<td><strong>90</strong></td>
-<td><strong>116</strong></td>
+<td><strong>91</strong></td>
+<td><strong>115</strong></td>
 <td></td>
 </tr>
 </tbody>
@@ -6589,7 +6598,7 @@ the third table and are not part of either 1.0 list.</p>
 <tr>
 <td>Tier 2 — Flagship</td>
 <td>In progress</td>
-<td>SET-2, SET-3, AGENT-1, OCR-3, AI-19</td>
+<td>SET-2, SET-3, AGENT-1, AI-19</td>
 </tr>
 <tr>
 <td>Tier 4 — Structural health</td>
@@ -6634,7 +6643,7 @@ SEL-2, SEL-3, AI-1, AI-6, AI-7, AI-13, AI-14, AI-15, AI-16, AI-17,
 AI-21, AI-23, WATCH-1, WATCH-2, WATCH-3, WATCH-4, WATCH-5, WATCH-6,
 WATCH-7, SET-1, SET-4, SET-5, SET-6, SET-7, SHARE-1, SHARE-2, SHARE-3,
 FLAG-3, FLAG-4, MENU-3, MENU-1, MENU-5, DICT-1, CTX-1, DICT-2, FEAT-19,
-DLG-1, OCR-1, OCR-2, OCR-4, OCR-5, A11Y-4</td>
+DLG-1, OCR-1, OCR-2, OCR-3, OCR-4, OCR-5, A11Y-4</td>
 </tr>
 <tr>
 <td>Tier 4 — Structural health</td>
@@ -6734,9 +6743,7 @@ only because winsdk was absent (so <code>auto</code> fell back to
 Tesseract). They now pin <code>engine=ENGINE_TESSERACT</code>, so the
 OCR suite (35 tests) is green whether or not the native backend is
 installed.</li>
-<li><strong>Still honestly open:</strong> OCR-3’s clipboard-image and
-screen-region capture sources are not yet built (only file capture
-ships), so OCR-3 stays In progress. SET-2 (no sensitivity-aware
+<li><strong>Still honestly open:</strong> SET-2 (no sensitivity-aware
 dictation backend; Win+H exposes no such control) and AI-19 (needs a
 live provider device-login endpoint) remain genuinely blocked even on
 Windows.</li>
@@ -6789,6 +6796,52 @@ Done.</li>
 closes, moving Tier 4 to <strong>12 of 30 done (18 remaining)</strong>,
 the QUILL 1.0 scope to <strong>89 of 143 done (54 remaining)</strong>,
 and the overall total to <strong>89 of 185</strong>.</li>
+</ul>
+<h4
+id="ocr-capture-sources-completed-end-to-end-ocr-3-landed-done">2026-06-10:
+OCR capture sources completed end to end — OCR-3 landed Done</h4>
+<p>On the same real Windows box that verified OCR-1, the two missing
+capture sources were built, wired, and validated, closing OCR-3.</p>
+<ul>
+<li><strong>OCR-3 (Done, Tier 2):</strong> clipboard-image and screen
+capture now join file capture as first-class OCR sources.
+<code>ocr_clipboard_image</code> grabs the current clipboard image and
+<code>ocr_screen_capture</code> grabs the whole screen or the active
+window (chosen via a stock <code>wx.SingleChoiceDialog</code>); both use
+the wx-free <code>quill/platform/windows/screen_capture.py</code> helper
+(PIL <code>ImageGrab</code> + <code>win32gui</code>) and funnel through
+the same shared <code>_run_ocr_on_path</code> pipeline (off-thread OCR,
+<code>wx.ProgressDialog</code>, <code>OcrReviewDialog</code> with
+Insert/Copy/Discard, focus returned to the editor) as file capture.
+Empty-clipboard and capture-failure cases are handled gracefully rather
+than crashing. Both commands are registered
+(<code>tools.ocr_clipboard</code>, <code>tools.ocr_screen</code>), gated
+by matching <code>core.features</code> entries, menued, id-ref’d, and
+event-bound. Verified on Windows with the live
+<code>Windows.Media.Ocr</code> engine.</li>
+<li><strong>Decomposition (CQ-1/GATE-11):</strong> to land OCR-3 without
+growing oversized modules, the image-capture cluster was extracted from
+<code>main_frame.py</code> into
+<code>quill/ui/main_frame_image.py</code> as
+<code>ImageCaptureMixin</code>; the AI image-description body builder
+moved to <code>quill/core/ai/vision.py</code>; the command→feature map
+moved to its own module; and the assistant provider catalog
+(<code>ModelRecommendation</code> plus the seven
+<code>*_for_provider</code>/<code>provider_*</code> helpers) was
+extracted to <code>quill/core/ai/providers.py</code> and re-exported
+from <code>assistant_ai.py</code>, bringing that module back under its
+GATE-11 budget. All four modules pass GATE-11.</li>
+<li><strong>Quality gates:</strong> ruff format/check clean and strict
+mypy “Success” on the changed <code>quill/core</code> files
+(<code>assistant_ai.py</code>, <code>ai/providers.py</code>,
+<code>ai/vision.py</code>); GATE-11 OK across all modules; the OCR
+review/contract suite plus the assistant_ai and AI-core suites are green
+(three new OCR-3 source-contract tests cover the methods, the Windows
+capture helper, and the MainFrame wiring).</li>
+<li>Counts: OCR-3 closes, moving Tier 2 to <strong>53 of 57 done (4
+remaining)</strong>, the QUILL 1.0 scope to <strong>91 of 143 done (52
+remaining)</strong>, and the overall total to <strong>91 of
+206</strong>.</li>
 </ul>
 <h4
 id="sharing-dialogs-completed-share-1-and-share-2-landed-done">2026-06-09:

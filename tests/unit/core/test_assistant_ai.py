@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+import quill.core.ai.providers as providers
 import quill.core.assistant_ai as assistant_ai
 
 
@@ -197,7 +198,7 @@ def test_filter_model_names_prioritizes_prefix_matches() -> None:
 def test_recommended_models_for_provider_cloud_and_local(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(assistant_ai, "total_ram_gb", lambda: 6.0)
+    monkeypatch.setattr(providers, "total_ram_gb", lambda: 6.0)
     local = assistant_ai.recommended_models_for_provider("ollama")
     assert local[0] == "llama3.2:1b-instruct-q4_K_M"
     cloud = assistant_ai.recommended_models_for_provider("openai")
@@ -207,7 +208,7 @@ def test_recommended_models_for_provider_cloud_and_local(
 def test_recommended_model_guidance_returns_framing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(assistant_ai, "total_ram_gb", lambda: 16.0)
+    monkeypatch.setattr(providers, "total_ram_gb", lambda: 16.0)
     guidance = assistant_ai.recommended_model_guidance("ollama")
     assert guidance
     assert guidance[0].framing != ""

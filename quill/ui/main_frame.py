@@ -492,6 +492,7 @@ from quill.ui.assistant_tools import (
 from quill.ui.csv_grid import CsvGridSurface
 from quill.ui.dialog_contract import apply_modal_ids, show_modal_dialog
 from quill.ui.main_frame_browse import BrowseModeMixin
+from quill.ui.main_frame_image import ImageCaptureMixin
 from quill.ui.palette import CommandPaletteDialog
 from quill.ui.session_browser import SessionBrowserDialog
 from quill.ui.share_dialogs import (
@@ -749,7 +750,7 @@ class _IntellisensePopup:
         return self.suggestions[index]
 
 
-class MainFrame(BrowseModeMixin):
+class MainFrame(ImageCaptureMixin, BrowseModeMixin):
     _ANNOUNCEMENT_BACKEND_LABELS: dict[str, str] = {
         "auto": "Automatic (use Prism when available)",
         "prism": "Prism",
@@ -1610,6 +1611,24 @@ class MainFrame(BrowseModeMixin):
             "tools.ocr_image",
             "OCR Image...",
             self.ocr_image_file,
+            None,
+        )
+        self.commands.register(
+            "tools.ocr_clipboard",
+            "OCR Clipboard Image",
+            self.ocr_clipboard_image,
+            self._binding_for("tools.ocr_clipboard"),
+        )
+        self.commands.register(
+            "tools.ocr_screen",
+            "OCR Screen Capture...",
+            self.ocr_screen_capture,
+            self._binding_for("tools.ocr_screen"),
+        )
+        self.commands.register(
+            "tools.describe_image",
+            "Describe Image...",
+            self.describe_image_with_ai,
             None,
         )
         self.commands.register(
@@ -3232,6 +3251,9 @@ class MainFrame(BrowseModeMixin):
         self._id_misspelling_list = wx.NewIdRef()
         self._id_dictionary_status = wx.NewIdRef()
         self._id_ocr_image = wx.NewIdRef()
+        self._id_ocr_clipboard = wx.NewIdRef()
+        self._id_ocr_screen = wx.NewIdRef()
+        self._id_describe_image = wx.NewIdRef()
         self._id_regex_helper = wx.NewIdRef()
         self._id_pandoc_wizard = wx.NewIdRef()
         self._id_external_tools = wx.NewIdRef()
@@ -3464,6 +3486,18 @@ class MainFrame(BrowseModeMixin):
         integrations_menu.Append(
             self._id_ocr_image,
             self._menu_label("OCR &Image...", "tools.ocr_image"),
+        )
+        integrations_menu.Append(
+            self._id_ocr_clipboard,
+            self._menu_label("OCR &Clipboard Image", "tools.ocr_clipboard"),
+        )
+        integrations_menu.Append(
+            self._id_ocr_screen,
+            self._menu_label("OCR &Screen Capture...", "tools.ocr_screen"),
+        )
+        integrations_menu.Append(
+            self._id_describe_image,
+            self._menu_label("&Describe Image...", "tools.describe_image"),
         )
         shell_menu = wx.Menu()
         shell_menu.Append(
@@ -4533,6 +4567,13 @@ class MainFrame(BrowseModeMixin):
             id=self._id_dictionary_status,
         )
         self.frame.Bind(wx.EVT_MENU, lambda _e: self.ocr_image_file(), id=self._id_ocr_image)
+        self.frame.Bind(
+            wx.EVT_MENU, lambda _e: self.ocr_clipboard_image(), id=self._id_ocr_clipboard
+        )
+        self.frame.Bind(wx.EVT_MENU, lambda _e: self.ocr_screen_capture(), id=self._id_ocr_screen)
+        self.frame.Bind(
+            wx.EVT_MENU, lambda _e: self.describe_image_with_ai(), id=self._id_describe_image
+        )
         self.frame.Bind(wx.EVT_MENU, lambda _e: self.show_regex_helper(), id=self._id_regex_helper)
         self.frame.Bind(wx.EVT_MENU, lambda _e: self.toggle_read_aloud(), id=self._id_read_aloud)
         self.frame.Bind(
@@ -15079,136 +15120,6 @@ class MainFrame(BrowseModeMixin):
             notify_on_error=True,
             notification_category="speech",
         )
-
-    def ocr_image_file(self) -> None:
-        wx = self._wx
-        # Defer the OCR pipeline import (pulls in tesseract bindings + PIL)
-        # until the user actually picks an image. Saves ~30–50 ms at cold
-        # start for anyone who never uses OCR.
-        from quill.io.ocr import (
-            OcrCancelledError,
-            OcrFailedError,
-            OcrUnavailableError,
-            ocr_image,
-        )
-
-        with wx.FileDialog(
-            self.frame,
-            "OCR image",
-            wildcard=(
-                "Image files (*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.bmp)|"
-                "*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.bmp|All files (*.*)|*.*"
-            ),
-            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
-        ) as dialog:
-            if self._show_modal_dialog(dialog, "OCR Image") != wx.ID_OK:
-                self._set_status("OCR cancelled")
-                return
-            image_path = Path(dialog.GetPath())
-        result = self._show_message_box(
-            "Run OCR on this image locally with Tesseract?",
-            "OCR Image",
-            wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT,
-        )
-        if result != wx.YES:
-            self._set_status("OCR cancelled")
-            return
-        progress_state = {
-            "message": "Starting OCR...",
-            "done": False,
-            "error": None,
-            "result": None,
-        }
-        cancel_requested = threading.Event()
-
-        def run_ocr() -> None:
-            try:
-                progress_state["result"] = ocr_image(
-                    image_path,
-                    engine=getattr(self.settings, "ocr_engine", "auto"),
-                    on_progress=lambda message: progress_state.__setitem__("message", message),
-                    cancel_requested=cancel_requested.is_set,
-                )
-            except OcrCancelledError as exc:
-                progress_state["error"] = exc
-            except (OcrUnavailableError, OcrFailedError) as exc:
-                progress_state["error"] = exc
-            finally:
-                progress_state["done"] = True
-
-        worker = threading.Thread(target=run_ocr, name="ocr-image", daemon=True)
-        worker.start()
-        progress = wx.ProgressDialog(
-            "OCR Image",
-            progress_state["message"],
-            maximum=100,
-            parent=self.frame,
-            style=wx.PD_APP_MODAL | wx.PD_AUTO_HIDE | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT,
-        )
-        try:
-            step = 10
-            while not progress_state["done"]:
-                keep_going, _ = progress.Update(step, progress_state["message"])
-                if not keep_going:
-                    cancel_requested.set()
-                wx.YieldIfNeeded()
-                time.sleep(0.1)
-                step = min(90, step + 4)
-            worker.join()
-            error = progress_state["error"]
-            if isinstance(error, OcrCancelledError):
-                self._set_status("OCR cancelled")
-                return
-            if isinstance(error, OcrUnavailableError):
-                self._show_message_box(str(error), "OCR Image", wx.ICON_INFORMATION | wx.OK)
-                self._set_status("OCR unavailable")
-                return
-            if isinstance(error, OcrFailedError):
-                self._show_message_box(str(error), "OCR Image", wx.ICON_ERROR | wx.OK)
-                self._set_status("OCR failed")
-                return
-            ocr_result = progress_state["result"]
-            if ocr_result is None:
-                self._set_status("OCR failed")
-                return
-            progress.Update(90, "Opening OCR result")
-        finally:
-            cancel_requested.set()
-            worker.join(timeout=0.5)
-            progress.Destroy()
-
-        # Show the OCR review dialog with Insert/Copy/Discard actions
-        from quill.io.ocr import render_ocr_review
-        from quill.ui.ocr_review_dialog import OcrReviewDialog
-
-        rendered_text = render_ocr_review(ocr_result)
-        review_dialog = OcrReviewDialog(self.frame, "OCR Review", rendered_text)
-        choice = review_dialog.show_modal(
-            announce=self._announce,
-            enter_region=self._enter_region,
-            exit_region=self._exit_region,
-        )
-
-        if choice == OcrReviewDialog.ID_INSERT:
-            # Insert at current cursor position
-            pos = self.editor.GetInsertionPoint()
-            self.editor.WriteText(ocr_result.text)
-            self.editor.SetInsertionPoint(pos + len(ocr_result.text))
-            self._set_status(f"OCR text inserted ({ocr_result.engine})")
-        elif choice == OcrReviewDialog.ID_COPY:
-            # Copy to clipboard
-            if wx.TheClipboard.Open():
-                wx.TheClipboard.SetData(wx.TextDataObject(ocr_result.text))
-                wx.TheClipboard.Close()
-                self._set_status(f"OCR text copied to clipboard ({ocr_result.engine})")
-            else:
-                self._set_status("Failed to copy to clipboard")
-        else:
-            # Discard
-            self._set_status("OCR discarded")
-
-        # Return focus to the editor
-        self.editor.SetFocus()
 
     def _on_read_aloud_progress(self, start: int, end: int) -> None:
         self.editor.SetSelection(start, end)

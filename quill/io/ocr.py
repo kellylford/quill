@@ -1,22 +1,15 @@
-"""Backend-pluggable OCR (image-to-text) engine (OCR-1, OCR-2).
+"""Native Windows OCR (image-to-text) engine (OCR-1).
 
 This module is UI-framework-agnostic (no ``wx``). It exposes a small backend
-contract so text can be pulled from images either fully offline through the
-native ``Windows.Media.Ocr`` runtime (zero-install) or through an opt-in
-Tesseract install, with a shared :class:`OcrResult` that carries the recognized
-text plus per-line confidence. Backend selection honors an ``engine``
-preference (``auto``/``windows``/``tesseract``); ``auto`` prefers the native
-Windows backend and falls back to Tesseract when present. When no usable
-backend exists the engine raises :class:`OcrUnavailableError` with a message
-that points the user back to OCR onboarding rather than failing silently.
+contract so text can be pulled from images fully offline through the native
+``Windows.Media.Ocr`` runtime (zero-install), with a shared :class:`OcrResult`
+that carries the recognized text plus per-line confidence. When the native
+engine is unavailable the module raises :class:`OcrUnavailableError` with a
+clear message rather than failing silently.
 """
 
 from __future__ import annotations
 
-import re
-import shutil
-import subprocess
-import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -35,49 +28,13 @@ class OcrCancelledError(RuntimeError):
     pass
 
 
-class OcrLanguageError(ValueError):
-    """Raised when a requested OCR language code is not a valid Tesseract code."""
-
-
-#: Engine preference values accepted by :func:`ocr_image` and the ``ocr_engine``
-#: setting (OCR-2).
-ENGINE_AUTO = "auto"
+#: The single built-in OCR engine id (native ``Windows.Media.Ocr``).
 ENGINE_WINDOWS = "windows"
-ENGINE_TESSERACT = "tesseract"
-ENGINE_CHOICES = (ENGINE_AUTO, ENGINE_WINDOWS, ENGINE_TESSERACT)
 
 #: Lines whose confidence falls below this (on a 0-100 scale) are flagged for
 #: review in the OCR review surface (OCR-4). A confidence of -1 means the
 #: backend did not report one and is never treated as low.
 LOW_CONFIDENCE_THRESHOLD = 60.0
-
-
-# Tesseract language codes are lowercase ISO 639-2/3 codes, optionally with a
-# script suffix (chi_sim, aze_cyrl), and may be combined with '+' (eng+fra).
-# Validating against this grammar rejects option injection like '-psm' or
-# '--config' and any other unexpected input before it reaches the CLI.
-_LANGUAGE_SEGMENT = re.compile(r"^[a-z]{2,4}(_[a-z]+)*$")
-_MAX_LANGUAGE_SEGMENTS = 8
-
-
-def validate_ocr_language(language: str) -> str:
-    """Return a normalized, validated Tesseract language string.
-
-    Raises OcrLanguageError if any segment is not a well-formed language code.
-    """
-    cleaned = language.strip()
-    if not cleaned:
-        raise OcrLanguageError("OCR language cannot be empty.")
-    segments = cleaned.split("+")
-    if len(segments) > _MAX_LANGUAGE_SEGMENTS:
-        raise OcrLanguageError("Too many OCR language codes requested.")
-    for segment in segments:
-        if not _LANGUAGE_SEGMENT.match(segment):
-            raise OcrLanguageError(
-                f"Unknown OCR language code: {segment!r}. "
-                "Use Tesseract codes such as 'eng', 'fra', or 'eng+fra'."
-            )
-    return "+".join(segments)
 
 
 @dataclass(slots=True)
@@ -114,9 +71,9 @@ CancelFn = Callable[[], bool]
 class OcrBackend(Protocol):
     """The contract every OCR backend implements.
 
-    ``backend_id`` is the stable engine id (``windows``/``tesseract``);
-    ``is_available`` reports whether the backend can run on this machine right
-    now (its runtime/binary is present); ``run`` performs recognition.
+    ``backend_id`` is the stable engine id (``windows``); ``is_available``
+    reports whether the backend can run on this machine right now (its runtime
+    is present); ``run`` performs recognition.
     """
 
     backend_id: str
@@ -130,115 +87,6 @@ class OcrBackend(Protocol):
         on_progress: ProgressFn | None,
         cancel_requested: CancelFn | None,
     ) -> OcrResult: ...
-
-
-def parse_tesseract_tsv(tsv: str) -> tuple[str, list[OcrLine]]:
-    """Parse Tesseract ``tsv`` output into text plus per-line confidence.
-
-    Tesseract emits one row per recognized token with a ``level`` column; word
-    tokens (level 5) carry the text and confidence. We rebuild each line from
-    its words and average their confidences. Returns the joined text and the
-    list of :class:`OcrLine`. Malformed rows are skipped defensively.
-    """
-    rows = tsv.splitlines()
-    if not rows:
-        return "", []
-    header = rows[0].split("\t")
-    try:
-        idx_level = header.index("level")
-        idx_line = header.index("line_num")
-        idx_block = header.index("block_num")
-        idx_par = header.index("par_num")
-        idx_conf = header.index("conf")
-        idx_text = header.index("text")
-    except ValueError:
-        # Not a recognized TSV header; treat the whole blob as plain text.
-        return tsv.rstrip(), []
-    grouped: dict[tuple[str, str, str], list[tuple[str, float]]] = {}
-    order: list[tuple[str, str, str]] = []
-    for raw in rows[1:]:
-        cols = raw.split("\t")
-        if len(cols) <= idx_text:
-            continue
-        if cols[idx_level] != "5":  # only word tokens carry text + conf
-            continue
-        word = cols[idx_text]
-        if not word.strip():
-            continue
-        try:
-            conf = float(cols[idx_conf])
-        except (TypeError, ValueError):
-            conf = -1.0
-        key = (cols[idx_block], cols[idx_par], cols[idx_line])
-        if key not in grouped:
-            grouped[key] = []
-            order.append(key)
-        grouped[key].append((word, conf))
-    lines: list[OcrLine] = []
-    for key in order:
-        words = grouped[key]
-        text = " ".join(word for word, _ in words)
-        confs = [conf for _, conf in words if conf >= 0]
-        confidence = sum(confs) / len(confs) if confs else -1.0
-        lines.append(OcrLine(text=text, confidence=confidence))
-    joined = "\n".join(line.text for line in lines)
-    return joined, lines
-
-
-@dataclass(slots=True)
-class TesseractBackend:
-    """OCR backend that shells out to a user-installed Tesseract (OCR-2)."""
-
-    backend_id: str = ENGINE_TESSERACT
-
-    def is_available(self) -> bool:
-        return shutil.which("tesseract") is not None
-
-    def run(
-        self,
-        path: Path,
-        language: str | None,
-        on_progress: ProgressFn | None,
-        cancel_requested: CancelFn | None,
-    ) -> OcrResult:
-        executable = shutil.which("tesseract")
-        if executable is None:
-            raise OcrUnavailableError(
-                "Tesseract OCR is not installed or not on PATH. "
-                "Turn it on in OCR setup, or choose the native Windows engine."
-            )
-        validated = validate_ocr_language(language) if language else ""
-        command = [executable, str(path), "stdout", "tsv"]
-        if validated:
-            command.extend(["-l", validated])
-        process = subprocess.Popen(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        if on_progress is not None:
-            on_progress("Running OCR...")
-        while True:
-            if cancel_requested is not None and cancel_requested():
-                process.terminate()
-                process.wait()
-                raise OcrCancelledError("OCR cancelled.")
-            return_code = process.poll()
-            if return_code is not None:
-                stdout, stderr = process.communicate()
-                if return_code != 0:
-                    message = stderr.strip() or stdout.strip() or "OCR failed."
-                    raise OcrFailedError(message)
-                text, lines = parse_tesseract_tsv(stdout)
-                return OcrResult(
-                    text=text.rstrip() + "\n" if text else "",
-                    engine=ENGINE_TESSERACT,
-                    executable=executable,
-                    language=validated,
-                    lines=lines,
-                )
-            time.sleep(0.1)
 
 
 @dataclass(slots=True)
@@ -299,7 +147,6 @@ def default_backends() -> dict[str, OcrBackend]:
     """The built-in OCR backends keyed by engine id."""
     return {
         ENGINE_WINDOWS: WindowsOcrBackend(),
-        ENGINE_TESSERACT: TesseractBackend(),
     }
 
 
@@ -309,57 +156,25 @@ def available_engines(backends: Mapping[str, OcrBackend] | None = None) -> list[
     return [engine for engine, backend in registry.items() if backend.is_available()]
 
 
-def select_engine(
-    preference: str,
-    backends: Mapping[str, OcrBackend] | None = None,
-) -> str:
-    """Resolve an engine ``preference`` to a concrete, available engine id.
-
-    ``auto`` prefers the native Windows backend and falls back to Tesseract.
-    An explicit ``windows``/``tesseract`` preference is honored when available.
-    Raises :class:`OcrUnavailableError` (pointing back to OCR setup) when the
-    requested engine, or any engine for ``auto``, is unavailable.
-    """
-    registry = dict(backends) if backends is not None else default_backends()
-    pref = (preference or ENGINE_AUTO).strip().lower()
-    if pref == ENGINE_AUTO:
-        for engine in (ENGINE_WINDOWS, ENGINE_TESSERACT):
-            backend = registry.get(engine)
-            if backend is not None and backend.is_available():
-                return engine
-        raise OcrUnavailableError(
-            "No OCR engine is available. Open OCR setup to install Tesseract "
-            "or enable the native Windows engine."
-        )
-    backend = registry.get(pref)
-    if backend is None:
-        raise OcrUnavailableError(f"Unknown OCR engine: {preference!r}.")
-    if not backend.is_available():
-        raise OcrUnavailableError(
-            f"The {pref} OCR engine is not available on this machine. "
-            "Open OCR setup to choose another engine."
-        )
-    return pref
-
-
 def ocr_image(
     path: Path,
     language: str | None = None,
-    engine: str = ENGINE_AUTO,
     on_progress: ProgressFn | None = None,
     cancel_requested: CancelFn | None = None,
     backends: Mapping[str, OcrBackend] | None = None,
 ) -> OcrResult:
-    """Recognize text in ``path`` using the selected/available OCR backend.
+    """Recognize text in ``path`` using the native Windows OCR backend.
 
-    ``engine`` is an ``ocr_engine`` preference (``auto``/``windows``/
-    ``tesseract``). Selection and availability are resolved by
-    :func:`select_engine`; the chosen backend performs recognition and returns
-    an :class:`OcrResult` with text and per-line confidence.
+    ``language`` is an optional BCP-47 tag (for example ``en-US``); when
+    omitted the engine uses the system's recognition languages. Raises
+    :class:`OcrUnavailableError` when the native engine is not present on this
+    machine. The backend performs recognition and returns an
+    :class:`OcrResult` with text and per-line confidence.
     """
     registry = dict(backends) if backends is not None else default_backends()
-    chosen = select_engine(engine, registry)
-    backend = registry[chosen]
+    backend = registry.get(ENGINE_WINDOWS)
+    if backend is None or not backend.is_available():
+        raise OcrUnavailableError("The native Windows OCR engine is not available on this machine.")
     return backend.run(path, language, on_progress, cancel_requested)
 
 
@@ -391,27 +206,19 @@ def render_ocr_review(result: OcrResult) -> str:
 
 
 __all__ = [
-    "ENGINE_AUTO",
-    "ENGINE_CHOICES",
-    "ENGINE_TESSERACT",
     "ENGINE_WINDOWS",
     "LOW_CONFIDENCE_THRESHOLD",
     "CancelFn",
     "OcrBackend",
     "OcrCancelledError",
     "OcrFailedError",
-    "OcrLanguageError",
     "OcrLine",
     "OcrResult",
     "OcrUnavailableError",
     "ProgressFn",
-    "TesseractBackend",
     "WindowsOcrBackend",
     "available_engines",
     "default_backends",
     "ocr_image",
-    "parse_tesseract_tsv",
     "render_ocr_review",
-    "select_engine",
-    "validate_ocr_language",
 ]

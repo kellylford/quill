@@ -93,7 +93,10 @@ or the command palette (`Ctrl+Shift+P`).
 - [ ] Read Aloud Settings: via Tools menu
 - [ ] Generate Speech Audio: via Tools menu
 - [ ] OCR Image: via Tools menu
-- [ ] OCR Review (nested in OCR Image): appears after OCR completes
+- [ ] OCR Clipboard Image: via Tools menu
+- [ ] OCR Screen Capture: via Tools menu
+- [ ] OCR Screen Capture target chooser (nested in OCR Screen Capture): whole screen or active window
+- [ ] OCR Review (nested in OCR Image, OCR Clipboard Image, OCR Screen Capture): appears after OCR completes
 
 ## H. Tools: sticky notes
 
