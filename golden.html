@@ -1894,9 +1894,20 @@ a 100-line document of 5 unique sentences synthesizes only 5 times.</td>
 <td>Performance budget suite</td>
 <td>Performance</td>
 <td>M</td>
-<td>Todo</td>
+<td>Done</td>
 <td>Startup, first spell check, first thesaurus, and Quick Nav prewarm
-have budgets enforced in CI.</td>
+now have hard ceilings enforced in CI. New
+<code>tests/performance/test_budgets.py</code> asserts a budget for the
+off-UI-thread startup lexical warm-up (<code>spellcheck.preload()</code>
++ <code>thesaurus.preload()</code>, &lt;3.0s cold), the first spell
+check after warm-up (&lt;0.05s), the first thesaurus lookup after
+warm-up (&lt;0.05s), and building the Quick Nav landmark index for a
+large document (<code>build_nav_index</code>, &lt;0.5s). A dedicated
+<code>performance-budgets</code> job in
+<code>.github/workflows/pr-ci.yml</code> runs
+<code>pytest tests\performance</code> on every push and PR, so a
+material regression on any startup-critical path fails the build.
+Budgets are decrease-only by policy.</td>
 </tr>
 <tr>
 <td>NAV-1</td>
@@ -7628,9 +7639,9 @@ CQ-16) are counted once, in their primary tier.</p>
 <td>Tier 4</td>
 <td>Structural health and performance</td>
 <td>31</td>
-<td>20</td>
-<td>11</td>
-<td>DLG-3, CQ-16, CQ-1, DLG-2, PERF-9, PERF-11..14, GATE-10, SEC-6</td>
+<td>21</td>
+<td>10</td>
+<td>DLG-3, CQ-16, CQ-1, DLG-2, PERF-11..14, GATE-10, SEC-6</td>
 </tr>
 <tr>
 <td>Tier 6</td>
@@ -7645,8 +7656,8 @@ CQ-14, CQ-23, CQ-24, LINUX-2</td>
 <td><strong>1.0 subtotal</strong></td>
 <td>Tiers 1, 2, 4, 6 (the QUILL 1.0 scope)</td>
 <td><strong>148</strong></td>
-<td><strong>103</strong></td>
-<td><strong>45</strong></td>
+<td><strong>104</strong></td>
+<td><strong>44</strong></td>
 <td></td>
 </tr>
 <tr>
@@ -7702,8 +7713,8 @@ LINUX-1, ECO-1, L10N-1, COLLAB-1</td>
 <td><strong>Total</strong></td>
 <td>All tiers (1.0 + 2.0)</td>
 <td><strong>211</strong></td>
-<td><strong>122</strong></td>
-<td><strong>89</strong></td>
+<td><strong>123</strong></td>
+<td><strong>88</strong></td>
 <td></td>
 </tr>
 </tbody>
@@ -7753,8 +7764,8 @@ the third table and are not part of either 1.0 list.</p>
 <tr>
 <td>Tier 4 — Structural health</td>
 <td>In progress / Todo</td>
-<td>DLG-3, CQ-1 (in progress), CQ-16, DLG-2, GATE-10, PERF-9, PERF-11,
-PERF-12, PERF-13, PERF-14, SEC-6</td>
+<td>DLG-3, CQ-1 (in progress), CQ-16, DLG-2, GATE-10, PERF-11, PERF-12,
+PERF-13, PERF-14, SEC-6</td>
 </tr>
 <tr>
 <td>Tier 6 — Documentation</td>
@@ -7798,9 +7809,9 @@ SHELL-1</td>
 <tr>
 <td>Tier 4 — Structural health</td>
 <td>CQ-7, CQ-12, CQ-13, CQ-14, CQ-15, CQ-17, CQ-18, CQ-19, CQ-20, CQ-21,
-CQ-22, GATE-11, PERF-1, PERF-2, PERF-3, PERF-8, PERF-10, SEC-4, SEC-7,
-SEC-8, SEC-14, SEC-15, SEC-16, SEC-17, TYPE-1, TYPE-2, TYPE-3, TYPE-4,
-TYPE-5, TYPE-6, TYPE-7, TYPE-8</td>
+CQ-22, GATE-11, PERF-1, PERF-2, PERF-3, PERF-8, PERF-9, PERF-10, SEC-4,
+SEC-7, SEC-8, SEC-14, SEC-15, SEC-16, SEC-17, TYPE-1, TYPE-2, TYPE-3,
+TYPE-4, TYPE-5, TYPE-6, TYPE-7, TYPE-8</td>
 </tr>
 <tr>
 <td>EdSharp parity (delivered in 1.0)</td>
