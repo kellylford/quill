@@ -25,6 +25,12 @@ from quill.io.pages import read_pages_document
 from quill.io.pdf import extract_pdf_text, format_pdf_document
 from quill.io.rtf import read_rtf_document
 
+# PERF-11: spreadsheet reads are bounded so a huge sheet cannot exhaust memory.
+# openpyxl's read-only mode streams rows lazily; these caps stop iteration early
+# (and trim very wide rows), so an extract never materializes an unbounded sheet.
+_SPREADSHEET_MAX_ROWS = 50
+_SPREADSHEET_MAX_COLS = 20
+
 
 def read_structured_document(path: Path, encoding: str = "utf-8") -> Document:
     suffix = path.suffix.lower()
@@ -255,8 +261,8 @@ def _read_workbook_as_text(path: Path, workbook: Any) -> Document:
         lines.append(f"## Sheet: {worksheet.title}")
         rows = []
         for row_index, row in enumerate(worksheet.iter_rows(values_only=True), start=1):
-            rows.append(["" if cell is None else str(cell) for cell in row[:20]])
-            if row_index >= 50:
+            rows.append(["" if cell is None else str(cell) for cell in row[:_SPREADSHEET_MAX_COLS]])
+            if row_index >= _SPREADSHEET_MAX_ROWS:
                 break
         lines.extend(_rows_to_markdown_table(rows) or ["(no extractable cells)"])
         lines.append("")

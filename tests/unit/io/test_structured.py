@@ -284,3 +284,53 @@ def test_pptx_slide_table_blocks_renders_multiple_body_rows() -> None:
     assert block[1] == "| --- | --- |"
     assert "| A | B |" in block
     assert "| C | D |" in block
+
+
+class _StubWorksheet:
+    """Minimal openpyxl-like worksheet that records how many rows are pulled."""
+
+    def __init__(self, title: str, total_rows: int, columns: int = 2) -> None:
+        self.title = title
+        self._total_rows = total_rows
+        self._columns = columns
+        self.rows_pulled = 0
+
+    def iter_rows(self, values_only: bool = True):
+        for row_index in range(self._total_rows):
+            self.rows_pulled += 1
+            yield tuple(f"r{row_index}c{col}" for col in range(self._columns))
+
+
+class _StubWorkbook:
+    def __init__(self, worksheets: list[_StubWorksheet]) -> None:
+        self.worksheets = worksheets
+
+
+def test_spreadsheet_read_caps_rows_so_a_huge_sheet_cannot_exhaust_memory() -> None:
+    # PERF-11: the reader must stop pulling rows at the cap rather than
+    # materializing every row of a very large sheet.
+    from quill.io.structured import _SPREADSHEET_MAX_ROWS, _read_workbook_as_text
+
+    sheet = _StubWorksheet("Big", total_rows=1_000_000)
+    workbook = _StubWorkbook([sheet])
+
+    document = _read_workbook_as_text(Path("big.xlsx"), workbook)
+
+    # Only the capped number of rows were ever pulled from the lazy iterator.
+    assert sheet.rows_pulled == _SPREADSHEET_MAX_ROWS
+    assert "## Sheet: Big" in document.text
+
+
+def test_spreadsheet_read_caps_columns_for_very_wide_rows() -> None:
+    # PERF-11: a very wide row is trimmed to the column cap.
+    from quill.io.structured import _SPREADSHEET_MAX_COLS, _read_workbook_as_text
+
+    sheet = _StubWorksheet("Wide", total_rows=1, columns=500)
+    workbook = _StubWorkbook([sheet])
+
+    document = _read_workbook_as_text(Path("wide.xlsx"), workbook)
+
+    header = next(line for line in document.text.splitlines() if line.startswith("| r0c0"))
+    # The header row holds at most the capped number of columns.
+    assert header.count(" | ") <= _SPREADSHEET_MAX_COLS
+    assert "r0c499" not in document.text
