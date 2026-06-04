@@ -484,7 +484,7 @@ from quill.ui.assistant_tools import (
 )
 from quill.ui.csv_grid import CsvGridSurface
 from quill.ui.dialog_contract import apply_modal_ids, focus_primary_control, show_modal_dialog
-from quill.ui.editor_surface import surface_kind
+from quill.ui.editor_surface import PLAIN, RICH, surface_kind
 from quill.ui.main_frame_ai_actions import AiActionsMixin
 from quill.ui.main_frame_browse import BrowseModeMixin
 from quill.ui.main_frame_edsharp import EdSharpActionsMixin
@@ -5969,9 +5969,13 @@ class MainFrame(
         The editor surface stores QUILL Markdown-style markup; Save As routes that
         markup through :func:`write_document_as`, which re-serializes it to RTF,
         HTML, or stripped plain text for those extensions and writes it verbatim
-        (as Markdown) otherwise.
+        (as Markdown) otherwise. The plain-text link style follows the setting so
+        URLs survive when the writer wants them to.
         """
-        write_document_as(document, target)  # type: ignore[arg-type]
+        link_style = str(
+            getattr(getattr(self, "settings", None), "plain_text_link_style", "text_url")
+        )
+        write_document_as(document, target, plain_text_link_style=link_style)  # type: ignore[arg-type]
 
     def save_file(self) -> None:
         if self.document.path is None:
@@ -6158,6 +6162,90 @@ class MainFrame(
         self._record_recent(target)
         self._refresh_title()
         self._set_status(f"Saved as {target.name} ({format_label_for_path(target)})")
+        self._maybe_reload_surface_after_save_as(target)
+
+    def _surface_kind_for_path(self, path: Path) -> str:
+        """The editing surface ``open_file`` would use for ``path``.
+
+        Mirrors the open dispatch: an ``.rtf`` opens in the Rich text lens when
+        that lens is enabled, and everything else opens on the plain surface.
+        """
+        if path.suffix.lower() == ".rtf" and self._rich_editor_enabled():
+            return RICH
+        return PLAIN
+
+    @staticmethod
+    def _resolve_surface_sync(current_kind: str, desired_kind: str, mode: str) -> str:
+        """Decide the post-Save-As surface action: ``none``, ``prompt`` or ``reload``."""
+        if current_kind == desired_kind:
+            return "none"
+        if mode == "never":
+            return "none"
+        if mode == "always":
+            return "reload"
+        return "prompt"
+
+    def _maybe_reload_surface_after_save_as(self, target: Path) -> None:
+        """Offer to reload ``target`` so the surface matches its new format.
+
+        Governed by the ``save_as_surface_sync`` setting (ask / always / never).
+        Structured surfaces (CSV grid, Word) are never disturbed, and nothing
+        happens unless the format's natural surface differs from the current one.
+        """
+        editor = self.editor
+        if isinstance(editor, (CsvGridSurface, WordDocumentSurface)):
+            return
+        current = surface_kind(editor)
+        if current not in (PLAIN, RICH):
+            return
+        desired = self._surface_kind_for_path(target)
+        mode = str(getattr(self.settings, "save_as_surface_sync", "prompt")).strip().lower()
+        action = self._resolve_surface_sync(current, desired, mode)
+        if action == "none":
+            return
+        if action == "prompt":
+            wx = self._wx
+            view_label = "Rich text" if desired == RICH else "plain text"
+            response = self._show_message_box(
+                f"This file is now {format_label_for_path(target)}. Reload it in the "
+                f"{view_label} editor so the view matches the format? Reloading replaces "
+                f"the editor contents with the saved file.",
+                "Reload in matching view?",
+                wx.ICON_QUESTION | wx.YES_NO | wx.NO_DEFAULT,
+            )
+            if response != wx.YES:
+                return
+        self._reload_in_place(target)
+
+    def _reload_in_place(self, target: Path) -> None:
+        """Replace the current tab with ``target`` reopened in its natural surface.
+
+        The file is read *before* the current tab is disturbed, so a read failure
+        leaves the live document intact. On success the current page is removed
+        without spawning a placeholder tab and the freshly typed surface is built
+        by the shared open-finish path.
+        """
+        suffix = target.suffix.lower()
+        try:
+            result = read_open_document(target, suffix)
+        except Exception:
+            self._set_status("Could not reload in the matching view.")
+            return
+        index = self._current_tab_index()
+        if index < 0:
+            index = self._active_tab_index
+        if 0 <= index < len(self._document_tabs):
+            self.notebook.DeletePage(index)
+            del self._document_tabs[index]
+        self._finish_open_document(
+            result,
+            selected_path=target,
+            suffix=suffix,
+            existing_index=-1,
+            record_recent=False,
+            line=None,
+            column=None,
+        )
 
     def save_as_plain_text(self) -> None:
         wx = self._wx
@@ -6178,7 +6266,8 @@ class MainFrame(
             encoding="utf-8",
             line_ending="\n",
         )
-        write_plain_text_document(plain_doc, target)
+        link_style = str(getattr(self.settings, "plain_text_link_style", "text_url"))
+        write_plain_text_document(plain_doc, target, link_style=link_style)
         self._record_recent(target)
         self._set_status(f"Saved plain text to {target.name}")
 

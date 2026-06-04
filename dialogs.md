@@ -43,6 +43,7 @@ or the command palette (`Ctrl+Shift+P`).
 - [ ] Open File: `Ctrl+O`
 - [ ] Save File: `Ctrl+S`
 - [ ] Save As: `Ctrl+Shift+S`
+- [ ] Reload in matching view (after Save As changes the format): native Yes/No prompt, shown after `Ctrl+Shift+S` when `save_as_surface_sync` is "Ask each time"
 - [ ] Page Setup: via File menu
 - [ ] Print: `Ctrl+P`
 - [ ] Restore Backup: via File menu

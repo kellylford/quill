@@ -38,6 +38,8 @@ class Settings:
     csv_open_mode: str = "prompt"
     word_open_mode: str = "prompt"
     editor_surface: str = "plain"
+    save_as_surface_sync: str = "prompt"
+    plain_text_link_style: str = "text_url"
     indent_with_tabs: bool = False
     indent_size: int = 4
     auto_check_updates: bool = False
@@ -192,6 +194,12 @@ class Settings:
         editor_surface = str(data.get("editor_surface", "plain")).strip().lower()
         if editor_surface not in {"plain", "rich"}:
             editor_surface = "plain"
+        save_as_surface_sync = str(data.get("save_as_surface_sync", "prompt")).strip().lower()
+        if save_as_surface_sync not in {"prompt", "always", "never"}:
+            save_as_surface_sync = "prompt"
+        plain_text_link_style = str(data.get("plain_text_link_style", "text_url")).strip().lower()
+        if plain_text_link_style not in {"text", "text_url", "url", "markdown"}:
+            plain_text_link_style = "text_url"
         indent_with_tabs = bool(data.get("indent_with_tabs", False))
         indent_size = int(data.get("indent_size", 4))
         auto_check_updates = bool(data.get("auto_check_updates", False))
@@ -457,6 +465,8 @@ class Settings:
             csv_open_mode=csv_open_mode,
             word_open_mode=word_open_mode,
             editor_surface=editor_surface,
+            save_as_surface_sync=save_as_surface_sync,
+            plain_text_link_style=plain_text_link_style,
             indent_with_tabs=indent_with_tabs,
             indent_size=indent_size,
             auto_check_updates=auto_check_updates,

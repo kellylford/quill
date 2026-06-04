@@ -27,6 +27,69 @@ def test_plain_strips_links_keeping_text() -> None:
     assert markdown_to_plain_text("See [the site](https://example.com).") == "See the site."
 
 
+# --------------------------------------------------------------------------- #
+# markdown_to_plain_text link_style
+# --------------------------------------------------------------------------- #
+def test_link_style_text_url_keeps_both() -> None:
+    out = markdown_to_plain_text("See [the site](https://example.com).", "text_url")
+    assert out == "See the site (https://example.com)."
+
+
+def test_link_style_url_only() -> None:
+    out = markdown_to_plain_text("See [the site](https://example.com).", "url")
+    assert out == "See https://example.com."
+
+
+def test_link_style_markdown_keeps_markup_verbatim() -> None:
+    out = markdown_to_plain_text("See [the site](https://example.com).", "markdown")
+    assert out == "See [the site](https://example.com)."
+
+
+def test_link_style_text_url_does_not_mangle_underscore_urls() -> None:
+    # The URL must survive emphasis stripping even though it contains underscores.
+    out = markdown_to_plain_text("[doc](https://x.com/a_b_c_d)", "text_url")
+    assert out == "doc (https://x.com/a_b_c_d)"
+
+
+def test_link_style_text_url_strips_emphasis_from_label() -> None:
+    out = markdown_to_plain_text("[**Docs**](https://x.com)", "text_url")
+    assert out == "Docs (https://x.com)"
+
+
+def test_link_style_text_url_drops_title_keeping_url() -> None:
+    out = markdown_to_plain_text('[doc](https://x.com "A Title")', "text_url")
+    assert out == "doc (https://x.com)"
+
+
+def test_link_style_text_url_unwraps_angle_bracket_url() -> None:
+    out = markdown_to_plain_text("[doc](<https://x.com>)", "text_url")
+    assert out == "doc (https://x.com)"
+
+
+def test_link_style_text_url_collapses_when_label_equals_url() -> None:
+    out = markdown_to_plain_text("[https://x.com](https://x.com)", "text_url")
+    assert out == "https://x.com"
+
+
+def test_link_style_image_text_url() -> None:
+    out = markdown_to_plain_text("![a cat](cat.png)", "text_url")
+    assert out == "a cat (cat.png)"
+
+
+def test_link_style_image_empty_alt_text_url_uses_url() -> None:
+    out = markdown_to_plain_text("![](cat.png)", "text_url")
+    assert out == "cat.png"
+
+
+def test_link_style_default_is_text_only() -> None:
+    assert markdown_to_plain_text("[the site](https://example.com)") == "the site"
+
+
+def test_link_style_text_url_preserves_code_span_links() -> None:
+    out = markdown_to_plain_text("`[x](y)` and [a](b)", "text_url")
+    assert out == "[x](y) and a (b)"
+
+
 def test_plain_unwraps_images_before_links() -> None:
     assert markdown_to_plain_text("![a cat](cat.png)") == "a cat"
 
@@ -98,6 +161,20 @@ def test_write_plain_text_strips_and_marks_saved(tmp_path: Path) -> None:
     assert result == target
     assert target.read_text(encoding="utf-8") == "H\n\nb"
     assert doc.path == target and doc.modified is False
+
+
+def test_write_plain_text_honors_link_style(tmp_path: Path) -> None:
+    doc = _doc("[site](https://example.com)")
+    target = tmp_path / "out.txt"
+    write_plain_text_document(doc, target, link_style="text_url")
+    assert target.read_text(encoding="utf-8") == "site (https://example.com)"
+
+
+def test_write_document_as_passes_link_style_to_plain(tmp_path: Path) -> None:
+    doc = _doc("[site](https://example.com)")
+    target = tmp_path / "out.txt"
+    write_document_as(doc, target, plain_text_link_style="url")
+    assert target.read_text(encoding="utf-8") == "https://example.com"
 
 
 def test_write_html_document_writes_html(tmp_path: Path) -> None:

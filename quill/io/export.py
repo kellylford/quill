@@ -22,6 +22,7 @@ from quill.io.rtf import write_rtf_document
 from quill.io.text import _normalize_line_endings, write_text_document
 
 __all__ = [
+    "LINK_STYLES",
     "markdown_to_plain_text",
     "markdown_to_html",
     "write_plain_text_document",
@@ -41,35 +42,80 @@ _BULLET_RE = re.compile(r"^(\s*)([-*+])\s+(.*)$")
 _NUMBERED_RE = re.compile(r"^(\s*)(\d+)\.\s+(.*)$")
 _HRULE_RE = re.compile(r"^\s*([-*_])(\s*\1){2,}\s*$")
 
-_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\([^)]*\)")
-_LINK_RE = re.compile(r"\[([^\]]+)\]\([^)]*\)")
+_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\(([^)]*)\)")
+_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]*)\)")
 _CODE_SPAN_RE = re.compile(r"`([^`]+)`")
 _BOLD_STAR_RE = re.compile(r"\*\*([^*]+)\*\*")
 _BOLD_UNDER_RE = re.compile(r"(?<!\w)__([^_]+)__(?!\w)")
 _ITALIC_STAR_RE = re.compile(r"(?<!\*)\*([^*\s][^*]*?)\*(?!\*)")
 _ITALIC_UNDER_RE = re.compile(r"(?<!\w)_([^_]+)_(?!\w)")
 
+#: Valid values for the plain-text link rendering style.
+LINK_STYLES = ("text", "text_url", "url", "markdown")
 
-def _strip_inline(text: str) -> str:
-    """Remove inline Markdown emphasis/link/code markers, preserving code spans.
 
-    Inline code spans are protected first so that markup *inside* a code span
-    (e.g. ``\\`**not bold**\\```) survives untouched. Images are unwrapped before
-    links because an image is a link with a leading ``!``.
-    """
-    placeholders: list[str] = []
-
-    def _protect(match: re.Match[str]) -> str:
-        placeholders.append(match.group(1))
-        return f"\x00{len(placeholders) - 1}\x00"
-
-    text = _CODE_SPAN_RE.sub(_protect, text)
-    text = _IMAGE_RE.sub(r"\1", text)
-    text = _LINK_RE.sub(r"\1", text)
+def _strip_emphasis(text: str) -> str:
+    """Remove bold/italic Markdown markers, keeping the emphasized words."""
     text = _BOLD_STAR_RE.sub(r"\1", text)
     text = _BOLD_UNDER_RE.sub(r"\1", text)
     text = _ITALIC_STAR_RE.sub(r"\1", text)
     text = _ITALIC_UNDER_RE.sub(r"\1", text)
+    return text
+
+
+def _format_link(label: str, target: str, link_style: str) -> str:
+    """Render one Markdown link/image as plain text per ``link_style``.
+
+    The visible label is emphasis-stripped (so ``[**Docs**](url)`` reads as
+    ``Docs``), while the URL is preserved verbatim. ``url`` is the first
+    whitespace-delimited token of the destination, with any wrapping angle
+    brackets removed, so titles such as ``(url "Title")`` keep just the URL.
+    """
+    label = _strip_emphasis(label.strip())
+    destination = target.strip()
+    url = destination.split(" ", 1)[0] if destination else ""
+    if url.startswith("<") and url.endswith(">") and len(url) >= 2:
+        url = url[1:-1]
+    if link_style == "url":
+        return url or label
+    if link_style == "text_url":
+        if not label:
+            return url
+        if not url or url == label:
+            return label
+        return f"{label} ({url})"
+    return label
+
+
+def _strip_inline(text: str, link_style: str = "text") -> str:
+    """Remove inline Markdown markers, preserving code spans and links.
+
+    Inline code spans are protected first so that markup *inside* a code span
+    survives untouched. Links and images are rendered per ``link_style`` and the
+    result is also stashed behind a placeholder, so the URL it may contain is
+    never altered by the emphasis stripping that follows. ``markdown`` keeps the
+    original link/image markup verbatim. Images are handled before links because
+    an image is a link with a leading ``!``.
+    """
+    placeholders: list[str] = []
+
+    def _stash(value: str) -> str:
+        placeholders.append(value)
+        return f"\x00{len(placeholders) - 1}\x00"
+
+    text = _CODE_SPAN_RE.sub(lambda m: _stash(m.group(1)), text)
+    if link_style == "markdown":
+        text = _IMAGE_RE.sub(lambda m: _stash(m.group(0)), text)
+        text = _LINK_RE.sub(lambda m: _stash(m.group(0)), text)
+    else:
+        text = _IMAGE_RE.sub(
+            lambda m: _stash(_format_link(m.group(1), m.group(2), link_style)), text
+        )
+        text = _LINK_RE.sub(
+            lambda m: _stash(_format_link(m.group(1), m.group(2), link_style)), text
+        )
+
+    text = _strip_emphasis(text)
 
     def _restore(match: re.Match[str]) -> str:
         return placeholders[int(match.group(1))]
@@ -77,12 +123,13 @@ def _strip_inline(text: str) -> str:
     return re.sub(r"\x00(\d+)\x00", _restore, text)
 
 
-def markdown_to_plain_text(markdown: str) -> str:
+def markdown_to_plain_text(markdown: str, link_style: str = "text") -> str:
     """Convert QUILL Markdown-style markup to readable plain text.
 
     Block markers (headings, blockquotes, list bullets, horizontal rules, code
     fences) and inline markers (emphasis, code, links, images) are stripped while
     keeping the visible words. Fenced code content is preserved verbatim.
+    ``link_style`` controls how links render (see :func:`_format_link`).
     """
     out: list[str] = []
     in_fence = False
@@ -98,23 +145,24 @@ def markdown_to_plain_text(markdown: str) -> str:
             continue
         heading = _HEADING_RE.match(raw)
         if heading:
-            out.append(_strip_inline(heading.group(2)))
+            out.append(_strip_inline(heading.group(2), link_style))
             continue
         quote = _BLOCKQUOTE_RE.match(raw)
         if quote and raw.lstrip().startswith(">"):
-            out.append(_strip_inline(quote.group(1)))
+            out.append(_strip_inline(quote.group(1), link_style))
             continue
         bullet = _BULLET_RE.match(raw)
         if bullet:
-            out.append(f"{bullet.group(1)}- {_strip_inline(bullet.group(3))}")
+            out.append(f"{bullet.group(1)}- {_strip_inline(bullet.group(3), link_style)}")
             continue
         numbered = _NUMBERED_RE.match(raw)
         if numbered:
             out.append(
-                f"{numbered.group(1)}{numbered.group(2)}. {_strip_inline(numbered.group(3))}"
+                f"{numbered.group(1)}{numbered.group(2)}. "
+                f"{_strip_inline(numbered.group(3), link_style)}"
             )
             continue
-        out.append(_strip_inline(raw))
+        out.append(_strip_inline(raw, link_style))
     text = "\n".join(out)
     return re.sub(r"\n{3,}", "\n\n", text)
 
@@ -145,12 +193,14 @@ def _write_utf8(document: Document, target: Path, text: str) -> Path:
     return target
 
 
-def write_plain_text_document(document: Document, path: Path | None = None) -> Path:
+def write_plain_text_document(
+    document: Document, path: Path | None = None, *, link_style: str = "text"
+) -> Path:
     """Write a document's markup out as stripped plain text."""
     target = path or document.path
     if target is None:
         raise ValueError("A path is required to save this document.")
-    return _write_utf8(document, target, markdown_to_plain_text(document.text))
+    return _write_utf8(document, target, markdown_to_plain_text(document.text, link_style))
 
 
 def write_html_document(document: Document, path: Path | None = None) -> Path:
@@ -162,13 +212,16 @@ def write_html_document(document: Document, path: Path | None = None) -> Path:
     return _write_utf8(document, target, markdown_to_html(document.text, title))
 
 
-def write_document_as(document: Document, path: Path | None = None) -> Path:
+def write_document_as(
+    document: Document, path: Path | None = None, *, plain_text_link_style: str = "text"
+) -> Path:
     """Write ``document`` to ``path``, converting to the format of its extension.
 
     ``.rtf`` re-serializes to RTF, ``.html``/``.htm``/``.xhtml`` render to HTML,
     ``.txt``/``.text`` strip to plain text, and everything else (``.md`` and any
     unknown extension) is written verbatim, since the canonical text already is
-    Markdown.
+    Markdown. ``plain_text_link_style`` controls how links survive the plain-text
+    conversion (see :data:`LINK_STYLES`).
     """
     target = path or document.path
     if target is None:
@@ -179,7 +232,7 @@ def write_document_as(document: Document, path: Path | None = None) -> Path:
     if suffix in _HTML_SUFFIXES:
         return write_html_document(document, target)
     if suffix in _PLAIN_SUFFIXES:
-        return write_plain_text_document(document, target)
+        return write_plain_text_document(document, target, link_style=plain_text_link_style)
     return write_text_document(document, target)
 
 

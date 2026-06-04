@@ -255,17 +255,17 @@ def test_write_document_to_disk_routes_rtf_through_the_rtf_writer(monkeypatch) -
     monkeypatch.setattr(
         export_module,
         "write_plain_text_document",
-        lambda doc, target=None: plain_calls.append((doc, target)),
+        lambda doc, target=None, **kwargs: plain_calls.append((doc, target)),
     )
     monkeypatch.setattr(
         export_module,
         "write_rtf_document",
-        lambda doc, target=None: rtf_calls.append((doc, target)),
+        lambda doc, target=None, **kwargs: rtf_calls.append((doc, target)),
     )
     monkeypatch.setattr(
         export_module,
         "write_text_document",
-        lambda doc, target=None: verbatim_calls.append((doc, target)),
+        lambda doc, target=None, **kwargs: verbatim_calls.append((doc, target)),
     )
 
     frame = _bare()

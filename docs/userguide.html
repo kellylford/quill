@@ -430,12 +430,21 @@ writes a standalone web page, and <strong>Text (*.txt)</strong> writes
 clean prose with the markup removed. Choosing <strong>Markdown
 (*.md)</strong> keeps the markup verbatim. The file’s extension always
 decides the format; if you type a name without an extension, the
-selected type supplies one. Saving to plain text or HTML is one-way for
-that file — links and emphasis are flattened — while your open document
-stays in its original markup.</li>
+selected type supplies one. When Save As changes the format, Quill can
+reload the file so the editing surface matches it — for example, opening
+a freshly saved <code>.rtf</code> in the Rich text editor. By default it
+asks first with a Yes/No prompt (reloading replaces the editor contents
+with the saved file); set <strong>Settings → Editing → Reload after Save
+As to match the format</strong> to <em>Reload automatically</em> or
+<em>Keep current surface</em> to skip the prompt.</li>
 <li><strong>Save All</strong> writes every modified open document.</li>
 <li><strong>Save As Plain Text…</strong> exports a clean plain-text
-version.</li>
+version. Because plain text has no links, <strong>Settings → Editing →
+Links in plain-text export</strong> controls how Markdown links are
+written: keep the link text and its URL (the default, so you never lose
+where a link pointed), the link text only, the URL only, or the original
+Markdown link. This setting also applies whenever Save As writes a
+<code>.txt</code> file.</li>
 <li><strong>Reload from Disk</strong> throws away in-memory edits and
 reloads the file from storage after confirmation.</li>
 <li><strong>Restore Backup…</strong> lets you restore a saved backup

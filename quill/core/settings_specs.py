@@ -306,6 +306,36 @@ SETTING_SPECS: tuple[SettingSpec, ...] = (
         keywords=("rich", "rtf", "formatting", "lens", "bold", "surface"),
     ),
     SettingSpec(
+        "save_as_surface_sync",
+        "Reload after Save As to match the format",
+        "editing",
+        "choice",
+        "After Save As changes the file type, optionally reload the file so the "
+        "editing surface (Rich text or plain text) matches the new format. "
+        "Reloading replaces the editor contents with the saved file.",
+        choices=(
+            ("prompt", "Ask each time"),
+            ("always", "Reload automatically"),
+            ("never", "Keep current surface"),
+        ),
+        keywords=("save as", "convert", "rtf", "reload", "surface", "format"),
+    ),
+    SettingSpec(
+        "plain_text_link_style",
+        "Links in plain-text export",
+        "editing",
+        "choice",
+        "How Markdown links are written when you save or export as plain text. "
+        "Keeping the URL avoids losing where a link pointed.",
+        choices=(
+            ("text", "Link text only"),
+            ("text_url", "Link text and URL"),
+            ("url", "URL only"),
+            ("markdown", "Keep Markdown link"),
+        ),
+        keywords=("link", "url", "plain text", "export", "convert"),
+    ),
+    SettingSpec(
         "autosave_interval_seconds",
         "Autosave interval (seconds)",
         "editing",
