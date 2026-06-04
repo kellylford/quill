@@ -75,6 +75,13 @@ jobs:
           done
 
       - name: Reconcile regenerated artifacts
+        env:
+          # Pass workflow context through the environment rather than expanding
+          # it inline, so a crafted branch name can't inject shell (actionlint
+          # script-injection guard).
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          THIS_REPO: ${{ github.repository }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           set -euo pipefail
           # "Stale" means deterministic HTML drift or a genuinely missing
@@ -91,16 +98,15 @@ jobs:
           # back to its source branch, so the eventual merge into main is always
           # in sync. Pushing to the protected main branch directly is rejected,
           # so we never attempt it (that was the chronic failure cause).
-          head_repo="${{ github.event.pull_request.head.repo.full_name }}"
-          if [ -n "$head_repo" ] && [ "$head_repo" = "${{ github.repository }}" ]; then
+          if [ -n "$HEAD_REPO" ] && [ "$HEAD_REPO" = "$THIS_REPO" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add -- docs
             # [skip ci] avoids re-triggering; the commit only touches .html/.epub
             # (not .md) so the docs/**.md path filter wouldn't re-fire anyway.
             git commit -m "docs: regenerate HTML/EPUB artifacts [skip ci]"
-            git push origin "HEAD:${{ github.head_ref }}"
-            echo "Pushed regenerated docs artifacts to ${{ github.head_ref }}."
+            git push origin "HEAD:${HEAD_REF}"
+            echo "Pushed regenerated docs artifacts to ${HEAD_REF}."
             exit 0
           fi
 
