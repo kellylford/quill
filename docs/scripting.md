@@ -1,4 +1,4 @@
-# QUILL Scripting & Extensions — Design Plan (for review)
+# QUILL Scripting & Quillins — Design Plan (for review)
 
 Status: **Draft for review** · Target: **QUILL 2.0** · Branch: `edsharp`
 
@@ -6,6 +6,19 @@ This document proposes how QUILL should let power users extend the application
 with custom behaviour that hooks into the **menu system**, **hotkeys**, and
 **right-click / context menus**. It is a design plan only — no runtime code in
 this document is wired into the shipping app yet.
+
+## Naming: Quillins
+
+QUILL's plugins are branded **Quillins**. Throughout this document "Quillin" and
+"Quillins" are the product-facing name for a QUILL extension in everything a user
+reads or hears: menus, the manager dialog, announcements, capability prompts, and
+documentation. The neutral technical terms — `extension`, the `quill.extension/1`
+manifest schema, the `ext.*` command namespace, and the `QuillExtensionApi` —
+remain unchanged in code, schemas, and APIs, so wire formats stay stable while the
+experience speaks of Quillins. Where this document describes schema or code, it
+uses the technical term; where it describes what a person sees or hears, it says
+Quillin.
+
 
 ## 0. Provenance and inspiration
 
@@ -197,7 +210,7 @@ Design rules:
 
 - Manifests are plain JSON and extensions are plain `.py` — both fully readable in
   QUILL itself, the EdSharp authoring philosophy.
-- The **Extensions Manager** dialog uses stock controls
+- The **Quillins Manager** dialog uses stock controls
   (`wx.ListBox` / `wx.TextCtrl` read-only review panes, explicit default buttons,
   consistent Escape/Close handling, focus returned to the editor on close) per
   the project's dialog/accessibility rules, and is registered in `dialogs.md`.
@@ -237,7 +250,7 @@ API. Capabilities would be granted explicitly, identical to the Python layer.
 - `quill/core` + `quill/io` (manifest model, schema validation, capability
   checks, conflict detection): real unit tests, wx-free, strict mypy.
 - UI registration (menu/context/hotkey wiring): source-contract tests plus the
-  A11Y-4 dialog-contract guard for the Extensions Manager dialog.
+  A11Y-4 dialog-contract guard for the Quillins Manager dialog.
 - Host/RPC bridge: integration tests with a fake extension exercising
   read/write/announce and a capability-denied path.
 - Security: explicit tests that an undeclared capability is rejected and that no
@@ -692,7 +705,7 @@ That uniformity is exactly *why* both tiers share one contribution grammar
 Seamlessness hides the *seam*, never the *capabilities*. Consistent with QUILL's
 "no silent network calls", per-action consent, and DPAPI rules:
 
-- An **Extensions manager** lists every installed extension, its publisher, and
+- A **Quillins Manager** lists every installed Quillin, its publisher, and
   its granted capabilities, so the user can audit, disable, or revoke.
 - **Capability prompts** (§6) surface the first time an untrusted extension wants
   something sensitive (network, filesystem beyond the document, clipboard, running
@@ -764,6 +777,131 @@ control, sets a sizer, or manages focus.
 - Anything sensitive a dialog *triggers* (network, file write, run executable)
   still passes through capability prompts (§6). An accessible dialog never
   bypasses consent.
+
+---
+
+## 19. Design principles carried from the editor proposals (rtf.md)
+
+The native-RTF, Compose-mode, keyword, and grammar proposals in `rtf.md` share a
+through-line: take a capability the rest of the industry built for the eye and
+make QUILL the place where it finally *speaks*. Quillins are an extensibility
+system, but the same principles apply, and applying them is what turns a competent
+plugin model into a delightful, screen-reader-first one. This section adapts those
+principles to Quillins.
+
+### 19.1 Spoken-first: every Quillin action announces its outcome
+
+The defining rtf.md rule is that every action reports its consequence aloud, in the
+shared announcement grammar, so a blind user never has to re-derive what happened.
+Quillins adopt this as a hard contract, not an option:
+
+- Installing, enabling, disabling, updating, or removing a Quillin announces the
+  result and the new state ("Enabled Title Case. 4 Quillins active.").
+- Granting or revoking a capability speaks exactly what changed ("Granted network
+  access to Weather Insert. This Quillin can now make outbound requests, with a
+  prompt each time.").
+- A Quillin command that completes speaks its outcome through the same engine
+  built-ins use, so `api.announce` is not a courtesy but the expected closing act
+  of every handler; the authoring guide (§15) should treat a silent handler as a
+  smell.
+- Failures surface as announced, reviewable text (a read-only multiline control),
+  never a transient-only beep, mirroring §7 and the rtf.md "speak the consequence"
+  rule.
+
+This is the single most important enhancement: a Quillin that cannot be heard is a
+second-class citizen, and QUILL's promise is that there are none.
+
+### 19.2 The Quillins Manager as an accessible tree
+
+rtf.md argues the outline *is* the document and that QUILL already ships the right
+primitive: the accessible tree-navigator (`_NavigatorNode` and
+`_show_tree_navigator` in `quill/ui/main_frame.py`, used today for the heading
+outline, EPUB chapters, and the misspelling list). The Quillins Manager should
+reuse that exact pattern rather than a flat list:
+
+- A tree groups Quillins by provenance (First-party, Installed) and, within each,
+  by capability footprint (No capabilities, Editor only, Filesystem, Network,
+  Clipboard), so a user can hear "everything that can reach the network" as one
+  branch.
+- Each node speaks its essentials on focus: name, publisher, version, enabled
+  state, and granted capabilities, the way rtf.md has each tree node announce its
+  title, level, and state.
+- Arrow keys walk the structure; expanding a capability branch is how a user
+  audits risk by ear, the accessible answer to a sighted user scanning a column of
+  permission icons.
+- A live, read-only detail pane sits beside the tree (exactly as the YAML
+  structure editor and the rtf.md Compose preview place detail beside structure),
+  showing the selected Quillin's manifest, capabilities, and provenance.
+
+### 19.3 A rich, spoken context menu on the manager tree
+
+Following the rtf.md Compose-mode context menu, right-clicking a Quillin in the
+manager opens a structure menu where every item is keyboard reachable and every
+action announces its outcome and confirms only what is destructive:
+
+| Menu item | Action | Spoken outcome |
+| --- | --- | --- |
+| Enable / Disable | Toggles the Quillin | "Disabled Title Case. 3 Quillins active." |
+| Review Capabilities | Speaks and shows the granted capability set | reads the capability list |
+| Revoke Capability... | Removes a granted capability (confirm) | "Revoked network access from Weather Insert." |
+| Inspect Manifest | Opens the manifest in a read-only review pane | "Showing manifest for Title Case." |
+| Where Did This Come From? | Speaks provenance and publisher | "Title Case, first-party, shipped with QUILL." |
+| View Commands and Bindings | Lists the Quillin's commands and hotkeys | reads each command and its binding |
+| Update / Reinstall | Re-reads the Quillin from disk | "Reloaded Title Case from disk." |
+| Remove... | Uninstalls the Quillin (confirm) | "Removed Title Case. 3 Quillins active." |
+
+Reordering-style, instantly reversible actions (enable, disable) never prompt;
+capability revocation and removal confirm through a native accessible dialog, per
+the rtf.md "friction only where loss is possible" rule.
+
+### 19.4 Provenance and capabilities as spoken objects
+
+rtf.md reframes keywords from visual chips into spoken objects a user can hear,
+filter, and jump through. Quillins apply the same move to provenance and
+capabilities, which are otherwise the classic "colored badge you must see":
+
+- "Read capabilities here" speaks the granted capabilities of the focused Quillin
+  on demand, the analogue of rtf.md's "Read keywords here."
+- "Go to capability" lists every Quillin that holds a given capability ("network: 2
+  Quillins; filesystem: 1"), so a user can audit by capability rather than by
+  Quillin, entirely by keyboard and entirely spoken.
+- Provenance is announced on demand, never implied: a one-key "Where did this come
+  from?" affordance (already promised in §17.2) speaks publisher and trust tier.
+
+The principle is identical to rtf.md's keywords: take state the industry shows as a
+glanceable badge and make it something a blind power user can add up, audit, and
+act on by ear.
+
+### 19.5 The adapter discipline: Quillins behind a stable, swappable seam
+
+rtf.md's grammar design refuses to hand-roll an engine and instead wraps a real
+one (Harper) behind a pure `quill/core` adapter that emits stable typed records,
+so the engine can be swapped without touching the app. Quillins already embody the
+same discipline, and this document should name it as the shared pattern:
+
+- The `QuillExtensionApi` is the adapter seam (§5): every method maps to an
+  existing core operation, so a Quillin never sees a `wx` widget and the host can
+  evolve behind a versioned facade exactly as the grammar adapter hides Harper.
+- The contribution grammar (§4) is the single registration vocabulary for both
+  first-party modules and Quillins (§16), the same "one protocol, many
+  implementations" idea rtf.md applies to its editor-surface protocol.
+- New host capabilities (a future grammar engine, a Compose-mode surface, a
+  keyword store) should be exposed to Quillins as additional capability-gated
+  adapter methods, never as raw access, keeping the seam stable as QUILL grows.
+
+### 19.6 Honest limits, stated plainly
+
+rtf.md states its constraints rather than hiding them, and §16.3 already does this
+well. Carrying the principle forward, three limits bind Quillins specifically:
+
+- A Quillin can never become the editor surface, the announcement engine, or the
+  accessibility path; those are the framework's central guarantee (§16.3), exactly
+  as rtf.md refuses to pluginize the writing path.
+- A Quillin can only *describe* UI, never draw it (§18); the finite field
+  vocabulary is the safety property, the same way rtf.md's accessible preview is
+  structured text rather than an opaque rendering.
+- Anything that cannot be made fully spoken and keyboard-driven is out of scope for
+  a Quillin and must be a reviewed first-party module instead.
 
 ---
 
