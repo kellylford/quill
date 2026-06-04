@@ -228,6 +228,13 @@ class RichTextSurface:
         self.text_ctrl.Replace(start, end, value)
         self._render_rich(self.text_ctrl.GetValue())
 
+    def WriteText(self, value: str) -> None:  # noqa: N802
+        # Insert/overwrite at the canonical caret (replacing any selection). Used
+        # by the atomic-replace path so case/transform edits record a single,
+        # cleanly reversible undo step on the Markdown lens (issue #131).
+        self.text_ctrl.WriteText(value)
+        self._render_rich(self.text_ctrl.GetValue())
+
     def CanUndo(self) -> bool:  # noqa: N802
         return bool(self.text_ctrl.CanUndo())
 

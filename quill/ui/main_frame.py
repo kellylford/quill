@@ -17383,7 +17383,7 @@ class MainFrame(
         if start != end:
             original = text[start:end]
             updated = transform(original)
-            self.editor.Replace(start, end, updated)
+            self._atomic_replace(start, end, updated)
             self.editor.SetSelection(start, start + len(updated))
             self.document.set_text(self.editor.GetValue())
             self._set_status(f"{label} applied to selection")
@@ -17395,10 +17395,29 @@ class MainFrame(
             return
         word_start, word_end = word_span
         updated = transform(text[word_start:word_end])
-        self.editor.Replace(word_start, word_end, updated)
+        self._atomic_replace(word_start, word_end, updated)
         self.editor.SetSelection(word_start, word_start + len(updated))
         self.document.set_text(self.editor.GetValue())
         self._set_status(f"{label} applied to current word")
+
+    def _atomic_replace(self, start: int, end: int, updated: str) -> None:
+        """Replace ``text[start:end]`` with ``updated`` as ONE undo step.
+
+        wx ``TextCtrl.Replace`` is recorded by the native control as two separate
+        undo entries (a delete followed by an insert). Undoing a whole-document
+        case transform then lands on an empty/corrupted intermediate state
+        instead of the original text (#131). Selecting the range and writing over
+        it records a single, cleanly reversible edit on every surface — plain
+        ``wx.TextCtrl`` and the RTF Markdown lens alike — so one Ctrl+Z restores
+        exactly the pre-transform text.
+        """
+        set_selection = getattr(self.editor, "SetSelection", None)
+        write_text = getattr(self.editor, "WriteText", None)
+        if callable(set_selection) and callable(write_text):
+            set_selection(start, end)
+            write_text(updated)
+        else:  # pragma: no cover - defensive fallback for minimal stubs
+            self.editor.Replace(start, end, updated)
 
     def _current_word_span_at_caret(self, text: str, caret: int) -> tuple[int, int] | None:
         if not text:
@@ -17428,7 +17447,7 @@ class MainFrame(
     def _replace_document_text(self, updated_text: str) -> None:
         self._browse_navigation_cache = None
         current_text = self.editor.GetValue()
-        self.editor.Replace(0, len(current_text), updated_text)
+        self._atomic_replace(0, len(current_text), updated_text)
         self.editor.SetSelection(0, len(updated_text))
         self._schedule_browse_prewarm()
 
