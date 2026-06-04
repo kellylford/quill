@@ -813,8 +813,62 @@ def bundle_embedded_python(
     print(f"Copying Quill package source from {quill_source} into runtime...")
     shutil.copytree(quill_source, site_packages / "quill", dirs_exist_ok=True)
 
+    _install_vendored_glow(python_exe, source_root)
+
     archive.unlink(missing_ok=True)
     return target_dir
+
+
+def _install_vendored_glow(python_exe: Path, source_root: Path) -> None:
+    """Install the vendored GLOW contract wheel into the runtime, fully offline.
+
+    This bundles the lightweight ``quill-glow-core`` contract wheel from
+    ``vendor/wheels`` (``--no-index`` keeps it offline). That gives the shipped
+    build the GLOW seam and its safe no-op fallback, and enables the opt-in,
+    consented GLOW updater (GLOW-8) to fetch and apply the full engine later.
+
+    The heavy ``acb-large-print`` backend (pandas, onnxruntime, pymupdf, ...) is
+    NOT vendored here; it is installed on demand through the consented updater or
+    a separate, explicit step. When no vendored wheel is present the build
+    continues without GLOW rather than failing, since GLOW is optional.
+    """
+    wheels_dir = source_root / "vendor" / "wheels"
+    if not wheels_dir.is_dir():
+        print("No vendor/wheels directory found; skipping GLOW bundling.")
+        return
+    contract_wheels = sorted(wheels_dir.glob("quill_glow_core-*.whl"))
+    if not contract_wheels:
+        print("No vendored quill-glow-core wheel found; skipping GLOW bundling.")
+        return
+    print(f"Installing vendored GLOW contract wheel from {wheels_dir} (offline)...")
+    subprocess.run(
+        [
+            str(python_exe),
+            "-m",
+            "pip",
+            "install",
+            "--no-warn-script-location",
+            "--no-compile",
+            "--no-index",
+            "--find-links",
+            str(wheels_dir),
+            "quill-glow-core",
+        ],
+        check=True,
+    )
+    # Smoke check: the contract package must import in the built runtime.
+    result = subprocess.run(
+        [str(python_exe), "-c", "import quill_glow_core; print('glow contract ok')"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            "GLOW contract wheel was installed but failed to import in the "
+            f"built runtime:\n{result.stderr}"
+        )
+    print(result.stdout.strip() or "glow contract ok")
 
 
 def bundled_runtime_dependencies(pyproject: Path) -> list[str]:

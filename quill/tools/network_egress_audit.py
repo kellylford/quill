@@ -53,6 +53,11 @@ _REVIEWED_EGRESS: dict[str, str] = {
     "core/updates.py::download_release_asset": (
         "User chooses to download an offered update; verified TLS, visible progress."
     ),
+    "core/glow_updates.py::fetch_glow_manifest": (
+        "Opt-in GLOW engine update check (GLOW-8); runs only when the user invokes "
+        "'Check for GLOW Updates' or enables the GLOW auto-check setting. Fetches a "
+        "signed manifest over a verified TLS context and host-allow-listed HTTPS URL."
+    ),
     "core/assistant_ai.py::_fetch_models_from_endpoint": (
         "User-initiated model discovery from the AI Connection dialog (Verify "
         "Connection / List Models). HTTPS uses a verified context."

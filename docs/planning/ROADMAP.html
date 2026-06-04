@@ -6389,7 +6389,7 @@ engineering. See SET-1, BW-7.</li>
 <h4 id="new-backlog-items-for-the-combined-suite">21.1 New backlog items
 for the combined suite</h4>
 <p>These extend the section 14 tracker. The GLOW family (GLOW-1 through
-GLOW-7) has a dedicated execution plan in <a href="glow.md">glow.md</a>;
+GLOW-8) has a dedicated execution plan in <a href="glow.md">glow.md</a>;
 keep both in step when any GLOW item changes scope or status.</p>
 <table style="width:100%;">
 <colgroup>
@@ -6529,6 +6529,41 @@ Wizard let the user review and change them (both sanctioned
 separately. Remaining: wire the per-action consent prompt (visible
 progress and outcome) at the point a user invokes a structured GLOW
 audit — that surface lands with the in-editor report (GLOW-3).</td>
+</tr>
+<tr>
+<td>GLOW-8</td>
+<td>Consented, signed in-app GLOW engine updates</td>
+<td>Suite</td>
+<td>M</td>
+<td>In progress</td>
+<td>Lets a user check for and apply a newer GLOW engine without waiting
+for a full QUILL release, reusing the updater trust model. Done:
+<code>quill/core/glow_updates.py</code> (wx-free) adds a signed
+<code>GlowUpdateManifest</code> (HMAC-SHA256 over the canonical form,
+verified before any download), HTTPS host-allow-listed URLs, per-wheel
+SHA-256 verification, an offline <code>--no-index</code> install with an
+injectable command runner, and <code>apply_glow_update</code> with
+rollback to the vendored wheels on failure;
+<code>check_for_glow_update</code> compares the manifest to
+<code>installed_glow_version()</code>. UI: a
+<code>tools.check_glow_updates</code> command and a Help-menu “Check for
+GLOW Updates…” item route through
+<code>MainFrame.check_for_glow_updates</code>, which gates
+download/install behind a second confirmation, announces the result, and
+tells the user to restart to apply. GATE-9: the new
+<code>fetch_glow_manifest</code> egress site is registered. Packaging:
+the Windows build now installs the vendored <code>quill-glow-core</code>
+contract wheel offline (<code>_install_vendored_glow</code>,
+<code>--find-links vendor/wheels</code>, with an import smoke check),
+the contract version is bumped to 0.1.1 and pinned, and
+<code>scripts/refresh_glow_wheel.py</code> re-vendors reproducibly from
+a committed source checkout. Tests:
+<code>tests/unit/core/test_glow_updates.py</code> (15) plus
+<code>tests/unit/ui/test_glow_update_wiring.py</code> (6). Remaining
+(2.0): the heavy <code>acb-large-print</code> backend is not yet
+vendored, so the full engine still installs online/opt-in; publish the
+signed manifest feed and exercise the live download-and-apply on a
+frozen Windows build.</td>
 </tr>
 <tr>
 <td>BW-1</td>

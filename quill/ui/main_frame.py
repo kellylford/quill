@@ -391,6 +391,11 @@ from quill.core.tagging import (
 from quill.core.transforms import to_lower, to_sentence_case, to_title, to_toggle_case, to_upper
 from quill.core.trust import is_trusted_location, load_trusted_locations, save_trusted_locations
 from quill.core.undo_store import load_undo_history, save_undo_history
+from quill.core.glow_updates import (
+    GlowUpdateCheck,
+    apply_glow_update,
+    check_for_glow_update,
+)
 from quill.core.updates import (
     GitHubRelease,
     UpdateManifest,
@@ -1855,6 +1860,12 @@ class MainFrame(
             "tools.check_updates",
             "Check for Updates...",
             self.check_for_updates,
+            None,
+        )
+        self.commands.register(
+            "tools.check_glow_updates",
+            "Check for GLOW Updates...",
+            self.check_for_glow_updates,
             None,
         )
         self.commands.register(
@@ -14287,6 +14298,112 @@ class MainFrame(
         from quill.core.browser_preview import render_preview_body
 
         return render_preview_body(markdown_text, "markdown")
+
+    def _vendored_glow_wheels_dir(self) -> Path | None:
+        """The directory holding QUILL's vendored GLOW wheels (rollback floor)."""
+        candidate = Path(__file__).resolve().parents[2] / "vendor" / "wheels"
+        if candidate.is_dir():
+            return candidate
+        # Frozen builds may place vendored wheels beside the interpreter prefix.
+        alt = Path(sys.prefix) / "vendor" / "wheels"
+        return alt if alt.is_dir() else None
+
+    def check_for_glow_updates(self, silent_no_update: bool = False) -> None:
+        """Check for, and optionally apply, a newer GLOW accessibility engine.
+
+        Opt-in and consented (GLOW-8): invoking this command is the explicit
+        action that authorizes the network check; a second confirmation gate is
+        shown before anything is downloaded or installed. The engine is verified
+        (signed manifest, per-wheel SHA-256) and installed offline; a failed
+        install rolls back to the vendored wheels. The new engine loads on
+        restart.
+        """
+        wx = self._wx
+        self._set_status("Checking for GLOW engine updates...")
+        try:
+            check: GlowUpdateCheck = check_for_glow_update()
+        except (URLError, ValueError, OSError) as error:
+            if silent_no_update:
+                self._record_notification(f"GLOW update check failed: {error}", "update")
+                self._set_status("GLOW update check failed")
+                return
+            self._html_info(
+                "Check for GLOW Updates",
+                f"# GLOW update check failed\n\nCould not check for updates:\n\n`{error}`",
+            )
+            self._set_status("GLOW update check failed")
+            return
+
+        if not check.update_available:
+            if silent_no_update:
+                self._record_notification("GLOW engine is up to date", "update")
+                return
+            installed = check.installed_version or "not installed"
+            self._html_info(
+                "Check for GLOW Updates",
+                "# GLOW engine is up to date\n\n"
+                f"**Installed:** {installed}  \n"
+                f"**Latest:** {check.available_version}",
+            )
+            self._set_status("GLOW engine is up to date")
+            return
+
+        if silent_no_update:
+            self._record_notification(
+                f"GLOW engine {check.available_version} is available", "update"
+            )
+            self._set_status("GLOW update available")
+            return
+
+        manifest = check.manifest
+        wheel_list = "\n".join(f"- `{w.filename}`" for w in manifest.wheels)
+        notes = manifest.notes or "_(no release notes provided)_"
+        proceed = self._show_message_box(
+            (
+                f"GLOW engine {manifest.version} is available "
+                f"(installed: {check.installed_version or 'none'}).\n\n"
+                f"{notes}\n\n"
+                "This downloads and installs the engine, then QUILL must restart "
+                "to apply it. Download and install now?"
+            ),
+            "Check for GLOW Updates",
+            wx.ICON_INFORMATION | wx.YES_NO,
+        )
+        if proceed != wx.YES:
+            self._set_status("GLOW update deferred")
+            self._record_notification(f"GLOW update {manifest.version} deferred", "update")
+            return
+
+        import tempfile
+
+        staging = Path(tempfile.mkdtemp(prefix="quill-glow-update-"))
+        self._set_status(f"Downloading GLOW engine {manifest.version}...")
+        result = apply_glow_update(
+            manifest,
+            staging,
+            rollback_dir=self._vendored_glow_wheels_dir(),
+        )
+        if result.applied:
+            self._html_info(
+                "GLOW update complete",
+                f"# GLOW engine updated to {manifest.version}\n\n"
+                f"{wheel_list}\n\n"
+                "**Restart QUILL** to load the new accessibility engine.",
+            )
+            self._set_status(f"GLOW engine updated to {manifest.version}; restart to apply")
+            self._announce(f"GLOW engine updated to {manifest.version}. Restart to apply.")
+            self._record_notification(
+                f"GLOW engine updated to {manifest.version}; restart to apply", "update"
+            )
+        else:
+            rollback = " The previous engine was restored." if result.rolled_back else ""
+            self._html_info(
+                "GLOW update failed",
+                f"# GLOW update failed\n\n`{result.message}`{rollback}",
+            )
+            self._set_status("GLOW update failed")
+            self._announce("GLOW update failed." + rollback)
+            self._record_notification(f"GLOW update failed: {result.message}", "update")
 
     def _html_info(self, title: str, markdown_text: str) -> None:
         """Show an informational message in the WebView dialog (with an OK button)."""

@@ -52,7 +52,7 @@ pages = ["keynote-parser>=1.0", "markitdown[docx,pptx,xlsx,xls,pdf]>=0.1.0"]
 # checkout root on any machine. Until these are published to an index, install
 # the vendored, drive-independent pure-Python wheels with a repo-relative path:
 #   pip install --find-links vendor/wheels "quill-glow-core[glow]"
-glow = ["quill-glow-core[glow]"]
+glow = ["quill-glow-core[glow]>=0.1.1"]
 # macOS build + runtime. py2app 0.28.x is incompatible with setuptools >= 80
 # (the build aborts with "install_requires is no longer supported"), so pin it.
 # pyobjc powers the macOS platform layer; apple-fm-sdk is the Foundation Models
