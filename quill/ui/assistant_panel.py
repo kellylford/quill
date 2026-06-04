@@ -76,6 +76,11 @@ class AskQuillChatDialog:
         self._announce = announce or (lambda _m: None)
         self._last_response = ""
         self._first_done = False
+        # Branch-tree session log (#130): conversational exchanges are recorded
+        # as user/assistant turns and saved so the Session Branches browser is
+        # populated. Created lazily on the first completed exchange.
+        self._session = None
+        self._pending_user_message = ""
         # Streaming state (AI-1): accumulate streamed fragments on the UI thread
         # and announce them in throttled, sentence-sized chunks.
         self._stream_active = False
@@ -238,6 +243,7 @@ class AskQuillChatDialog:
             self._focus_composer()
             return
         self._append("You", message)
+        self._pending_user_message = message
         if self.input is not None:
             self.input.SetValue("")
         # Suggestions fall away once the conversation starts (like Apple Intelligence).
@@ -366,6 +372,7 @@ class AskQuillChatDialog:
             self._append("Quill", proposal)
             self._announce_incoming(text, prefix="Quill proposal")
             self._show_approval(True, "Apply this to the document?")
+            self._record_session_exchange(text)
         else:
             self._last_response = text
             self._append("Quill", text or "(no response)")
@@ -376,6 +383,7 @@ class AskQuillChatDialog:
                 self._stream_active = False
             else:
                 self._announce_incoming(text or "No response")
+            self._record_session_exchange(text)
         self.copy_button.Enable(bool(self._last_response))
         self._set_busy(False)
         if self._webview is not None:
@@ -387,6 +395,35 @@ class AskQuillChatDialog:
             # The live region already announced the reply; don't steal focus
             # from the in-page edit field the user is sitting in.
             self._announce("Response ready")
+
+    def _record_session_exchange(self, assistant_text: str) -> None:
+        """Persist the user/assistant turn pair to the branch-tree log (#130).
+
+        Created lazily on the first completed exchange and titled from the first
+        user message. Persistence failures must never disrupt the conversation,
+        so any error here is swallowed.
+        """
+        user_message = self._pending_user_message
+        self._pending_user_message = ""
+        if not user_message or not assistant_text:
+            return
+        try:
+            from quill.core.ai.sessions import (
+                ROLE_ASSISTANT,
+                ROLE_USER,
+                append_turn,
+                new_session,
+                save_session,
+            )
+
+            if self._session is None:
+                title = " ".join(user_message.split())[:60] or "Writing session"
+                self._session = new_session(title)
+            self._session = append_turn(self._session, ROLE_USER, user_message)
+            self._session = append_turn(self._session, ROLE_ASSISTANT, assistant_text)
+            save_session(self._session)
+        except Exception:  # noqa: BLE001 - session logging is best-effort
+            pass
 
     def _on_approve(self, _event: object) -> None:
         if not self._pending:
