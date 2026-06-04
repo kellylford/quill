@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from collections.abc import Callable
 
 from quill.core.accessibility_agent import (
@@ -1670,8 +1671,32 @@ class AssistantConnectionDialog:
         self.dialog.Layout()
 
     def _on_verify_connection(self, _event: object) -> None:
+        # Run the network check on a worker thread so a slow or unresponsive
+        # endpoint cannot freeze the UI thread (and with it the screen reader)
+        # while verification is in flight (#127).
         settings = self._current_settings()
-        ok, message = verify_assistant_connection(settings, self.api_key.GetValue())
+        api_key = self.api_key.GetValue()
+        self.verify_button.Enable(False)
+        self.connection_status.SetLabel("Verifying connection...")
+
+        def worker() -> None:
+            try:
+                ok, message = verify_assistant_connection(settings, api_key)
+            except Exception as exc:  # noqa: BLE001 - surface any failure as a result
+                ok, message = False, f"Could not verify the connection: {exc}"
+            call_after = getattr(self._wx, "CallAfter", None)
+            if callable(call_after):
+                call_after(self._finish_verify_connection, ok, message)
+            else:  # pragma: no cover - fallback when CallAfter is unavailable
+                self._finish_verify_connection(ok, message)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _finish_verify_connection(self, ok: bool, message: str) -> None:
+        """UI-thread completion for the async verify (#127)."""
+        enable = getattr(self.verify_button, "Enable", None)
+        if callable(enable):
+            self.verify_button.Enable(True)
         self.connection_status.SetLabel(message)
         icon = self._wx.ICON_INFORMATION if ok else self._wx.ICON_WARNING
         self._wx.MessageBox(message, "AI Connection Check", icon | self._wx.OK)
