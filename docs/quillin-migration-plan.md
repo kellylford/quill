@@ -94,7 +94,7 @@ def _number_lines(ctx: Host) -> None:
 ```
 
 The module imports **no `wx`** directly for its *logic*; UI effects go through the
-host facade, exactly as the EdSharp handlers already centralize their edits. (A
+host facade, exactly as the Power Tools handlers already centralize their edits. (A
 module may still live under `quill/ui/` and use `wx` for genuinely bespoke UI, but
 that UI must pass A11Y-4 review — it is first-party, not a sandboxed extension.)
 
@@ -127,7 +127,7 @@ Two design rules keep this honest:
    (`quill/core/quillins/registry.py`) so first-party and third-party
    contributions collide-detect against each other and the host keymap uniformly.
    First-party ids are *not* forced under `ext.` — they keep their existing
-   namespaces (`lines.*`, `eds.*`, …); only third-party ids carry `ext.`.
+   namespaces (`lines.*`, `power.*`, …); only third-party ids carry `ext.`.
 2. **The breadth gap is the only difference between tiers.** `host` exposes
    settings/workers/platform/dialogs; `api` does not. That asymmetry *is* the
    trust boundary — there is no second registration mechanism, no second menu
@@ -141,7 +141,7 @@ in a self-contained, individually revertible step:
 1. **Pin behavior first.** Write/extend a characterization test that asserts the
    feature's *current* observable behavior (command id registered, menu present,
    handler output for representative input, announcement text). The existing
-   `test_eds_command_wiring.py` is the template: it reads source text and asserts
+   `test_power_tools_command_wiring.py` is the template: it reads source text and asserts
    the wiring contract without constructing the full frame.
 2. **Introduce the facade seam.** Land `quill/core/contributions.py` + its
    `MainFrame` adapter with **zero behavior change** — `main_frame.py` keeps
@@ -161,23 +161,23 @@ Pick first movers that are **already command-shaped and already extracted into a
 mixin**, so the migration is mechanical and the risk is near zero. The codebase
 hands us an ideal pilot:
 
-- **Pilot 1 — EdSharp Tools (`eds.*`).** `quill/ui/main_frame_edsharp_menu.py`
+- **Pilot 1 — Power Tools (`power.*`).** `quill/ui/main_frame_power_tools_menu.py`
   already centralizes the commands as a `(id, label, handler)` table
-  (`_edsharp_command_table`) and the handlers already live on one mixin
-  (`EdSharpActionsMixin`). That table *is* a contribution list in all but name —
+  (`_power_tools_command_table`) and the handlers already live on one mixin
+  (`PowerToolsActionsMixin`). That table *is* a contribution list in all but name —
   converting it to `host.add_command(...)` calls is a near-syntactic transform,
-  and `test_eds_command_wiring.py` already pins the contract.
+  and `test_power_tools_command_wiring.py` already pins the contract.
 
   **This pilot and the menu-consolidation plan are the same work.** `menus.md`
-  §3.7 renames `EdSharp Tools` → `Power Tools` and **recirculates** most of its
+  §3.7 groups these under `Power Tools` and **recirculates** most of its
   commands into their conventional homes (Insert/Edit/Format/Search/Navigate/File
   and the Compare/Read-Aloud Tools submenus). Done by hand against today's inline
   `wx.Menu().Append(...)` wiring that is a fiddly, error-prone move across hundreds
   of lines. Done *through the contribution grammar* it is a **pure data edit**:
   each command already carries a `menu=(...)` placement tuple, so recirculating
-  `eds.number_lines` from the EdSharp submenu to `Format` is changing one tuple —
+  `power.number_lines` from the Power Tools submenu to `Format` is changing one tuple —
   the registry re-files it, the palette and Keymap Editor are untouched, and the
-  collision detector still guards it. Migrate EdSharp first (Wave 1), then the
+  collision detector still guards it. Migrate Power Tools first (Wave 1), then the
   menus.md §3.7 recirculation becomes the motivating, low-risk demonstration that
   "menus as data" works. The two plans should land together.
 - **Pilot 2 — line operations & "speak …" commands.** Self-contained, pure-ish
@@ -194,8 +194,8 @@ Status legend: ✅ shipped · ⏳ future.
 | Wave | Scope | Exit criterion | Status |
 | --- | --- | --- | --- |
 | 0 | Land `quill/core/contributions.py` (wx-free facade: `FirstPartyRegistrar` + `FirstPartyCommand` + `build_first_party_registry`) feeding the **same** `build_registry` as Quillins | Facade unit-tested (`tests/unit/core/test_contributions.py`); `main_frame.py` unchanged in behavior; public-surface fixture stable | ✅ Shipped |
-| 1 | Pilot 1 (EdSharp `eds.*`) — **lands the menus.md §3.7 rename + recirculation as data** | EdSharp table + menu recirculation **derived from** the declarative `EDSHARP_COMMANDS` manifest (each command carries its recirculated home Insert/Edit/Format/Search/Navigate/File or the renamed `Power Tools` remainder); `test_eds_command_wiring.py` reads the manifest and is green; live menu byte-for-byte identical | ✅ Shipped |
-| 2 | Line-ops + speak/status commands | Each command a module; characterization tests green | 🔄 In progress — `Host` facade + adapter shipped; the line-transforms group (`eds.number_lines`, `eds.hard_wrap_lines`) migrated to `quill/ui/features/line_transforms.py` and removed from the mixin (§9 worked example). Remaining line/speak/status commands future |
+| 1 | Pilot 1 (Power Tools `power.*`) — **lands the menus.md §3.7 rename + recirculation as data** | Power Tools table + menu recirculation **derived from** the declarative `POWER_TOOLS_COMMANDS` manifest (each command carries its recirculated home Insert/Edit/Format/Search/Navigate/File or the renamed `Power Tools` remainder); `test_power_tools_command_wiring.py` reads the manifest and is green; live menu byte-for-byte identical | ✅ Shipped |
+| 2 | Line-ops + speak/status commands | Each command a module; characterization tests green | 🔄 In progress — `Host` facade + adapter shipped; the line-transforms group (`power.number_lines`, `power.hard_wrap_lines`) migrated to `quill/ui/features/line_transforms.py` and removed from the mixin (§9 worked example). Remaining line/speak/status commands future |
 | 3 | Format-menu commands | `Format` contributions all flow through the registry | ⏳ Future |
 | 4 | Navigate/View read-only commands | … | ⏳ Future |
 | 5 | Tools utilities that already use `show_web_form` | Dialogs stay A11Y-4-registered; `dialogs.md` rows unchanged | ⏳ Future |
@@ -209,13 +209,13 @@ Each wave is multiple small PRs, not one large one.
 > the *same* `build_registry` (`quill/core/quillins/registry.py`) used for
 > Quillins, so first-party ids and any Quillin contribution collide-detect
 > uniformly (verified by `test_first_party_and_quillin_collide_through_one_registry`).
-> First-party ids keep their namespaces (`eds.*`) and may attach under the whole
+> First-party ids keep their namespaces (`power.*`) and may attach under the whole
 > bar (`FIRST_PARTY_MENU_PARENTS` is a superset of the narrow third-party
-> `MENU_PARENTS`). The EdSharp pilot (`quill/ui/main_frame_edsharp_menu.py`) is the
-> first consumer: its 33 commands are declared once as `EDSHARP_COMMANDS`, and
+> `MENU_PARENTS`). The Power Tools pilot (`quill/ui/main_frame_power_tools_menu.py`) is the
+> first consumer: its 33 commands are declared once as `POWER_TOOLS_COMMANDS`, and
 > both the palette registration table and the menu recirculation (one
-> `_append_edsharp_group` loop instead of eight hand-written helpers) derive from
-> that data. The handler resolves by convention (`eds.number_lines` →
+> `_append_power_tools_group` loop instead of eight hand-written helpers) derive from
+> that data. The handler resolves by convention (`power.number_lines` →
 > `self.number_lines`), so the data and behavior cannot drift. Waves 2–N repeat
 > this mechanically, one command group per PR.
 
@@ -242,13 +242,13 @@ For every feature moved:
 - [ ] If a public `MainFrame` method disappeared, regenerate the public-surface
       fixture and review the diff.
 
-## 9. Worked example — migrating `eds.number_lines`
+## 9. Worked example — migrating `power.number_lines`
 
-**Before** (conceptually, in `main_frame_edsharp_menu.py` + `EdSharpActionsMixin`):
+**Before** (conceptually, in `main_frame_power_tools_menu.py` + `PowerToolsActionsMixin`):
 
 ```python
 # table row
-("eds.number_lines", "EdSharp: Number Lines", self.number_lines)
+("power.number_lines", "Number Lines", self.number_lines)
 # registration loop calls self.commands.register(id, label, handler, binding)
 # and the menu builder appends + binds the same id
 ```
@@ -258,22 +258,22 @@ For every feature moved:
 ```python
 def register(host):
     host.add_command(
-        id="eds.number_lines",
-        title="EdSharp: Number Lines",
+        id="power.number_lines",
+        title="Number Lines",
         handler=_number_lines,
         menu=("Format",),         # recirculated home (menus.md §3.7), not a deep
-                                  # "Tools > EdSharp Tools > Lines" chain
+                                  # "Tools > Power Tools > Lines" chain
     )
 
 def _number_lines(ctx):
     if ctx.is_read_only():
         ctx.set_status("Document is read-only")
         return
-    ...                       # same body as today's EdSharpActionsMixin.number_lines
+    ...                       # same body as today's PowerToolsActionsMixin.number_lines
     ctx.announce("Numbered lines")
 ```
 
-and in `main_frame.py`, the EdSharp block collapses to:
+and in `main_frame.py`, the Power Tools block collapses to:
 
 ```python
 from quill.ui.features import eds_line_ops
@@ -281,22 +281,21 @@ eds_line_ops.register(self._contribution_host)
 ```
 
 The user sees the command in its **new, conventional home** (Format, per
-menus.md §3.7) instead of three levels deep under a foreign-branded "EdSharp
-Tools" submenu — same palette entry, same key-bindability, same announcement.
+menus.md §3.7) instead of three levels deep under a single power-tools submenu — same palette entry, same key-bindability, same announcement.
 The maintainer sees one fewer responsibility in the god object, a module they can
 read in isolation, **and** the menu recirculation expressed as one `menu=` tuple
 rather than hand-edited `wx.Menu` plumbing. The menu-consolidation win and the
 god-object-shrink win arrive in the same diff.
 
 > **✅ Shipped (Wave 2 first cut).** This example is real:
-> `quill/ui/features/line_transforms.py` now owns the `eds.number_lines` and
-> `eds.hard_wrap_lines` handlers as pure `host`-driven functions (no `wx`, no
-> `MainFrame` reach-in); they were deleted from `EdSharpActionsMixin`. The EdSharp
+> `quill/ui/features/line_transforms.py` now owns the `power.number_lines` and
+> `power.hard_wrap_lines` handlers as pure `host`-driven functions (no `wx`, no
+> `MainFrame` reach-in); they were deleted from `PowerToolsActionsMixin`. The Power Tools
 > registration table resolves those two ids to the feature handlers via the live
-> `MainFrameHost`, while the declarative `EDSHARP_COMMANDS` manifest still owns
+> `MainFrameHost`, while the declarative `POWER_TOOLS_COMMANDS` manifest still owns
 > their `Format > Transform Lines` placement. Behaviour is verified identical by
 > `tests/unit/ui/test_contribution_host.py` (fake-host logic) plus a live
-> `MainFrame` smoke test; the full suite stays green. The remaining EdSharp groups
+> `MainFrame` smoke test; the full suite stays green. The remaining Power Tools groups
 > are mechanical repeats of this same move.
 
 ## 10. Done criteria & honest limits

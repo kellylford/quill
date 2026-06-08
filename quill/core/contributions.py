@@ -11,7 +11,7 @@ them through the **same** merge/conflict engine
 The asymmetry between this facade and the third-party ``QuillExtensionApi`` is the
 trust boundary, not a second mechanism (migration plan §4):
 
-* First-party command ids keep their existing namespaces (``eds.*``, ``lines.*``,
+* First-party command ids keep their existing namespaces (``power.*``, ``lines.*``,
   …); they are **not** forced under ``ext.`` and they may attach under any
   real top-level menu (``Insert``/``Search`` included), because they bypass the
   third-party :mod:`quill.core.quillins.validation` contract while still flowing
@@ -138,7 +138,7 @@ class FirstPartyCommand:
         """The mixin method that implements this command.
 
         First-party handlers follow the convention ``<namespace>.<method>`` →
-        ``self.<method>``; e.g. ``eds.number_lines`` resolves to
+        ``self.<method>``; e.g. ``power.number_lines`` resolves to
         ``self.number_lines``. The whole-bar wiring relies on this so the
         declarative table never has to repeat the handler reference.
         """

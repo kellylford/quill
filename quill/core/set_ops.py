@@ -1,6 +1,7 @@
 """Set operations on lines, split at the cursor (EDS-12).
 
-EdSharp's Alt+Shift+L and Alt+Shift+Q compute, respectively, the lines that are
+Lines in First Block Only and Lines Common to Both Blocks compute, respectively,
+the lines that are
 in the first block but not the second, and the lines common to both blocks. The
 document is split into two blocks at the cursor line. Results preserve the order
 of their first appearance in the first block and drop duplicates.

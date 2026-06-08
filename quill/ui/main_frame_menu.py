@@ -49,9 +49,9 @@ class MenuBuilderMixin:
         self._refresh_recent_menu()
         file_menu.Append(self._id_open_url, "Open from &URL...")
         file_menu.AppendSubMenu(self._sessions_menu, "&Workspace Snapshots")
-        # New document from clipboard sits beside New (EdSharp recirculation,
+        # New document from clipboard sits beside New (Power Tools recirculation,
         # menus.md Phase 4).
-        self._append_edsharp_file_create_items(file_menu)
+        self._append_power_tools_file_create_items(file_menu)
         file_menu.AppendSeparator()
         # --- Save ---
         file_menu.Append(self._id_save, self._menu_label("&Save", "file.save"))
@@ -67,8 +67,8 @@ class MenuBuilderMixin:
         file_menu.Append(self._id_page_setup, "Pa&ge Setup...")
         file_menu.Append(self._id_print, self._menu_label("&Print...", "file.print"))
         file_menu.AppendSeparator()
-        # --- Current-file operations (EdSharp recirculation, menus.md Phase 4) ---
-        self._append_edsharp_file_ops_items(file_menu)
+        # --- Current-file operations (Power Tools recirculation, menus.md Phase 4) ---
+        self._append_power_tools_file_ops_items(file_menu)
         file_menu.AppendSeparator()
         # --- Close ---
         file_menu.Append(
@@ -231,9 +231,9 @@ class MenuBuilderMixin:
         selection_menu.AppendSeparator()
         selection_menu.AppendSubMenu(mark_ring_menu, "Recent &Marks (Ring)")
         edit_menu.AppendSubMenu(selection_menu, "&Selection")
-        # Paste-as-Markdown and line-deletion commands (EdSharp recirculation,
+        # Paste-as-Markdown and line-deletion commands (Power Tools recirculation,
         # menus.md Phase 4).
-        self._append_edsharp_edit_items(edit_menu)
+        self._append_power_tools_edit_items(edit_menu)
         insert_menu = wx.Menu()
 
         search_menu = wx.Menu()
@@ -248,9 +248,9 @@ class MenuBuilderMixin:
             self._menu_label("&Replace Across Files...", "tools.replace_in_files"),
         )
         # Regex match count/extract and block set-ops make Search the single
-        # find / filter / extract-lines hub (EdSharp recirculation, menus.md
+        # find / filter / extract-lines hub (Power Tools recirculation, menus.md
         # Phase 4).
-        self._append_edsharp_search_items(search_menu)
+        self._append_power_tools_search_items(search_menu)
         self._id_send_to_tray = wx.NewIdRef()
         self._id_toggle_tray_mode = wx.NewIdRef()
         self._id_toggle_soft_wrap = wx.NewIdRef()
@@ -441,9 +441,9 @@ class MenuBuilderMixin:
         self._id_insert_code_block = wx.NewIdRef()
         self._id_insert_footnote = wx.NewIdRef()
         self._id_insert_table = wx.NewIdRef()
-        # Percent / first / last non-blank movement (EdSharp recirculation,
+        # Percent / first / last non-blank movement (Power Tools recirculation,
         # menus.md Phase 4).
-        self._append_edsharp_navigate_items(navigate_menu)
+        self._append_power_tools_navigate_items(navigate_menu)
         format_menu = wx.Menu()
         case_menu = wx.Menu()
         case_menu.Append(
@@ -595,9 +595,9 @@ class MenuBuilderMixin:
             self._id_manage_snippets,
             self._menu_label("Manage Snippets...", "format.manage_snippets"),
         )
-        # Special character / date-time / calculated date / file content (EdSharp
+        # Special character / date-time / calculated date / file content (Power Tools
         # recirculation, menus.md Phase 4).
-        self._append_edsharp_insert_items(insert_menu)
+        self._append_power_tools_insert_items(insert_menu)
         self._id_next_document = wx.NewIdRef()
         self._id_previous_document = wx.NewIdRef()
         window_menu = wx.Menu()
@@ -1142,10 +1142,10 @@ class MenuBuilderMixin:
             self._menu_label("&Manage Macros...", "tools.manage_macros"),
         )
         # Transform Lines is the single home for line/text transforms (menus.md
-        # §3.7.2): the former Tools > Authoring > Convert group plus the EdSharp
+        # §3.7.2): the former Tools > Authoring > Convert group plus the Power Tools
         # line transforms, surfaced under Format where text-shaping lives.
         transform_menu = wx.Menu()
-        self._append_edsharp_transform_line_items(transform_menu)
+        self._append_power_tools_transform_line_items(transform_menu)
         transform_menu.AppendSeparator()
         transform_menu.Append(
             self._id_sort_lines_ascending,
@@ -1222,8 +1222,8 @@ class MenuBuilderMixin:
         accessibility_menu.Append(self._id_validate_contrast, "&Validate Contrast...")
         accessibility_menu.Append(self._id_link_inventory, "Link Inventory && Alt-Text Catalo&g...")
         # Speak cursor address / document status / selection length are screen-
-        # reader status queries (EdSharp recirculation, menus.md Phase 4).
-        self._append_edsharp_accessibility_items(accessibility_menu)
+        # reader status queries (Power Tools recirculation, menus.md Phase 4).
+        self._append_power_tools_accessibility_items(accessibility_menu)
         tools_menu.AppendSubMenu(accessibility_menu, "A&ccessibility")
 
         support_menu = wx.Menu()

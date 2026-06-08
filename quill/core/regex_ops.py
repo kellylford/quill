@@ -1,8 +1,8 @@
 """Regular-expression count and extract commands (EDS-13).
 
-EdSharp's Ctrl+Shift+Y counts regex matches and Ctrl+Shift+E extracts all
-matches into a new buffer. UI-framework agnostic so it can be unit-tested
-without ``wx``. Invalid patterns raise :class:`RegexError`.
+Count Regex Matches counts matches of a pattern and Extract Regex Matches
+extracts all matches into a new buffer. UI-framework agnostic so it can be
+unit-tested without ``wx``. Invalid patterns raise :class:`RegexError`.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ def extract_matches(text: str, pattern: str, *, divider: str = "\n", flags: int 
     """Return all whole matches of ``pattern`` joined by ``divider``.
 
     Whole matches (group 0) are extracted even when the pattern contains capture
-    groups, matching EdSharp's behaviour.
+    groups.
     """
     matches = [match.group(0) for match in _compile(pattern, flags).finditer(text)]
     return divider.join(matches)

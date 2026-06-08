@@ -84,19 +84,15 @@ Quillin.
 ## 0. Provenance and inspiration
 
 This capability is QUILL's answer to the scripting/add-in model pioneered by
-**EdSharp 4.0** by **Jamal Mazrui** (2007–2017), a respected accessible,
-screen-reader-first Windows editor that exposed almost its entire object model
-to add-in code.
+earlier accessible, screen-reader-first Windows editors that exposed almost
+their entire object model to add-in code.
 
-- Jamal Mazrui on GitHub: <https://github.com/jamalmazrui>
-- EdSharp source: <https://github.com/jamalmazrui/EdSharp> and
-  <https://github.com/EmpowermentZone/EdSharp>
-
-EdSharp used **JScript.NET** as its scripting language because its host
-application was written in C#/.NET, so the scripting language matched the
-platform object model and the .NET Framework Class Library. The faithful
-translation of that design for QUILL is to expose **QUILL's own object model**,
-which is **Python** — see the language decision below.
+Those editors typically scripted the host application in **the host's own
+language**: when the application was written in C#/.NET, the add-in language was
+a .NET language, so the scripting language matched the platform object model and
+its class library. The faithful translation of that design for QUILL is to
+expose **QUILL's own object model**, which is **Python** &mdash; see the language
+decision below.
 
 ## 1. Goals and non-goals
 
@@ -110,7 +106,8 @@ which is **Python** — see the language decision below.
   subprocess access unless explicitly declared and user-granted, consistent with
   QUILL's existing consent gates, DPAPI secret handling, and "no silent network
   calls" rule.
-- Make extensions **authorable by blind power users** — the EdSharp audience —
+- Make extensions **authorable by blind power users** &mdash; the same audience
+  those editors served &mdash;
   with plain-text manifests, readable Python, and accessible install/enable UX.
 - Preserve the architecture boundary: `quill/core` and `quill/io` stay
   UI-framework-agnostic; only `quill/ui` and `quill/platform/windows` touch `wx`.
@@ -129,11 +126,11 @@ which is **Python** — see the language decision below.
 
 Rationale: QUILL's platform object model is Python, so scripting it in Python is
 the lowest-friction, most powerful, most debuggable, and most maintainable
-option — and it is the faithful analogue of EdSharp scripting its C# host with
-JScript.NET. Choosing JavaScript as the primary language would mean maintaining
+option — and it is the faithful analogue of scripting a .NET editor in a .NET
+language. Choosing JavaScript as the primary language would mean maintaining
 a second runtime and a permanent Python⇄JS marshalling layer purely to script an
-application that is already Python. JavaScript's only strong advantages
-(familiarity, EdSharp-parity optics) do not outweigh that cost.
+application that is already Python. JavaScript's only strong advantage
+(familiarity) does not outweigh that cost.
 
 A comparison of the options considered (Python, embedded JavaScript via
 QuickJS/V8, Lua via `lupa`, WASM via Extism, declarative-only) is retained in
@@ -270,7 +267,7 @@ Design rules:
 ## 7. Accessibility of the authoring experience
 
 - Manifests are plain JSON and extensions are plain `.py` — both fully readable in
-  QUILL itself, the EdSharp authoring philosophy.
+  QUILL itself, following that same authoring philosophy.
 - The **Quillins Manager** dialog uses stock controls
   (`wx.ListBox` / `wx.TextCtrl` read-only review panes, explicit default buttons,
   consistent Escape/Close handling, focus returned to the editor on close) per
@@ -288,10 +285,10 @@ Design rules:
 
 ## 9. Optional future: JavaScript snippet evaluator (QuickJS)
 
-Strictly optional, post-foundation, for literal EdSharp `.js`-snippet parity:
+Strictly optional, post-foundation, for literal `.js`-snippet parity:
 embed **QuickJS** (tiny, no ambient I/O by default) as an **expression/snippet
-evaluator** only — e.g. a "Evaluate Expression" command and `.js` snippet tokens,
-matching EdSharp's `Control+Equals` / `Alt+V`. It would **not** be the extension
+evaluator** only — e.g. a "Evaluate Expression" command and `.js` snippet tokens.
+It would **not** be the extension
 API. Capabilities would be granted explicitly, identical to the Python layer.
 
 ## 10. Phasing / milestones
@@ -308,7 +305,7 @@ future work. Third-party execution stays gated off for 1.0 (SEC-8).
 3. **M3 — Capabilities + consent: _Done._** `fs.read`/`fs.write`/`net`,
    install-time disclosure, per-action consent gate. (A per-extension audit log
    remains a future enhancement.)
-4. **M4 (optional) — QuickJS snippet evaluator** for EdSharp `.js` parity.
+4. **M4 (optional) — QuickJS snippet evaluator** for `.js` snippet parity.
 
 ## 11. Testing strategy
 
@@ -993,8 +990,8 @@ well. Carrying the principle forward, three limits bind Quillins specifically:
 
 | Option | Pros | Cons | Verdict |
 | --- | --- | --- | --- |
-| **Python (embedded, app's own language)** | No new runtime; whole object model already Python; best debugging/docs/stdlib; faithful analogue of EdSharp scripting its C# host; easiest to maintain | In-process sandboxing is weak — must run out-of-process for real isolation | **Chosen (Layer 2)** |
-| **JavaScript (QuickJS / V8 via `py_mini_racer`)** | Familiar to most; strong sandbox (isolates / no ambient I/O); EdSharp/JScript.NET optics; QuickJS tiny | Permanent Python⇄JS marshalling; cross-boundary stack traces; native build/packaging dependency; async/wx impedance | Optional future snippet evaluator only |
+| **Python (embedded, app's own language)** | No new runtime; whole object model already Python; best debugging/docs/stdlib; faithful analogue of scripting a .NET editor in a .NET language; easiest to maintain | In-process sandboxing is weak — must run out-of-process for real isolation | **Chosen (Layer 2)** |
+| **JavaScript (QuickJS / V8 via `py_mini_racer`)** | Familiar to most; strong sandbox (isolates / no ambient I/O); QuickJS tiny | Permanent Python⇄JS marshalling; cross-boundary stack traces; native build/packaging dependency; async/wx impedance | Optional future snippet evaluator only |
 | **Lua (`lupa`/LuaJIT)** | Classic embeddable scripting; tiny; easy to sandbox | Small user base among QUILL power users; another language to learn; weak text-tooling stdlib | Rejected |
 | **WASM (Extism / Wasmtime)** | Strongest sandbox; language-agnostic | Heavy; complex host bindings; hard to author/debug; overkill | Rejected for 2.0 |
 | **Declarative-only (manifest)** | Safest; covers ~70% of requests; trivially accessible to author | Not Turing-complete; power users hit a ceiling | **Chosen (Layer 1), paired with Python** |

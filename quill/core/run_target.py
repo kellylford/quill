@@ -1,6 +1,6 @@
 """Classify and safety-check a "run target at cursor" (EDS-19).
 
-EdSharp's Shift+F5 runs the URL, email address, or file path under the cursor (or
+Run Target at Cursor runs the URL, email address, or file path under the cursor (or
 in the selection). QUILL routes that through the same conservative safety bar as
 the executable-path validation (SEC-1): only ``http``/``https`` URLs, ``mailto:``
 addresses, bare email addresses, and existing non-executable file paths are ever

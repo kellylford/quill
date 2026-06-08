@@ -116,16 +116,16 @@ A feature is a Tier C candidate iff **all** hold:
 | Feature(s) | Current home | Verdict | Target |
 | --- | --- | --- | --- |
 | Line transforms: number lines, hard-wrap | `quill/ui/features/line_transforms.py` (already Tier B) | ✅ Strong — pure text, already extracted | Tier C "Text Tools" |
-| `set_lines_first_not_second`, `set_lines_common` | `quill/ui/main_frame_edsharp.py` | ✅ Strong — pure set algebra over two buffers | Tier C "Text Tools" |
-| `count_regex_matches`, `extract_regex_matches` | `quill/ui/main_frame_edsharp.py` | ✅ Good — pure regex over text (uses `regex`, a runtime dep the worker can ship) | Tier C "Text Tools" |
+| `set_lines_first_not_second`, `set_lines_common` | `quill/ui/main_frame_power_tools.py` | ✅ Strong — pure set algebra over two buffers | Tier C "Text Tools" |
+| `count_regex_matches`, `extract_regex_matches` | `quill/ui/main_frame_power_tools.py` | ✅ Good — pure regex over text (uses `regex`, a runtime dep the worker can ship) | Tier C "Text Tools" |
 | HTML-clipboard → Markdown paste | `quill/core/html_to_markdown.py` + `paste_html_as_markdown` | ✅ Good — pure transform + `clipboard.read`; helper vendored into the Quillin | Tier C "Markdown Tools" |
 | Insert date/time, calculate-and-insert-date | `insert_date_time`, `calculate_and_insert_date` | ✅ Good — Layer 1 snippet (`${date}`/`${time}`) or a small handler, no caps / `editor.write` | Tier C "Insert Tools" |
 | Front-matter / boilerplate snippets | sample Quillin | ✅ Already a Layer 1 Quillin (the worked example) | Tier C (ship it) |
-| Read-only guard, `speak_*`, key describer, indent announce | `quill/ui/main_frame_edsharp.py` | ❌ No — announcement-engine / wx / live-event coupled (Tier A/B) | Stay core |
-| `run_current_file`, `run_target_at_cursor`, file rename/delete | `quill/ui/main_frame_edsharp.py` | ❌ No — process execution / shell / filesystem beyond the consent model's intent | Stay core |
+| Read-only guard, `speak_*`, key describer, indent announce | `quill/ui/main_frame_power_tools.py` | ❌ No — announcement-engine / wx / live-event coupled (Tier A/B) | Stay core |
+| `run_current_file`, `run_target_at_cursor`, file rename/delete | `quill/ui/main_frame_power_tools.py` | ❌ No — process execution / shell / filesystem beyond the consent model's intent | Stay core |
 | Dictation, OCR, AI assistant, watch folders, sticky-notes UI, spell-check | various `quill/ui`, `quill/platform` | ❌ No — wx UI, platform bindings, background services, or models | Stay core |
 
-The pattern is clear: **the EdSharp-parity text transforms are the ideal proving
+The pattern is clear: **the power-tool text transforms are the ideal proving
 ground** — many are already pure functions or one mixin method away from it, and
 several already passed through Tier B (`line_transforms.py`), so the path from
 inline → Tier B → Tier C is a graded, low-risk ramp.

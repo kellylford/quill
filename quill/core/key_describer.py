@@ -1,6 +1,6 @@
 """Reverse keymap lookup for Key Describer mode (EDS-17).
 
-EdSharp's Key Describer (Ctrl+F1) speaks the action a key would perform instead
+Key Describer mode speaks the action a key would perform instead
 of performing it. The reverse lookup from an accelerator string to a command id
 is pure and lives here so it can be unit-tested without ``wx``; the UI layer is
 responsible only for turning a live key event into an accelerator string.

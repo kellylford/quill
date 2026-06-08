@@ -1,7 +1,7 @@
 # QUILL Menu Bar — Definitive Consolidation Plan
 
 > **Status:** Implemented — Phases 1–4 shipped (top level reduced 12 → 10;
-> AI/BITS demoted; Find/Replace folded into Edit; Tools flattened and EdSharp
+> AI/BITS demoted; Find/Replace folded into Edit; Tools flattened and Power Tools
 > recirculated/renamed to Power Tools). Phase 5 (menus-as-data) remains future
 > work. See §5 for the per-phase ledger.
 > **Scope:** The top-level menu bar and its nesting in `quill/ui/main_frame_menu.py`.
@@ -76,7 +76,7 @@ AI and no top-level BITS Whisperer.** The shipped bar diverges:
 - **Re-ordered** unconventionally: `Insert` appears before `View`; `Format`
   appears *after* `Navigate` (lines 1293–1295 append Navigate, Format, Tools
   late, after AI).
-- **Grew** `Tools` beyond the PRD's clean 10-submenu taxonomy (EdSharp Tools,
+- **Grew** `Tools` beyond the PRD's clean 10-submenu taxonomy (Power Tools,
   Quillins, Sticky Notes, Read Aloud → Announcement Backend added).
 
 The plan's north star: **make the implementation match the PRD again, then go a
@@ -88,7 +88,7 @@ step further on ordering and depth.**
 Sticky Notes · Writing and Language · Read Aloud (→ Announcement Backend) ·
 Integrations (→ Shell Integration) · Document Intake · Authoring & Automation
 (→ GLOW, Macros, Convert) · Compare Documents · Accessibility · Support ·
-Customize · EdSharp Tools · Quillins.
+Customize · Power Tools · Quillins.
 
 Three chains reach **three levels deep**, which is the worst case for
 screen-reader navigation (more key presses, easy to lose place):
@@ -96,7 +96,7 @@ screen-reader navigation (more key presses, easy to lose place):
 - `Tools → Read Aloud → Announcement Backend`
 - `Tools → Integrations → Shell Integration`
 - `Tools → Authoring & Automation → {GLOW, Macros, Convert}`
-- `Tools → EdSharp Tools → {Insert, Lines, …}` (six sub-submenus; §3.7)
+- `Tools → Power Tools → {Insert, Lines, …}` (six sub-submenus; §3.7)
 
 ### 1.4 Oversized menus for linear review
 
@@ -212,23 +212,23 @@ Regroup `Tools` to the PRD §5.1a taxonomy and flatten the three 3-level chains:
   submenus** — `Authoring` (GLOW, Convert) and `Automation` (Macros) — or
   promote GLOW/Macros/Convert to direct entries under a single
   `Authoring & Automation` submenu. Either way, **no third level**.
-- `EdSharp Tools` is **renamed and recirculated** — see §3.7.
+- `Power Tools` is **renamed and recirculated** — see §3.7.
 - `Quillins`, `Sticky Notes` remain `Tools` submenus (consistent with their
   current home).
 
-### 3.7 `EdSharp Tools` — rename and recirculate (the centerpiece)
+### 3.7 `Power Tools` — rename and recirculate (the centerpiece)
 
-`Tools → EdSharp Tools` (built in `quill/ui/main_frame_edsharp_menu.py`,
+`Tools → Power Tools` (built in `quill/ui/main_frame_power_tools_menu.py`,
 attached at `main_frame_menu.py:1291`) is the clearest example of menu sprawl
 done wrong:
 
-- **The name leaks a foreign brand.** "EdSharp" is the name of *another* editor;
+- **The name leaks a foreign brand.** "Power Tools" is the name of *another* editor;
   it means nothing to a QUILL user and fails the discoverability test — a
-  screen-reader user hears "EdSharp Tools submenu" and learns nothing about what
+  screen-reader user hears "Power Tools submenu" and learns nothing about what
   is inside.
 - **It is a 33-command monolith nested two levels deep**, with its own six
   sub-submenus (Insert, Lines, Compare Blocks, Find with Regex, Go, Speak) —
-  reaching **three levels** (`Tools → EdSharp Tools → Insert → …`). That is the
+  reaching **three levels** (`Tools → Power Tools → Insert → …`). That is the
   exact 3-level anti-pattern §1.3 calls out.
 - **Most of its commands already have a natural home** elsewhere on the bar.
 
@@ -237,10 +237,10 @@ menus, and **rename** the cohesive remainder.
 
 #### 3.7.1 Recirculation map
 
-Each EdSharp command keeps its `eds.*` id, palette entry, and Keymap-Editor
+Each Power Tools command keeps its `power.*` id, palette entry, and Keymap-Editor
 binding (nothing is lost); only its **menu home** changes.
 
-| EdSharp group | Commands | New menu home |
+| Power Tools group | Commands | New menu home |
 |---------------|----------|---------------|
 | Insert | special character, date/time, calculated date, file content | **Insert** menu |
 | Line transforms | number lines, hard-wrap lines | **Format → Transform Lines** (consolidated — see §3.7.2) |
@@ -269,14 +269,14 @@ Placement rationale for the four non-obvious moves:
 
 #### 3.7.2 Consolidation finding: one home for line/text transforms
 
-EdSharp's line transforms (number lines, hard-wrap) overlap the **Convert**
+Power Tools's line transforms (number lines, hard-wrap) overlap the **Convert**
 group already shipped under `Tools → Authoring & Automation → Convert` (sort
 ascending/descending, reverse, remove duplicates, trim trailing whitespace,
 normalize whitespace, convert indentation to spaces/tabs). Two homes for the
 same concept is exactly the miscategorization §1.5 warns about.
 
 **Decision:** create a single **`Format → Transform Lines`** submenu and move
-**both** sets into it — the EdSharp line transforms *and* the entire Convert
+**both** sets into it — the Power Tools line transforms *and* the entire Convert
 group. This removes a 3-level chain (`Tools → Authoring & Automation → Convert`),
 empties most of `Authoring & Automation` toward just GLOW + Macros, and gives
 users one obvious place for every line/text transform. It is a strict win for
@@ -287,7 +287,7 @@ discoverability and depth.
 What stays together is the cohesive set of **editor-behavior power toggles** with
 no conventional home: read-only guard, clipboard collector, collect clipboard
 now, key describer, indentation announcements, infer indentation. These are the
-genuine "EdSharp-signature" behaviors and deserve one discoverable submenu.
+genuine "Power Tools-signature" behaviors and deserve one discoverable submenu.
 
 - **Recommended name (clarity-first): `Power Tools`** — conventional, instantly
   discoverable ("a submenu of advanced utilities"), and brand-neutral.
@@ -303,10 +303,10 @@ rename lever already supports this with zero code).
 
 #### 3.7.4 Why this is the model for the whole bar
 
-EdSharp is the proof of the §2 principles in miniature: **relocate, never
+Power Tools is the proof of the §2 principles in miniature: **relocate, never
 remove**; **shallow wins** (kills a 3-level chain); **brand-neutral,
 function-announcing names**; and **palette/keymap parity preserved**. It rides
-the existing command table in `_edsharp_command_table()` (the single source of
+the existing command table in `_power_tools_command_table()` (the single source of
 truth for ids/labels/handlers), so the recirculation is pure menu wiring — the
 commands, handlers, and tests for behavior are untouched. This is the template
 every later consolidation follows.
@@ -315,7 +315,7 @@ Target `Tools` submenu set (matches PRD §5.1a + the shipped extras):
 Writing and Language · Read Aloud · Dictation and Watch Folder Automation
 (BITS Whisperer) · Integrations · Document Intake · Authoring and Automation ·
 Compare Documents · Accessibility · Support · Customize · Power Tools
-(renamed from EdSharp Tools — §3.7) · Quillins · AI Assistant · Sticky Notes.
+(renamed from Power Tools — §3.7) · Quillins · AI Assistant · Sticky Notes.
 
 ### 3.6 `View`, de-cluttered
 
@@ -353,7 +353,7 @@ The bar is currently built imperatively in one large method in
 Phases 1–4 are **shipped on `main`** (commits `954e0b8`, `c525a4e`, `73567be`,
 `8f83cfa`). Each phase was independently shippable, behind characterization
 tests, and kept `tests/unit/ui/test_main_frame_menu_contract.py` and `dialogs.md`
-green. Phase 5 has now landed its foundation (Wave 0 facade + the EdSharp pilot
+green. Phase 5 has now landed its foundation (Wave 0 facade + the Power Tools pilot
 expressed as data); the remaining waves stay honestly future.
 
 | Phase | Change | Risk | Lever | Status |
@@ -361,15 +361,15 @@ expressed as data); the remaining waves stay honestly future.
 | **1. Reorder** | Top-level order → §3.1 convention; `Format` up by `Insert`; `Insert` after `View`. Pure ordering. | Low | default order list | ✅ Shipped (`954e0b8`) |
 | **2. Demote** | `AI` and `BITS Whisperer` → `Tools` submenus; AI promotable via Customize Menus when AI profile active. | Med | menu_customization + build | ✅ Shipped (`c525a4e`) |
 | **3. De-dup / relocate** | Move Find/Replace into `Edit`; reduce `Search` to in-files; move `View` preference toggles → Settings. | Med | build + settings registry | ✅ Shipped (`73567be`) |
-| **4. Flatten Tools** | Collapse the three 3-level chains to ≤2; regroup to PRD taxonomy; move Announcement Backend picker → Settings; **recirculate + rename EdSharp Tools (§3.7)**. | Med | build | ✅ Shipped (`8f83cfa`) |
-| **5. Menus-as-data (Wave 0 + Pilot 1)** | Land the wx-free first-party contribution facade (`quill/core/contributions.py`) that feeds the **same** `build_registry` as Quillins; express the 33 EdSharp `eds.*` commands as a declarative manifest (`EDSHARP_COMMANDS`) that **drives** the palette table and the menu recirculation. | High | contribution grammar | ✅ Shipped |
-| **5. Menus-as-data (Wave 2 first cut)** | Land the `Host` execution facade + live `MainFrameHost` adapter; migrate the line-transforms group (`eds.number_lines`, `eds.hard_wrap_lines`) into `quill/ui/features/line_transforms.py` as pure `host`-driven handlers, removed from the mixin. | High | contribution grammar | ✅ Shipped |
+| **4. Flatten Tools** | Collapse the three 3-level chains to ≤2; regroup to PRD taxonomy; move Announcement Backend picker → Settings; **recirculate + rename Power Tools (§3.7)**. | Med | build | ✅ Shipped (`8f83cfa`) |
+| **5. Menus-as-data (Wave 0 + Pilot 1)** | Land the wx-free first-party contribution facade (`quill/core/contributions.py`) that feeds the **same** `build_registry` as Quillins; express the 33 Power Tools `power.*` commands as a declarative manifest (`POWER_TOOLS_COMMANDS`) that **drives** the palette table and the menu recirculation. | High | contribution grammar | ✅ Shipped |
+| **5. Menus-as-data (Wave 2 first cut)** | Land the `Host` execution facade + live `MainFrameHost` adapter; migrate the line-transforms group (`power.number_lines`, `power.hard_wrap_lines`) into `quill/ui/features/line_transforms.py` as pure `host`-driven handlers, removed from the mixin. | High | contribution grammar | ✅ Shipped |
 | **5. Menus-as-data (Waves 2–N cont.)** | Move the remaining first-party command groups (rest of line-ops, speak/status, Format, Navigate/View, Tools utilities) onto the facade per `docs/quillin-migration-plan.md` §7. | High | contribution grammar | ⏳ Future |
 
 **Sequencing note:** Phases 1–4 deliver the entire user-visible improvement on
 the existing machinery. Phase 5 is an internal refactor that unlocks the Quillin
 migration and is optional for the usability win. Wave 0 + Pilot 1 prove the
-"menus as data" model end-to-end (the EdSharp menu is now byte-for-byte rebuilt
+"menus as data" model end-to-end (the Power Tools menu is now byte-for-byte rebuilt
 from a manifest); later waves repeat the mechanical move group by group.
 
 ---
@@ -405,7 +405,7 @@ BEFORE (12, non-standard order):
 AFTER  (10, conventional order; AI/BITS nested under Tools):
   File Edit View Insert Format Navigate Search Tools Window Help
         ^Find/Replace        ^in-files only   ^AI Assistant, BITS,
-                                               EdSharp, Quillins, … (≤2 deep)
+                                               Power Tools, Quillins, … (≤2 deep)
 ```
 
 ---
@@ -423,14 +423,14 @@ AFTER  (10, conventional order; AI/BITS nested under Tools):
    minimal profile, or shown-but-disabled with an explanatory tooltip (PRD's
    "disabled items remain visible" stance)?
 5. **`Power Tools` name.** Ship `Power Tools` (clarity-first, recommended) or the
-   on-brand `Scribe's Toolkit` for the renamed EdSharp remainder (§3.7.3)?
+   on-brand `Scribe's Toolkit` for the renamed Power Tools remainder (§3.7.3)?
 
 ---
 
 ## 9. Files this plan touches
 
 - `quill/ui/main_frame_menu.py` — menu construction (all phases).
-- `quill/ui/main_frame_edsharp_menu.py` — EdSharp recirculation + rename (§3.7).
+- `quill/ui/main_frame_power_tools_menu.py` — Power Tools recirculation + rename (§3.7).
 - `quill/core/menu_customization.py` — default order/visibility (Phases 1–2).
 - `quill/core/settings_registry.py` + Settings dialog — relocated toggles
   (Phases 3–4).

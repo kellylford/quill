@@ -487,11 +487,11 @@ from quill.ui.dialog_contract import apply_modal_ids, focus_primary_control, sho
 from quill.ui.editor_surface import PLAIN, RICH, surface_kind
 from quill.ui.main_frame_ai_actions import AiActionsMixin
 from quill.ui.main_frame_browse import BrowseModeMixin
-from quill.ui.main_frame_edsharp import EdSharpActionsMixin
-from quill.ui.main_frame_edsharp_menu import EdSharpMenuMixin
 from quill.ui.main_frame_image import ImageCaptureMixin
 from quill.ui.main_frame_intellisense import IntellisensePopupMixin
 from quill.ui.main_frame_menu import MenuBuilderMixin
+from quill.ui.main_frame_power_tools import PowerToolsActionsMixin
+from quill.ui.main_frame_power_tools_menu import PowerToolsMenuMixin
 from quill.ui.main_frame_quill_key import QuillKeyMixin
 from quill.ui.main_frame_quillins import QuillinsMenuMixin
 from quill.ui.main_frame_selection import SelectionMarksMixin
@@ -757,8 +757,8 @@ class MainFrame(
     SessionsMixin,
     StatusBarMixin,
     IntellisensePopupMixin,
-    EdSharpActionsMixin,
-    EdSharpMenuMixin,
+    PowerToolsActionsMixin,
+    PowerToolsMenuMixin,
     QuillinsMenuMixin,
 ):
     _ANNOUNCEMENT_BACKEND_LABELS: dict[str, str] = {
@@ -2632,7 +2632,7 @@ class MainFrame(
             self.convert_indentation_to_tabs,
             None,
         )
-        self._register_edsharp_commands()
+        self._register_power_tools_commands()
         self._register_quillins_commands()
 
     def _apply_accelerators(self) -> None:

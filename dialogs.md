@@ -250,13 +250,13 @@ parent first.
 
 ## W. Power Tools and recirculated editor conveniences
 
-EdSharp-parity conveniences (EDS-1..20). These commands carry no default
+Editor power-tool conveniences (EDS-1..20). These commands carry no default
 keybinding; reach each from its conventional menu home (or the command palette,
 `Ctrl+Shift+P`). As of the menu reorg (menus.md §3.7) these commands were
-recirculated out of the former "EdSharp Tools" monolith into their natural
+recirculated out of the former power-tools monolith into their natural
 menus; the cohesive editor-behavior remainder lives under **Tools > Power
 Tools**. Only the commands that present a dialog are listed here; the remaining
-EdSharp commands act directly on the document and announce their result.
+power-tool commands act directly on the document and announce their result.
 
 - [ ] Insert Special Character (codepoint prompt): Insert > Insert Special Character
 - [ ] Insert Calculated Date: Insert > Insert Calculated Date

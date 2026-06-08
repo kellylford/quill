@@ -1,8 +1,9 @@
 """On-demand cursor/document speech queries (EDS-14) and go-to-percent (EDS-15).
 
-EdSharp's Alt+A speaks the cursor address, Alt+Z the document status, and
-Shift+Space the selection length, none of which move the cursor. Ctrl+J jumps to
-a document percentage. These helpers are UI-framework agnostic so the exact
+Speak Cursor Address reports the caret position, Speak Document Status the
+document statistics, and Speak Selection Length the size of the selection, none
+of which move the cursor. Go to Percent jumps to a document percentage. These
+helpers are UI-framework agnostic so the exact
 phrasing can be unit-tested without ``wx``.
 """
 

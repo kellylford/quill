@@ -116,7 +116,7 @@ Screen-reader coverage matrix for the dialog estate:
 | S–T. Help, features, startup, support | Full | Spot | Sanity |
 | U. Selection and QUILL key | Full | — | Sanity |
 | V. Nested and secondary dialogs | Full | — | Sanity |
-| W. EdSharp Tools | Full | — | Sanity |
+| W. Power Tools | Full | — | Sanity |
 | X. Startup-only (crash recovery, trust) | Full | Spot | Sanity |
 
 "Full" = exercise the complete A11Y-4 contract. "Spot" = open, confirm title +

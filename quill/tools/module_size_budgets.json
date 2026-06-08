@@ -5,7 +5,7 @@
   "budgets": {
     "quill/ui/main_frame.py": 19618,
     "quill/ui/assistant_tools.py": 1756,
-    "quill/ui/main_frame_edsharp.py": 737,
+    "quill/ui/main_frame_power_tools.py": 737,
     "quill/ui/main_frame_menu.py": 2405,
     "quill/core/read_aloud.py": 1240,
     "quill/core/assistant_ai.py": 1230,

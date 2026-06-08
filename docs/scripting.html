@@ -388,22 +388,13 @@ or code, it uses the technical term; where it describes what a person
 sees or hears, it says Quillin.</p>
 <h2 id="0-provenance-and-inspiration">0. Provenance and inspiration</h2>
 <p>This capability is QUILL's answer to the scripting/add-in model
-pioneered by <strong>EdSharp 4.0</strong> by <strong>Jamal
-Mazrui</strong> (2007–2017), a respected accessible, screen-reader-first
-Windows editor that exposed almost its entire object model to add-in
-code.</p>
-<ul>
-<li>Jamal Mazrui on GitHub: <a
-href="https://github.com/jamalmazrui">https://github.com/jamalmazrui</a></li>
-<li>EdSharp source: <a
-href="https://github.com/jamalmazrui/EdSharp">https://github.com/jamalmazrui/EdSharp</a>
-and <a
-href="https://github.com/EmpowermentZone/EdSharp">https://github.com/EmpowermentZone/EdSharp</a></li>
-</ul>
-<p>EdSharp used <strong>JScript.NET</strong> as its scripting language
-because its host application was written in C#/.NET, so the scripting
-language matched the platform object model and the .NET Framework Class
-Library. The faithful translation of that design for QUILL is to expose
+pioneered by earlier accessible, screen-reader-first Windows editors
+that exposed almost their entire object model to add-in code.</p>
+<p>Those editors typically scripted the host application in <strong>the
+host's own language</strong>: when the application was written in
+C#/.NET, the add-in language was a .NET language, so the scripting
+language matched the platform object model and its class library. The
+faithful translation of that design for QUILL is to expose
 <strong>QUILL's own object model</strong>, which is
 <strong>Python</strong> — see the language decision below.</p>
 <h2 id="1-goals-and-non-goals">1. Goals and non-goals</h2>
@@ -420,8 +411,8 @@ filesystem, network, or subprocess access unless explicitly declared and
 user-granted, consistent with QUILL's existing consent gates, DPAPI
 secret handling, and "no silent network calls" rule.</li>
 <li>Make extensions <strong>authorable by blind power users</strong> —
-the EdSharp audience — with plain-text manifests, readable Python, and
-accessible install/enable UX.</li>
+the same audience those editors served — with plain-text manifests,
+readable Python, and accessible install/enable UX.</li>
 <li>Preserve the architecture boundary: <code>quill/core</code> and
 <code>quill/io</code> stay UI-framework-agnostic; only
 <code>quill/ui</code> and <code>quill/platform/windows</code> touch
@@ -446,12 +437,12 @@ optional future work only).</li>
 JavaScript.</strong></p>
 <p>Rationale: QUILL's platform object model is Python, so scripting it
 in Python is the lowest-friction, most powerful, most debuggable, and
-most maintainable option — and it is the faithful analogue of EdSharp
-scripting its C# host with JScript.NET. Choosing JavaScript as the
-primary language would mean maintaining a second runtime and a permanent
+most maintainable option — and it is the faithful analogue of scripting
+a .NET editor in a .NET language. Choosing JavaScript as the primary
+language would mean maintaining a second runtime and a permanent
 Python⇄JS marshalling layer purely to script an application that is
-already Python. JavaScript's only strong advantages (familiarity,
-EdSharp-parity optics) do not outweigh that cost.</p>
+already Python. JavaScript's only strong advantage (familiarity) does
+not outweigh that cost.</p>
 <p>A comparison of the options considered (Python, embedded JavaScript
 via QuickJS/V8, Lua via <code>lupa</code>, WASM via Extism,
 declarative-only) is retained in Appendix A.</p>
@@ -592,7 +583,7 @@ signature/trust prompts and a per-extension audit log.</li>
 the authoring experience</h2>
 <ul>
 <li>Manifests are plain JSON and extensions are plain <code>.py</code> —
-both fully readable in QUILL itself, the EdSharp authoring
+both fully readable in QUILL itself, following that same authoring
 philosophy.</li>
 <li>The <strong>Quillins Manager</strong> dialog uses stock controls
 (<code>wx.ListBox</code> / <code>wx.TextCtrl</code> read-only review
@@ -615,14 +606,13 @@ deferred and optional.</li>
 </ul>
 <h2 id="9-optional-future-javascript-snippet-evaluator-quickjs">9.
 Optional future: JavaScript snippet evaluator (QuickJS)</h2>
-<p>Strictly optional, post-foundation, for literal EdSharp
+<p>Strictly optional, post-foundation, for literal
 <code>.js</code>-snippet parity: embed <strong>QuickJS</strong> (tiny,
 no ambient I/O by default) as an <strong>expression/snippet
 evaluator</strong> only — e.g. a "Evaluate Expression" command and
-<code>.js</code> snippet tokens, matching EdSharp's
-<code>Control+Equals</code> / <code>Alt+V</code>. It would
-<strong>not</strong> be the extension API. Capabilities would be granted
-explicitly, identical to the Python layer.</p>
+<code>.js</code> snippet tokens. It would <strong>not</strong> be the
+extension API. Capabilities would be granted explicitly, identical to
+the Python layer.</p>
 <h2 id="10-phasing--milestones">10. Phasing / milestones</h2>
 <p>Status note: <strong>M1–M3 are implemented and tested</strong> (see
 §0a). M4 remains optional future work. Third-party execution stays gated
@@ -643,7 +633,7 @@ host services.</li>
 install-time disclosure, per-action consent gate. (A per-extension audit
 log remains a future enhancement.)</li>
 <li><strong>M4 (optional) — QuickJS snippet evaluator</strong> for
-EdSharp <code>.js</code> parity.</li>
+<code>.js</code> snippet parity.</li>
 </ol>
 <h2 id="11-testing-strategy">11. Testing strategy</h2>
 <p>Status note: <strong>this strategy is implemented</strong> — the test
@@ -1615,8 +1605,8 @@ options considered</h2>
 <tr>
 <td><strong>Python (embedded, app's own language)</strong></td>
 <td>No new runtime; whole object model already Python; best
-debugging/docs/stdlib; faithful analogue of EdSharp scripting its C#
-host; easiest to maintain</td>
+debugging/docs/stdlib; faithful analogue of scripting a .NET editor in a
+.NET language; easiest to maintain</td>
 <td>In-process sandboxing is weak — must run out-of-process for real
 isolation</td>
 <td><strong>Chosen (Layer 2)</strong></td>
@@ -1625,7 +1615,7 @@ isolation</td>
 <td><strong>JavaScript (QuickJS / V8 via
 <code>py_mini_racer</code>)</strong></td>
 <td>Familiar to most; strong sandbox (isolates / no ambient I/O);
-EdSharp/JScript.NET optics; QuickJS tiny</td>
+QuickJS tiny</td>
 <td>Permanent Python⇄JS marshalling; cross-boundary stack traces; native
 build/packaging dependency; async/wx impedance</td>
 <td>Optional future snippet evaluator only</td>

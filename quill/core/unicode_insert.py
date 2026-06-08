@@ -1,6 +1,6 @@
 """Parse Unicode code points for the Insert Special Character command (EDS-1).
 
-EdSharp's Insert Special Character (F2) accepts a code point as hexadecimal, or
+Insert Special Character accepts a code point as hexadecimal, or
 as decimal when prefixed with ``d``. This module is UI-framework agnostic so the
 parsing can be unit-tested without ``wx``.
 """

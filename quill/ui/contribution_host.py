@@ -38,8 +38,8 @@ class MainFrameHost:
         self._frame._announce(message)
 
     def prompt(self, title: str, label: str, value: str = "") -> str | None:
-        result = self._frame._eds_prompt_single(title, label, value)
+        result = self._frame._power_tools_prompt_single(title, label, value)
         return None if result is None else str(result)
 
     def transform_block(self, transform: Callable[[str], str], status: str) -> None:
-        self._frame._eds_transform_selection_or_document(transform, status)
+        self._frame._power_tools_transform_selection_or_document(transform, status)

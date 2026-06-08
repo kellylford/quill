@@ -39,9 +39,7 @@ def _write_quillin(directory: Path, manifest: object, *, with_main: bool = True)
         encoding="utf-8",
     )
     if with_main:
-        (directory / "extension.py").write_text(
-            "def register(api):\n    pass\n", encoding="utf-8"
-        )
+        (directory / "extension.py").write_text("def register(api):\n    pass\n", encoding="utf-8")
         (directory / "README.md").write_text("# Demo\n", encoding="utf-8")
     return directory
 

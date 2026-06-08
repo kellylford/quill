@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="pandoc" />
+  <meta name="generator" content="pandoc 3.10" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>rtf</title>
   <style>
@@ -156,8 +156,12 @@
       text-decoration: none;
     }
     span.smallcaps{font-variant: small-caps;}
-    div.columns{display: flex; gap: min(4vw, 1.5em);}
-    div.column{flex: auto; overflow-x: auto;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     /* The extra [class] is a hack that increases specificity enough to
        override a similar rule in reveal.js */
@@ -207,11 +211,11 @@ plain-text control, and the formatting is a translation, not a live
 object.</p>
 <p>This proposal is about the surface itself. It introduces a second,
 opt-in editor control where formatting is native and visible, and where
-RTF is the document’s true in-memory representation rather than a
+RTF is the document's true in-memory representation rather than a
 serialized export of markup.</p>
 <h3 id="the-headline-tension-stated-plainly">The headline tension,
 stated plainly</h3>
-<p>QUILL’s founding principle is screen-reader-first, plain-text-first
+<p>QUILL's founding principle is screen-reader-first, plain-text-first
 writing on stock controls. The PRD and the repository conventions are
 explicit that the writing path should use <code>wx.TextCtrl</code> and
 avoid custom-drawn or heavily rich-formatted editor controls, because
@@ -220,14 +224,14 @@ screen-reader experience across NVDA, JAWS, and Narrator.</p>
 <p>A <code>wx.RichTextCtrl</code> is a richer, more complex control. On
 Windows its accessibility exposure is good but not identical to a plain
 edit control, and on macOS and Linux the wx rich-text implementation
-behaves differently again. So the core design question is not “can we
-host an RTF control” (we can) but “can we host it without weakening the
-accessibility guarantee that defines QUILL.” The answer this proposal
+behaves differently again. So the core design question is not "can we
+host an RTF control" (we can) but "can we host it without weakening the
+accessibility guarantee that defines QUILL." The answer this proposal
 defends: yes, but only as an explicit, clearly-announced, non-default
 choice, with the plain-text surface remaining the supported default and
 the rich surface treated as a power-user mode with its own honest
 accessibility disclosure.</p>
-<h3 id="what-magical-looks-like-here">What “magical” looks like
+<h3 id="what-magical-looks-like-here">What "magical" looks like
 here</h3>
 <p>The magic is not the formatting. Every word processor has formatting.
 The magic is making a rich surface feel as calm, legible, and
@@ -239,7 +243,7 @@ as live formatting, and switching lenses is a single command with a
 spoken summary of what changed and what, if anything, cannot survive the
 switch.</li>
 <li>A spoken formatting model. When the caret enters bold text, QUILL
-says “bold” the way it already announces actions, so formatting is
+says "bold" the way it already announces actions, so formatting is
 something you hear, not only something sighted users see. This is the
 feature Microsoft Word and Ulysses never built for screen-reader users,
 and it is where QUILL can lead.</li>
@@ -250,7 +254,7 @@ ever.</li>
 </ul>
 <h3 id="architecture-where-this-lives">Architecture: where this
 lives</h3>
-<p>QUILL’s layering rules are strict. <code>quill/core</code> and
+<p>QUILL's layering rules are strict. <code>quill/core</code> and
 <code>quill/io</code> must stay free of <code>wx</code>. All widget code
 lives in <code>quill/ui</code> and <code>quill/platform</code>. This
 proposal respects that boundary completely.</p>
@@ -263,7 +267,7 @@ and query inline formatting, report the caret context, and emit change
 and caret events. The rest of <code>quill/ui/main_frame.py</code> talks
 to the surface through this protocol instead of touching
 <code>self.editor</code> directly.</li>
-<li>The plain-text surface wraps today’s <code>wx.TextCtrl</code> and is
+<li>The plain-text surface wraps today's <code>wx.TextCtrl</code> and is
 the default.</li>
 <li>The rich surface wraps a <code>wx.RichTextCtrl</code> and is
 selected only when the writer opts in.</li>
@@ -275,14 +279,14 @@ writes through that model.</li>
 </ul>
 <p>This is the single most important design decision: introduce a
 surface protocol so the two controls are interchangeable from the
-application’s point of view. Without it, every one of the command
-surfaces below would need a branch for “is this the rich control or the
-plain control.” With it, each command asks the surface to do the work
+application's point of view. Without it, every one of the command
+surfaces below would need a branch for "is this the rich control or the
+plain control." With it, each command asks the surface to do the work
 and the surface knows how.</p>
 <h3 id="impact-across-every-command-surface">Impact across every command
 surface</h3>
-<p>This is the heart of the proposal. The instruction to “keep in mind
-all command surfaces that could be impacted” is taken literally. The
+<p>This is the heart of the proposal. The instruction to "keep in mind
+all command surfaces that could be impacted" is taken literally. The
 table below inventories the real call sites discovered in the codebase
 and rates the work each one needs to support a rich surface. The
 plain-text surface keeps working unchanged in every row; the rating
@@ -292,12 +296,6 @@ protocol with little change. Medium means the command needs a rich-aware
 path. High means the command needs genuine new design because formatting
 changes its meaning.</p>
 <table>
-<colgroup>
-<col style="width: 25%" />
-<col style="width: 25%" />
-<col style="width: 25%" />
-<col style="width: 25%" />
-</colgroup>
 <thead>
 <tr>
 <th>Command surface</th>
@@ -342,7 +340,7 @@ selection math must move behind the surface protocol.</td>
 <code>copy_with_source</code>, <a
 href="quill/platform/windows/clipboard.py">quill/platform/windows/clipboard.py</a>,
 <a
-href="quill/ui/main_frame_edsharp.py">quill/ui/main_frame_edsharp.py</a></td>
+href="quill/ui/main_frame_power_tools.py">quill/ui/main_frame_power_tools.py</a></td>
 <td>High</td>
 <td>Rich paste must decide between formatted paste and paste-as-plain,
 and copy should offer RTF and plain flavors. This is also a security
@@ -376,7 +374,7 @@ formatting.</td>
 href="quill/core/spellcheck.py">quill/core/spellcheck.py</a></td>
 <td>Medium</td>
 <td>Word extraction and squiggle placement work on runs rather than a
-flat string; correction must not drop a run’s formatting.</td>
+flat string; correction must not drop a run's formatting.</td>
 </tr>
 <tr>
 <td>Markup and formatting commands</td>
@@ -412,7 +410,7 @@ round-trip the rich representation atomically.</td>
 flush, <a
 href="quill/core/undo_store.py">quill/core/undo_store.py</a></td>
 <td>High</td>
-<td>The rich control has its own undo stack. Reconciling it with QUILL’s
+<td>The rich control has its own undo stack. Reconciling it with QUILL's
 persistent, cross-session undo is the subtlest engineering problem in
 the whole proposal.</td>
 </tr>
@@ -437,7 +435,7 @@ formatting boundaries (entering and leaving bold) as a spoken cue.</td>
 href="quill/core/dictation.py">quill/core/dictation.py</a>, <a
 href="quill/platform/windows/dictation.py">quill/platform/windows/dictation.py</a></td>
 <td>Medium</td>
-<td>Inserted dictated text must land in the rich model with the caret’s
+<td>Inserted dictated text must land in the rich model with the caret's
 current formatting.</td>
 </tr>
 <tr>
@@ -498,7 +496,7 @@ control renders the overlay.</li>
 <li>Security. RTF is a historically dangerous format (object packager
 and embedded object abuse, remote image fetches). Any native RTF surface
 must parse defensively, refuse embedded executables and OLE objects, and
-honor QUILL’s no-silent-network rule by never fetching a remote resource
+honor QUILL's no-silent-network rule by never fetching a remote resource
 referenced in an RTF without explicit consent. This aligns with the
 existing egress-audit posture.</li>
 <li>Testing and CI. Because <code>wx</code> cannot be imported on Linux
@@ -537,8 +535,8 @@ vocabulary.</li>
 files: the moment the design lives or dies</h3>
 <p>Everything above is plumbing. The place a writer actually meets this
 design is the instant they open a file. If that moment is confusing
-(“why is this file showing markup characters?” or “why did my headings
-turn into hash marks?”), the feature fails no matter how elegant the
+("why is this file showing markup characters?" or "why did my headings
+turn into hash marks?"), the feature fails no matter how elegant the
 internals are. So the open and save experience deserves its own design,
 and it can be genuinely magical.</p>
 <h4 id="the-one-principle-that-prevents-all-confusion">The one principle
@@ -554,19 +552,14 @@ on a per-document basis, without losing a word.</li>
 screen-reader user is never guessing.</li>
 </ul>
 <p>That last promise is the accessibility heart of it. The status bar
-shows the lens (“Plain” or “Rich”), and the announcement grammar speaks
-it: “Opened report.rtf, Rich text lens.”</p>
+shows the lens ("Plain" or "Rich"), and the announcement grammar speaks
+it: "Opened report.rtf, Rich text lens."</p>
 <h4 id="how-each-kind-of-file-behaves-on-open">How each kind of file
 behaves on open</h4>
-<p>There is no separate “open as plain” versus “open as rich” file
+<p>There is no separate "open as plain" versus "open as rich" file
 picker. There is one Open command. QUILL inspects what you opened and
 does the obvious right thing, then tells you what it did.</p>
 <table>
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
 <thead>
 <tr>
 <th>You open</th>
@@ -585,14 +578,14 @@ users.</td>
 <tr>
 <td>An <code>.rtf</code> file, with the rich surface available</td>
 <td>Rich</td>
-<td>“Opened in Rich text lens.” A single command flips to Plain to see
+<td>"Opened in Rich text lens." A single command flips to Plain to see
 or edit the underlying markup.</td>
 </tr>
 <tr>
 <td>An <code>.rtf</code> file, with the rich surface turned off</td>
 <td>Plain (markup)</td>
-<td>Behaves like today’s EDS-21 round-trip, and offers a one-key “Open
-in Rich text lens” if the writer wants formatting.</td>
+<td>Behaves like today's EDS-21 round-trip, and offers a one-key "Open
+in Rich text lens" if the writer wants formatting.</td>
 </tr>
 <tr>
 <td>A rich format QUILL can import (<code>.docx</code>,
@@ -609,10 +602,10 @@ to be rich documents.</td>
 </tr>
 </tbody>
 </table>
-<p>The key insight: the writer’s default-surface preference is a
+<p>The key insight: the writer's default-surface preference is a
 <em>fallback</em>, not a mandate. An <code>.rtf</code> is inherently a
 rich document, so it opens rich when rich is available, even if the
-writer’s default is plain, because that is the least surprising thing.
+writer's default is plain, because that is the least surprising thing.
 The preference only decides the ambiguous cases.</p>
 <h4 id="making-the-choice-effortless-not-a-chore">Making the choice
 effortless, not a chore</h4>
@@ -623,8 +616,8 @@ considerate:</p>
 last time, QUILL reopens it in Plain and says so. The decision is sticky
 per document, stored in the same schema-validated JSON used for other
 per-document state, so you only ever decide once.</li>
-<li>One command to flip lenses. A single QUILL-key command, “Switch
-editing lens,” toggles Plain and Rich for the current document,
+<li>One command to flip lenses. A single QUILL-key command, "Switch
+editing lens," toggles Plain and Rich for the current document,
 announces the new lens, and keeps the caret on the same word. No dialog,
 no reload.</li>
 <li>No dead ends. Every flip is reversible and lossless within a
@@ -640,16 +633,16 @@ the fidelity stage.</li>
 </ul>
 <h4 id="saving-the-mirror-image-equally-calm">Saving: the mirror image,
 equally calm</h4>
-<p>Saving follows the same “least surprise, always announced” rule.</p>
+<p>Saving follows the same "least surprise, always announced" rule.</p>
 <ul>
-<li>Save keeps the file’s own format. An <code>.rtf</code> saves as RTF,
+<li>Save keeps the file's own format. An <code>.rtf</code> saves as RTF,
 a <code>.md</code> saves as Markdown, regardless of which lens you were
-editing in, because the lens is a <em>view</em>, not the file’s
+editing in, because the lens is a <em>view</em>, not the file's
 identity.</li>
 <li>Save As is where format genuinely changes, and that is the right
 place for a clear, accessible format picker with a spoken fidelity note
-(“Saving as plain text will remove bold, italic, and headings. Keep a
-Rich copy too?”).</li>
+("Saving as plain text will remove bold, italic, and headings. Keep a
+Rich copy too?").</li>
 <li>The dirty-state, autosave, and backup machinery all operate on the
 canonical model, so switching lenses never marks a document dirty by
 itself and never risks a recovery that loses formatting.</li>
@@ -684,19 +677,14 @@ right mirror for QUILL</h3>
 <p>Ulysses is a mature, respected, markup-first writing app for Mac,
 iPad, and iPhone, in active development since 2003 and an Apple Design
 Award winner. Like QUILL, it bets on markup rather than visual rich
-editing, keeps the writer’s hands on the keyboard, and produces clean
+editing, keeps the writer's hands on the keyboard, and produces clean
 text as output. That shared philosophy makes it the most instructive
-comparison: where Ulysses is strong, it validates QUILL’s direction;
-where QUILL is strong, it shows QUILL’s distinct advantage.</p>
+comparison: where Ulysses is strong, it validates QUILL's direction;
+where QUILL is strong, it shows QUILL's distinct advantage.</p>
 <p>The comparison below reflects Ulysses as described on its official
 site and feature pages.</p>
 <h3 id="side-by-side-at-a-glance">Side-by-side at a glance</h3>
 <table>
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
 <thead>
 <tr>
 <th>Dimension</th>
@@ -761,7 +749,7 @@ parity</td>
 <h3 id="what-ulysses-does-that-quill-can-learn-from">What Ulysses does
 that QUILL can learn from</h3>
 <p>These are the ideas worth bringing into QUILL, each reframed through
-QUILL’s accessibility-first, privacy-first, plain-text-first lens so it
+QUILL's accessibility-first, privacy-first, plain-text-first lens so it
 arrives as a QUILL feature rather than a transplant.</p>
 <h4 id="writing-goals-you-can-hear">Writing goals you can hear</h4>
 <p>Ulysses lets a writer set a deadline and a daily or per-document
@@ -769,7 +757,7 @@ target and watch progress fill toward it. QUILL has word count and
 statistics but not goals as a first-class, motivating object. The
 magical QUILL version is a <em>spoken, glanceable</em> goal: set a
 target by voice or command, and QUILL announces progress on demand and
-at milestones (“halfway to your 800 words”, “goal met”) through the
+at milestones ("halfway to your 800 words", "goal met") through the
 existing announcement grammar, with an optional status-bar field. This
 turns a visual progress bar into something a blind writer experiences
 exactly as richly as a sighted one.</p>
@@ -779,27 +767,27 @@ navigation and filtering layer</h4>
 QUILL has headings, bookmarks, and profiles, but not lightweight,
 user-defined tags that cut across documents. A QUILL keyword system,
 stored in schema-validated JSON and fully keyboard and screen-reader
-navigable, would let a writer mark passages or files (“research”,
-“todo”, “chapter-3”) and then jump or filter by tag through the quick
+navigable, would let a writer mark passages or files ("research",
+"todo", "chapter-3") and then jump or filter by tag through the quick
 navigation surface. The magic is making tags audible and command-driven
 rather than a mouse-driven sidebar.</p>
 <h4 id="a-unified-navigable-library">A unified, navigable library</h4>
 <p>Ulysses keeps every text in one searchable library that syncs
 everywhere. QUILL is file-and-tab oriented. Without abandoning
 local-first files, QUILL could offer an optional library <em>view</em>:
-a single accessible list or tree across a writer’s project folders, with
+a single accessible list or tree across a writer's project folders, with
 type-ahead, keywords, and goals visible, built from the same
 stock-control, first-letter-navigable patterns QUILL already favors. It
 is the Edge-style list pattern QUILL just adopted for Preferences,
-applied to a writer’s whole corpus.</p>
+applied to a writer's whole corpus.</p>
 <h4 id="built-in-style-and-grammar-assistance-on-quills-terms">Built-in
-style and grammar assistance, on QUILL’s terms</h4>
+style and grammar assistance, on QUILL's terms</h4>
 <p>Ulysses ships an integrated proofreader across many languages. QUILL
 has spellcheck and an opt-in AI assistant. The recommendation is not to
 bolt on a cloud grammar service; it is to make style and grammar
 suggestions a <em>local-first, consent-gated</em> capability that
 announces each suggestion and never sends text anywhere without explicit
-per-action consent, consistent with QUILL’s egress rules. Ulysses proves
+per-action consent, consistent with QUILL's egress rules. Ulysses proves
 writers want this; QUILL can offer it without surrendering privacy.</p>
 <h4 id="frictionless-beautiful-export-with-live-preview">Frictionless,
 beautiful export with live preview</h4>
@@ -808,7 +796,7 @@ on-the-fly style switching and live preview. QUILL already has strong
 Pandoc-backed export. The borrowable idea is the <em>experience</em>: a
 single command that previews the chosen output format and lets the
 writer switch styles before exporting, with the preview itself
-accessible. QUILL’s advantage is that its preview can be screen-reader
+accessible. QUILL's advantage is that its preview can be screen-reader
 legible, which a purely visual preview is not.</p>
 <h4 id="distraction-free-focus-as-an-announced-mode">Distraction-free
 focus as an announced mode</h4>
@@ -820,33 +808,33 @@ rather than a visual one.</p>
 <h3 id="what-quill-should-deliberately-not-copy">What QUILL should
 deliberately not copy</h3>
 <ul>
-<li>Apple-only reach. Ulysses is Apple-exclusive. QUILL’s Windows-first,
+<li>Apple-only reach. Ulysses is Apple-exclusive. QUILL's Windows-first,
 screen-reader-first mission is its differentiation; that should not
-change to chase Ulysses’ aesthetic.</li>
+change to chase Ulysses' aesthetic.</li>
 <li>Cloud-library-by-default. Ulysses assumes a synced cloud library.
-QUILL’s local-first, no-silent-network posture is a feature, not a gap.
+QUILL's local-first, no-silent-network posture is a feature, not a gap.
 Any library or sync work must stay opt-in and consent-gated.</li>
 <li>Subscription-shaped feature gating. Pricing strategy is out of scope
-here, but QUILL should not let a feature’s design be distorted by a
+here, but QUILL should not let a feature's design be distorted by a
 paywall the way some Ulysses capabilities are.</li>
 </ul>
 <h3 id="where-quill-already-beats-ulysses">Where QUILL already beats
 Ulysses</h3>
-<p>It is worth naming QUILL’s lead so the roadmap protects it.</p>
+<p>It is worth naming QUILL's lead so the roadmap protects it.</p>
 <ul>
 <li>Screen-reader-first design. Ulysses inherits platform accessibility;
 QUILL is engineered around it, with a shared announcement grammar and
 parity across NVDA, JAWS, and Narrator.</li>
 <li>Privacy by architecture. No silent network calls and explicit
 per-action consent are guarantees Ulysses does not make.</li>
-<li>Branchable AI writing sessions. QUILL’s resumable, forkable session
+<li>Branchable AI writing sessions. QUILL's resumable, forkable session
 tree is a genuinely novel capability with no Ulysses equivalent.</li>
 <li>Windows reach. QUILL serves a platform and an audience Ulysses does
 not.</li>
 </ul>
 <h3 id="recommended-priorities-from-this-study">Recommended priorities
 from this study</h3>
-<p>In rough order of value-to-effort for QUILL’s audience:</p>
+<p>In rough order of value-to-effort for QUILL's audience:</p>
 <ol type="1">
 <li>Spoken writing goals, building on the existing metrics and
 announcement surfaces. High value, modest effort, distinctly QUILL.</li>
@@ -869,14 +857,14 @@ id="part-three-compose-mode-a-workshop-for-assembling-documents">Part
 Three: Compose Mode, a Workshop for Assembling Documents</h2>
 <h3 id="the-idea-in-one-sentence-1">The idea in one sentence</h3>
 <p>Add an optional Compose mode where a document is built from a list of
-parts (call them segments, QUILL’s answer to Ulysses sheets), each part
+parts (call them segments, QUILL's answer to Ulysses sheets), each part
 holding a chunk of writing or a pulled-in source, where the writer
 reorders parts, promotes and demotes their heading levels, and merges
 them into one finished document, while a live HTML preview shows the
 assembled whole in real time, and the parts can be written in Markdown,
 RTF, or HTML.</p>
 <p>This is the writing-as-architecture idea that David Hewson praised in
-Ulysses (“shuffle around the many different parts and scenes”), rebuilt
+Ulysses ("shuffle around the many different parts and scenes"), rebuilt
 so a screen-reader user can architect a document by ear with exactly the
 same fluency as by eye.</p>
 <h3 id="what-a-writer-actually-does-in-compose-mode">What a writer
@@ -895,21 +883,21 @@ sent)</li>
 </ul>
 <p>Each part is a real, editable unit. The writer can:</p>
 <ul>
-<li>Reorder parts. Move “Method” above “Background” and the whole
-document reflows, the preview updates, and QUILL announces “Moved Method
-to position 3 of 6.”</li>
+<li>Reorder parts. Move "Method" above "Background" and the whole
+document reflows, the preview updates, and QUILL announces "Moved Method
+to position 3 of 6."</li>
 <li>Re-level headings. Promote a part so its heading becomes a top-level
 section, or demote it so it nests under the part above. QUILL announces
-“Background is now heading level 2, nested under Introduction.”</li>
+"Background is now heading level 2, nested under Introduction."</li>
 <li>Pull sources together. Add a part that references another file
 (Markdown, RTF, or HTML) so material from many places is gathered into
 one outline without copy-paste drift. The source can be embedded (frozen
 copy) or linked (kept in sync), and QUILL says which.</li>
 <li>Mix formats per part. One part can be Markdown, the next RTF, the
-next HTML. Compose mode normalizes them through QUILL’s existing
+next HTML. Compose mode normalizes them through QUILL's existing
 conversion layer so the assembled document is coherent.</li>
-<li>Merge to a single document. When the architecture is right, “Flatten
-to document” produces one ordinary file in the writer’s chosen format,
+<li>Merge to a single document. When the architecture is right, "Flatten
+to document" produces one ordinary file in the writer's chosen format,
 with heading levels already correct.</li>
 </ul>
 <h3 id="the-structure-tree-the-document-as-a-navigable-outline">The
@@ -925,7 +913,7 @@ performs add-child, add-sibling, rename, and delete on a
 <code>wx.TreeCtrl</code> with a live preview beside it. Compose mode
 should reuse this exact, battle-tested pattern rather than invent a new
 surface.</p>
-<p>Represented as a tree, the part list becomes the document’s true
+<p>Represented as a tree, the part list becomes the document's true
 shape:</p>
 <ul>
 <li>Introduction</li>
@@ -938,21 +926,21 @@ shape:</p>
 <li>Findings
 <ul>
 <li>Quantitative</li>
-<li>Quoted source (from a colleague’s RTF)</li>
+<li>Quoted source (from a colleague's RTF)</li>
 </ul></li>
 <li>Conclusion</li>
 </ul>
 <p>A <code>wx.TreeCtrl</code> is a first-class accessible control (it
-sits in the dialog contract’s preferred-focus list), and on Windows,
+sits in the dialog contract's preferred-focus list), and on Windows,
 macOS, and Linux it gives blind writers what sighted writers get from an
 indented outline: nesting they can feel.</p>
 <ul>
 <li>Arrow keys walk the structure. Up and down move between parts, right
 expands a part to hear its children, left collapses to hear just the
-section. Screen readers announce level and position natively (“Method,
-level 1, expanded, 2 of 6; Participants, level 2, 1 of 2”).</li>
+section. Screen readers announce level and position natively ("Method,
+level 1, expanded, 2 of 6; Participants, level 2, 1 of 2").</li>
 <li>Collapsing a branch hides a whole sub-section so a writer can think
-at the chapter level, then expand to drop into detail, the outliner’s
+at the chapter level, then expand to drop into detail, the outliner's
 core joy.</li>
 <li>The tree is the document. Reordering a node reorders the prose;
 promoting a node re-levels its heading; moving a parent carries its
@@ -971,15 +959,15 @@ made accessible</h3>
 accessible half is making that preview meaningful without sight.</p>
 <ul>
 <li>The preview renders the assembled document as HTML and updates as
-parts move or change, reusing QUILL’s existing HTML preview path.</li>
+parts move or change, reusing QUILL's existing HTML preview path.</li>
 <li>Crucially, the preview is screen-reader legible: it is presented as
 structured, navigable text (headings, lists, links exposed as real
 semantics), not as an opaque image of a page, so a screen-reader user
 can read the assembled result by heading and by element just like the
 final document.</li>
-<li>A spoken structure summary is one keystroke away: “6 parts, 4
+<li>A spoken structure summary is one keystroke away: "6 parts, 4
 top-level headings, estimated 2,300 words, reading order: Introduction,
-Method, Background…” so the writer hears the shape of the whole before
+Method, Background..." so the writer hears the shape of the whole before
 diving in.</li>
 <li>Preview and parts stay in sync both ways: jumping to a heading in
 the preview offers to jump to the part that produced it, closing the
@@ -996,7 +984,7 @@ structures in a minute.</li>
 pane to maintain; the part list <em>is</em> the outline, and editing the
 outline edits the document.</li>
 <li>It speaks architecture. Every structural action has a spoken outcome
-in the shared announcement grammar, so “move this section earlier” is a
+in the shared announcement grammar, so "move this section earlier" is a
 confident, audible act rather than a fragile drag.</li>
 <li>It meets writers where their material is. Markdown notes, an RTF
 from a colleague, an HTML snippet from the web can all become parts
@@ -1009,18 +997,13 @@ right-click that builds a document: a rich, spoken context menu</h3>
 The fastest, most direct way to architect a document is to act on the
 part you are standing on, and the context menu is where that lives. In
 Compose mode, invoking the context menu on a part (by right-click, by
-the keyboard context-menu key, or by QUILL’s own context command) opens
+the keyboard context-menu key, or by QUILL's own context command) opens
 a structure menu that is the command center for the whole assembly.
 Every item is keyboard reachable, every item announces its outcome, and
 destructive items confirm.</p>
 <p>The menu is organized so the most common architectural moves are at
 the top:</p>
 <table>
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
 <thead>
 <tr>
 <th>Menu item</th>
@@ -1032,92 +1015,92 @@ the top:</p>
 <tr>
 <td>Move Up / Move Down</td>
 <td>Swaps this part with its neighbor</td>
-<td>“Moved Method up to position 2 of 6.”</td>
+<td>"Moved Method up to position 2 of 6."</td>
 </tr>
 <tr>
 <td>Move to Top / Move to Bottom</td>
 <td>Jumps this part to the start or end</td>
-<td>“Moved Conclusion to the end, position 6 of 6.”</td>
+<td>"Moved Conclusion to the end, position 6 of 6."</td>
 </tr>
 <tr>
-<td>Move to Position…</td>
+<td>Move to Position...</td>
 <td>Accessible entry to type or pick an exact slot</td>
-<td>“Moved Background to position 3 of 6.”</td>
+<td>"Moved Background to position 3 of 6."</td>
 </tr>
 <tr>
 <td>Promote (heading level up)</td>
-<td>Raises this part’s heading one level, outdenting it</td>
-<td>“Background is now heading level 1, a top-level section.”</td>
+<td>Raises this part's heading one level, outdenting it</td>
+<td>"Background is now heading level 1, a top-level section."</td>
 </tr>
 <tr>
 <td>Demote (heading level down)</td>
-<td>Lowers this part’s heading one level, nesting it</td>
-<td>“Background is now heading level 3, nested under Method.”</td>
+<td>Lowers this part's heading one level, nesting it</td>
+<td>"Background is now heading level 3, nested under Method."</td>
 </tr>
 <tr>
 <td>Make Top-Level Section</td>
 <td>Sets this part to heading level 1 in one step</td>
-<td>“Introduction is now a top-level section.”</td>
+<td>"Introduction is now a top-level section."</td>
 </tr>
 <tr>
 <td>Group Under Previous</td>
 <td>Nests this part (and re-levels it) beneath the part above</td>
-<td>“Grouped Findings under Method.”</td>
+<td>"Grouped Findings under Method."</td>
 </tr>
 <tr>
 <td>Promote With Children / Demote With Children</td>
 <td>Re-levels this part and everything nested under it together</td>
-<td>“Promoted Method and its 3 sub-parts.”</td>
+<td>"Promoted Method and its 3 sub-parts."</td>
 </tr>
 <tr>
-<td>Change Format…</td>
+<td>Change Format...</td>
 <td>Switches this part between Markdown, RTF, and HTML</td>
-<td>“Changed Background to HTML.”</td>
+<td>"Changed Background to HTML."</td>
 </tr>
 <tr>
 <td>Convert Link to Embedded Copy</td>
 <td>Freezes a linked source so it stops tracking the original</td>
-<td>“Background is now an embedded copy.”</td>
+<td>"Background is now an embedded copy."</td>
 </tr>
 <tr>
 <td>Refresh Linked Source</td>
-<td>Re-pulls a linked source’s latest content</td>
-<td>“Refreshed Background from research-notes.md.”</td>
+<td>Re-pulls a linked source's latest content</td>
+<td>"Refreshed Background from research-notes.md."</td>
 </tr>
 <tr>
 <td>Split Part Here / Merge With Previous</td>
 <td>Breaks one part into two at the caret, or fuses two</td>
-<td>“Split into Method and Method, part 2.”</td>
+<td>"Split into Method and Method, part 2."</td>
 </tr>
 <tr>
 <td>Duplicate Part</td>
 <td>Copies the part as a new sibling</td>
-<td>“Duplicated Findings.”</td>
+<td>"Duplicated Findings."</td>
 </tr>
 <tr>
 <td>Rename Part</td>
-<td>Accessible text entry for the part’s outline label</td>
-<td>“Renamed to Literature Review.”</td>
+<td>Accessible text entry for the part's outline label</td>
+<td>"Renamed to Literature Review."</td>
 </tr>
 <tr>
-<td>Add Keyword to Part…</td>
+<td>Add Keyword to Part...</td>
 <td>Tags this part (see Part Four)</td>
-<td>“Added keyword research to this part.”</td>
+<td>"Added keyword research to this part."</td>
 </tr>
 <tr>
 <td>Preview This Part</td>
 <td>Jumps the live HTML preview to this part</td>
-<td>“Previewing Findings.”</td>
+<td>"Previewing Findings."</td>
 </tr>
 <tr>
-<td>Flatten From Here…</td>
+<td>Flatten From Here...</td>
 <td>Merges this part and those after it into a document</td>
 <td>spoken summary of the flattened result</td>
 </tr>
 <tr>
 <td>Remove Part</td>
 <td>Deletes the part (with confirm)</td>
-<td>“Removed Background. 5 parts remain.”</td>
+<td>"Removed Background. 5 parts remain."</td>
 </tr>
 </tbody>
 </table>
@@ -1130,22 +1113,22 @@ relationship, so a screen-reader user never has to re-read the list to
 discover what happened. The menu is a place where you act and
 immediately <em>hear</em> the new shape.</li>
 <li>It re-levels structurally, not cosmetically. Promote and Demote
-understand nesting: “Promote With Children” lifts an entire subtree so a
+understand nesting: "Promote With Children" lifts an entire subtree so a
 writer can move a whole sub-section up a level in one act, and QUILL
 announces how many parts moved with it. This is the difference between
 editing an outline and merely nudging text.</li>
 <li>It is context-aware. Items that cannot apply are absent or clearly
-disabled with a spoken reason: “Move Up unavailable, Introduction is
-already first.” “Refresh Linked Source unavailable, this part is an
-embedded copy.” No dead clicks, no silent no-ops.</li>
+disabled with a spoken reason: "Move Up unavailable, Introduction is
+already first." "Refresh Linked Source unavailable, this part is an
+embedded copy." No dead clicks, no silent no-ops.</li>
 <li>It mirrors keyboard commands exactly. Every menu item has a
 QUILL-key binding so power users never need the menu, and the menu never
 hides a capability the keyboard lacks. The context menu and the command
 system are two doors to one room.</li>
 <li>It keeps focus sane. After a move, focus stays on the part that
-moved (now in its new position) so repeated presses of “Move Up” walk a
+moved (now in its new position) so repeated presses of "Move Up" walk a
 part smoothly toward the top, each step announced, exactly the
-predictable behavior the repository’s dialog and focus rules
+predictable behavior the repository's dialog and focus rules
 require.</li>
 <li>It confirms only what is destructive. Reordering and re-leveling are
 instantly reversible and never prompt; Remove Part and a flatten that
@@ -1156,17 +1139,17 @@ Friction lands only where loss is possible.</li>
 part: acting on a selection</h4>
 <p>The magic compounds when the writer selects several parts in the
 list. The same context menu then operates on the whole set, spoken as a
-set: “Move 3 parts up,” “Demote 3 parts,” “Group 3 parts under
-Introduction,” “Add keyword research to 3 parts.” A scattered draft
+set: "Move 3 parts up," "Demote 3 parts," "Group 3 parts under
+Introduction," "Add keyword research to 3 parts." A scattered draft
 becomes a structured manuscript in a handful of audible, reversible
 gestures, all from the one context menu every editor estate already
 makes feel familiar.</p>
 <p>This context menu must, like all QUILL dialogs and menus, be
 registered and classified under the DLG-3 dialog and menu estate, with
 no menu items mutated while the menu is open (deferring label and enable
-updates until close), per the repository’s dialog and menu lessons.</p>
+updates until close), per the repository's dialog and menu lessons.</p>
 <h3 id="how-compose-mode-fits-quills-architecture">How Compose mode fits
-QUILL’s architecture</h3>
+QUILL's architecture</h3>
 <p>This respects the same boundaries as the rest of this document.</p>
 <ul>
 <li>The part-list model, reordering, heading-level math, and the
@@ -1186,7 +1169,7 @@ patterns QUILL already favors.</li>
 gate for any new dialogs, and the no-silent-network rule for any linked
 remote source.</li>
 <li>A composition is persisted as schema-validated JSON (the ordered
-part list with each part’s source, format, embed-or-link choice, and
+part list with each part's source, format, embed-or-link choice, and
 heading level), with atomic writes and backup or recovery parity, so an
 assembly is as robust as any other QUILL document.</li>
 </ul>
@@ -1194,9 +1177,9 @@ assembly is as robust as any other QUILL document.</li>
 <ul>
 <li>Mixed-format flattening is only as faithful as the conversions
 beneath it; the same no-silent-loss warnings from Part One apply when a
-part’s formatting cannot survive the chosen output format.</li>
+part's formatting cannot survive the chosen output format.</li>
 <li>A real-time preview of a large multi-part document must respect
-QUILL’s performance budgets; the preview should update incrementally
+QUILL's performance budgets; the preview should update incrementally
 rather than re-rendering the world on every keystroke.</li>
 <li>Linked (live) sources introduce freshness and trust questions;
 linked external content must follow the existing untrusted-location and
@@ -1211,25 +1194,25 @@ so they deserve their own design. The goal: tagging and tag-navigation
 that a screen-reader user performs as fluently as a sighted user clicks
 a colored label.</p>
 <h3 id="what-a-keyword-is-in-quill">What a keyword is in QUILL</h3>
-<p>A keyword is a short, user-defined label (“research”, “todo”,
-“chapter-3”, “verify”) attached to a whole document or to a specific
+<p>A keyword is a short, user-defined label ("research", "todo",
+"chapter-3", "verify") attached to a whole document or to a specific
 part or passage. Keywords are stored in schema-validated JSON alongside
 other per-document state, never embedded invisibly in the prose, so they
 never pollute the text a screen reader reads.</p>
 <h3 id="assigning-keywords-by-ear">Assigning keywords by ear</h3>
 <ul>
-<li>A single command, “Add keyword,” opens an accessible entry with
-type-ahead over existing keywords, so the writer reuses “research”
-rather than inventing “reserach”. The field announces matches as they
+<li>A single command, "Add keyword," opens an accessible entry with
+type-ahead over existing keywords, so the writer reuses "research"
+rather than inventing "reserach". The field announces matches as they
 narrow.</li>
-<li>Assigning announces the outcome: “Added keyword research to this
-section. This section now has two keywords: research, verify.” The
+<li>Assigning announces the outcome: "Added keyword research to this
+section. This section now has two keywords: research, verify." The
 writer always hears the resulting state, not just the action.</li>
-<li>Removing is symmetric and equally spoken: “Removed todo. One keyword
-remains: research.”</li>
-<li>Keywords on a passage are anchored to that passage’s position, and
-QUILL speaks where they live (“keyword verify spans the selected
-sentence”) so they are never invisible floating state.</li>
+<li>Removing is symmetric and equally spoken: "Removed todo. One keyword
+remains: research."</li>
+<li>Keywords on a passage are anchored to that passage's position, and
+QUILL speaks where they live ("keyword verify spans the selected
+sentence") so they are never invisible floating state.</li>
 </ul>
 <h3 id="hearing-which-keywords-are-present">Hearing which keywords are
 present</h3>
@@ -1238,34 +1221,34 @@ discovery: sighted users see colored chips at a glance. QUILL replaces
 the glance with sound and structure.</p>
 <ul>
 <li>On entering a tagged document or part, QUILL can announce its
-keywords as part of the context, configurably, for example “Findings,
-keywords: research, verify.”</li>
-<li>A “Read keywords here” command speaks the keywords at the caret on
+keywords as part of the context, configurably, for example "Findings,
+keywords: research, verify."</li>
+<li>A "Read keywords here" command speaks the keywords at the caret on
 demand, so the information is available the instant it is wanted and
 silent when it is not.</li>
-<li>A status-bar field can carry the current location’s keyword count,
+<li>A status-bar field can carry the current location's keyword count,
 and reading that field aloud is already a supported QUILL action.</li>
 </ul>
 <h3 id="navigating-by-keyword">Navigating by keyword</h3>
 <p>This is where keywords become a navigation superpower rather than
 mere labels.</p>
 <ul>
-<li>“Go to keyword” opens an accessible, first-letter-navigable list of
-all keywords with their occurrence counts (“research, 7; todo, 3;
-verify, 2”). Choosing one lists every place it appears, each entry
+<li>"Go to keyword" opens an accessible, first-letter-navigable list of
+all keywords with their occurrence counts ("research, 7; todo, 3;
+verify, 2"). Choosing one lists every place it appears, each entry
 spoken with its document, section, and a short context snippet.</li>
-<li>“Next keyword” and “Previous keyword” jump between occurrences of a
+<li>"Next keyword" and "Previous keyword" jump between occurrences of a
 chosen tag the way heading navigation jumps between headings, each
 landing announced with its surrounding context.</li>
 <li>A keyword filter can scope the accessible library view and Compose
-mode part list to just the tagged items (“showing 7 parts tagged
-research”), turning a sprawling project into a focused working set,
+mode part list to just the tagged items ("showing 7 parts tagged
+research"), turning a sprawling project into a focused working set,
 entirely by keyboard and entirely spoken.</li>
 </ul>
 <h3 id="why-this-is-the-accessible-version-ulysses-never-built">Why this
 is the accessible version Ulysses never built</h3>
 <p>Ulysses keywords are fundamentally visual: chips you scan and click.
-QUILL’s keywords are spoken objects you can add, hear, filter, and jump
+QUILL's keywords are spoken objects you can add, hear, filter, and jump
 through without ever seeing them. Every keyword action has an audible
 outcome, every keyword location is announced rather than implied, and
 discovery is a command away instead of a visual scan. That is the
@@ -1277,8 +1260,8 @@ speaks.</p>
 id="part-five-embedded-grammar-checking-and-how-it-understands-language">Part
 Five: Embedded Grammar Checking, and How It Understands Language</h2>
 <p>Grammar checking is the most technically ambitious idea in this
-document, and the honest framing matters: spelling asks “is this token a
-word?” while grammar asks “is this sentence well-formed, and why?” The
+document, and the honest framing matters: spelling asks "is this token a
+word?" while grammar asks "is this sentence well-formed, and why?" The
 second question requires the software to understand the
 <em>structure</em> of language, not just a wordlist. This part explains
 how QUILL would gain that understanding, how it would surface findings
@@ -1297,7 +1280,7 @@ cursor, and <code>suggest_words</code> offers fixes. The UI layer turns
 those records into navigation, a context menu, and the misspelling tree
 navigator. Grammar checking should mirror this contract exactly: a pure
 core engine that returns typed issue records with offsets, a category,
-an explanation, and suggested rewrites, and a UI that reuses QUILL’s
+an explanation, and suggested rewrites, and a UI that reuses QUILL's
 existing navigation, dialog, and announcement surfaces. If grammar
 issues look like richer misspellings to the rest of the app, the
 integration cost collapses.</p>
@@ -1314,44 +1297,36 @@ already has word and line tokenizing patterns to build on.</li>
 <li>Part-of-speech tagging. Label each token with its grammatical
 category: noun, verb, adjective, determiner, preposition, and finer tags
 (singular noun, past tense verb, comparative adjective). This is how the
-software knows that in “the dog runs,” “dog” is a singular noun and
-“runs” is a singular present-tense verb, which is what lets it judge
+software knows that in "the dog runs," "dog" is a singular noun and
+"runs" is a singular present-tense verb, which is what lets it judge
 subject-verb agreement. POS tagging is a solved, well-understood task: a
 tagger is trained on large hand-labeled corpora and learns the
 probability of each tag given the word and its neighbors.</li>
 <li>Morphological analysis. Determine number (singular or plural),
-tense, and person from word forms, so the checker can compare “dog/dogs”
-or “run/runs/ran.”</li>
+tense, and person from word forms, so the checker can compare "dog/dogs"
+or "run/runs/ran."</li>
 <li>Shallow or full parsing. Group tagged words into phrases (noun
 phrase, verb phrase) and, in fuller form, build a dependency tree
 linking each word to the word it modifies or agrees with. The dependency
 link between subject and verb is precisely what an agreement rule
 inspects.</li>
 <li>Rule and model checking. With tags and structure in hand, the
-checker applies rules (“a singular subject takes a singular verb”; “this
-preposition does not fit this verb”) and statistical signals (this
+checker applies rules ("a singular subject takes a singular verb"; "this
+preposition does not fit this verb") and statistical signals (this
 n-gram is improbable) to flag likely errors and propose fixes.</li>
 </ol>
 <p>The crucial idea: parts of speech are the bridge. Once every word
 carries an accurate grammatical tag and the words are linked into
 phrases, most common grammar checks become tractable rules over that
 tagged structure rather than guesses over raw characters.</p>
-<h3 id="dont-build-the-engine-adopt-one-the-open-source-options">Don’t
+<h3 id="dont-build-the-engine-adopt-one-the-open-source-options">Don't
 build the engine, adopt one: the open-source options</h3>
 <p>The first instinct, a hand-written ruleset, is a trap. Real grammar
 checking is years of linguistic work, and several mature open-source
 engines already exist. The honest job is to pick the one whose language
 understanding, license, runtime, and privacy posture fit QUILL, then
 wrap it. The survey below reflects each project as of mid-2026.</p>
-<table style="width:100%;">
-<colgroup>
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
-</colgroup>
+<table>
 <thead>
 <tr>
 <th>Engine</th>
@@ -1371,7 +1346,7 @@ wrap it. The survey below reflects each project as of mid-2026.</p>
 <td>English only today; real POS tagging (its <code>harper-brill</code>
 tagger) and many rules</td>
 <td>Strongest fit. No Java, no VM, milliseconds per lint, roughly
-one-fiftieth of LanguageTool’s memory. Cost: a compiled native
+one-fiftieth of LanguageTool's memory. Cost: a compiled native
 dependency to bundle and sign per platform, and English-only for
 now.</td>
 </tr>
@@ -1411,12 +1386,12 @@ subject-verb agreement; a complement, not the engine.</td>
 </tr>
 <tr>
 <td>Consent-gated AI</td>
-<td>QUILL’s existing AI path</td>
+<td>QUILL's existing AI path</td>
 <td>n/a</td>
 <td>No, sends text off device</td>
 <td>Broadest coverage and fluent rewrites</td>
 <td>Best raw coverage and style help, but it must be strictly opt-in per
-QUILL’s no-silent-network rule; latency, cost, and non-determinism
+QUILL's no-silent-network rule; latency, cost, and non-determinism
 apply.</td>
 </tr>
 </tbody>
@@ -1457,19 +1432,19 @@ wrap Harper as the default local, private grammar engine behind a
 feature flag; offer LanguageTool as an opt-in heavyweight for writers
 who need its breadth of languages and rules, bundling its Java server
 only when enabled; and expose deep, fluent AI grammar only through
-QUILL’s existing consent gate. spaCy stays in reserve as the toolkit if
+QUILL's existing consent gate. spaCy stays in reserve as the toolkit if
 QUILL ever wants to grow its own multilingual structural checks.</p>
 <h3 id="why-this-is-genuinely-complex-stated-plainly">Why this is
 genuinely complex, stated plainly</h3>
 <p>You called grammar complex, and that is correct. The honest
 difficulties:</p>
 <ul>
-<li>Ambiguity is everywhere. “Time flies” can be a noun and verb or an
+<li>Ambiguity is everywhere. "Time flies" can be a noun and verb or an
 adjective and noun; many words are several parts of speech, and the
 tagger must use context.</li>
 <li>Real grammar needs structure, not just words. Subject-verb agreement
-can span a long clause (“The list of items <em>is</em> on the desk,” not
-“are”), so a checker that ignores phrase structure gets it wrong.</li>
+can span a long clause ("The list of items <em>is</em> on the desk," not
+"are"), so a checker that ignores phrase structure gets it wrong.</li>
 <li>False positives erode trust fast. A grammar checker that nags about
 correct sentences is worse than none; tuning for precision over recall
 matters more than raw coverage.</li>
@@ -1483,25 +1458,25 @@ the caret.</li>
 </ul>
 <h3
 id="surfacing-grammar-through-quills-existing-accessible-machinery">Surfacing
-grammar through QUILL’s existing accessible machinery</h3>
-<p>Here the earlier request for “keyboard commands, a dialog, and more
-to help with all of the document interaction” is answered directly.
+grammar through QUILL's existing accessible machinery</h3>
+<p>Here the earlier request for "keyboard commands, a dialog, and more
+to help with all of the document interaction" is answered directly.
 Grammar reuses every spelling surface, so a screen-reader user already
 knows how to drive it.</p>
 <ul>
-<li>Keyboard commands. “Next grammar issue” and “Previous grammar issue”
+<li>Keyboard commands. "Next grammar issue" and "Previous grammar issue"
 walk findings from the caret, each landing spoken with its category and
-a short explanation (“subject-verb agreement, line 12: the subject
-<em>list</em> is singular, so use <em>is</em>”). “Explain grammar issue
-here” speaks the full rationale on demand. “Apply suggested fix” and
-“Apply fix and continue” accept a rewrite and move on. “Ignore once” and
-“Ignore this rule” tune the noise. All bind through the QUILL-key system
+a short explanation ("subject-verb agreement, line 12: the subject
+<em>list</em> is singular, so use <em>is</em>"). "Explain grammar issue
+here" speaks the full rationale on demand. "Apply suggested fix" and
+"Apply fix and continue" accept a rewrite and move on. "Ignore once" and
+"Ignore this rule" tune the noise. All bind through the QUILL-key system
 and appear in the command palette.</li>
 <li>A grammar dialog. A dedicated, accessible review dialog (native or
-QUILL’s web surface, registered under the DLG-3 dialog estate) walks
+QUILL's web surface, registered under the DLG-3 dialog estate) walks
 issues one at a time with the sentence in context, the category, the
 plain-language explanation, the parts of speech it is reasoning about
-(“<em>list</em>: singular noun; <em>are</em>: plural verb”), and a list
+("<em>list</em>: singular noun; <em>are</em>: plural verb"), and a list
 of suggested rewrites the writer can choose from, with Apply, Skip,
 Ignore, and Ignore Rule. This mirrors the existing spell-check dialog so
 it is instantly familiar.</li>
@@ -1547,14 +1522,14 @@ announcements) lives in <code>quill/ui</code> and reuses existing
 surfaces, so the new code is mostly the adapter plus thin wiring.</li>
 <li>The optional AI engine routes only through the existing
 consent-gated AI path and the egress audit; no grammar engine may make a
-silent outbound call, which also means LanguageTool’s public-API mode is
+silent outbound call, which also means LanguageTool's public-API mode is
 forbidden and only its bundled local server is permitted.</li>
 <li>Feature-flagged through FeatureManager so grammar (and each engine)
 can be enabled per profile.</li>
 </ul>
 <h3 id="recommendation-1">Recommendation</h3>
 <p>Do not hand-roll a grammar checker; adopt a real engine and treat
-grammar as “spelling, with structure.” The leading choice for QUILL is
+grammar as "spelling, with structure." The leading choice for QUILL is
 Harper: open source (Apache-2.0), offline, privacy-first, fast enough to
 run live, real POS tagging, and no Java. Accept its honest costs (a Rust
 native binding to package per platform, English-only for now, and a
@@ -1563,7 +1538,7 @@ Python distribution to verify) and wrap it behind a pure
 spellcheck. Offer LanguageTool as an opt-in multilingual heavyweight
 (bundled local Java server only, never its remote API), keep spaCy in
 reserve as a structural toolkit, and expose fluent AI grammar only
-through QUILL’s existing consent gate. Whichever engine answers, make
+through QUILL's existing consent gate. Whichever engine answers, make
 the finding <em>speak its reasoning</em>, parts of speech included, so
 QUILL becomes not just a grammar checker but the rare one a blind writer
 can fully hear, interrogate, and learn from.</p>
@@ -1572,7 +1547,7 @@ can fully hear, interrogate, and learn from.</p>
 <p>Part One argues QUILL can host a rich surface without betraying its
 plain-text, screen-reader-first heart, provided it refactors to an
 editor-surface protocol first and keeps the rich control an honest,
-opt-in power mode. Part Two argues the best ideas in the category’s most
+opt-in power mode. Part Two argues the best ideas in the category's most
 admired markup app, Ulysses, can each be brought into QUILL in a form
 that is more accessible than the original. Part Three proposes Compose
 mode, a workshop that assembles a document from reorderable,

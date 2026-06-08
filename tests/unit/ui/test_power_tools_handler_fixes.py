@@ -1,4 +1,4 @@
-"""Behavior tests for EdSharp handlers that had wiring bugs.
+"""Behavior tests for power-tool handlers that had wiring bugs.
 
 Covers the Infer Indent setting name (EDS-18) and the clipboard collector
 rebind-on-toggle correctness (EDS-11), exercising the mixin against lightweight
@@ -7,7 +7,7 @@ stand-ins (no live wx needed).
 
 from __future__ import annotations
 
-from quill.ui.main_frame_edsharp import EdSharpActionsMixin
+from quill.ui.main_frame_power_tools import PowerToolsActionsMixin
 
 
 class _Settings:
@@ -24,7 +24,7 @@ class _Editor:
         return self._text
 
 
-class _IndentHarness(EdSharpActionsMixin):
+class _IndentHarness(PowerToolsActionsMixin):
     def __init__(self, text: str, answer: int) -> None:
         self.editor = _Editor(text)
         self.settings = _Settings()
@@ -83,7 +83,7 @@ class _CopyEditor:
         self.bound.append("unbind")
 
 
-class _CollectorHarness(EdSharpActionsMixin):
+class _CollectorHarness(PowerToolsActionsMixin):
     class _Wx:
         EVT_TEXT_COPY = object()
 
@@ -103,11 +103,11 @@ def test_collector_toggle_unbinds_the_editor_it_bound() -> None:
 
     harness.toggle_clipboard_collector()  # on -> binds first
     assert first.bound == ["bind"]
-    assert harness._eds_collector_editor is first
+    assert harness._power_tools_collector_editor is first
 
     # Switch tabs, then toggle off: the ORIGINAL editor must be unbound.
     harness.editor = _CopyEditor("tab2")
     harness.toggle_clipboard_collector()  # off -> unbinds first, not the new editor
     assert "unbind" in first.bound
     assert harness.editor.bound == []
-    assert harness._eds_collector_editor is None
+    assert harness._power_tools_collector_editor is None

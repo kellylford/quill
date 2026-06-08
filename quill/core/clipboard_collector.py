@@ -1,6 +1,6 @@
 """Clipboard collector mode append logic (EDS-11).
 
-EdSharp's paste-board mode (Alt+7) appends every subsequent clipboard copy into
+Clipboard collector mode appends every subsequent clipboard copy into
 the document, separated by a divider. This wx-free helper holds the pure append
 logic so the divider behaviour can be unit-tested without ``wx``.
 """

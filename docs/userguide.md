@@ -608,7 +608,7 @@ Macros record a sequence of editing commands and replay them, which is ideal for
 - **Toggle Indentation Announcements**
 - **Infer Indentation...**
 
-Power Tools collects the editor-behavior power toggles that have no other conventional home. (These were previously grouped under the "EdSharp Tools" submenu; the rest of those commands now live in their natural menus — see File, Edit, Insert, Format -> Transform Lines, Navigate, Search, and Accessibility.)
+Power Tools collects the editor-behavior power toggles that have no other conventional home. (These were previously grouped under a single power-tools submenu; the rest of those commands now live in their natural menus — see File, Edit, Insert, Format -> Transform Lines, Navigate, Search, and Accessibility.)
 
 #### Compare documents
 

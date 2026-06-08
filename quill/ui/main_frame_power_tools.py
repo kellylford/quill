@@ -1,6 +1,6 @@
-"""EdSharp parity editor conveniences, mixed into :class:`MainFrame` (EDS-1..20).
+"""Editor power-tool conveniences, mixed into :class:`MainFrame` (EDS-1..20).
 
-This module gathers the EdSharp 4.0 competitive-parity commands behind one mixin
+This module gathers the editor power-tool commands behind one mixin
 so they do not bloat ``main_frame.py`` (the same structural pattern used by
 ``BrowseModeMixin`` for CQ-1). Every method resolves through ``MainFrame`` and
 relies on its helpers: ``self.editor``, ``self.document``, ``self.settings``,
@@ -62,18 +62,18 @@ from quill.core.unicode_insert import CodepointError, parse_codepoint
 _DATE_INSERT_FORMAT = "%Y-%m-%d"
 
 
-class EdSharpActionsMixin:
-    """EdSharp-parity editor conveniences mixed into :class:`MainFrame`."""
+class PowerToolsActionsMixin:
+    """Editor power-tool conveniences mixed into :class:`MainFrame`."""
 
     # ------------------------------------------------------------------ shared
-    def _eds_text_cursor(self) -> tuple[str, int]:
+    def _power_tools_text_cursor(self) -> tuple[str, int]:
         return self.editor.GetValue(), self.editor.GetInsertionPoint()
 
-    def _eds_insert_at_cursor(self, snippet: str, status: str) -> None:
+    def _power_tools_insert_at_cursor(self, snippet: str, status: str) -> None:
         if self._document_is_read_only():
             self._set_status("Document is read-only")
             return
-        text, pos = self._eds_text_cursor()
+        text, pos = self._power_tools_text_cursor()
         updated = text[:pos] + snippet + text[pos:]
         self._replace_document_text(updated)
         self.document.set_text(updated)
@@ -82,7 +82,7 @@ class EdSharpActionsMixin:
         self.editor.SetSelection(new_pos, new_pos)
         self._set_status(status)
 
-    def _eds_transform_selection_or_document(self, transform, status: str) -> None:
+    def _power_tools_transform_selection_or_document(self, transform, status: str) -> None:
         if self._document_is_read_only():
             self._set_status("Document is read-only")
             return
@@ -97,12 +97,12 @@ class EdSharpActionsMixin:
         self.editor.SetSelection(start, start + len(block))
         self._set_status(status)
 
-    def _eds_open_text_in_new_buffer(self, text: str, status: str) -> None:
+    def _power_tools_open_text_in_new_buffer(self, text: str, status: str) -> None:
         self._clear_empty_workspace_state()
         self._create_document_tab(Document(text=text), select=True)
         self._set_status(status)
 
-    def _eds_prompt_single(self, title: str, label: str, value: str = "") -> str | None:
+    def _power_tools_prompt_single(self, title: str, label: str, value: str = "") -> str | None:
         from quill.ui.web_form import show_web_form
 
         values = show_web_form(
@@ -115,7 +115,7 @@ class EdSharpActionsMixin:
             return None
         return str(values.get("value", ""))
 
-    def _eds_clipboard_text(self) -> str:
+    def _power_tools_clipboard_text(self) -> str:
         wx = self._wx
         clipboard = getattr(wx, "TheClipboard", None)
         if clipboard is None or not clipboard.Open():
@@ -128,7 +128,7 @@ class EdSharpActionsMixin:
         finally:
             clipboard.Close()
 
-    def _eds_clipboard_html(self) -> str:
+    def _power_tools_clipboard_html(self) -> str:
         """Return the clipboard's HTML payload, if any.
 
         Prefers the Windows ``HTML Format`` (CF_HTML) clipboard flavour and
@@ -163,11 +163,11 @@ class EdSharpActionsMixin:
 
         Bound to the QUILL key, then ``M``. Uses the clipboard's CF_HTML payload
         when available, otherwise treats the plain-text clipboard as HTML. The
-        read-only guard is honoured via ``_eds_insert_at_cursor``.
+        read-only guard is honoured via ``_power_tools_insert_at_cursor``.
         """
-        html = self._eds_clipboard_html()
+        html = self._power_tools_clipboard_html()
         if not html.strip():
-            html = self._eds_clipboard_text()
+            html = self._power_tools_clipboard_text()
         if not html.strip():
             self._set_status("Clipboard is empty")
             return
@@ -175,11 +175,11 @@ class EdSharpActionsMixin:
         if not markdown.strip():
             self._set_status("No HTML content to convert")
             return
-        self._eds_insert_at_cursor(markdown, "Pasted HTML as Markdown")
+        self._power_tools_insert_at_cursor(markdown, "Pasted HTML as Markdown")
 
     # ----------------------------------------------------------- EDS-1 unicode
     def insert_special_character(self) -> None:
-        raw = self._eds_prompt_single(
+        raw = self._power_tools_prompt_single(
             "Insert Special Character",
             "Unicode code point (hex, d-prefix for decimal, or U+):",
         )
@@ -190,13 +190,13 @@ class EdSharpActionsMixin:
         except CodepointError as error:
             self._set_status(str(error))
             return
-        self._eds_insert_at_cursor(character, f"Inserted U+{ord(character):04X}")
+        self._power_tools_insert_at_cursor(character, f"Inserted U+{ord(character):04X}")
 
     # --------------------------------------------------------- EDS-2 date/time
     def insert_date_time(self) -> None:
         fmt = str(getattr(self.settings, "datetime_insert_format", "") or DEFAULT_DATETIME_FORMAT)
         rendered = format_datetime(datetime.now(), fmt)
-        self._eds_insert_at_cursor(rendered, f"Inserted date and time: {rendered}")
+        self._power_tools_insert_at_cursor(rendered, f"Inserted date and time: {rendered}")
 
     # ------------------------------------------------------- EDS-3 calc a date
     def calculate_and_insert_date(self) -> None:
@@ -245,19 +245,19 @@ class EdSharpActionsMixin:
             self._set_status(f"Could not calculate date: {error}")
             return
         rendered = result.strftime(_DATE_INSERT_FORMAT)
-        self._eds_insert_at_cursor(rendered, f"Inserted date: {rendered}")
+        self._power_tools_insert_at_cursor(rendered, f"Inserted date: {rendered}")
 
     # ----------------------------------- EDS-4/5 line transforms (migrated)
     # ``number_lines`` and ``hard_wrap_lines`` moved onto the contribution
     # grammar: their handlers now live in ``quill.ui.features.line_transforms``
     # and run through the first-party ``Host`` facade (migration plan Wave 2 /
-    # §9). The EdSharp registration table resolves the ``eds.number_lines`` and
-    # ``eds.hard_wrap_lines`` ids to those handlers, so no mixin method remains.
+    # §9). The power-tools registration table resolves the ``power.number_lines`` and
+    # ``power.hard_wrap_lines`` ids to those handlers, so no mixin method remains.
 
     # --------------------------------------------------- EDS-6 new from clipboard
     def new_document_from_clipboard(self) -> None:
-        clip = self._eds_clipboard_text()
-        self._eds_open_text_in_new_buffer(
+        clip = self._power_tools_clipboard_text()
+        self._power_tools_open_text_in_new_buffer(
             clip,
             "New document from clipboard" if clip else "New document (clipboard was empty)",
         )
@@ -275,14 +275,14 @@ class EdSharpActionsMixin:
                 return
             chosen = Path(dialog.GetPath())
         try:
-            content = self._eds_read_text_with_detection(chosen)
+            content = self._power_tools_read_text_with_detection(chosen)
         except OSError as error:
             self._set_status(f"Could not read file: {error}")
             return
-        self._eds_insert_at_cursor(content, f"Inserted contents of {chosen.name}")
+        self._power_tools_insert_at_cursor(content, f"Inserted contents of {chosen.name}")
 
     @staticmethod
-    def _eds_read_text_with_detection(path: Path) -> str:
+    def _power_tools_read_text_with_detection(path: Path) -> str:
         raw = path.read_bytes()
         for encoding in ("utf-8-sig", "utf-8", "utf-16"):
             try:
@@ -296,15 +296,15 @@ class EdSharpActionsMixin:
         return app_data_dir() / "read-only-guards.json"
 
     def _read_only_paths(self) -> set[str]:
-        cached = getattr(self, "_eds_read_only_paths", None)
+        cached = getattr(self, "_power_tools_read_only_paths", None)
         if cached is None:
             stored = read_json(self._read_only_store_path(), [])
             cached = {str(item) for item in stored} if isinstance(stored, list) else set()
-            self._eds_read_only_paths = cached
+            self._power_tools_read_only_paths = cached
         return cached
 
     def _document_is_read_only(self) -> bool:
-        flag = self.document.source_metadata.get("eds_read_only")
+        flag = self.document.source_metadata.get("read_only_guard")
         if flag is not None:
             return bool(flag)
         if self.document.path is not None:
@@ -314,12 +314,12 @@ class EdSharpActionsMixin:
     def _refresh_read_only_state(self) -> None:
         """Re-apply the persisted read-only guard to the active editor."""
         read_only = self._document_is_read_only()
-        self.document.source_metadata["eds_read_only"] = read_only
+        self.document.source_metadata["read_only_guard"] = read_only
         getattr(self.editor, "SetEditable", lambda _v: None)(not read_only)
 
     def toggle_read_only_guard(self) -> None:
         read_only = not self._document_is_read_only()
-        self.document.source_metadata["eds_read_only"] = read_only
+        self.document.source_metadata["read_only_guard"] = read_only
         self.editor.SetEditable(not read_only)
         if self.document.path is not None:
             paths = self._read_only_paths()
@@ -352,22 +352,24 @@ class EdSharpActionsMixin:
 
     # -------------------------------------------- EDS-11 clipboard collector
     def toggle_clipboard_collector(self) -> None:
-        active = not getattr(self, "_eds_clipboard_collector", False)
-        self._eds_clipboard_collector = active
+        active = not getattr(self, "_power_tools_clipboard_collector", False)
+        self._power_tools_clipboard_collector = active
         copy_event = getattr(self._wx, "EVT_TEXT_COPY", None)
-        previous = getattr(self, "_eds_collector_editor", None)
+        previous = getattr(self, "_power_tools_collector_editor", None)
         if copy_event is not None and previous is not None:
             previous.Unbind(copy_event)
-        self._eds_collector_editor = self.editor if (copy_event is not None and active) else None
+        self._power_tools_collector_editor = (
+            self.editor if (copy_event is not None and active) else None
+        )
         if copy_event is not None and active:
-            self.editor.Bind(copy_event, self._on_eds_collect_copy)
+            self.editor.Bind(copy_event, self._on_power_tools_collect_copy)
         self._announce(
             "Clipboard collector on; copies append to this document"
             if active
             else "Clipboard collector off"
         )
 
-    def _on_eds_collect_copy(self, event: object) -> None:
+    def _on_power_tools_collect_copy(self, event: object) -> None:
         event.Skip()
         call_after = getattr(self._wx, "CallAfter", None)
         if callable(call_after):
@@ -378,7 +380,7 @@ class EdSharpActionsMixin:
     def collect_clipboard_now(self) -> None:
         if self._document_is_read_only():
             return
-        clip = self._eds_clipboard_text()
+        clip = self._power_tools_clipboard_text()
         if not clip:
             return
         updated = append_collected(self.editor.GetValue(), clip)
@@ -393,22 +395,22 @@ class EdSharpActionsMixin:
 
     # ---------------------------------------------------- EDS-12 set operations
     def set_lines_first_not_second(self) -> None:
-        text, cursor = self._eds_text_cursor()
+        text, cursor = self._power_tools_text_cursor()
         lines = lines_in_first_not_second(text, cursor)
-        self._eds_open_text_in_new_buffer(
+        self._power_tools_open_text_in_new_buffer(
             format_lines(lines), f"{len(lines)} line(s) in first block only"
         )
 
     def set_lines_common(self) -> None:
-        text, cursor = self._eds_text_cursor()
+        text, cursor = self._power_tools_text_cursor()
         lines = lines_common_to_both(text, cursor)
-        self._eds_open_text_in_new_buffer(
+        self._power_tools_open_text_in_new_buffer(
             format_lines(lines), f"{len(lines)} line(s) common to both blocks"
         )
 
     # ---------------------------------------------- EDS-13 regex count/extract
     def count_regex_matches(self) -> None:
-        pattern = self._eds_prompt_single("Count Matches", "Regular expression:")
+        pattern = self._power_tools_prompt_single("Count Matches", "Regular expression:")
         if pattern is None:
             return
         text = self.editor.GetValue()
@@ -422,7 +424,7 @@ class EdSharpActionsMixin:
         self._announce(f"{total} match(es)")
 
     def extract_regex_matches(self) -> None:
-        pattern = self._eds_prompt_single("Extract Matches", "Regular expression:")
+        pattern = self._power_tools_prompt_single("Extract Matches", "Regular expression:")
         if pattern is None:
             return
         text = self.editor.GetValue()
@@ -433,11 +435,11 @@ class EdSharpActionsMixin:
         except RegexError as error:
             self._set_status(str(error))
             return
-        self._eds_open_text_in_new_buffer(extracted, "Extracted matches")
+        self._power_tools_open_text_in_new_buffer(extracted, "Extracted matches")
 
     # -------------------------------------------------- EDS-14 speech queries
     def speak_cursor_address(self) -> None:
-        text, cursor = self._eds_text_cursor()
+        text, cursor = self._power_tools_text_cursor()
         self._announce(describe_cursor_address(text, cursor))
 
     def speak_document_status(self) -> None:
@@ -450,7 +452,7 @@ class EdSharpActionsMixin:
 
     # ----------------------------------------------------- EDS-15 go to percent
     def go_to_percent(self) -> None:
-        raw = self._eds_prompt_single("Go To Percent", "Document percentage (0-100):", "50")
+        raw = self._power_tools_prompt_single("Go To Percent", "Document percentage (0-100):", "50")
         if raw is None:
             return
         try:
@@ -468,13 +470,13 @@ class EdSharpActionsMixin:
 
     # ---------------------------------------------- EDS-16 non-blank navigation
     def move_to_first_non_blank(self) -> None:
-        text, cursor = self._eds_text_cursor()
+        text, cursor = self._power_tools_text_cursor()
         position = first_non_blank_position(text, cursor)
         self._move_point(position)
         self._announce_character_at(text, position)
 
     def move_to_last_non_blank(self) -> None:
-        text, cursor = self._eds_text_cursor()
+        text, cursor = self._power_tools_text_cursor()
         position = last_non_blank_position(text, cursor)
         self._move_point(position)
         self._announce_character_at(text, position)
@@ -487,8 +489,8 @@ class EdSharpActionsMixin:
 
     # ------------------------------------------------- EDS-17 key describer
     def toggle_key_describer(self) -> None:
-        active = not getattr(self, "_eds_key_describer", False)
-        self._eds_key_describer = active
+        active = not getattr(self, "_power_tools_key_describer", False)
+        self._power_tools_key_describer = active
         self._announce(
             "Key Describer on; press a key to hear its action" if active else "Key Describer off"
         )
@@ -498,7 +500,7 @@ class EdSharpActionsMixin:
 
         Returns ``True`` if the event was consumed.
         """
-        if not getattr(self, "_eds_key_describer", False):
+        if not getattr(self, "_power_tools_key_describer", False):
             return False
         accelerator = self._accelerator_from_event(event)
         if accelerator is None:
@@ -558,9 +560,9 @@ class EdSharpActionsMixin:
 
     # ------------------------------------------- EDS-18 indent infer/announce
     def toggle_indent_announce(self) -> None:
-        active = not getattr(self, "_eds_indent_announce", False)
-        self._eds_indent_announce = active
-        self._eds_last_indent_columns = self._current_indent_columns()
+        active = not getattr(self, "_power_tools_indent_announce", False)
+        self._power_tools_indent_announce = active
+        self._power_tools_last_indent_columns = self._current_indent_columns()
         self._announce(
             "Indentation announcements on" if active else "Indentation announcements off"
         )
@@ -575,11 +577,11 @@ class EdSharpActionsMixin:
         return indent_columns(text[line_start:line_end], tab_width=tab_width)
 
     def _maybe_announce_indent(self) -> None:
-        if not getattr(self, "_eds_indent_announce", False):
+        if not getattr(self, "_power_tools_indent_announce", False):
             return
         current = self._current_indent_columns()
-        previous = getattr(self, "_eds_last_indent_columns", current)
-        self._eds_last_indent_columns = current
+        previous = getattr(self, "_power_tools_last_indent_columns", current)
+        self._power_tools_last_indent_columns = current
         message = describe_indent_change(previous, current)
         if message is not None:
             self._announce(message)
@@ -626,7 +628,7 @@ class EdSharpActionsMixin:
         self._set_status(f"Running {path.name}")
 
     def run_target_at_cursor(self) -> None:
-        text, cursor = self._eds_text_cursor()
+        text, cursor = self._power_tools_text_cursor()
         start, end = self.editor.GetSelection()
         selection = text[start:end] if start != end else ""
         token = target_at_cursor(text, cursor, selection)
@@ -662,7 +664,7 @@ class EdSharpActionsMixin:
             self._set_status("Save the document before renaming it")
             return
         current = self.document.path
-        new_name = self._eds_prompt_single("Rename File", "New file name:", current.name)
+        new_name = self._power_tools_prompt_single("Rename File", "New file name:", current.name)
         if new_name is None:
             return
         new_name = new_name.strip()

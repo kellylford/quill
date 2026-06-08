@@ -1,6 +1,6 @@
 """Indentation inference and announcement helpers (EDS-18).
 
-EdSharp's Infer Indent (Alt+RightBracket) reports the document's indent unit and
+Infer Indentation reports the document's indent unit and
 can adopt it, while an opt-in mode announces indentation-level changes while
 navigating by line. UI-framework agnostic so it can be unit-tested without
 ``wx``.

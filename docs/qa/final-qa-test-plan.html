@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="pandoc" />
+  <meta name="generator" content="pandoc 3.10" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>final-qa-test-plan</title>
   <style>
@@ -156,8 +156,12 @@
       text-decoration: none;
     }
     span.smallcaps{font-variant: small-caps;}
-    div.columns{display: flex; gap: min(4vw, 1.5em);}
-    div.column{flex: auto; overflow-x: auto;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     /* The extra [class] is a hack that increases specificity enough to
        override a similar rule in reveal.js */
@@ -172,14 +176,14 @@
   </style>
 </head>
 <body>
-<h1 id="quill-1.0-final-qa-test-plan">QUILL 1.0 final-QA test plan</h1>
+<h1 id="quill-10-final-qa-test-plan">QUILL 1.0 final-QA test plan</h1>
 <p>Status: living document — execution owned by the maintainer for the
 Tier 6 release gate (DLG-3.8). This is the authoritative manual and
 exploratory test plan for the QUILL 1.0 release. It complements, and
 does not replace, the machine-enforced gate ladder (PR CI, Security CI,
 Accessibility CI) and the <code>dialogs.md</code> manual dialog
 regression checklist.</p>
-<h2 id="purpose-and-scope">1. Purpose and scope</h2>
+<h2 id="1-purpose-and-scope">1. Purpose and scope</h2>
 <p>This plan defines the final, human-executed quality pass required
 before QUILL 1.0 ships. Its job is to verify, on a real Windows runtime
 with real assistive technology, the behaviours that static analysis and
@@ -197,7 +201,7 @@ navigation.</li>
 <li>The QUILL key, browse mode, and Quick Nav surfaces.</li>
 <li>File, session, and document lifecycle (open, edit, save,
 recover).</li>
-<li>AI / assistant tool flows, including consent gating and async “busy”
+<li>AI / assistant tool flows, including consent gating and async "busy"
 states.</li>
 <li>OCR capture and review.</li>
 <li>Startup, onboarding, trust-consent, and crash-recovery paths.</li>
@@ -209,16 +213,10 @@ states.</li>
 <code>ROADMAP.md</code>): axe-core / Nu Html Checker validation, BITS
 Whisperer, the GLOW watch-action binding (WATCH-8), and the
 Accessibility Agents workstream.</p>
-<h2 id="test-environments">2. Test environments</h2>
+<h2 id="2-test-environments">2. Test environments</h2>
 <p>Run the full pass on at least one machine from each row. Record the
 exact build identifier (version + commit) on every result.</p>
 <table>
-<colgroup>
-<col style="width: 25%" />
-<col style="width: 25%" />
-<col style="width: 25%" />
-<col style="width: 25%" />
-</colgroup>
 <thead>
 <tr>
 <th>Environment</th>
@@ -262,7 +260,7 @@ exact build identifier (version + commit) on every result.</p>
 </table>
 <p>Build under test: record <code>version</code> from About Quill and
 the commit SHA. A pass is only valid against a single, named build.</p>
-<h2 id="entry-and-exit-criteria">3. Entry and exit criteria</h2>
+<h2 id="3-entry-and-exit-criteria">3. Entry and exit criteria</h2>
 <p>Entry criteria (all must hold before a final-QA pass begins):</p>
 <ul>
 <li>All required CI gates are green on <code>main</code>: PR CI,
@@ -285,13 +283,8 @@ build.</li>
 <li>Each known limitation is documented in the ACR/VPAT and release
 notes.</li>
 </ul>
-<h2 id="severity-model">4. Severity model</h2>
+<h2 id="4-severity-model">4. Severity model</h2>
 <table>
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
 <thead>
 <tr>
 <th>Severity</th>
@@ -324,7 +317,7 @@ is broken</td>
 </tr>
 </tbody>
 </table>
-<h2 id="evidence-capture">5. Evidence capture</h2>
+<h2 id="5-evidence-capture">5. Evidence capture</h2>
 <p>For every test case record: build id, environment row, screen reader
 + version, pass/fail, and a one-line observation. For dialog cases,
 capture the exact announced title and the announced text of the default
@@ -333,7 +326,7 @@ vs actual announcement/focus, severity, and a linked issue.</p>
 <p>Store the completed evidence alongside this plan (a dated copy of the
 filled <code>dialogs.md</code> plus a results sheet) so each release has
 a durable record.</p>
-<h2 id="dialog-estate-pass-covers-dlg-2-dlg-3.6-dlg-3.8">6. Dialog
+<h2 id="6-dialog-estate-pass-covers-dlg-2-dlg-36-dlg-38">6. Dialog
 estate pass (covers DLG-2, DLG-3.6, DLG-3.8)</h2>
 <p>The authoritative list is <code>dialogs.md</code> (sections A–X). Do
 not duplicate it here; execute it directly. The contract every dialog
@@ -384,7 +377,7 @@ cancel.</li>
 <td>Sanity</td>
 </tr>
 <tr>
-<td>G. Read aloud + OCR (incl. OCR Review)</td>
+<td>G. Read aloud + OCR (incl. OCR Review)</td>
 <td>Full</td>
 <td>Spot</td>
 <td>Sanity</td>
@@ -432,7 +425,7 @@ cancel.</li>
 <td>Sanity</td>
 </tr>
 <tr>
-<td>W. EdSharp Tools</td>
+<td>W. Power Tools</td>
 <td>Full</td>
 <td>—</td>
 <td>Sanity</td>
@@ -445,8 +438,8 @@ cancel.</li>
 </tr>
 </tbody>
 </table>
-<p>“Full” = exercise the complete A11Y-4 contract. “Spot” = open,
-confirm title + default + Escape + focus return. “Sanity” = open and
+<p>"Full" = exercise the complete A11Y-4 contract. "Spot" = open,
+confirm title + default + Escape + focus return. "Sanity" = open and
 confirm it is not silent or trapped. JAWS spot priority: startup, the
 assistant/AI tools, sticky notes, and watch profiles (the surfaces with
 live lists, async work, and chained modals).</p>
@@ -455,7 +448,7 @@ DLG-3.6 acceptance the maintainer is signing off:</p>
 <ul>
 <li>Each long-running action disables its trigger before work starts and
 re-enables on completion.</li>
-<li>“Busy” state is announced; the surface never appears hung.</li>
+<li>"Busy" state is announced; the surface never appears hung.</li>
 <li>Results marshalled back to the UI thread are announced once, not
 duplicated.</li>
 <li>A worker exception surfaces as an announced error, not a silent
@@ -463,7 +456,7 @@ failure.</li>
 <li>No cloud/AI action runs without an explicit, per-action
 consent.</li>
 </ul>
-<h2 id="keyboard-and-focus-pass">7. Keyboard and focus pass</h2>
+<h2 id="7-keyboard-and-focus-pass">7. Keyboard and focus pass</h2>
 <ul>
 <li>Tab order is sensible and complete on the main shell and every
 dialog.</li>
@@ -479,13 +472,13 @@ announce.</li>
 their menu.</li>
 <li>Focus returns to the editor after every modal closes.</li>
 </ul>
-<h2 id="file-session-and-document-lifecycle">8. File, session, and
+<h2 id="8-file-session-and-document-lifecycle">8. File, session, and
 document lifecycle</h2>
 <ul>
 <li>Open, edit, save, Save As, and encoding selection round-trip
 correctly.</li>
 <li>Dirty-state title suffix appears and clears accurately.</li>
-<li>Prompt-to-save offers Save / Don’t Save / Cancel and honours
+<li>Prompt-to-save offers Save / Don't Save / Cancel and honours
 each.</li>
 <li>Multi-tab switch wraps correctly and is announced.</li>
 <li>Session save/open restores the working set.</li>
@@ -494,7 +487,7 @@ file; <code>.bak</code> / recovery behaves per the data-layout
 contract.</li>
 <li>Restore Backup recovers a prior version.</li>
 </ul>
-<h2 id="ai-consent-and-privacy-pass">9. AI, consent, and privacy
+<h2 id="9-ai-consent-and-privacy-pass">9. AI, consent, and privacy
 pass</h2>
 <ul>
 <li>No outbound document content without an explicit, visible,
@@ -503,13 +496,13 @@ per-action consent.</li>
 sending.</li>
 <li>A declined consent cancels the action and announces the
 cancellation.</li>
-<li>API keys are stored via DPAPI; “Forget API Key” clears them and
+<li>API keys are stored via DPAPI; "Forget API Key" clears them and
 confirms.</li>
 <li>The device-login round trip (AI-19) completes against the live
 endpoint on a real network (cannot be verified headless).</li>
 <li>No document text appears in any log file after an AI action.</li>
 </ul>
-<h2 id="ocr-pass-ocr-1-ocr-3">10. OCR pass (OCR-1, OCR-3)</h2>
+<h2 id="10-ocr-pass-ocr-1-ocr-3">10. OCR pass (OCR-1, OCR-3)</h2>
 <p>Requires a live display, clipboard, and OCR engine, so it cannot be
 verified headless.</p>
 <ul>
@@ -521,8 +514,8 @@ window.</li>
 and inserts the accepted text at the caret.</li>
 <li>A failed or empty OCR announces a clear outcome, not silence.</li>
 </ul>
-<h2 id="startup-onboarding-and-recovery-pass">11. Startup, onboarding,
-and recovery pass</h2>
+<h2 id="11-startup-onboarding-and-recovery-pass">11. Startup,
+onboarding, and recovery pass</h2>
 <ul>
 <li>First run shows onboarding; consent is recorded only on explicit
 accept.</li>
@@ -531,11 +524,12 @@ continuing.</li>
 <li>Each deferred startup step is isolated: a forced failure in one step
 logs to <code>logs/startup-errors.log</code> and keeps QUILL open.</li>
 <li>Crash Recovery appears after an unclean exit and restores or
-discards per the user’s choice.</li>
+discards per the user's choice.</li>
 <li>The Untrusted Location Warning appears for files from untrusted
 folders.</li>
 </ul>
-<h2 id="read-aloud-and-speech-pass">12. Read-aloud and speech pass</h2>
+<h2 id="12-read-aloud-and-speech-pass">12. Read-aloud and speech
+pass</h2>
 <ul>
 <li>Read Aloud Voice Settings and Read Aloud Settings apply and
 persist.</li>
@@ -543,7 +537,7 @@ persist.</li>
 <li>Voice selection chain falls back gracefully when an engine is
 unavailable.</li>
 </ul>
-<h2 id="installer-and-first-run-pass-clean-machine">13. Installer and
+<h2 id="13-installer-and-first-run-pass-clean-machine">13. Installer and
 first-run pass (clean machine)</h2>
 <ul>
 <li>The installer runs to completion on a fresh Windows VM with no
@@ -555,7 +549,7 @@ running.</li>
 <li>Uninstall removes the app and leaves user data per the documented
 policy.</li>
 </ul>
-<h2 id="performance-and-stability-pass">14. Performance and stability
+<h2 id="14-performance-and-stability-pass">14. Performance and stability
 pass</h2>
 <ul>
 <li>Open and edit a large document (target sizes per the PERF acceptance
@@ -567,7 +561,7 @@ environment.</li>
 <li>The diagnostics bundle (Save Diagnostics) collects without document
 content.</li>
 </ul>
-<h2 id="high-contrast-and-visual-pass">15. High-contrast and visual
+<h2 id="15-high-contrast-and-visual-pass">15. High-contrast and visual
 pass</h2>
 <ul>
 <li>High Contrast mode renders every surface legibly; nothing
@@ -576,13 +570,13 @@ disappears.</li>
 <li>Contrast validation tooling reports the shipped theme as
 compliant.</li>
 </ul>
-<h2 id="localization-sanity">16. Localization sanity</h2>
+<h2 id="16-localization-sanity">16. Localization sanity</h2>
 <ul>
-<li>The shipped locales load; no layout breaks truncate a control’s
+<li>The shipped locales load; no layout breaks truncate a control's
 name.</li>
 <li>Announcements remain grammatical in each shipped locale.</li>
 </ul>
-<h2 id="sign-off">17. Sign-off</h2>
+<h2 id="17-sign-off">17. Sign-off</h2>
 <p>Final sign-off is recorded by the maintainer against a single named
 build when every section has evidence, <code>dialogs.md</code> is fully
 ticked for that build, and no open Critical or High defect remains. This

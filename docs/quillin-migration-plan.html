@@ -243,10 +243,10 @@
 <body>
 <h1
 id="migrating-quills-first-party-code-onto-the-quillins-contribution-grammar">Migrating
-QUILL’s first-party code onto the Quillins contribution grammar</h1>
+QUILL's first-party code onto the Quillins contribution grammar</h1>
 <p>Status: <strong>In progress — Wave 0 + Pilot 1 shipped; Host facade +
 Wave 2 line transforms landed</strong> · Companion to
-<code>docs/scripting.md</code> (esp. §16) and <code>menus.md</code>
+<code>docs/scripting.md</code> (esp. §16) and <code>menus.md</code>
 (§3.7 + Phase 5) · Scope: <strong>internal refactor, 2.0-scale,
 maintainability-driven</strong></p>
 <blockquote>
@@ -258,17 +258,17 @@ low-risk, reversible procedure for moving built-in features out of the
 context-menu entries) that Quillins already use — turning
 <code>quill/core</code> into a genuine framework.</p>
 </blockquote>
-<h2 id="the-one-insight-this-plan-rests-on">1. The one insight this plan
-rests on</h2>
+<h2 id="1-the-one-insight-this-plan-rests-on">1. The one insight this
+plan rests on</h2>
 <p>The Quillins framework already defines, validates, and wires a
 contribution vocabulary: a <strong>command</strong> (<code>id</code>,
 <code>title</code>, a handler), its placement in <strong>menus</strong>
 and the <strong>context menu</strong>, and its <strong>hotkey</strong>
 binding, all merged with conflict detection
-(<code>quill/core/quillins/registry.py</code>). QUILL’s built-ins are
+(<code>quill/core/quillins/registry.py</code>). QUILL's built-ins are
 wired with <em>the same concepts</em>, but by hand, inline, inside one
 20k-line class.</p>
-<p>So the migration is not “rewrite features”. It is: <strong>express
+<p>So the migration is not "rewrite features". It is: <strong>express
 each existing feature as a self-registering module that contributes
 commands through one host facade</strong>, and delete the corresponding
 hand-wiring from <code>main_frame.py</code>.</p>
@@ -286,30 +286,30 @@ out-of-process Quillin path.</strong> That path exists for
 <em>untrusted</em> code; forcing trusted per-keystroke built-ins across
 an RPC bridge would wreck latency and capability for zero security
 gain.</p>
-<h2 id="guardrails-what-must-not-be-migrated">2. Guardrails — what must
-NOT be migrated</h2>
-<p>These are load-bearing for QUILL’s identity. Decomposing them is how
+<h2 id="2-guardrails--what-must-not-be-migrated">2. Guardrails — what
+must NOT be migrated</h2>
+<p>These are load-bearing for QUILL's identity. Decomposing them is how
 accessibility regresses (see §16.3):</p>
 <ul>
 <li><strong>The editor surface.</strong> The plain-text
 <code>wx.TextCtrl</code> writing path stays a first-class, hand-owned
 widget. It is not a plugin and gets no <code>register(host)</code>.</li>
 <li><strong>The accessibility / announcement engine.</strong>
-NVDA/JAWS/Narrator parity is the framework’s central guarantee. It is
+NVDA/JAWS/Narrator parity is the framework's central guarantee. It is
 <em>called by</em> migrated modules; it is not itself pluginized.</li>
 <li><strong>App lifecycle &amp; frame construction.</strong> Startup
 ordering, tab management, the single-instance guard, crash recovery, and
 the menu <em>bar</em> skeleton remain core.</li>
 <li><strong>Anything with deep shared-mutable-state coupling</strong>
 that cannot be covered by a characterization test first (see §5). If you
-can’t pin its behavior, you can’t safely move it yet.</li>
+can't pin its behavior, you can't safely move it yet.</li>
 </ul>
 <p>When in doubt: a feature is a migration candidate iff it is
 <strong>command-shaped</strong> — it has a stable id, a title, a
 handler, and (optionally) a menu/hotkey/context placement — and its
 handler can reach everything it needs through the host facade (§4).</p>
-<h2 id="target-shape-of-a-migrated-module">3. Target shape of a migrated
-module</h2>
+<h2 id="3-target-shape-of-a-migrated-module">3. Target shape of a
+migrated module</h2>
 <p>A first-party feature module is a small, self-contained file exposing
 one top-level <code>register(host)</code> that contributes its commands.
 It mirrors the Quillin <code>register(api)</code> shape so the mental
@@ -342,11 +342,12 @@ class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a hr
 <span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    ctx.announce(<span class="st">&quot;Numbered lines&quot;</span>)</span></code></pre></div>
 <p>The module imports <strong>no <code>wx</code></strong> directly for
 its <em>logic</em>; UI effects go through the host facade, exactly as
-the EdSharp handlers already centralize their edits. (A module may still
-live under <code>quill/ui/</code> and use <code>wx</code> for genuinely
-bespoke UI, but that UI must pass A11Y-4 review — it is first-party, not
-a sandboxed extension.)</p>
-<h2 id="the-first-party-host-facade">4. The first-party host facade</h2>
+the Power Tools handlers already centralize their edits. (A module may
+still live under <code>quill/ui/</code> and use <code>wx</code> for
+genuinely bespoke UI, but that UI must pass A11Y-4 review — it is
+first-party, not a sandboxed extension.)</p>
+<h2 id="4-the-first-party-host-facade">4. The first-party host
+facade</h2>
 <p>This is the single piece of <em>new</em> core surface the migration
 introduces, and both halves have now <strong>landed</strong>. The
 registration half (Wave 0): <code>quill/core/contributions.py</code>
@@ -365,11 +366,6 @@ richer breadth below (more editor primitives, services) is the trusted
 superset of <code>QuillExtensionApi</code>, filled in per wave as
 features move:</p>
 <table>
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
 <thead>
 <tr>
 <th>Group</th>
@@ -421,7 +417,7 @@ features move:</p>
 third-party contributions collide-detect against each other and the host
 keymap uniformly. First-party ids are <em>not</em> forced under
 <code>ext.</code> — they keep their existing namespaces
-(<code>lines.*</code>, <code>eds.*</code>, …); only third-party ids
+(<code>lines.*</code>, <code>power.*</code>, …); only third-party ids
 carry <code>ext.</code>.</li>
 <li><strong>The breadth gap is the only difference between
 tiers.</strong> <code>host</code> exposes
@@ -429,18 +425,18 @@ settings/workers/platform/dialogs; <code>api</code> does not. That
 asymmetry <em>is</em> the trust boundary — there is no second
 registration mechanism, no second menu builder, no second keymap.</li>
 </ol>
-<h2 id="strategy-strangler-fig-behind-characterization-tests">5.
+<h2 id="5-strategy-strangler-fig-behind-characterization-tests">5.
 Strategy: strangler-fig, behind characterization tests</h2>
-<p>Never a big-bang “everything is a plugin” rewrite (§16.3). Each
+<p>Never a big-bang "everything is a plugin" rewrite (§16.3). Each
 feature is moved in a self-contained, individually revertible step:</p>
 <ol type="1">
 <li><strong>Pin behavior first.</strong> Write/extend a characterization
-test that asserts the feature’s <em>current</em> observable behavior
+test that asserts the feature's <em>current</em> observable behavior
 (command id registered, menu present, handler output for representative
 input, announcement text). The existing
-<code>test_eds_command_wiring.py</code> is the template: it reads source
-text and asserts the wiring contract without constructing the full
-frame.</li>
+<code>test_power_tools_command_wiring.py</code> is the template: it
+reads source text and asserts the wiring contract without constructing
+the full frame.</li>
 <li><strong>Introduce the facade seam.</strong> Land
 <code>quill/core/contributions.py</code> + its <code>MainFrame</code>
 adapter with <strong>zero behavior change</strong> —
@@ -459,37 +455,38 @@ PR.</li>
 </ol>
 <p>Rollback at any step is a single-file revert because each module is
 independent.</p>
-<h2 id="pilot-selection">6. Pilot selection</h2>
+<h2 id="6-pilot-selection">6. Pilot selection</h2>
 <p>Pick first movers that are <strong>already command-shaped and already
 extracted into a mixin</strong>, so the migration is mechanical and the
 risk is near zero. The codebase hands us an ideal pilot:</p>
 <ul>
-<li><p><strong>Pilot 1 — EdSharp Tools (<code>eds.*</code>).</strong>
-<code>quill/ui/main_frame_edsharp_menu.py</code> already centralizes the
-commands as a <code>(id, label, handler)</code> table
-(<code>_edsharp_command_table</code>) and the handlers already live on
-one mixin (<code>EdSharpActionsMixin</code>). That table <em>is</em> a
-contribution list in all but name — converting it to
+<li><p><strong>Pilot 1 — Power Tools (<code>power.*</code>).</strong>
+<code>quill/ui/main_frame_power_tools_menu.py</code> already centralizes
+the commands as a <code>(id, label, handler)</code> table
+(<code>_power_tools_command_table</code>) and the handlers already live
+on one mixin (<code>PowerToolsActionsMixin</code>). That table
+<em>is</em> a contribution list in all but name — converting it to
 <code>host.add_command(...)</code> calls is a near-syntactic transform,
-and <code>test_eds_command_wiring.py</code> already pins the
+and <code>test_power_tools_command_wiring.py</code> already pins the
 contract.</p>
 <p><strong>This pilot and the menu-consolidation plan are the same
-work.</strong> <code>menus.md</code> §3.7 renames
-<code>EdSharp Tools</code> → <code>Power Tools</code> and
-<strong>recirculates</strong> most of its commands into their
-conventional homes (Insert/Edit/Format/Search/Navigate/File and the
-Compare/Read-Aloud Tools submenus). Done by hand against today’s inline
+work.</strong> <code>menus.md</code> §3.7 groups these under
+<code>Power Tools</code> and <strong>recirculates</strong> most of its
+commands into their conventional homes
+(Insert/Edit/Format/Search/Navigate/File and the Compare/Read-Aloud
+Tools submenus). Done by hand against today's inline
 <code>wx.Menu().Append(...)</code> wiring that is a fiddly, error-prone
 move across hundreds of lines. Done <em>through the contribution
 grammar</em> it is a <strong>pure data edit</strong>: each command
 already carries a <code>menu=(...)</code> placement tuple, so
-recirculating <code>eds.number_lines</code> from the EdSharp submenu to
-<code>Format</code> is changing one tuple — the registry re-files it,
-the palette and Keymap Editor are untouched, and the collision detector
-still guards it. Migrate EdSharp first (Wave 1), then the menus.md §3.7
-recirculation becomes the motivating, low-risk demonstration that “menus
-as data” works. The two plans should land together.</p></li>
-<li><p><strong>Pilot 2 — line operations &amp; “speak …”
+recirculating <code>power.number_lines</code> from the Power Tools
+submenu to <code>Format</code> is changing one tuple — the registry
+re-files it, the palette and Keymap Editor are untouched, and the
+collision detector still guards it. Migrate Power Tools first (Wave 1),
+then the menus.md §3.7 recirculation becomes the motivating, low-risk
+demonstration that "menus as data" works. The two plans should land
+together.</p></li>
+<li><p><strong>Pilot 2 — line operations &amp; "speak …"
 commands.</strong> Self-contained, pure-ish text transforms with clear
 announcements and no dialog dependencies.</p></li>
 <li><p><strong>Pilot 3 — formatting commands</strong> that contribute
@@ -498,15 +495,9 @@ under the <code>Format</code> menu.</p></li>
 <p>Defer: anything touching tab lifecycle, the watch service,
 AI/assistant flows, or shared mutable selection state until the facade
 has proven itself on Pilots 1–3.</p>
-<h2 id="wave-by-wave-sequencing">7. Wave-by-wave sequencing</h2>
+<h2 id="7-wave-by-wave-sequencing">7. Wave-by-wave sequencing</h2>
 <p>Status legend: ✅ shipped · ⏳ future.</p>
 <table>
-<colgroup>
-<col style="width: 25%" />
-<col style="width: 25%" />
-<col style="width: 25%" />
-<col style="width: 25%" />
-</colgroup>
 <thead>
 <tr>
 <th>Wave</th>
@@ -530,14 +521,14 @@ stable</td>
 </tr>
 <tr>
 <td>1</td>
-<td>Pilot 1 (EdSharp <code>eds.*</code>) — <strong>lands the menus.md
-§3.7 rename + recirculation as data</strong></td>
-<td>EdSharp table + menu recirculation <strong>derived from</strong> the
-declarative <code>EDSHARP_COMMANDS</code> manifest (each command carries
-its recirculated home Insert/Edit/Format/Search/Navigate/File or the
-renamed <code>Power Tools</code> remainder);
-<code>test_eds_command_wiring.py</code> reads the manifest and is green;
-live menu byte-for-byte identical</td>
+<td>Pilot 1 (Power Tools <code>power.*</code>) — <strong>lands the
+menus.md §3.7 rename + recirculation as data</strong></td>
+<td>Power Tools table + menu recirculation <strong>derived from</strong>
+the declarative <code>POWER_TOOLS_COMMANDS</code> manifest (each command
+carries its recirculated home Insert/Edit/Format/Search/Navigate/File or
+the renamed <code>Power Tools</code> remainder);
+<code>test_power_tools_command_wiring.py</code> reads the manifest and
+is green; live menu byte-for-byte identical</td>
 <td>✅ Shipped</td>
 </tr>
 <tr>
@@ -545,8 +536,8 @@ live menu byte-for-byte identical</td>
 <td>Line-ops + speak/status commands</td>
 <td>Each command a module; characterization tests green</td>
 <td>🔄 In progress — <code>Host</code> facade + adapter shipped; the
-line-transforms group (<code>eds.number_lines</code>,
-<code>eds.hard_wrap_lines</code>) migrated to
+line-transforms group (<code>power.number_lines</code>,
+<code>power.hard_wrap_lines</code>) migrated to
 <code>quill/ui/features/line_transforms.py</code> and removed from the
 mixin (§9 worked example). Remaining line/speak/status commands
 future</td>
@@ -592,19 +583,20 @@ facade: a <code>FirstPartyRegistrar</code> collects
 first-party ids and any Quillin contribution collide-detect uniformly
 (verified by
 <code>test_first_party_and_quillin_collide_through_one_registry</code>).
-First-party ids keep their namespaces (<code>eds.*</code>) and may
+First-party ids keep their namespaces (<code>power.*</code>) and may
 attach under the whole bar (<code>FIRST_PARTY_MENU_PARENTS</code> is a
-superset of the narrow third-party <code>MENU_PARENTS</code>). The
-EdSharp pilot (<code>quill/ui/main_frame_edsharp_menu.py</code>) is the
-first consumer: its 33 commands are declared once as
-<code>EDSHARP_COMMANDS</code>, and both the palette registration table
-and the menu recirculation (one <code>_append_edsharp_group</code> loop
-instead of eight hand-written helpers) derive from that data. The
-handler resolves by convention (<code>eds.number_lines</code> →
+superset of the narrow third-party <code>MENU_PARENTS</code>). The Power
+Tools pilot (<code>quill/ui/main_frame_power_tools_menu.py</code>) is
+the first consumer: its 33 commands are declared once as
+<code>POWER_TOOLS_COMMANDS</code>, and both the palette registration
+table and the menu recirculation (one
+<code>_append_power_tools_group</code> loop instead of eight
+hand-written helpers) derive from that data. The handler resolves by
+convention (<code>power.number_lines</code> →
 <code>self.number_lines</code>), so the data and behavior cannot drift.
 Waves 2–N repeat this mechanically, one command group per PR.</p>
 </blockquote>
-<h2 id="per-feature-migration-checklist">8. Per-feature migration
+<h2 id="8-per-feature-migration-checklist">8. Per-feature migration
 checklist</h2>
 <p>For every feature moved:</p>
 <ul class="task-list">
@@ -628,7 +620,7 @@ collide-detect via the shared registry (no silently-overridden hotkey —
 §4 rule 1).</label></li>
 <li><label><input type="checkbox" />If the feature owns a dialog:
 <code>dialog_inventory.json</code> regenerated, the A11Y-4 gate green,
-<code>dialogs.md</code> row unchanged (the dialog didn’t move for the
+<code>dialogs.md</code> row unchanged (the dialog didn't move for the
 user, only in code).</label></li>
 <li><label><input
 type="checkbox" /><code>ruff format</code>/<code>check</code> clean;
@@ -639,14 +631,14 @@ green.</label></li>
 method disappeared, regenerate the public-surface fixture and review the
 diff.</label></li>
 </ul>
-<h2 id="worked-example-migrating-eds.number_lines">9. Worked example —
-migrating <code>eds.number_lines</code></h2>
+<h2 id="9-worked-example--migrating-powernumber_lines">9. Worked example
+— migrating <code>power.number_lines</code></h2>
 <p><strong>Before</strong> (conceptually, in
-<code>main_frame_edsharp_menu.py</code> +
-<code>EdSharpActionsMixin</code>):</p>
+<code>main_frame_power_tools_menu.py</code> +
+<code>PowerToolsActionsMixin</code>):</p>
 <div class="sourceCode" id="cb3"><pre
 class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># table row</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>(<span class="st">&quot;eds.number_lines&quot;</span>, <span class="st">&quot;EdSharp: Number Lines&quot;</span>, <span class="va">self</span>.number_lines)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>(<span class="st">&quot;power.number_lines&quot;</span>, <span class="st">&quot;Number Lines&quot;</span>, <span class="va">self</span>.number_lines)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># registration loop calls self.commands.register(id, label, handler, binding)</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># and the menu builder appends + binds the same id</span></span></code></pre></div>
 <p><strong>After</strong>
@@ -654,28 +646,28 @@ class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a hr
 <div class="sourceCode" id="cb4"><pre
 class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> register(host):</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    host.add_command(</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        <span class="bu">id</span><span class="op">=</span><span class="st">&quot;eds.number_lines&quot;</span>,</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span><span class="st">&quot;EdSharp: Number Lines&quot;</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        <span class="bu">id</span><span class="op">=</span><span class="st">&quot;power.number_lines&quot;</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span><span class="st">&quot;Number Lines&quot;</span>,</span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        handler<span class="op">=</span>_number_lines,</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        menu<span class="op">=</span>(<span class="st">&quot;Format&quot;</span>,),         <span class="co"># recirculated home (menus.md §3.7), not a deep</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                                  <span class="co"># &quot;Tools &gt; EdSharp Tools &gt; Lines&quot; chain</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                                  <span class="co"># &quot;Tools &gt; Power Tools &gt; Lines&quot; chain</span></span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _number_lines(ctx):</span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ctx.is_read_only():</span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        ctx.set_status(<span class="st">&quot;Document is read-only&quot;</span>)</span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    ...                       <span class="co"># same body as today&#39;s EdSharpActionsMixin.number_lines</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    ...                       <span class="co"># same body as today&#39;s PowerToolsActionsMixin.number_lines</span></span>
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    ctx.announce(<span class="st">&quot;Numbered lines&quot;</span>)</span></code></pre></div>
-<p>and in <code>main_frame.py</code>, the EdSharp block collapses
+<p>and in <code>main_frame.py</code>, the Power Tools block collapses
 to:</p>
 <div class="sourceCode" id="cb5"><pre
 class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quill.ui.features <span class="im">import</span> eds_line_ops</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>eds_line_ops.register(<span class="va">self</span>._contribution_host)</span></code></pre></div>
 <p>The user sees the command in its <strong>new, conventional
 home</strong> (Format, per menus.md §3.7) instead of three levels deep
-under a foreign-branded “EdSharp Tools” submenu — same palette entry,
-same key-bindability, same announcement. The maintainer sees one fewer
+under a single power-tools submenu — same palette entry, same
+key-bindability, same announcement. The maintainer sees one fewer
 responsibility in the god object, a module they can read in isolation,
 <strong>and</strong> the menu recirculation expressed as one
 <code>menu=</code> tuple rather than hand-edited <code>wx.Menu</code>
@@ -684,21 +676,21 @@ arrive in the same diff.</p>
 <blockquote>
 <p><strong>✅ Shipped (Wave 2 first cut).</strong> This example is real:
 <code>quill/ui/features/line_transforms.py</code> now owns the
-<code>eds.number_lines</code> and <code>eds.hard_wrap_lines</code>
+<code>power.number_lines</code> and <code>power.hard_wrap_lines</code>
 handlers as pure <code>host</code>-driven functions (no <code>wx</code>,
 no <code>MainFrame</code> reach-in); they were deleted from
-<code>EdSharpActionsMixin</code>. The EdSharp registration table
+<code>PowerToolsActionsMixin</code>. The Power Tools registration table
 resolves those two ids to the feature handlers via the live
 <code>MainFrameHost</code>, while the declarative
-<code>EDSHARP_COMMANDS</code> manifest still owns their
+<code>POWER_TOOLS_COMMANDS</code> manifest still owns their
 <code>Format &gt; Transform Lines</code> placement. Behaviour is
 verified identical by
 <code>tests/unit/ui/test_contribution_host.py</code> (fake-host logic)
 plus a live <code>MainFrame</code> smoke test; the full suite stays
-green. The remaining EdSharp groups are mechanical repeats of this same
-move.</p>
+green. The remaining Power Tools groups are mechanical repeats of this
+same move.</p>
 </blockquote>
-<h2 id="done-criteria-honest-limits">10. Done criteria &amp; honest
+<h2 id="10-done-criteria--honest-limits">10. Done criteria &amp; honest
 limits</h2>
 <p><strong>Done looks like:</strong> <code>quill/core</code> carries the
 document model, command registry, keymap, event bus, feature gating, the

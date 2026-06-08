@@ -177,11 +177,11 @@
 </head>
 <body>
 <h1
-id="converting-quill-features-into-bundled-quillins-a-flexibility-proof">Converting
+id="converting-quill-features-into-bundled-quillins--a-flexibility-proof">Converting
 QUILL features into bundled Quillins — a flexibility proof</h1>
 <p>Status: <strong>Proposed roadmap (2.0-scale, demonstration- and
 maintainability-driven)</strong> · Companion to
-<code>docs/scripting.md</code> (esp. §6 security, §16 modularization)
+<code>docs/scripting.md</code> (esp. §6 security, §16 modularization)
 and <code>docs/quillin-migration-plan.md</code> · Sample artifact: <a
 href="../examples/quillins/markdown-helpers/"><code>examples/quillins/markdown-helpers/</code></a></p>
 <blockquote>
@@ -198,8 +198,8 @@ core</strong>. If QUILL can host its own features through the same
 narrow door it offers strangers, the extension platform is real, not a
 brochure.</p>
 </blockquote>
-<h2 id="what-this-proves-and-why-it-is-worth-doing">1. What this proves,
-and why it is worth doing</h2>
+<h2 id="1-what-this-proves-and-why-it-is-worth-doing">1. What this
+proves, and why it is worth doing</h2>
 <p>The Quillins framework is fully built and tested
 (<code>quill/core/quillins/*</code>), but in QUILL 1.0 it runs
 <strong>zero</strong> real extensions: third-party execution is locked
@@ -215,14 +215,14 @@ grammar, capability catalogue, consent gate, out-of-process isolation,
 and packaging against <em>features users already rely on</em> shows the
 platform can carry production weight — the strongest possible signal to
 third-party authors.</li>
-<li><strong>A smaller core.</strong> Each converted feature’s algorithm,
+<li><strong>A smaller core.</strong> Each converted feature's algorithm,
 tests, menu wiring, and handler leave
 <code>quill/core</code>/<code>quill/ui</code>. The god object
 (<code>quill/ui/main_frame.py</code>) shrinks and
 <code>quill/core</code> keeps only what other core code still
 needs.</li>
 <li><strong>A living dogfood.</strong> Bundled Quillins are run on every
-launch, so the framework’s hot paths stay exercised and honest rather
+launch, so the framework's hot paths stay exercised and honest rather
 than dormant behind a locked flag.</li>
 </ol>
 <p>This is a <strong>demonstration + maintainability</strong> effort. It
@@ -230,7 +230,8 @@ adds no user-facing capability (the features already exist), so it is
 sequenced <strong>after</strong> 1.0 user-facing work and proceeds
 opportunistically — every step leaves the suite green and the
 accessibility contract intact, or it does not land.</p>
-<h2 id="three-trust-tiers-read-this-before-proposing-any-conversion">2.
+<h2
+id="2-three-trust-tiers-read-this-before-proposing-any-conversion">2.
 Three trust tiers (read this before proposing any conversion)</h2>
 <p>The migration plan established two tiers; this roadmap needs a third.
 Keeping them straight is the whole game.</p>
@@ -268,20 +269,15 @@ trusted per-keystroke built-ins are <em>not</em> forced across an RPC
 bridge. Tier C is for features where the out-of-process round-trip is
 acceptable (on-demand, not per-keystroke) <strong>and</strong> the whole
 point is to demo the extension path. Converting a hot-path feature to
-Tier C to “be pure” would wreck latency for zero gain — that belongs in
+Tier C to "be pure" would wreck latency for zero gain — that belongs in
 Tier B.</p>
 </blockquote>
 <h2
-id="the-enabling-work-the-platform-needs-first-honest-prerequisites">3.
+id="3-the-enabling-work-the-platform-needs-first-honest-prerequisites">3.
 The enabling work the platform needs first (honest prerequisites)</h2>
 <p>Tier C does not exist yet. Wave 0 builds it. None of this weakens
 SEC-8.</p>
 <table>
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
 <thead>
 <tr>
 <th>Prerequisite</th>
@@ -337,7 +333,7 @@ registers it as a component.</td>
 <tr>
 <td><strong>Latency budget</strong></td>
 <td>Measure cold-load + warm-invoke round-trip for an on-demand command;
-set a published budget (e.g. warm invoke &lt; 50 ms) below which Tier C
+set a published budget (e.g. warm invoke &lt; 50 ms) below which Tier C
 is acceptable.</td>
 <td>New perf test under <code>tests/perf</code>.</td>
 </tr>
@@ -348,7 +344,7 @@ is acceptable.</td>
 bundled Quillin, ships enabled in a build, appears in <strong>Tools ▸
 Quillins Manager</strong>, and runs end-to-end — with the third-party
 flag still <code>locked_off</code>.</p>
-<h2 id="candidate-selection-what-can-become-a-quillin">4. Candidate
+<h2 id="4-candidate-selection--what-can-become-a-quillin">4. Candidate
 selection — what can become a Quillin</h2>
 <p>A feature is a Tier C candidate iff <strong>all</strong> hold:</p>
 <ul>
@@ -369,14 +365,8 @@ keystroke.</li>
 before the move.</li>
 </ul>
 <h3 id="candidate-catalogue-grounded-in-todays-code">Candidate catalogue
-(grounded in today’s code)</h3>
+(grounded in today's code)</h3>
 <table>
-<colgroup>
-<col style="width: 25%" />
-<col style="width: 25%" />
-<col style="width: 25%" />
-<col style="width: 25%" />
-</colgroup>
 <thead>
 <tr>
 <th>Feature(s)</th>
@@ -391,22 +381,22 @@ before the move.</li>
 <td><code>quill/ui/features/line_transforms.py</code> (already Tier
 B)</td>
 <td>✅ Strong — pure text, already extracted</td>
-<td>Tier C “Text Tools”</td>
+<td>Tier C "Text Tools"</td>
 </tr>
 <tr>
 <td><code>set_lines_first_not_second</code>,
 <code>set_lines_common</code></td>
-<td><code>quill/ui/main_frame_edsharp.py</code></td>
+<td><code>quill/ui/main_frame_power_tools.py</code></td>
 <td>✅ Strong — pure set algebra over two buffers</td>
-<td>Tier C “Text Tools”</td>
+<td>Tier C "Text Tools"</td>
 </tr>
 <tr>
 <td><code>count_regex_matches</code>,
 <code>extract_regex_matches</code></td>
-<td><code>quill/ui/main_frame_edsharp.py</code></td>
+<td><code>quill/ui/main_frame_power_tools.py</code></td>
 <td>✅ Good — pure regex over text (uses <code>regex</code>, a runtime
 dep the worker can ship)</td>
-<td>Tier C “Text Tools”</td>
+<td>Tier C "Text Tools"</td>
 </tr>
 <tr>
 <td>HTML-clipboard → Markdown paste</td>
@@ -414,7 +404,7 @@ dep the worker can ship)</td>
 <code>paste_html_as_markdown</code></td>
 <td>✅ Good — pure transform + <code>clipboard.read</code>; helper
 vendored into the Quillin</td>
-<td>Tier C “Markdown Tools”</td>
+<td>Tier C "Markdown Tools"</td>
 </tr>
 <tr>
 <td>Insert date/time, calculate-and-insert-date</td>
@@ -423,7 +413,7 @@ vendored into the Quillin</td>
 <td>✅ Good — Layer 1 snippet
 (<code>${date}</code>/<code>${time}</code>) or a small handler, no caps
 / <code>editor.write</code></td>
-<td>Tier C “Insert Tools”</td>
+<td>Tier C "Insert Tools"</td>
 </tr>
 <tr>
 <td>Front-matter / boilerplate snippets</td>
@@ -434,7 +424,7 @@ vendored into the Quillin</td>
 <tr>
 <td>Read-only guard, <code>speak_*</code>, key describer, indent
 announce</td>
-<td><code>quill/ui/main_frame_edsharp.py</code></td>
+<td><code>quill/ui/main_frame_power_tools.py</code></td>
 <td>❌ No — announcement-engine / wx / live-event coupled (Tier
 A/B)</td>
 <td>Stay core</td>
@@ -442,9 +432,9 @@ A/B)</td>
 <tr>
 <td><code>run_current_file</code>, <code>run_target_at_cursor</code>,
 file rename/delete</td>
-<td><code>quill/ui/main_frame_edsharp.py</code></td>
+<td><code>quill/ui/main_frame_power_tools.py</code></td>
 <td>❌ No — process execution / shell / filesystem beyond the consent
-model’s intent</td>
+model's intent</td>
 <td>Stay core</td>
 </tr>
 <tr>
@@ -457,19 +447,19 @@ models</td>
 </tr>
 </tbody>
 </table>
-<p>The pattern is clear: <strong>the EdSharp-parity text transforms are
-the ideal proving ground</strong> — many are already pure functions or
-one mixin method away from it, and several already passed through Tier B
+<p>The pattern is clear: <strong>the power-tool text transforms are the
+ideal proving ground</strong> — many are already pure functions or one
+mixin method away from it, and several already passed through Tier B
 (<code>line_transforms.py</code>), so the path from inline → Tier B →
 Tier C is a graded, low-risk ramp.</p>
-<h2 id="the-conversion-procedure-per-feature-strangler-fig">5. The
+<h2 id="5-the-conversion-procedure-per-feature-strangler-fig">5. The
 conversion procedure (per feature, strangler-fig)</h2>
 <p>Mirrors <code>quillin-migration-plan.md</code> §5/§8 but the target
 is the <strong>Quillin path</strong>, and the algorithm <strong>moves
 out of core</strong> rather than staying behind a facade.</p>
 <ol type="1">
 <li><strong>Pin behavior first.</strong> Add/extend a characterization
-test asserting the feature’s current observable behavior (handler output
+test asserting the feature's current observable behavior (handler output
 for representative input, announcement text, menu/hotkey placement). For
 an already-extracted helper, the existing core test is the
 baseline.</li>
@@ -478,10 +468,10 @@ baseline.</li>
 install-tree home) with a <code>manifest.json</code>
 (<code>quill.extension/1</code>, <code>ext.*</code> ids, declared
 capabilities) and <code>extension.py</code>. <strong>Vendor the pure
-algorithm into the Quillin</strong> — move the wx-free helper (e.g. the
+algorithm into the Quillin</strong> — move the wx-free helper (e.g. the
 relevant function from <code>quill/core/html_to_markdown.py</code>) into
 a sibling module the Quillin imports, and move its unit tests alongside.
-“Thin core, fat Quillin”: core keeps a function only if other
+"Thin core, fat Quillin": core keeps a function only if other
 <em>core</em> code still calls it.</li>
 <li><strong>Register it as bundled.</strong> Add the Quillin to the
 bundled-manifest allowlist so it ships enabled (Wave 0 machinery).</li>
@@ -501,13 +491,8 @@ green; public-surface fixture regenerated if a <code>MainFrame</code>
 method disappeared.</li>
 </ol>
 <p>Rollback at any step is a single-directory + single-PR revert.</p>
-<h2 id="wave-by-wave-sequencing">6. Wave-by-wave sequencing</h2>
+<h2 id="6-wave-by-wave-sequencing">6. Wave-by-wave sequencing</h2>
 <table>
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
 <thead>
 <tr>
 <th>Wave</th>
@@ -528,21 +513,21 @@ and met.</td>
 <tr>
 <td><strong>1 — Text Tools</strong></td>
 <td>Convert 3–5 pure text transforms (<code>set_lines_*</code>,
-number/wrap lines, trim/case/sort if present) into ONE bundled “Text
-Tools” Quillin; delete their core helpers.</td>
+number/wrap lines, trim/case/sort if present) into ONE bundled "Text
+Tools" Quillin; delete their core helpers.</td>
 <td>Each command loads + invokes through the host with byte-identical
 output; core LOC for those features removed; suite green.</td>
 </tr>
 <tr>
 <td><strong>2 — Insert Tools</strong></td>
 <td>Convert date/time + snippet/boilerplate inserters into a bundled
-“Insert Tools” Quillin (mostly Layer 1, zero capabilities).</td>
+"Insert Tools" Quillin (mostly Layer 1, zero capabilities).</td>
 <td>Snippets expand identically; no consent prompts (no gated caps);
 menu homes match <code>menus.md</code>.</td>
 </tr>
 <tr>
 <td><strong>3 — Gated proof</strong></td>
-<td>Convert one <strong>consent-gated</strong> feature (e.g. an online
+<td>Convert one <strong>consent-gated</strong> feature (e.g. an online
 lookup over <code>net</code>, or a file-backed action over
 <code>fs.*</code>) to a bundled Quillin.</td>
 <td>The real shipped Quillin triggers the <strong>consent gate</strong>
@@ -570,10 +555,10 @@ the guardrail set (§2) explicitly <em>not</em> converted.</td>
 would have to cross a guardrail (§2) or a latency budget (§3) — that
 feature belongs in Tier A/B, and saying so is part of the honest
 result.</p>
-<h2 id="done-criteria-honest-limits">7. Done criteria &amp; honest
+<h2 id="7-done-criteria--honest-limits">7. Done criteria &amp; honest
 limits</h2>
 <p><strong>Done looks like:</strong> a Tier C mechanism shipping a
-handful of QUILL’s own text/insert/markdown features as <strong>bundled,
+handful of QUILL's own text/insert/markdown features as <strong>bundled,
 enabled, sandboxed Quillins</strong>; their algorithms and tests living
 <em>in the Quillins</em>, not in
 <code>quill/core</code>/<code>quill/ui</code>; the <strong>Tools ▸
@@ -599,8 +584,8 @@ flexibility-demonstration and maintainability; sequence after 1.0
 user-facing work; every wave stays green and accessible or it does not
 land.</li>
 <li><strong>Latency is a real constraint, not a footnote.</strong> If
-Wave 0’s measurement shows the out-of-process round-trip is too slow for
-a candidate’s expected use, that candidate stays Tier B. The budget
+Wave 0's measurement shows the out-of-process round-trip is too slow for
+a candidate's expected use, that candidate stays Tier B. The budget
 decides, not the aspiration.</li>
 </ul>
 </body>

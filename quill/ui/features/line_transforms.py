@@ -1,4 +1,4 @@
-"""Line-transform commands (``eds.number_lines``, ``eds.hard_wrap_lines``).
+"""Line-transform commands (``power.number_lines``, ``power.hard_wrap_lines``).
 
 The first feature group migrated off ``main_frame.py`` onto the contribution
 grammar (Quillin migration plan §9, Wave 2). These handlers are the worked
@@ -7,7 +7,7 @@ example: pure functions that read the editor, prompt for a parameter, and apply 
 the wx-free :class:`quill.core.contributions.Host` facade. They import no ``wx``
 and reach no ``MainFrame`` internal, so they are unit-testable with a fake host.
 
-``HANDLERS`` maps each command id to its handler; the EdSharp menu/registration
+``HANDLERS`` maps each command id to its handler; the Power Tools menu/registration
 table resolves these ids to ``lambda: handler(host)`` instead of a mixin method,
 which is what lets the inline bodies leave the god object.
 """
@@ -62,10 +62,10 @@ def hard_wrap_lines(host: Host) -> None:
     )
 
 
-# Command-id -> handler. Consumed by the EdSharp registration/menu wiring so the
+# Command-id -> handler. Consumed by the Power Tools registration/menu wiring so the
 # manifest stays the single declaration of placement while the behavior lives
 # here (migration plan §9).
 HANDLERS: dict[str, Callable[[Host], None]] = {
-    "eds.number_lines": number_lines,
-    "eds.hard_wrap_lines": hard_wrap_lines,
+    "power.number_lines": number_lines,
+    "power.hard_wrap_lines": hard_wrap_lines,
 }

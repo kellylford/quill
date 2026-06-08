@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from quill.ui.main_frame_edsharp import EdSharpActionsMixin
+from quill.ui.main_frame_power_tools import PowerToolsActionsMixin
 
 
-class _Harness(EdSharpActionsMixin):
+class _Harness(PowerToolsActionsMixin):
     """Minimal stand-in exercising the clipboard-to-insert path."""
 
     def __init__(self, *, html: str = "", plain: str = "", read_only: bool = False) -> None:
@@ -15,16 +15,16 @@ class _Harness(EdSharpActionsMixin):
         self.inserted: str | None = None
         self.status: str | None = None
 
-    def _eds_clipboard_html(self) -> str:  # type: ignore[override]
+    def _power_tools_clipboard_html(self) -> str:  # type: ignore[override]
         return self._html
 
-    def _eds_clipboard_text(self) -> str:  # type: ignore[override]
+    def _power_tools_clipboard_text(self) -> str:  # type: ignore[override]
         return self._plain
 
     def _document_is_read_only(self) -> bool:  # type: ignore[override]
         return self._read_only
 
-    def _eds_insert_at_cursor(self, snippet: str, status: str) -> None:  # type: ignore[override]
+    def _power_tools_insert_at_cursor(self, snippet: str, status: str) -> None:  # type: ignore[override]
         if self._read_only:
             self.status = "Document is read-only"
             return
