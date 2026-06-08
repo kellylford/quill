@@ -27,8 +27,9 @@ shipped that manifest on disk.
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
+from typing import Protocol, runtime_checkable
 
 from quill.core.quillins.model import (
     ContextMenuContribution,
@@ -39,6 +40,48 @@ from quill.core.quillins.model import (
     MenuContribution,
 )
 from quill.core.quillins.registry import ContributionRegistry, build_registry
+
+
+@runtime_checkable
+class Host(Protocol):
+    """The trusted first-party execution facade (migration plan §3/§4).
+
+    A migrated feature module exposes handlers that take a ``Host`` and reach the
+    editor, status line, announcer, and dialogs *only* through it — never by
+    importing ``wx`` or reaching into ``MainFrame`` internals. This is the
+    superset of the third-party ``QuillExtensionApi``; the breadth gap (settings,
+    workers, platform, …) is the trust boundary, added per wave as features move.
+
+    The live implementation lives in ``quill/ui`` (it wraps ``MainFrame``); this
+    protocol is wx-free so feature handlers and their tests stay framework-free.
+    """
+
+    def get_text(self) -> str:
+        """Return the active editor buffer's full text."""
+
+    def get_selection(self) -> tuple[int, int]:
+        """Return the ``(start, end)`` selection offsets (equal when none)."""
+
+    def is_read_only(self) -> bool:
+        """Return whether the active document blocks edits."""
+
+    def set_status(self, message: str) -> None:
+        """Show a transient status-line message (no screen-reader interrupt)."""
+
+    def announce(self, message: str) -> None:
+        """Announce ``message`` through the one announcement engine."""
+
+    def prompt(self, title: str, label: str, value: str = "") -> str | None:
+        """Ask for one line of text; return ``None`` when cancelled."""
+
+    def transform_block(self, transform: Callable[[str], str], status: str) -> None:
+        """Apply ``transform`` to the selection (or whole document) undoably.
+
+        Honours the read-only guard, replaces the affected range through the core
+        command/history path, reselects the result, and reports ``status`` — the
+        single mutation primitive migrated line/format commands build on.
+        """
+
 
 # The synthetic extension id under which first-party contributions are merged.
 # It carries no ``ext.`` prefix and never round-trips through the on-disk loader;

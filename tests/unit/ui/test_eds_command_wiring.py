@@ -164,12 +164,29 @@ def test_command_table_is_exactly_the_expected_ids_with_no_duplicates() -> None:
 
 def test_every_table_handler_exists_on_the_actions_mixin() -> None:
     from quill.ui.main_frame_edsharp import EdSharpActionsMixin
+    from quill.ui.main_frame_edsharp_menu import _MIGRATED_HANDLERS
 
     for command in EDSHARP_COMMANDS:
+        if command.id in _MIGRATED_HANDLERS:
+            # Migrated onto the contribution grammar: handler lives in a feature
+            # module and runs through the Host facade, not on the mixin.
+            assert callable(_MIGRATED_HANDLERS[command.id])
+            continue
         name = command.handler_name
         assert hasattr(EdSharpActionsMixin, name), (
             f"missing handler {name} on EdSharpActionsMixin for {command.id}"
         )
+
+
+def test_line_transforms_are_migrated_off_the_mixin() -> None:
+    # Wave 2 / §9: number_lines + hard_wrap_lines no longer live on the mixin;
+    # they are resolved from the line_transforms feature module instead.
+    from quill.ui.main_frame_edsharp import EdSharpActionsMixin
+    from quill.ui.main_frame_edsharp_menu import _MIGRATED_HANDLERS
+
+    assert set(_MIGRATED_HANDLERS) >= {"eds.number_lines", "eds.hard_wrap_lines"}
+    assert not hasattr(EdSharpActionsMixin, "number_lines")
+    assert not hasattr(EdSharpActionsMixin, "hard_wrap_lines")
 
 
 def test_menu_recirculation_preserves_shipped_group_order() -> None:

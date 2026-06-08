@@ -23,6 +23,14 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from quill.core.contributions import FirstPartyCommand, FirstPartyRegistrar
+from quill.ui.features import line_transforms
+
+# Command ids whose handler has been migrated off the EdSharp mixin onto the
+# contribution grammar (migration plan Wave 2). For these, the registration table
+# resolves the id to ``lambda: handler(host)`` against the live first-party Host
+# facade instead of a ``self.<method>`` mixin attribute; everything else still
+# resolves by convention. As more groups migrate, they register here.
+_MIGRATED_HANDLERS: dict[str, Callable[[object], None]] = dict(line_transforms.HANDLERS)
 
 
 def _build_edsharp_registrar() -> FirstPartyRegistrar:
@@ -304,17 +312,47 @@ EDSHARP_COMMANDS: tuple[FirstPartyCommand, ...] = EDSHARP_REGISTRAR.commands
 class EdSharpMenuMixin:
     """Palette + menu wiring for the EdSharp parity commands."""
 
+    def _contribution_host(self) -> object:
+        """Return the cached live first-party :class:`Host` adapter.
+
+        Lazily built so it is available wherever the EdSharp table resolves a
+        migrated handler. The adapter reads ``self.editor`` dynamically, so a
+        single instance stays correct across tab switches.
+        """
+        host = getattr(self, "_first_party_host_obj", None)
+        if host is None:
+            from quill.ui.contribution_host import MainFrameHost
+
+            host = MainFrameHost(self)
+            self._first_party_host_obj = host
+        return host
+
+    def _resolve_edsharp_handler(self, command_id: str) -> Callable[[], None]:
+        """Resolve a command id to its zero-arg handler.
+
+        Migrated ids (``_MIGRATED_HANDLERS``) bind to a feature-module handler
+        invoked with the live ``Host`` facade; all others resolve by convention
+        to the matching ``EdSharpActionsMixin`` method (``eds.number_lines`` ->
+        ``self.number_lines``).
+        """
+        migrated = _MIGRATED_HANDLERS.get(command_id)
+        if migrated is not None:
+            host = self._contribution_host()
+            return lambda: migrated(host)
+        _, _, method = command_id.partition(".")
+        return getattr(self, method or command_id)
+
     def _edsharp_command_table(self) -> list[tuple[str, str, Callable[[], None]]]:
         """EdSharp parity commands as ``(id, label, handler)`` rows.
 
-        Derived from the declarative :data:`EDSHARP_COMMANDS` manifest; the
-        handler is resolved by convention (``eds.number_lines`` ->
-        ``self.number_lines``) so the data and behavior stay in lock-step. Shared
-        by command registration (palette + Keymap Editor) and the menu
-        recirculation so the two never drift.
+        Derived from the declarative :data:`EDSHARP_COMMANDS` manifest; each
+        handler is resolved via :meth:`_resolve_edsharp_handler` (migrated feature
+        module or mixin method by convention) so the data and behavior stay in
+        lock-step. Shared by command registration (palette + Keymap Editor) and
+        the menu recirculation so the two never drift.
         """
         return [
-            (command.id, command.title, getattr(self, command.handler_name))
+            (command.id, command.title, self._resolve_edsharp_handler(command.id))
             for command in EDSHARP_COMMANDS
         ]
 

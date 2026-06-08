@@ -1,8 +1,9 @@
 # Migrating QUILL's first-party code onto the Quillins contribution grammar
 
-Status: **In progress — Wave 0 + Pilot 1 shipped** · Companion to
-`docs/scripting.md` (esp. §16) and `menus.md` (§3.7 + Phase 5) · Scope:
-**internal refactor, 2.0-scale, maintainability-driven**
+Status: **In progress — Wave 0 + Pilot 1 shipped; Host facade + Wave 2 line
+transforms landed** · Companion to `docs/scripting.md` (esp. §16) and
+`menus.md` (§3.7 + Phase 5) · Scope: **internal refactor, 2.0-scale,
+maintainability-driven**
 
 > Read `docs/scripting.md` §16 for the *why* (one vocabulary, two tiers). This
 > document is the *how*: a concrete, low-risk, reversible procedure for moving
@@ -99,13 +100,17 @@ that UI must pass A11Y-4 review — it is first-party, not a sandboxed extension
 
 ## 4. The first-party host facade
 
-This is the single piece of *new* core surface the migration introduces, and it
-has **landed** (Wave 0): `quill/core/contributions.py` (wx-free) provides the
-trusted registration half of the facade — a `FirstPartyRegistrar` that emits an
-`ExtensionManifest` merged through the shared `build_registry`. The richer
-editor/announce/services breadth below is the trusted superset of
-`QuillExtensionApi` adapted onto `MainFrame`; it is filled in per wave as
-features move:
+This is the single piece of *new* core surface the migration introduces, and both
+halves have now **landed**. The registration half (Wave 0):
+`quill/core/contributions.py` (wx-free) provides a `FirstPartyRegistrar` that
+emits an `ExtensionManifest` merged through the shared `build_registry`. The
+execution half (Wave 2): the same module defines the wx-free `Host` protocol —
+`get_text`, `get_selection`, `is_read_only`, `set_status`, `announce`, `prompt`,
+`transform_block` — implemented live by `MainFrameHost`
+(`quill/ui/contribution_host.py`), a thin adapter that delegates to existing
+`MainFrame` helpers so migrated handlers behave byte-for-byte like the inline
+code they replace. The richer breadth below (more editor primitives, services) is
+the trusted superset of `QuillExtensionApi`, filled in per wave as features move:
 
 | Group | Methods (illustrative) | Notes |
 | --- | --- | --- |
@@ -190,7 +195,7 @@ Status legend: ✅ shipped · ⏳ future.
 | --- | --- | --- | --- |
 | 0 | Land `quill/core/contributions.py` (wx-free facade: `FirstPartyRegistrar` + `FirstPartyCommand` + `build_first_party_registry`) feeding the **same** `build_registry` as Quillins | Facade unit-tested (`tests/unit/core/test_contributions.py`); `main_frame.py` unchanged in behavior; public-surface fixture stable | ✅ Shipped |
 | 1 | Pilot 1 (EdSharp `eds.*`) — **lands the menus.md §3.7 rename + recirculation as data** | EdSharp table + menu recirculation **derived from** the declarative `EDSHARP_COMMANDS` manifest (each command carries its recirculated home Insert/Edit/Format/Search/Navigate/File or the renamed `Power Tools` remainder); `test_eds_command_wiring.py` reads the manifest and is green; live menu byte-for-byte identical | ✅ Shipped |
-| 2 | Line-ops + speak/status commands | Each command a module; characterization tests green | ⏳ Future |
+| 2 | Line-ops + speak/status commands | Each command a module; characterization tests green | 🔄 In progress — `Host` facade + adapter shipped; the line-transforms group (`eds.number_lines`, `eds.hard_wrap_lines`) migrated to `quill/ui/features/line_transforms.py` and removed from the mixin (§9 worked example). Remaining line/speak/status commands future |
 | 3 | Format-menu commands | `Format` contributions all flow through the registry | ⏳ Future |
 | 4 | Navigate/View read-only commands | … | ⏳ Future |
 | 5 | Tools utilities that already use `show_web_form` | Dialogs stay A11Y-4-registered; `dialogs.md` rows unchanged | ⏳ Future |
@@ -282,6 +287,17 @@ The maintainer sees one fewer responsibility in the god object, a module they ca
 read in isolation, **and** the menu recirculation expressed as one `menu=` tuple
 rather than hand-edited `wx.Menu` plumbing. The menu-consolidation win and the
 god-object-shrink win arrive in the same diff.
+
+> **✅ Shipped (Wave 2 first cut).** This example is real:
+> `quill/ui/features/line_transforms.py` now owns the `eds.number_lines` and
+> `eds.hard_wrap_lines` handlers as pure `host`-driven functions (no `wx`, no
+> `MainFrame` reach-in); they were deleted from `EdSharpActionsMixin`. The EdSharp
+> registration table resolves those two ids to the feature handlers via the live
+> `MainFrameHost`, while the declarative `EDSHARP_COMMANDS` manifest still owns
+> their `Format > Transform Lines` placement. Behaviour is verified identical by
+> `tests/unit/ui/test_contribution_host.py` (fake-host logic) plus a live
+> `MainFrame` smoke test; the full suite stays green. The remaining EdSharp groups
+> are mechanical repeats of this same move.
 
 ## 10. Done criteria & honest limits
 

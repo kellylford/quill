@@ -244,10 +244,11 @@
 <h1
 id="migrating-quills-first-party-code-onto-the-quillins-contribution-grammar">Migrating
 QUILL’s first-party code onto the Quillins contribution grammar</h1>
-<p>Status: <strong>In progress — Wave 0 + Pilot 1 shipped</strong> ·
-Companion to <code>docs/scripting.md</code> (esp. §16) and
-<code>menus.md</code> (§3.7 + Phase 5) · Scope: <strong>internal
-refactor, 2.0-scale, maintainability-driven</strong></p>
+<p>Status: <strong>In progress — Wave 0 + Pilot 1 shipped; Host facade +
+Wave 2 line transforms landed</strong> · Companion to
+<code>docs/scripting.md</code> (esp. §16) and <code>menus.md</code>
+(§3.7 + Phase 5) · Scope: <strong>internal refactor, 2.0-scale,
+maintainability-driven</strong></p>
 <blockquote>
 <p>Read <code>docs/scripting.md</code> §16 for the <em>why</em> (one
 vocabulary, two tiers). This document is the <em>how</em>: a concrete,
@@ -347,14 +348,22 @@ bespoke UI, but that UI must pass A11Y-4 review — it is first-party, not
 a sandboxed extension.)</p>
 <h2 id="the-first-party-host-facade">4. The first-party host facade</h2>
 <p>This is the single piece of <em>new</em> core surface the migration
-introduces, and it has <strong>landed</strong> (Wave 0):
-<code>quill/core/contributions.py</code> (wx-free) provides the trusted
-registration half of the facade — a <code>FirstPartyRegistrar</code>
-that emits an <code>ExtensionManifest</code> merged through the shared
-<code>build_registry</code>. The richer editor/announce/services breadth
-below is the trusted superset of <code>QuillExtensionApi</code> adapted
-onto <code>MainFrame</code>; it is filled in per wave as features
-move:</p>
+introduces, and both halves have now <strong>landed</strong>. The
+registration half (Wave 0): <code>quill/core/contributions.py</code>
+(wx-free) provides a <code>FirstPartyRegistrar</code> that emits an
+<code>ExtensionManifest</code> merged through the shared
+<code>build_registry</code>. The execution half (Wave 2): the same
+module defines the wx-free <code>Host</code> protocol —
+<code>get_text</code>, <code>get_selection</code>,
+<code>is_read_only</code>, <code>set_status</code>,
+<code>announce</code>, <code>prompt</code>, <code>transform_block</code>
+— implemented live by <code>MainFrameHost</code>
+(<code>quill/ui/contribution_host.py</code>), a thin adapter that
+delegates to existing <code>MainFrame</code> helpers so migrated
+handlers behave byte-for-byte like the inline code they replace. The
+richer breadth below (more editor primitives, services) is the trusted
+superset of <code>QuillExtensionApi</code>, filled in per wave as
+features move:</p>
 <table>
 <colgroup>
 <col style="width: 33%" />
@@ -535,7 +544,12 @@ live menu byte-for-byte identical</td>
 <td>2</td>
 <td>Line-ops + speak/status commands</td>
 <td>Each command a module; characterization tests green</td>
-<td>⏳ Future</td>
+<td>🔄 In progress — <code>Host</code> facade + adapter shipped; the
+line-transforms group (<code>eds.number_lines</code>,
+<code>eds.hard_wrap_lines</code>) migrated to
+<code>quill/ui/features/line_transforms.py</code> and removed from the
+mixin (§9 worked example). Remaining line/speak/status commands
+future</td>
 </tr>
 <tr>
 <td>3</td>
@@ -667,6 +681,23 @@ responsibility in the god object, a module they can read in isolation,
 <code>menu=</code> tuple rather than hand-edited <code>wx.Menu</code>
 plumbing. The menu-consolidation win and the god-object-shrink win
 arrive in the same diff.</p>
+<blockquote>
+<p><strong>✅ Shipped (Wave 2 first cut).</strong> This example is real:
+<code>quill/ui/features/line_transforms.py</code> now owns the
+<code>eds.number_lines</code> and <code>eds.hard_wrap_lines</code>
+handlers as pure <code>host</code>-driven functions (no <code>wx</code>,
+no <code>MainFrame</code> reach-in); they were deleted from
+<code>EdSharpActionsMixin</code>. The EdSharp registration table
+resolves those two ids to the feature handlers via the live
+<code>MainFrameHost</code>, while the declarative
+<code>EDSHARP_COMMANDS</code> manifest still owns their
+<code>Format &gt; Transform Lines</code> placement. Behaviour is
+verified identical by
+<code>tests/unit/ui/test_contribution_host.py</code> (fake-host logic)
+plus a live <code>MainFrame</code> smoke test; the full suite stays
+green. The remaining EdSharp groups are mechanical repeats of this same
+move.</p>
+</blockquote>
 <h2 id="done-criteria-honest-limits">10. Done criteria &amp; honest
 limits</h2>
 <p><strong>Done looks like:</strong> <code>quill/core</code> carries the

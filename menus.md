@@ -363,7 +363,8 @@ expressed as data); the remaining waves stay honestly future.
 | **3. De-dup / relocate** | Move Find/Replace into `Edit`; reduce `Search` to in-files; move `View` preference toggles → Settings. | Med | build + settings registry | ✅ Shipped (`73567be`) |
 | **4. Flatten Tools** | Collapse the three 3-level chains to ≤2; regroup to PRD taxonomy; move Announcement Backend picker → Settings; **recirculate + rename EdSharp Tools (§3.7)**. | Med | build | ✅ Shipped (`8f83cfa`) |
 | **5. Menus-as-data (Wave 0 + Pilot 1)** | Land the wx-free first-party contribution facade (`quill/core/contributions.py`) that feeds the **same** `build_registry` as Quillins; express the 33 EdSharp `eds.*` commands as a declarative manifest (`EDSHARP_COMMANDS`) that **drives** the palette table and the menu recirculation. | High | contribution grammar | ✅ Shipped |
-| **5. Menus-as-data (Waves 2–N)** | Move the remaining first-party command groups (line-ops, Format, Navigate/View, Tools utilities) onto the facade per `docs/quillin-migration-plan.md` §7. | High | contribution grammar | ⏳ Future |
+| **5. Menus-as-data (Wave 2 first cut)** | Land the `Host` execution facade + live `MainFrameHost` adapter; migrate the line-transforms group (`eds.number_lines`, `eds.hard_wrap_lines`) into `quill/ui/features/line_transforms.py` as pure `host`-driven handlers, removed from the mixin. | High | contribution grammar | ✅ Shipped |
+| **5. Menus-as-data (Waves 2–N cont.)** | Move the remaining first-party command groups (rest of line-ops, speak/status, Format, Navigate/View, Tools utilities) onto the facade per `docs/quillin-migration-plan.md` §7. | High | contribution grammar | ⏳ Future |
 
 **Sequencing note:** Phases 1–4 deliver the entire user-visible improvement on
 the existing machinery. Phase 5 is an internal refactor that unlocks the Quillin

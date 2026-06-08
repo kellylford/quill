@@ -51,7 +51,6 @@ from quill.core.line_ops import (
     delete_to_line_start,
     first_non_blank_position,
     last_non_blank_position,
-    number_lines,
 )
 from quill.core.paths import app_data_dir
 from quill.core.regex_ops import RegexError, count_matches, extract_matches
@@ -59,7 +58,6 @@ from quill.core.run_target import classify_target, is_dangerous_executable, targ
 from quill.core.set_ops import format_lines, lines_common_to_both, lines_in_first_not_second
 from quill.core.storage import read_json, write_json_atomic
 from quill.core.unicode_insert import CodepointError, parse_codepoint
-from quill.core.wrap_ops import hard_wrap, widest_line_width
 
 _DATE_INSERT_FORMAT = "%Y-%m-%d"
 
@@ -249,42 +247,12 @@ class EdSharpActionsMixin:
         rendered = result.strftime(_DATE_INSERT_FORMAT)
         self._eds_insert_at_cursor(rendered, f"Inserted date: {rendered}")
 
-    # ------------------------------------------------------- EDS-4 number lines
-    def number_lines(self) -> None:
-        raw = self._eds_prompt_single("Number Lines", "Start numbering at:", "1")
-        if raw is None:
-            return
-        try:
-            start = int(raw.strip() or "1")
-        except ValueError:
-            self._set_status("Start value must be a whole number")
-            return
-        self._eds_transform_selection_or_document(
-            lambda block: number_lines(block, start=start),
-            "Numbered lines",
-        )
-
-    # --------------------------------------------------------- EDS-5 hard wrap
-    def hard_wrap_lines(self) -> None:
-        text = self.editor.GetValue()
-        start, end = self.editor.GetSelection()
-        block = text if start == end else text[start:end]
-        default_width = widest_line_width(block) or 72
-        raw = self._eds_prompt_single("Hard-Wrap Lines", "Wrap width:", str(default_width))
-        if raw is None:
-            return
-        try:
-            width = int(raw.strip())
-        except ValueError:
-            self._set_status("Wrap width must be a whole number")
-            return
-        if width <= 0:
-            self._set_status("Wrap width must be greater than zero")
-            return
-        self._eds_transform_selection_or_document(
-            lambda value: hard_wrap(value, width),
-            f"Hard-wrapped at {width} characters",
-        )
+    # ----------------------------------- EDS-4/5 line transforms (migrated)
+    # ``number_lines`` and ``hard_wrap_lines`` moved onto the contribution
+    # grammar: their handlers now live in ``quill.ui.features.line_transforms``
+    # and run through the first-party ``Host`` facade (migration plan Wave 2 /
+    # §9). The EdSharp registration table resolves the ``eds.number_lines`` and
+    # ``eds.hard_wrap_lines`` ids to those handlers, so no mixin method remains.
 
     # --------------------------------------------------- EDS-6 new from clipboard
     def new_document_from_clipboard(self) -> None:
