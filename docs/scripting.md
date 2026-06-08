@@ -45,6 +45,25 @@ enabled (gated by the on-by-default `core.bundled_quillins` flag, wholly
 independent of the SEC-8 third-party lock) and is the canonical template for
 authoring a new Quillin.
 
+### Submitting a Quillin
+
+Authoring a Quillin for submission is governed by three companion pieces:
+
+- **[Quillin Author Covenant](quillin-code-of-conduct.md)** — the code of
+  conduct for Quillin *code*: accessibility (announce every outcome,
+  keyboard-complete), capability minimization and honesty, no silent network or
+  telemetry, privacy, security (no obfuscation, no sandbox-escape, no malware),
+  licensing, and namespace etiquette. Every submission attests to it.
+- **[Submission guide](quillin-submission.md)** — the end-to-end author journey:
+  directory layout, manifest authoring, self-lint, tests, the PR template, and
+  the review criteria.
+- **The submission linter** — `python -m quill.tools.quillin_lint <dir> --strict`
+  (`quill/tools/quillin_lint.py`) applies three lenses: an *executable* check of
+  the published JSON Schema (`quill/core/schemas/extension.json`), the contract
+  validator the loader enforces, and a structure/capability-hygiene gate. The
+  `Quillin Verify` workflow (`.github/workflows/quillin-verify.yml`) runs it on
+  every submission, so a Quillin cannot land without passing.
+
 This document is a design plan turned reference; where it describes future,
 optional, or 2.0-scale work it says so explicitly (the QuickJS evaluator in §9,
 and the internal modularization in §16).

@@ -1,0 +1,150 @@
+name: Quillin submission
+description: Propose a Quillin for QUILL — this form scaffolds the manifest JSON and records the submission acknowledgements.
+title: "[Quillin]: "
+labels: ["quillin", "submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing a Quillin! This form helps you build the
+        `manifest.json` and records your acceptance of the
+        [Quillin Author Covenant](../blob/main/docs/quillin-code-of-conduct.md).
+        Read the [submission guide](../blob/main/docs/quillin-submission.md)
+        first. Before opening the PR, run the linter locally:
+        `python -m quill.tools.quillin_lint <dir> --strict`.
+  - type: input
+    id: ext_id
+    attributes:
+      label: Quillin id (reverse-DNS you control)
+      description: "`com.quill.*` is reserved for first-party bundled Quillins."
+      placeholder: "com.example.mytool"
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: Display name
+      placeholder: "My Tool"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version (MAJOR.MINOR.PATCH)
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Layer
+      description: Layer 1 (snippet only, no code, no capabilities) is the fastest path to acceptance.
+      options:
+        - "Layer 1 — snippet only (no capabilities)"
+        - "Layer 2 — Python handler (requires main + ui.command)"
+    validations:
+      required: true
+  - type: checkboxes
+    id: capabilities
+    attributes:
+      label: Capabilities requested (declare the minimum)
+      description: "`fs.read`, `fs.write`, and `net` are consent-gated — every use prompts the user at runtime."
+      options:
+        - label: "editor.read"
+        - label: "editor.write"
+        - label: "ui.announce"
+        - label: "ui.command (required for a handler command)"
+        - label: "clipboard.read"
+        - label: "clipboard.write"
+        - label: "fs.read (consent-gated)"
+        - label: "fs.write (consent-gated)"
+        - label: "net (consent-gated)"
+  - type: textarea
+    id: manifest
+    attributes:
+      label: Draft manifest.json
+      description: Edit this scaffold to match your Quillin. The linter validates it against the published JSON Schema.
+      render: json
+      value: |
+        {
+          "schema": "quill.extension/1",
+          "id": "com.example.mytool",
+          "name": "My Tool",
+          "version": "1.0.0",
+          "author": "Your Name",
+          "description": "One sentence describing what this Quillin does.",
+          "license": "MIT",
+          "min_quill_version": "1.0.0",
+          "capabilities": ["editor.read", "editor.write", "ui.announce", "ui.command"],
+          "main": "extension.py",
+          "contributes": {
+            "commands": [
+              {
+                "id": "ext.mytool.snippet",
+                "title": "Insert My Snippet",
+                "run": { "snippet": "Hello, ${selection}${cursor}" }
+              },
+              {
+                "id": "ext.mytool.run",
+                "title": "Do The Thing",
+                "run": { "handler": "do_the_thing" }
+              }
+            ],
+            "menus": [
+              { "parent": "Format", "command": "ext.mytool.run" }
+            ],
+            "context_menu": [
+              { "command": "ext.mytool.run", "when": "editor.hasSelection" }
+            ],
+            "hotkeys": [
+              { "command": "ext.mytool.run", "binding": "Ctrl+Shift+T" }
+            ]
+          }
+        }
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What each command announces on completion
+      description: Every command must report a clear outcome (NVDA/JAWS/Narrator parity).
+      placeholder: |
+        ext.mytool.run: announces "Wrapped 3 words." on success, "Nothing selected." otherwise.
+    validations:
+      required: true
+  - type: textarea
+    id: capability_justification
+    attributes:
+      label: Capability justification
+      description: Justify each declared capability. For any consent-gated capability, describe how a refusal is handled gracefully.
+    validations:
+      required: false
+  - type: checkboxes
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: A submission is accepted only when all of these are true.
+      options:
+        - label: "`python -m quill.tools.quillin_lint <dir> --strict` is green"
+          required: true
+        - label: "Every command announces a clear outcome and is fully keyboard-operable"
+          required: true
+        - label: "Only the minimum capabilities are declared and each is justified"
+          required: true
+        - label: "Tests added (manifest + registry + snippet/handler; host round-trip for handlers)"
+          required: true
+        - label: "README and license present; id is reverse-DNS I control"
+          required: true
+  - type: checkboxes
+    id: covenant
+    attributes:
+      label: Author Covenant acknowledgement
+      options:
+        - label: "I have read the Quillin Author Covenant and attest this Quillin upholds every promise in it"
+          required: true
+        - label: "No silent network, telemetry, or tracking; document content never leaves the device without per-action consent"
+          required: true
+        - label: "Readable source (no obfuscation); no sandbox-escape attempts; no malware"
+          required: true
+        - label: "I searched existing issues and this Quillin is not a duplicate"
+          required: true

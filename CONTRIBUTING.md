@@ -126,6 +126,25 @@ A strong PR includes:
 
 Please avoid mixing unrelated refactors with feature or bug-fix work.
 
+## Contributing a Quillin
+
+Quillins are small, sandboxed extensions that add commands, snippets, menus, and
+hotkeys to QUILL. Contributing one has its own dedicated path:
+
+- **Tutorial** — [`docs/quillin-tutorial.md`](docs/quillin-tutorial.md): a
+  hands-on, build-it-from-scratch walkthrough (Layer 1 snippet → Layer 2
+  handler → lint → test → submit).
+- **Submission guide** — [`docs/quillin-submission.md`](docs/quillin-submission.md):
+  the process, directory layout, review criteria, and acceptance checklist.
+- **Author Covenant** — [`docs/quillin-code-of-conduct.md`](docs/quillin-code-of-conduct.md):
+  the code of conduct for Quillin *code* (accessibility, capability honesty, no
+  silent network, security). Every submission attests to it.
+- **Self-lint** — `python -m quill.tools.quillin_lint <dir> --strict` must be
+  green; the `Quillin Verify` CI gate runs it on every submission.
+- **Start a submission** — open the **Quillin submission** issue (it scaffolds
+  the `manifest.json`), then open a PR with the **Quillin submission** PR
+  template.
+
 ## Reporting bugs and proposing features
 
 - For product/support issues, users can use in-app `Help -> Report a Bug`.
@@ -135,7 +154,7 @@ Please avoid mixing unrelated refactors with feature or bug-fix work.
   - reproduction steps
   - environment details
 - Use the most specific issue template available (accessibility, AI, intake,
-  snippets, dictation, performance, or general bug/feature).
+  snippets, dictation, performance, Quillin submission, or general bug/feature).
 - Use GitHub Discussions for Q&A and early design exploration.
 
 ## Security issues

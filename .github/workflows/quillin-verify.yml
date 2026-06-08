@@ -1,0 +1,56 @@
+name: Quillin Verify
+
+# Automated verification for Quillin submissions. Every Quillin bundled with, or
+# submitted to, QUILL must pass the submission linter in --strict mode (schema
+# check + contract validator + structure/capability hygiene) and the linter's
+# own test suite. A red check here blocks merge — the "magical" submission gate
+# described in docs/quillin-submission.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "quill/quillins_bundled/**"
+      - "quill/core/schemas/extension.json"
+      - "quill/core/quillins/**"
+      - "quill/tools/quillin_lint.py"
+      - "tests/unit/tools/test_quillin_lint.py"
+  pull_request:
+    paths:
+      - "quill/quillins_bundled/**"
+      - "quill/core/schemas/extension.json"
+      - "quill/core/quillins/**"
+      - "quill/tools/quillin_lint.py"
+      - "tests/unit/tools/test_quillin_lint.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quillin-verify-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install QUILL (core is wx-free; the linter needs no GUI)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Lint all bundled Quillins (strict)
+        # --strict treats warnings as failures, so a bundled Quillin must be an
+        # exemplary submission: valid manifest, README + license, justified caps.
+        run: |
+          python -m quill.tools.quillin_lint quill/quillins_bundled --strict
+
+      - name: Run the submission linter's own test suite
+        run: |
+          pytest -q tests/unit/tools/test_quillin_lint.py

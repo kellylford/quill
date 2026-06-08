@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.10" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>quillin-code-of-conduct</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<h1 id="quillin-author-covenant">Quillin Author Covenant</h1>
+<p>This Covenant is the <strong>code of conduct for Quillin
+code</strong> — the technical and ethical promises every Quillin must
+keep to be bundled with, or listed for, QUILL. It complements (and does
+not replace) the community <a
+href="../CODE_OF_CONDUCT.md"><code>CODE_OF_CONDUCT.md</code></a>, which
+governs how people behave; this document governs how <em>Quillins</em>
+behave.</p>
+<p>QUILL is <strong>Quality, Usable, Inclusive, Lightweight,
+Literate</strong> — a screen-reader-first editor. A Quillin extends that
+editor, so it inherits those values. By submitting a Quillin (see <a
+href="quillin-submission.md"><code>quillin-submission.md</code></a>) you
+attest that it upholds every promise below. Verification is partly
+automated (<code>python -m quill.tools.quillin_lint</code>) and partly
+human review; both must pass.</p>
+<h2 id="1-accessibility-is-non-negotiable">1. Accessibility is
+non-negotiable</h2>
+<ul>
+<li><strong>Announce every outcome.</strong> Every command reports its
+result as text, so a screen-reader user knows what happened
+(NVDA/JAWS/Narrator parity). A silent success is a bug.</li>
+<li><strong>Keyboard-complete.</strong> Everything a Quillin offers is
+reachable and operable from the keyboard alone. No mouse-only
+affordance, no focus traps.</li>
+<li><strong>Plain-text first.</strong> Respect the editor's
+plain-text-first writing surface; do not fight the stock controls QUILL
+relies on for accessibility.</li>
+<li><strong>No flashing, no surprise focus changes.</strong> Do not move
+focus unexpectedly or produce content that could trigger photosensitive
+reactions.</li>
+</ul>
+<h2 id="2-capability-honesty-and-minimization">2. Capability honesty and
+minimization</h2>
+<ul>
+<li><strong>Declare the minimum.</strong> Request only the capabilities
+you actually use. A snippet-only Quillin declares none.</li>
+<li><strong>No capability laundering.</strong> Do not request a broad
+capability to do a narrow thing, and never attempt to act beyond what
+you declared. The sandbox enforces this; trying to defeat it is grounds
+for immediate removal.</li>
+<li><strong><code>fs.*</code> and <code>net</code> are
+consent-gated.</strong> If you request filesystem or network access,
+expect every use to pass a per-action consent prompt, and design for a
+graceful, announced outcome when the user says no.</li>
+</ul>
+<h2 id="3-no-silent-network-no-telemetry">3. No silent network, no
+telemetry</h2>
+<ul>
+<li><strong>No silent network calls.</strong> Every outbound request is
+an explicit, opt-in, per-action event with visible progress and an
+announced outcome. This mirrors QUILL's own non-negotiable rule.</li>
+<li><strong>No telemetry, analytics, tracking, or beaconing</strong> of
+any kind.</li>
+<li><strong>No document content leaves the device</strong> without an
+explicit, per-action consent gate the user can decline.</li>
+</ul>
+<h2 id="4-privacy-and-data-handling">4. Privacy and data handling</h2>
+<ul>
+<li><strong>Treat document content as private.</strong> Never log it,
+never transmit it without consent, never persist it outside what the
+user asked for.</li>
+<li><strong>No secrets in the manifest or code.</strong> Do not embed
+credentials, tokens, or keys. Do not phone home for "activation".</li>
+<li><strong>Be transparent about what you store</strong> and where, and
+keep it inside QUILL's sanctioned storage conventions.</li>
+</ul>
+<h2 id="5-security-and-integrity">5. Security and integrity</h2>
+<ul>
+<li><strong>No obfuscation.</strong> Ship readable source. Minified,
+encoded, or deliberately obscured handler code will be rejected.</li>
+<li><strong>No sandbox escape attempts</strong>, no spawning
+unsanctioned subprocesses, no loading remote code at runtime, no
+monkey-patching QUILL internals.</li>
+<li><strong>No malware, ever</strong> — no destructive behaviour,
+ransomware, cryptominers, credential harvesting, or anything that harms
+the user or their data.</li>
+<li><strong>Fail safe.</strong> Errors surface as announced, reviewable
+text — never a silent failure and never a crash that takes the editor
+down.</li>
+</ul>
+<h2 id="6-licensing-and-attribution">6. Licensing and attribution</h2>
+<ul>
+<li><strong>Declare a license</strong> (manifest <code>license</code>
+field and/or a <code>LICENSE</code> file) and ship a
+<code>README</code>.</li>
+<li><strong>Respect copyright.</strong> Only include content and
+dependencies you have the right to distribute, and attribute third-party
+material correctly.</li>
+</ul>
+<h2 id="7-naming-and-namespace-etiquette">7. Naming and namespace
+etiquette</h2>
+<ul>
+<li><strong>Use a reverse-DNS <code>id</code></strong> you control (e.g.
+<code>com.example.mytool</code>); do not squat on
+<code>com.quill.*</code>, which is reserved for first-party bundled
+Quillins.</li>
+<li><strong>Namespace commands under <code>ext.</code></strong>
+(enforced) and choose clear, honest, Title-Case command names. No
+misleading or impersonating titles.</li>
+</ul>
+<h2 id="8-maintenance-and-good-citizenship">8. Maintenance and good
+citizenship</h2>
+<ul>
+<li><strong>Version honestly</strong> using
+<code>MAJOR.MINOR.PATCH</code>; bump on every change.</li>
+<li><strong>Keep it lightweight.</strong> Do only what you describe; no
+scope creep, no bundling unrelated functionality.</li>
+<li><strong>Be responsive</strong> to security reports and accessibility
+regressions.</li>
+</ul>
+<h2 id="enforcement">Enforcement</h2>
+<p>A Quillin that violates this Covenant may be <strong>rejected,
+delisted, or unbundled</strong> without notice, and repeated or
+malicious violations may bar an author from future submissions. Security
+and accessibility violations are treated as the most serious. Report
+concerns through the process in <a
+href="../SECURITY.md"><code>SECURITY.md</code></a> (for security) or by
+opening an issue (for accessibility or conduct).</p>
+<p>Keeping this Covenant is what lets QUILL ship Quillins
+<strong>seamlessly at the point of use and transparently where it
+matters</strong>.</p>
+</body>
+</html>
