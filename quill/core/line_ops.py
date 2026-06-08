@@ -1,3 +1,13 @@
+"""Cursor-aware line operations for the first-party editor commands.
+
+Migration note: ``duplicate_line``, ``delete_line``, ``move_line_up``,
+``move_line_down``, ``join_paragraph``, and ``join_with_next_line`` are now also
+vendored into ``quill/quillins_bundled/line-tools/line_ops.py`` for the
+sandboxed Quillin counterparts (``ext.lines.*``). The first-party
+``power.lines.*`` commands still use this module. When those commands are retired
+(migration plan Wave N), the overlapping functions here can be removed.
+"""
+
 from __future__ import annotations
 
 

@@ -1,78 +1,51 @@
-"""Convert copied HTML into Markdown for the Paste HTML as Markdown command.
+"""HTML-to-Markdown converter vendored into the Text Tools Quillin.
 
-The QUILL key, then ``M``, pastes clipboard HTML as Markdown. On Windows the
-clipboard's ``HTML Format`` payload is wrapped in a CF_HTML header that points at
-the real fragment with byte offsets; :func:`extract_cf_html_fragment` unwraps it.
-:func:`html_to_markdown` then turns common structural and inline HTML into
-Markdown. Both are UI-framework agnostic so they can be unit-tested without
-``wx``; the editor layer only supplies the clipboard payload and inserts the
-result.
+Converts common structural and inline HTML to Markdown. Originally
+``quill/core/html_to_markdown.py``; vendored here so the feature is
+self-contained in the sandboxed worker and requires no host imports.
 
 The converter targets the everyday "copied from a web page or word processor"
-case (headings, paragraphs, bold/italic, links, lists, code, block quotes). It is
-deliberately forgiving: unknown tags are dropped and their text is kept.
-
-Migration note: the same converter is now vendored into
-``quill/quillins_bundled/text-tools/html_ops.py`` for the ``ext.text.html_to_markdown``
-Quillin command. The first-party "Paste HTML as Markdown" (QUILL Key + M) still
-uses this module. When that command is retired (migration plan Wave N), this
-module can be removed and the Quillin becomes the sole implementation.
+case: headings, paragraphs, bold/italic, inline code, code blocks, links,
+ordered/unordered lists (with nesting), block quotes, and horizontal rules.
+Unknown tags are dropped and their text content is kept.
 """
 
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 from html.parser import HTMLParser
 
 __all__ = ["extract_cf_html_fragment", "html_to_markdown"]
 
 
-@dataclass
 class _ListContext:
-    kind: str
-    index: int = 0
+    __slots__ = ("kind", "index")
+
+    def __init__(self, kind: str, index: int = 0) -> None:
+        self.kind = kind
+        self.index = index
 
 
 _BLOCK_TAGS = {
-    "p",
-    "div",
-    "section",
-    "article",
-    "header",
-    "footer",
-    "ul",
-    "ol",
-    "li",
-    "blockquote",
-    "pre",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "h6",
-    "table",
-    "tr",
-    "hr",
+    "p", "div", "section", "article", "header", "footer",
+    "ul", "ol", "li", "blockquote", "pre",
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    "table", "tr", "hr",
 }
 
 
 def extract_cf_html_fragment(payload: str) -> str:
-    """Return the HTML fragment from a Windows CF_HTML clipboard ``payload``.
+    """Return the HTML fragment from a Windows CF_HTML clipboard payload.
 
-    A CF_HTML payload begins with a header of ``Key:Value`` lines including
-    ``StartFragment``/``EndFragment`` offsets and usually ``<!--StartFragment-->``
-    / ``<!--EndFragment-->`` markers. When neither is present the payload is
-    returned unchanged, so plain HTML passes straight through.
+    Strips the ``<!--StartFragment-->`` / ``<!--EndFragment-->`` comment markers
+    or falls back to the byte-offset header. Plain HTML passes straight through.
     """
     start_marker = "<!--StartFragment-->"
     end_marker = "<!--EndFragment-->"
     start = payload.find(start_marker)
     end = payload.find(end_marker)
     if start != -1 and end != -1 and end > start:
-        return payload[start + len(start_marker) : end].strip()
-    # Fall back to the byte-offset header if the comment markers are absent.
+        return payload[start + len(start_marker):end].strip()
     match_start = re.search(r"StartFragment:(\d+)", payload)
     match_end = re.search(r"EndFragment:(\d+)", payload)
     if match_start and match_end:
@@ -94,9 +67,8 @@ class _MarkdownWriter(HTMLParser):
         self._pre_depth = 0
         self._link_href: str | None = None
         self._link_text: list[str] = []
-        self._skip_depth = 0  # inside <script>/<style>
+        self._skip_depth = 0
 
-    # -- helpers ---------------------------------------------------------
     def _emit(self, text: str) -> None:
         if self._link_href is not None:
             self._link_text.append(text)
@@ -110,7 +82,6 @@ class _MarkdownWriter(HTMLParser):
             else:
                 self._parts.append("\n\n")
 
-    # -- tag handling ----------------------------------------------------
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag in {"script", "style"}:
             self._skip_depth += 1
@@ -229,8 +200,8 @@ def html_to_markdown(html: str) -> str:
 
     Handles headings, paragraphs, line breaks, bold/italic, inline code, code
     blocks, links, ordered/unordered lists (with nesting), block quotes, and
-    horizontal rules. Unknown tags are dropped but their text is kept. Returns a
-    single trailing newline; an empty or whitespace-only input yields ``""``.
+    horizontal rules. Unknown tags are dropped and their text is kept.
+    Returns a trailing newline; empty/whitespace-only input yields ``""``.
     """
     fragment = extract_cf_html_fragment(html)
     if not fragment.strip():

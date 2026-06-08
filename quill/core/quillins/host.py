@@ -33,8 +33,11 @@ from quill.core.quillins.model import (
     CAP_FS_READ,
     CAP_FS_WRITE,
     CAP_NET,
+    CAP_STORAGE,
     CAP_UI_ANNOUNCE,
+    CAP_UI_CHOICES,
     CAP_UI_PROMPT,
+    CAP_UI_STATUS,
     CONSENT_GATED_CAPABILITIES,
     ApiVersionError,
     CapabilityError,
@@ -48,17 +51,26 @@ _METHOD_CAPABILITY: dict[str, str] = {
     "get_text": CAP_EDITOR_READ,
     "get_selection": CAP_EDITOR_READ,
     "get_cursor": CAP_EDITOR_READ,
+    "get_cursor_offset": CAP_EDITOR_READ,
+    "get_selection_range": CAP_EDITOR_READ,
     "insert_text": CAP_EDITOR_WRITE,
     "replace_selection": CAP_EDITOR_WRITE,
     "set_text": CAP_EDITOR_WRITE,
     "open_buffer": CAP_EDITOR_WRITE,
+    "set_cursor": CAP_EDITOR_WRITE,
+    "replace_range": CAP_EDITOR_WRITE,
     "announce": CAP_UI_ANNOUNCE,
     "prompt": CAP_UI_PROMPT,
+    "set_status": CAP_UI_STATUS,
+    "show_choices": CAP_UI_CHOICES,
     "read_file": CAP_FS_READ,
     "write_file": CAP_FS_WRITE,
     "fetch": CAP_NET,
     "get_clipboard": CAP_CLIPBOARD_READ,
     "set_clipboard": CAP_CLIPBOARD_WRITE,
+    "get_storage": CAP_STORAGE,
+    "set_storage": CAP_STORAGE,
+    "delete_storage": CAP_STORAGE,
 }
 
 
@@ -73,12 +85,18 @@ class HostServices(Protocol):
     def get_text(self) -> str: ...
     def get_selection(self) -> str: ...
     def get_cursor(self) -> dict[str, int]: ...
+    def get_cursor_offset(self) -> int: ...
+    def get_selection_range(self) -> dict[str, int]: ...
     def insert_text(self, text: str) -> None: ...
     def replace_selection(self, text: str) -> None: ...
     def set_text(self, text: str) -> None: ...
     def open_buffer(self, text: str, title: str) -> None: ...
+    def set_cursor(self, offset: int) -> None: ...
+    def replace_range(self, start: int, end: int, text: str) -> None: ...
     def announce(self, message: str) -> None: ...
     def prompt(self, title: str, label: str, default: str) -> str | None: ...
+    def set_status(self, message: str) -> None: ...
+    def show_choices(self, title: str, items: list[str]) -> str | None: ...
     def read_file(self, path: str) -> str: ...
     def write_file(self, path: str, text: str) -> None: ...
     def fetch(self, url: str, method: str, body: str | None) -> dict[str, Any]: ...
@@ -107,6 +125,7 @@ class ApiDispatcher:
         *,
         consent: ConsentCallback = _always_deny,
         granted_capabilities: tuple[str, ...] | None = None,
+        storage: dict[str, str] | None = None,
     ) -> None:
         self._services = services
         self._consent = consent
@@ -114,6 +133,7 @@ class ApiDispatcher:
         if granted is None:
             granted = manifest.capabilities
         self._granted: frozenset[str] = frozenset(granted)
+        self._storage: dict[str, str] = storage if storage is not None else {}
 
     def handle(self, message: dict[str, Any]) -> dict[str, Any]:
         call_id = int(message.get("id", 0))
@@ -187,6 +207,31 @@ class ApiDispatcher:
         if method == "set_clipboard":
             services.set_clipboard(str(args[0]))
             return None
+        if method == "get_cursor_offset":
+            return services.get_cursor_offset()
+        if method == "get_selection_range":
+            return services.get_selection_range()
+        if method == "set_cursor":
+            services.set_cursor(int(args[0]))
+            return None
+        if method == "replace_range":
+            services.replace_range(int(args[0]), int(args[1]), str(args[2]))
+            return None
+        if method == "set_status":
+            services.set_status(str(args[0]))
+            return None
+        if method == "show_choices":
+            title = str(args[0]) if args else ""
+            items = [str(i) for i in args[1]] if len(args) > 1 and isinstance(args[1], list) else []
+            return services.show_choices(title, items)
+        if method == "get_storage":
+            return self._storage.get(str(args[0]))
+        if method == "set_storage":
+            self._storage[str(args[0])] = str(args[1])
+            return None
+        if method == "delete_storage":
+            self._storage.pop(str(args[0]), None)
+            return None
         raise QuillinError(f"unhandled method: {method}")
 
 
@@ -219,6 +264,7 @@ class ExtensionHost:
         consent: ConsentCallback = _always_deny,
         granted_capabilities: tuple[str, ...] | None = None,
         python_executable: str | None = None,
+        storage: dict[str, str] | None = None,
     ) -> None:
         self._manifest = manifest
         self._directory = directory
@@ -227,6 +273,7 @@ class ExtensionHost:
             services,
             consent=consent,
             granted_capabilities=granted_capabilities,
+            storage=storage,
         )
         self._python = python_executable or sys.executable
         self._process: subprocess.Popen[str] | None = None

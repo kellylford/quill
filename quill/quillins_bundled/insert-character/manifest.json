@@ -1,0 +1,27 @@
+{
+  "schema": "quill.extension/1",
+  "id": "com.quill.bundled.insert-character",
+  "name": "Insert Character",
+  "version": "1.0.0",
+  "author": "QUILL Project",
+  "description": "Bundled Quillin: insert any Unicode character by code point (hex, decimal, or U+ notation).",
+  "license": "MIT",
+  "min_quill_version": "1.0.0",
+  "capabilities": ["ui.prompt", "ui.announce", "editor.write", "ui.command"],
+  "main": "extension.py",
+  "contributes": {
+    "commands": [
+      {
+        "id": "ext.insert.character",
+        "title": "Insert Special Character...",
+        "run": { "handler": "insert_character" }
+      }
+    ],
+    "menus": [
+      { "parent": "Insert", "command": "ext.insert.character" }
+    ],
+    "context_menu": [
+      { "command": "ext.insert.character", "when": "always" }
+    ]
+  }
+}

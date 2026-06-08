@@ -7,7 +7,7 @@
   "description": "Bundled Quillin: number lines, hard-wrap, count/extract regex matches, and cursor-split set operations, surfaced in the Format and Search menus.",
   "license": "MIT",
   "min_quill_version": "1.0.0",
-  "capabilities": ["editor.read", "editor.write", "ui.announce", "ui.prompt", "ui.command"],
+  "capabilities": ["editor.read", "editor.write", "ui.announce", "ui.prompt", "ui.command", "clipboard.read"],
   "main": "extension.py",
   "contributes": {
     "commands": [
@@ -40,6 +40,11 @@
         "id": "ext.text.lines_common",
         "title": "Lines Common to Both Blocks",
         "run": { "handler": "lines_common" }
+      },
+      {
+        "id": "ext.text.html_to_markdown",
+        "title": "Paste Clipboard HTML as Markdown",
+        "run": { "handler": "html_to_markdown" }
       }
     ],
     "menus": [
@@ -48,7 +53,8 @@
       { "parent": "Search", "command": "ext.text.count_regex" },
       { "parent": "Search", "command": "ext.text.extract_regex" },
       { "parent": "Search", "command": "ext.text.lines_first_only" },
-      { "parent": "Search", "command": "ext.text.lines_common" }
+      { "parent": "Search", "command": "ext.text.lines_common" },
+      { "parent": "Edit", "command": "ext.text.html_to_markdown" }
     ]
   }
 }

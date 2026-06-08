@@ -79,6 +79,13 @@ class _EditorHostServices:
         percent = int((position / len(text)) * 100) if text else 0
         return {"line": line, "column": column, "percent": percent}
 
+    def get_cursor_offset(self) -> int:
+        return int(self._frame.editor.GetInsertionPoint())
+
+    def get_selection_range(self) -> dict[str, int]:
+        start, end = self._frame.editor.GetSelection()
+        return {"start": int(start), "end": int(end)}
+
     def insert_text(self, text: str) -> None:
         self._frame.editor.WriteText(text)
 
@@ -96,6 +103,12 @@ class _EditorHostServices:
         self._frame._replace_document_text(text)
         self._frame.document.set_text(text)
 
+    def set_cursor(self, offset: int) -> None:
+        self._frame.editor.SetInsertionPoint(int(offset))
+
+    def replace_range(self, start: int, end: int, text: str) -> None:
+        self._frame.editor.Replace(int(start), int(end), text)
+
     def open_buffer(self, text: str, title: str) -> None:
         """Open ``text`` in a new editor tab, leaving the current one untouched."""
 
@@ -106,6 +119,21 @@ class _EditorHostServices:
 
     def prompt(self, title: str, label: str, default: str) -> str | None:
         return self._frame._power_tools_prompt_single(title, label, default)
+
+    def set_status(self, message: str) -> None:
+        self._frame._set_status_text(message)
+
+    def show_choices(self, title: str, items: list[str]) -> str | None:
+        wx = self._frame._wx if hasattr(self._frame, "_wx") else None
+        if wx is None:
+            return None
+        dialog = wx.SingleChoiceDialog(self._frame, title, title, items)
+        try:
+            if dialog.ShowModal() == wx.ID_OK:
+                return dialog.GetStringSelection()
+            return None
+        finally:
+            dialog.Destroy()
 
     def read_file(self, path: str) -> str:
         return Path(path).read_text(encoding="utf-8")
@@ -314,8 +342,13 @@ class QuillinsMenuMixin:
     def _run_quillin_handler(
         self, manifest: ExtensionManifest, directory: Path, command_id: str
     ) -> None:
+        if not hasattr(self, "_quillin_storage_data"):
+            self._quillin_storage_data: dict[str, dict[str, str]] = {}
+        storage = self._quillin_storage_data.setdefault(manifest.id, {})
         services = _EditorHostServices(self)
-        host = ExtensionHost(manifest, directory, services, consent=self._quillin_consent)
+        host = ExtensionHost(
+            manifest, directory, services, consent=self._quillin_consent, storage=storage
+        )
         try:
             host.start()
             host.load()

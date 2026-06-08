@@ -33,6 +33,9 @@ CAP_FS_WRITE = "fs.write"
 CAP_NET = "net"
 CAP_CLIPBOARD_READ = "clipboard.read"
 CAP_CLIPBOARD_WRITE = "clipboard.write"
+CAP_UI_STATUS = "ui.status"
+CAP_UI_CHOICES = "ui.choices"
+CAP_STORAGE = "storage"
 
 CAPABILITIES: frozenset[str] = frozenset({
     CAP_EDITOR_READ,
@@ -45,6 +48,9 @@ CAPABILITIES: frozenset[str] = frozenset({
     CAP_NET,
     CAP_CLIPBOARD_READ,
     CAP_CLIPBOARD_WRITE,
+    CAP_UI_STATUS,
+    CAP_UI_CHOICES,
+    CAP_STORAGE,
 })
 
 # Capabilities whose every use must additionally pass QUILL's per-action consent

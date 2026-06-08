@@ -119,11 +119,12 @@ def test_text_tools_manifest_and_menus() -> None:
         "ext.text.extract_regex",
         "ext.text.lines_first_only",
         "ext.text.lines_common",
+        "ext.text.html_to_markdown",
     }
     registry = build_registry([manifest])
     assert registry.conflicts == ()
     parents = {menu.parent for menu in registry.menus}
-    assert parents == {"Format", "Search"}
+    assert parents == {"Format", "Search", "Edit"}
 
 
 def test_insert_tools_manifest_is_capability_free_layer_one() -> None:

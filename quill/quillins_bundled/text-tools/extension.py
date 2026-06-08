@@ -17,6 +17,8 @@ clipboard access, so no consent prompt is ever raised.
 
 from __future__ import annotations
 
+from html_ops import html_to_markdown as _html_to_markdown
+
 from algorithms import (
     RegexError,
     count_matches,
@@ -119,9 +121,22 @@ def register(api):
         lines = lines_common_to_both(text, offset)
         ctx.open_buffer(format_lines(lines), f"{len(lines)} line(s) common to both blocks")
 
+    def html_to_markdown_command(ctx):
+        html = ctx.get_clipboard()
+        if not html.strip():
+            ctx.announce("Clipboard is empty")
+            return
+        result = _html_to_markdown(html)
+        if not result.strip():
+            ctx.announce("No Markdown could be extracted from the clipboard HTML")
+            return
+        ctx.insert_text(result)
+        ctx.announce("Pasted clipboard HTML as Markdown")
+
     api.register_command("number_lines", number_lines_command)
     api.register_command("hard_wrap", hard_wrap_command)
     api.register_command("count_regex", count_regex_command)
     api.register_command("extract_regex", extract_regex_command)
     api.register_command("lines_first_only", lines_first_only_command)
     api.register_command("lines_common", lines_common_command)
+    api.register_command("html_to_markdown", html_to_markdown_command)

@@ -3,6 +3,12 @@
 Insert Special Character accepts a code point as hexadecimal, or
 as decimal when prefixed with ``d``. This module is UI-framework agnostic so the
 parsing can be unit-tested without ``wx``.
+
+Migration note: the same logic is now vendored into
+``quill/quillins_bundled/insert-character/codepoints.py`` so the feature can
+run as a sandboxed Quillin (``ext.insert.character``) alongside the first-party
+``power.insert_special_character`` command. When the first-party command is
+retired (migration plan Wave N), this module can be removed.
 """
 
 from __future__ import annotations

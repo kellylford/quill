@@ -42,7 +42,10 @@
           "fs.write",
           "net",
           "clipboard.read",
-          "clipboard.write"
+          "clipboard.write",
+          "ui.status",
+          "ui.choices",
+          "storage"
         ]
       }
     },

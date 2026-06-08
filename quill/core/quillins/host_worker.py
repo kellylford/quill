@@ -137,6 +137,63 @@ class QuillExtensionApi:
     def set_clipboard(self, text: str) -> None:
         self._worker.call("set_clipboard", [text])
 
+    # -- editor.read (extended) -----------------------------------------------
+    def get_cursor_offset(self) -> int:
+        """Return the caret position as a character offset from document start."""
+
+        return int(self._worker.call("get_cursor_offset", []))
+
+    def get_selection_range(self) -> dict[str, int]:
+        """Return ``{"start": int, "end": int}`` character offsets for the selection.
+
+        When there is no selection, ``start == end == cursor_offset``.
+        """
+
+        value = self._worker.call("get_selection_range", [])
+        data = value if isinstance(value, dict) else {}
+        return {"start": int(data.get("start", 0)), "end": int(data.get("end", 0))}
+
+    # -- editor.write (extended) ----------------------------------------------
+    def set_cursor(self, offset: int) -> None:
+        """Move the caret to ``offset`` without creating an undo entry."""
+
+        self._worker.call("set_cursor", [offset])
+
+    def replace_range(self, start: int, end: int, text: str) -> None:
+        """Replace the character range ``[start, end)`` with ``text`` undoably."""
+
+        self._worker.call("replace_range", [start, end, text])
+
+    # -- ui.status ------------------------------------------------------------
+    def set_status(self, message: str) -> None:
+        """Show a transient status-bar message (no screen-reader interrupt)."""
+
+        self._worker.call("set_status", [message])
+
+    # -- ui.choices -----------------------------------------------------------
+    def show_choices(self, title: str, items: list[str]) -> str | None:
+        """Present a list-picker dialog and return the chosen item, or ``None``."""
+
+        value = self._worker.call("show_choices", [title, items])
+        return None if value is None else str(value)
+
+    # -- storage --------------------------------------------------------------
+    def get_storage(self, key: str) -> str | None:
+        """Retrieve a previously stored value for ``key``, or ``None``."""
+
+        value = self._worker.call("get_storage", [key])
+        return None if value is None else str(value)
+
+    def set_storage(self, key: str, value: str) -> None:
+        """Persist ``value`` under ``key`` for this extension's session storage."""
+
+        self._worker.call("set_storage", [key, value])
+
+    def delete_storage(self, key: str) -> None:
+        """Remove ``key`` from this extension's session storage."""
+
+        self._worker.call("delete_storage", [key])
+
     # -- diagnostics ----------------------------------------------------------
     def log(self, message: str) -> None:
         """Emit a diagnostic line to the host (never document content)."""
