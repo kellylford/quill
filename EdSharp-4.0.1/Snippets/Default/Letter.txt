@@ -1,9 +1,0 @@
-﻿text form caret
-%Date%
-
-Dear %Customer=%:
-
-Thank you for your purchase of %Product=Super Widget%.  ^^
-
-Sincerely,
-%UserName%
