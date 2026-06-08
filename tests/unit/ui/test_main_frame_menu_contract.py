@@ -40,15 +40,28 @@ def test_menu_item_ids_have_menu_bindings() -> None:
     assert missing_bindings == set()
 
 
-def test_top_level_menu_append_order_places_insert_and_view_before_search() -> None:
+def test_top_level_menu_append_order_is_conventional() -> None:
+    # MENU-REORDER (menus.md Phase 1): top-level menus are attached in one place
+    # in the conventional Windows order: File, Edit, View, Insert, Format,
+    # Navigate, Search, (AI), Tools, Window, Help.
     source = _menu_source()
     edit_index = source.index('menu_bar.Append(edit_menu, "&Edit")')
-    insert_index = source.index('menu_bar.Append(insert_menu, "&Insert")')
     view_index = source.index('menu_bar.Append(view_menu, "&View")')
-    search_index = source.index('menu_bar.Append(search_menu, "&Search")')
+    insert_index = source.index('menu_bar.Append(insert_menu, "&Insert")')
+    format_index = source.index('menu_bar.Append(format_menu, "F&ormat")')
     navigate_index = source.index('menu_bar.Append(navigate_menu, "&Navigate")')
+    search_index = source.index('menu_bar.Append(search_menu, "&Search")')
+    tools_index = source.index('menu_bar.Append(tools_menu, "&Tools")')
 
-    assert edit_index < insert_index < view_index < search_index < navigate_index
+    assert (
+        edit_index
+        < view_index
+        < insert_index
+        < format_index
+        < navigate_index
+        < search_index
+        < tools_index
+    )
 
 
 def test_update_toggle_is_in_help_menu_not_view_menu() -> None:

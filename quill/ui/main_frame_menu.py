@@ -70,7 +70,6 @@ class MenuBuilderMixin:
             self._menu_label("&Close Document", "file.close_document"),
         )
         file_menu.Append(self._id_exit, self._menu_label("E&xit", "app.exit"))
-        menu_bar.Append(file_menu, "&File")
 
         self._id_find = wx.NewIdRef()
         self._id_undo = wx.NewIdRef()
@@ -205,9 +204,7 @@ class MenuBuilderMixin:
         selection_menu.AppendSeparator()
         selection_menu.AppendSubMenu(mark_ring_menu, "Recent &Marks (Ring)")
         edit_menu.AppendSubMenu(selection_menu, "&Selection")
-        menu_bar.Append(edit_menu, "&Edit")
         insert_menu = wx.Menu()
-        menu_bar.Append(insert_menu, "&Insert")
 
         search_menu = wx.Menu()
         search_menu.Append(self._id_find, self._menu_label("&Find...", "edit.find"))
@@ -339,9 +336,6 @@ class MenuBuilderMixin:
             self._id_browser_preview,
             self._menu_label("&Browser Preview...", "view.browser_preview"),
         )
-        menu_bar.Append(view_menu, "&View")
-        menu_bar.Append(search_menu, "&Search")
-
         navigate_menu = wx.Menu()
         self._id_go_to_line = wx.NewIdRef()
         self._id_set_bookmark = wx.NewIdRef()
@@ -1036,7 +1030,6 @@ class MenuBuilderMixin:
             self._menu_label("Generate &Audio...", "tools.read_aloud_generate_audio"),
         )
         ai_menu.AppendSubMenu(speech_menu, "&Speech")
-        menu_bar.Append(ai_menu, "A&I")
         whisperer_menu = wx.Menu()
         whisperer_menu.Append(
             self._id_whisperer_about,
@@ -1135,12 +1128,6 @@ class MenuBuilderMixin:
             self._menu_label("&Capability Matrix", "whisperer.capability_matrix"),
         )
         whisperer_menu.AppendSubMenu(bw_rollout_menu, "&Rollout")
-        # BITS Whisperer is deferred to QUILL 2.0; the master `core.bw_whisperer`
-        # flag is locked off for 1.0, so the whole menu stays hidden until the
-        # suite reaches feature parity. Its commands are also feature-gated out of
-        # the palette via the bw_* feature dependencies on this master flag.
-        if self._feature_enabled("core.bw_whisperer"):
-            menu_bar.Append(whisperer_menu, "&BITS Whisperer")
         glow_menu = wx.Menu()
         glow_menu.Append(
             self._id_glow_audit_document,
@@ -1290,9 +1277,6 @@ class MenuBuilderMixin:
         tools_menu.AppendSeparator()
         tools_menu.AppendSubMenu(self._build_edsharp_menu(), "Ed&Sharp Tools")
         tools_menu.AppendSubMenu(self._build_quillins_menu(), "&Quillins")
-        menu_bar.Append(navigate_menu, "&Navigate")
-        menu_bar.Append(format_menu, "F&ormat")
-        menu_bar.Append(tools_menu, "&Tools")
 
         # The former top-level "Settings" menu is gone. All configuration now
         # lives together under Tools > Customize (Preferences, Customize Menus,
@@ -1371,6 +1355,26 @@ class MenuBuilderMixin:
         help_menu.Append(self._id_check_updates, "Check for &Updates...")
         help_menu.Append(self._id_check_glow_updates, "Check for &GLOW Updates...")
         help_menu.Append(self._id_about_quill, "&About Quill")
+
+        # MENU-REORDER (menus.md Phase 1): every top-level menu is attached to the
+        # bar here, in one place, in the conventional Windows order. Menu *content*
+        # is built above in arbitrary order; wx lets bar order be set independently
+        # of construction order. Keep this list in sync with ``_TOP_MENU_DEFS``.
+        menu_bar.Append(file_menu, "&File")
+        menu_bar.Append(edit_menu, "&Edit")
+        menu_bar.Append(view_menu, "&View")
+        menu_bar.Append(insert_menu, "&Insert")
+        menu_bar.Append(format_menu, "F&ormat")
+        menu_bar.Append(navigate_menu, "&Navigate")
+        menu_bar.Append(search_menu, "&Search")
+        menu_bar.Append(ai_menu, "A&I")
+        # BITS Whisperer is deferred to QUILL 2.0; the master ``core.bw_whisperer``
+        # flag is locked off for 1.0, so the whole menu stays hidden until the
+        # suite reaches feature parity. Its commands are also feature-gated out of
+        # the palette via the bw_* feature dependencies on this master flag.
+        if self._feature_enabled("core.bw_whisperer"):
+            menu_bar.Append(whisperer_menu, "&BITS Whisperer")
+        menu_bar.Append(tools_menu, "&Tools")
         menu_bar.Append(window_menu, "&Window")
         menu_bar.Append(help_menu, "&Help")
 
