@@ -20,15 +20,15 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
-from pathlib import Path
 from typing import Any
 
+from quill.core.quillins.loader import bundled_extensions_root
 from quill.core.quillins.model import ExtensionManifest
 from quill.core.quillins.registry import build_registry
 from quill.core.quillins.snippets import SnippetContext, expand_snippet
 from quill.core.quillins.validation import parse_manifest, validate_manifest
 
-_EXAMPLE_DIR = Path(__file__).resolve().parents[3] / "examples" / "quillins" / "markdown-helpers"
+_EXAMPLE_DIR = bundled_extensions_root() / "markdown-helpers"
 
 
 def _load_manifest() -> ExtensionManifest:
@@ -39,7 +39,7 @@ def _load_manifest() -> ExtensionManifest:
 
 def test_example_manifest_is_valid_and_parses() -> None:
     manifest = _load_manifest()
-    assert manifest.id == "com.quill.examples.markdown-helpers"
+    assert manifest.id == "com.quill.bundled.markdown-helpers"
     assert manifest.is_layer_two
     assert manifest.main == "extension.py"
     command_ids = {command.id for command in manifest.contributes.commands}

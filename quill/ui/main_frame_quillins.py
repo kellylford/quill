@@ -8,15 +8,19 @@ accessible UI:
 * builds the **Quillins Manager** dialog — a hardened ``wx.Dialog`` of stock
   controls that lists installed Quillins, shows manifest/capability detail, and
   offers Enable/Disable, Reload, and Remove;
-* when the SEC-8 ``core.third_party_plugins`` flag is enabled, loads enabled
-  manifests, registers their ``ext.*`` commands, and runs them — snippet
+* always loads **bundled** Quillins (Tier C) behind the on-by-default
+  ``core.bundled_quillins`` flag, and — when the SEC-8
+  ``core.third_party_plugins`` flag is enabled — also loads enabled third-party
+  manifests; both register their ``ext.*`` commands and run them — snippet
   commands inline, handler commands through the out-of-process host with a
   capability + consent gate.
 
-SEC-8 (non-negotiable for 1.0): the flag is ``locked_off``, so a shipping build
-discovers nothing and runs nothing third-party. The Manager still opens and is
-fully operable; it simply reports that third-party Quillins are disabled. The
-live runtime paths below are reachable only when the flag is forced on (tests).
+SEC-8 (non-negotiable for 1.0): the third-party flag is ``locked_off``, so a
+shipping build discovers and runs nothing third-party. Bundled Quillins are a
+separate, trusted-author install-tree tier and run regardless. The Manager still
+opens and is fully operable; it reports that third-party Quillins are disabled
+while bundled Quillins remain listed and runnable. The third-party live runtime
+paths below are reachable only when the flag is forced on (tests).
 
 ``core``/``io`` stay wx-free; this UI module owns all ``wx`` use, marshalling
 editor effects on the UI thread per the host services contract.
@@ -36,7 +40,9 @@ from quill.core.quillins import (
 )
 from quill.core.quillins.host import ExtensionHost
 from quill.core.quillins.loader import (
+    discover_bundled_extensions,
     discover_extensions,
+    load_enabled_bundled_manifests,
     load_enabled_manifests,
     remove_extension,
     set_enabled,
@@ -152,6 +158,7 @@ class QuillinsMenuMixin:
             self._binding_for(_QUILLINS_MANAGER_COMMAND),
         )
         self._quillin_index: dict[str, tuple[ExtensionManifest, Path]] = {}
+        self._bundled_command_ids: set[str] = set()
         self._quillin_registry: ContributionRegistry | None = None
         self._register_quillin_contributions()
 
@@ -161,24 +168,48 @@ class QuillinsMenuMixin:
             return False
         return bool(is_enabled(THIRD_PARTY_PLUGINS_FEATURE))
 
+    def _installed_quillins(self) -> list[Any]:
+        """All discovered Quillins: bundled (Tier C) first, then third-party.
+
+        Bundled Quillins ship enabled and are independent of the SEC-8
+        third-party lock; third-party entries appear only when that flag is on.
+        """
+
+        installed = list(discover_bundled_extensions(self.features))
+        installed.extend(discover_extensions(self.features))
+        return installed
+
     def _register_quillin_contributions(self) -> None:
-        """Load enabled Quillins and register their commands (SEC-8 gated)."""
+        """Load enabled Quillins and register their commands.
+
+        Bundled Quillins (Tier C) are always loaded behind the on-by-default
+        ``core.bundled_quillins`` flag; third-party Quillins are loaded only when
+        the SEC-8 ``core.third_party_plugins`` flag is enabled. Both feed the one
+        shared registry so their ids collide-detect uniformly.
+        """
 
         self._quillin_index = {}
+        self._bundled_command_ids = set()
         self._quillin_registry = None
-        if not self._quillins_enabled():
+
+        installed = {item.id: item for item in self._installed_quillins()}
+        bundled_manifests = load_enabled_bundled_manifests(self.features)
+        third_party_manifests = load_enabled_manifests(self.features)
+        manifests = [*bundled_manifests, *third_party_manifests]
+        if not manifests:
             return
 
-        installed = {item.id: item for item in discover_extensions(self.features)}
-        manifests = load_enabled_manifests(self.features)
         registry = build_registry(manifests, host_keymap=self.keymap)
         self._quillin_registry = registry
 
+        bundled_ids = {manifest.id for manifest in bundled_manifests}
         for manifest in manifests:
             entry = installed.get(manifest.id)
             if entry is not None:
                 for command in manifest.contributes.commands:
                     self._quillin_index[command.id] = (manifest, entry.directory)
+                    if manifest.id in bundled_ids:
+                        self._bundled_command_ids.add(command.id)
 
         for command_id, resolved in registry.commands.items():
             binding = next(
@@ -197,14 +228,18 @@ class QuillinsMenuMixin:
 
     # -- execution -----------------------------------------------------------
     def run_quillin_command(self, command_id: str) -> None:
-        """Run a contributed command: snippet inline, handler out-of-process."""
+        """Run a contributed command: snippet inline, handler out-of-process.
 
-        if not self._quillins_enabled():
-            self._announce("Third-party Quillins are disabled in this build.")
-            return
+        Bundled (Tier C) commands run whenever they are registered; third-party
+        commands additionally require the SEC-8 flag to still be on.
+        """
+
         entry = self._quillin_index.get(command_id)
         if entry is None:
             self._announce("Quillin command is unavailable.")
+            return
+        if command_id not in self._bundled_command_ids and not self._quillins_enabled():
+            self._announce("Third-party Quillins are disabled in this build.")
             return
         manifest, directory = entry
         command = next((c for c in manifest.contributes.commands if c.id == command_id), None)
@@ -266,7 +301,7 @@ class QuillinsMenuMixin:
         wx = self._wx
         launcher = self.frame.FindFocus() if hasattr(self.frame, "FindFocus") else None
 
-        installed = discover_extensions(self.features)
+        installed = self._installed_quillins()
         dialog = wx.Dialog(
             self.frame,
             title="Quillins Manager",
@@ -283,8 +318,9 @@ class QuillinsMenuMixin:
             )
         else:
             intro_text = (
-                "Third-party Quillins are disabled in this build. Installed Quillins "
-                "are listed for review but cannot run until enabled."
+                "Bundled Quillins ship enabled and run normally. Third-party "
+                "Quillins are disabled in this build and are listed for review "
+                "only. Choose a Quillin to read its details."
             )
         body.Add(wx.StaticText(panel, label=intro_text), 0, wx.ALL | wx.EXPAND, 8)
 

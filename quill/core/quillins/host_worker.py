@@ -186,8 +186,16 @@ class _Worker:
 
     def _import_main(self, main: str) -> ModuleType:
         main_path = (self._directory / main).resolve()
-        if self._directory.resolve() not in main_path.parents:
+        directory = self._directory.resolve()
+        if directory not in main_path.parents:
             raise QuillinError("main module escapes the extension directory")
+        # Put the extension's own directory on the import path (front) so a
+        # Quillin may ship and import its own vendored helper modules. This is
+        # path-contained to the extension directory — it never exposes the host's
+        # package layout beyond what the worker already imports.
+        directory_str = str(directory)
+        if directory_str not in sys.path:
+            sys.path.insert(0, directory_str)
         spec = importlib.util.spec_from_file_location("quillin_extension_main", main_path)
         if spec is None or spec.loader is None:
             raise QuillinError(f"cannot import extension main: {main}")

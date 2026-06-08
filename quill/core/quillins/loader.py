@@ -5,11 +5,20 @@ Installed Quillins live under ``%APPDATA%\\Quill\\extensions\\<id>\\`` with a
 capabilities are recorded in ``extensions\\state.json``, written atomically and
 schema-validated like every other QUILL store.
 
-**SEC-8 gate (non-negotiable for 1.0).** Discovery returns nothing unless the
-``core.third_party_plugins`` feature flag is enabled, and that flag is
+**SEC-8 gate (non-negotiable for 1.0).** Third-party discovery returns nothing
+unless the ``core.third_party_plugins`` feature flag is enabled, and that flag is
 ``locked_off`` for QUILL 1.0. A default build therefore never discovers, loads,
 or runs third-party Quillin code. The gate is shared with :mod:`quill.plugins`
 so there is a single source of truth.
+
+**Bundled Quillins (Tier C).** QUILL's own features shipped as Quillins live
+under ``quill/quillins_bundled/<id>/`` *inside the install tree* (never the
+per-user ``%APPDATA%`` root). They are discovered by the separate
+:func:`discover_bundled_extensions` path, ship **enabled**, and are gated by the
+on-by-default ``core.bundled_quillins`` flag — wholly independent of the SEC-8
+third-party lock. They still declare capabilities and still hit the runtime
+consent gate for ``fs.*``/``net``; the non-consent capabilities they declare are
+pre-granted so a trusted shipped feature does not nag on first use.
 
 This module imports no ``wx`` and no platform code.
 """
@@ -22,7 +31,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from quill.core.paths import app_data_dir
-from quill.core.quillins.model import ExtensionManifest
+from quill.core.quillins.model import (
+    CONSENT_GATED_CAPABILITIES,
+    ExtensionManifest,
+)
 from quill.core.quillins.validation import parse_manifest
 from quill.core.storage import read_json, write_json_atomic
 from quill.plugins import third_party_plugins_enabled
@@ -30,6 +42,10 @@ from quill.plugins import third_party_plugins_enabled
 STATE_SCHEMA_VERSION = 1
 _MANIFEST_FILENAME = "manifest.json"
 _STATE_FILENAME = "state.json"
+
+#: Feature flag gating the bundled (Tier C) Quillin path. On by default; entirely
+#: separate from the SEC-8 ``core.third_party_plugins`` lock.
+BUNDLED_QUILLINS_FEATURE = "core.bundled_quillins"
 
 
 @dataclass(frozen=True, slots=True)
@@ -232,3 +248,99 @@ def remove_extension(extension_id: str, *, root: Path | None = None) -> bool:
         del state.entries[extension_id]
         save_state(state, root=root)
     return removed
+
+
+# -- Bundled Quillins (Tier C) -------------------------------------------------
+
+
+def bundled_quillins_enabled(features: object) -> bool:
+    """Return whether the bundled (Tier C) Quillin path is active.
+
+    Gated by the on-by-default ``core.bundled_quillins`` flag, *not* the SEC-8
+    third-party lock. A ``features`` object without ``is_enabled`` is treated as
+    disabled, matching the conservative default used elsewhere.
+    """
+
+    is_enabled = getattr(features, "is_enabled", None)
+    if not callable(is_enabled):
+        return False
+    return bool(is_enabled(BUNDLED_QUILLINS_FEATURE))
+
+
+def bundled_extensions_root(*, root: Path | None = None) -> Path:
+    """Return the read-only directory holding QUILL's bundled Quillins.
+
+    Defaults to ``quill/quillins_bundled`` inside the install tree. Tests may
+    override ``root`` to point at a fixture directory.
+    """
+
+    if root is not None:
+        return root
+    # quill/core/quillins/loader.py -> parents[2] is the ``quill`` package root.
+    return Path(__file__).resolve().parents[2] / "quillins_bundled"
+
+
+def _bundled_granted_capabilities(manifest: ExtensionManifest) -> tuple[str, ...]:
+    """Pre-grant a bundled Quillin's non-consent capabilities.
+
+    Trusted bundled authors get their declared ``editor.*``/``ui.*``/``clipboard.*``
+    capabilities up front, so a shipped feature does not prompt on first use.
+    ``fs.*``/``net`` are *not* pre-granted here — they remain consent-gated at
+    runtime, so the security proof stays real.
+    """
+
+    return tuple(
+        capability
+        for capability in manifest.capabilities
+        if capability not in CONSENT_GATED_CAPABILITIES
+    )
+
+
+def discover_bundled_extensions(
+    features: object, *, root: Path | None = None
+) -> list[InstalledExtension]:
+    """Discover QUILL's bundled Quillins (Tier C).
+
+    Returns an empty list unless ``core.bundled_quillins`` is enabled. Each
+    bundled Quillin is reported as ``enabled=True`` with its non-consent
+    capabilities pre-granted; invalid manifests are surfaced with their errors so
+    the Manager can show them.
+    """
+
+    if not bundled_quillins_enabled(features):
+        return []
+
+    directory_root = bundled_extensions_root(root=root)
+    if not directory_root.exists():
+        return []
+
+    discovered: list[InstalledExtension] = []
+    for child in sorted(directory_root.iterdir(), key=lambda path: path.name):
+        if not child.is_dir():
+            continue
+        manifest, errors = _read_manifest(child)
+        extension_id = manifest.id if manifest is not None else child.name
+        granted = _bundled_granted_capabilities(manifest) if manifest is not None else ()
+        discovered.append(
+            InstalledExtension(
+                id=extension_id,
+                directory=child,
+                manifest=manifest,
+                enabled=True,
+                granted_capabilities=granted,
+                errors=errors,
+            )
+        )
+    return discovered
+
+
+def load_enabled_bundled_manifests(
+    features: object, *, root: Path | None = None
+) -> list[ExtensionManifest]:
+    """Return validated manifests for all valid bundled Quillins (flag-gated)."""
+
+    manifests: list[ExtensionManifest] = []
+    for installed in discover_bundled_extensions(features, root=root):
+        if installed.manifest is not None and installed.is_valid:
+            manifests.append(installed.manifest)
+    return manifests

@@ -38,23 +38,26 @@ def test_quillins_submenu_is_attached_to_tools() -> None:
     assert 'AppendSubMenu(self._build_quillins_menu(), "&Quillins")' in _MENU
 
 
-def test_runtime_is_gated_behind_sec8_flag() -> None:
-    # Discovery/registration must early-return unless the flag is on.
-    reg = _QUILLINS[_QUILLINS.index("def _register_quillin_contributions") :][:600]
-    assert "if not self._quillins_enabled():" in reg
-    assert "return" in reg
+def test_runtime_gates_bundled_and_third_party_separately() -> None:
+    # Registration loads bundled (Tier C) behind core.bundled_quillins and
+    # third-party behind the SEC-8 flag — they are merged into one registry.
+    reg = _QUILLINS[_QUILLINS.index("def _register_quillin_contributions") :][:900]
+    assert "load_enabled_bundled_manifests(self.features)" in reg
+    assert "load_enabled_manifests(self.features)" in reg
     enabled = _QUILLINS[_QUILLINS.index("def _quillins_enabled") :][:400]
     assert "THIRD_PARTY_PLUGINS_FEATURE" in enabled
 
 
-def test_run_command_refuses_when_disabled() -> None:
-    run = _QUILLINS[_QUILLINS.index("def run_quillin_command") :][:600]
-    assert "if not self._quillins_enabled():" in run
+def test_run_command_runs_bundled_but_refuses_disabled_third_party() -> None:
+    run = _QUILLINS[_QUILLINS.index("def run_quillin_command") :][:900]
+    # Bundled commands run regardless of the SEC-8 flag; third-party do not.
+    assert "self._bundled_command_ids" in run
+    assert "not self._quillins_enabled()" in run
     assert "disabled" in run
 
 
 def test_snippet_and_handler_paths_both_exist() -> None:
-    run = _QUILLINS[_QUILLINS.index("def run_quillin_command") :][:900]
+    run = _QUILLINS[_QUILLINS.index("def run_quillin_command") :][:1200]
     assert "_run_quillin_snippet" in run
     assert "_run_quillin_handler" in run
     # Handler path goes through the out-of-process host.

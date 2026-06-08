@@ -261,6 +261,24 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         dependencies=("core.app",),
         locked_off=True,
     ),
+    "core.bundled_quillins": FeatureDefinition(
+        "core.bundled_quillins",
+        "Bundled Quillins",
+        aliases=("bundled quillins", "first-party quillins", "built-in quillins"),
+        description=(
+            "Tier C: QUILL's own features shipped as sandboxed Quillins inside "
+            "the install tree (quill/quillins_bundled). These are trusted-author, "
+            "run through the same out-of-process, capability- and consent-gated "
+            "path as third-party Quillins, and ship enabled — wholly independent "
+            "of the SEC-8 core.third_party_plugins lock, which stays off. Turning "
+            "this off hides the bundled Quillins' commands."
+        ),
+        maturity="stable",
+        privacy="local only",
+        category="core",
+        dependencies=("core.app",),
+        locked_on=True,
+    ),
 }
 
 

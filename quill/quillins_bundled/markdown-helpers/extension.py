@@ -1,4 +1,4 @@
-"""Markdown Helpers — a proof-of-concept Layer 2 Quillin entry module.
+"""Markdown Helpers — a bundled Layer 2 Quillin entry module (Tier C).
 
 QUILL loads this module inside the sandboxed Quillin worker process and calls
 ``register(api)`` exactly once. The ``wrap_bold`` handler runs only when the
