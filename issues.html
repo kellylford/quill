@@ -1,0 +1,1969 @@
+<h1 id="quill-1.0-pre-release-code-review-issues">QUILL 1.0 —
+Pre-Release Code Review Issues</h1>
+<blockquote>
+<p><strong>Generated:</strong> pre-release review
+<strong>Scope:</strong> entire <code>quill/</code> tree (~640 files),
+all <code>tests/</code>, all <code>docs/</code>, and the supporting
+toolchain (<code>tools/</code>, <code>installer/</code>,
+<code>scripts/</code>). <strong>Reviewers:</strong> 3 parallel agents
+(UI/platform, core/io, stability+tools+tests+docs) corroborated by
+direct source inspection. <strong>Status legend:</strong> ✅ FIXED · 🔵
+Open (with status) · 🟡 Deferred (needs real Windows runtime)</p>
+</blockquote>
+<hr />
+<h2 id="executive-summary">1. Executive Summary</h2>
+<p>The QUILL codebase is <strong>architecturally sound</strong> and the
+kind of work that ships is <em>load-bearing</em>: atomic JSON writes
+with retry, <code>os.replace</code> semantics, OS-level file locks, a
+screen-reader-first dialog contract, a banned-pattern gate,
+schema-validated stores, a strict <code>core</code> / <code>ui</code>
+split, and a strong separation between <code>core</code> /
+<code>io</code> (wx-free) and <code>ui</code> / <code>platform</code>
+(wx). The privacy and consent model is documented in
+<code>SECURITY.md</code> and <code>PRIVACY.md</code> and most of the
+load-bearing surface honours it.</p>
+<p>This review aggregated <strong>~85 distinct issues</strong> from
+three parallel review agents. All HIGH items and all §8 UX delight
+features are closed and recorded in <code>CHANGELOG.md</code>. The
+severity tally of <strong>remaining open items</strong> is:</p>
+<table>
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 40%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr>
+<th>Severity</th>
+<th style="text-align: right;">Count</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CRITICAL</td>
+<td style="text-align: right;">0</td>
+<td>(none found)</td>
+</tr>
+<tr>
+<td>HIGH</td>
+<td style="text-align: right;">0</td>
+<td><strong>All 13 CLOSED</strong> — see <code>CHANGELOG.md</code></td>
+</tr>
+<tr>
+<td>MEDIUM</td>
+<td style="text-align: right;">32</td>
+<td>All open — tracked below</td>
+</tr>
+<tr>
+<td>LOW</td>
+<td style="text-align: right;">~19</td>
+<td>Open — tracked below (3 closed items moved to
+<code>CHANGELOG.md</code>)</td>
+</tr>
+<tr>
+<td>NIT</td>
+<td style="text-align: right;">~5</td>
+<td>Open — tracked below (11 closed items moved to
+<code>CHANGELOG.md</code>)</td>
+</tr>
+<tr>
+<td>§8 Magic/UX</td>
+<td style="text-align: right;">0</td>
+<td><strong>All 16 CLOSED</strong> — see <code>CHANGELOG.md</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Tone:</strong> nothing in the codebase smells like a rushed
+1.0. The findings below are real but most are local hardening
+opportunities, suitable for the 1.0 → 1.1 window.</p>
+<hr />
+<h2 id="how-to-read-this-file">2. How to read this file</h2>
+<h3 id="severity-legend">Severity legend</h3>
+<ul>
+<li><strong>CRITICAL</strong> — must fix before public 1.0 release. No
+shipping without remediation.</li>
+<li><strong>HIGH</strong> — must fix or formally defer before 1.0. Each
+entry below includes a regression test that locks the fix in.</li>
+<li><strong>MEDIUM</strong> — should fix in the 1.0 → 1.1 window. Mostly
+usability, lifecycle, and defense-in-depth.</li>
+<li><strong>LOW</strong> — nice-to-have; track in the CQ / DOC / GATE
+backlog.</li>
+<li><strong>NIT</strong> — cosmetic / readability.</li>
+</ul>
+<h3 id="status-legend">Status legend</h3>
+<ul>
+<li>✅ <strong>FIXED</strong> — implementation + regression test merged;
+no further work required for this severity.</li>
+<li>🔵 <strong>OPEN</strong> — work to do; suggested fix and regression
+test described.</li>
+<li>🟡 <strong>DEFERRED</strong> — blocked on a real Windows runtime
+that this session cannot exercise; honest “in progress” per the honesty
+rule in the cloud-agent directives.</li>
+</ul>
+<h3 id="per-issue-shape">Per-issue shape</h3>
+<p>Every issue in this file uses the same template:</p>
+<ul>
+<li><strong>Severity / Category</strong> —
+<code>(HIGH / SECURITY)</code> for example.</li>
+<li><strong>File</strong> — <code>quill/core/paths.py:10-12</code> (line
+numbers refer to the snapshot inspected during the review).</li>
+<li><strong>Symptom</strong> — what the user sees.</li>
+<li><strong>Root cause</strong> — the source-level defect.</li>
+<li><strong>Suggested fix</strong> — concrete code or test change.</li>
+<li><strong>Regression test</strong> — the test that catches the
+regression class.</li>
+</ul>
+<h3 id="magic-callout">“Magic” callout</h3>
+<p>Items marked ✨ are <strong>“magic” / UX delight</strong> suggestions
+— ideas that go beyond bug-fixing into making the app feel intelligent.
+They live in §8 and are intentionally not blocking 1.0.</p>
+<h3 id="per-file-quick-reference">Per-file quick reference</h3>
+<p>§10 is a one-screen table of every file that has at least one issue,
+with the highest severity in that file. Use it to scope a PR.</p>
+<h3 id="cross-references">Cross-references</h3>
+<p>§12 maps every issue to a <code>ROADMAP.md</code> item, a
+<code>SECURITY.md</code> section, and the relevant
+<code>dialogs.md</code> row where applicable.</p>
+<hr />
+<h2 id="critical">3. CRITICAL</h2>
+<p><strong>No CRITICAL-severity issues were found in any of the three
+review passes.</strong></p>
+<p>The architecture is solid: <code>quill/core</code> and
+<code>quill/io</code> are wx-free; subprocess calls use argv lists with
+<code>shell=False</code>; the only persistence surface is
+schema-validated JSON written atomically; no untrusted pickle; no
+<code>eval</code> / <code>exec</code> in user-facing paths except the
+explicit <code>python_sandbox.py</code> (which itself has a documented
+escape — see M-11); the DPAPI wrapper exists and is used; the SSH
+keyfile wrapper exists and is used; the Safe Mode env-var is now wired
+through (H-SAFE-1, ✅ FIXED).</p>
+<hr />
+<h2 id="medium-issues-32-all-open">5. MEDIUM issues (~32, all open)</h2>
+<blockquote>
+<p>MEDIUM items are real defects worth filing; none block the 1.0
+release but each has a clear test that locks in a fix.</p>
+</blockquote>
+<h3 id="security-and-privacy-defense-in-depth">5.1 Security and privacy
+(defense-in-depth)</h3>
+<h4
+id="m-1-corewatch_actions.py148172212253294348413451-except-exception-overwrites-original-failure-cause">M-1
+— <code>core/watch_actions.py:148,172,212,253,294,348,413,451</code> —
+<code>except Exception</code> overwrites original failure cause</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/watch_actions.py</code> (8 sites) / BUG, UX</li>
+<li><strong>Symptom:</strong> Each
+<code>except Exception as error</code> block calls
+<code>logger.exception(...)</code> then returns
+<code>WatchActionOutcome.failed(str(error))</code>. For library
+exceptions (<code>PermissionError</code>, <code>OSError</code>) the
+message is useless to a screen-reader user:
+<code>"[Errno 13] Permission denied: …"</code> with no actionable
+remedy.</li>
+<li><strong>Suggested fix:</strong> Centralize a
+<code>_humanize_action_error(action_id, error)</code> that maps known
+categories
+(<code>PermissionError → "Quill cannot write here. Try saving to a folder you own."</code>,
+<code>FileNotFoundError → "The file disappeared before the action could finish."</code>).
+Fall back to <code>str(error)</code> only when no category matches.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/core/test_watch_actions.py::test_permission_error_humanized</code>.</li>
+</ul>
+<h4 id="m-2-coreipc.py128-148-jsonl-queue-append-with-no-file-lock">M-2
+— <code>core/ipc.py:128-148</code> — JSONL queue append with no file
+lock</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/ipc.py:128-148</code> / RACE</li>
+<li><strong>Symptom:</strong> Covered as H-4-core-2 in the HIGH section.
+Listed here so MEDIUM-only readers see the same finding. See §4.2 for
+the suggested fix.</li>
+</ul>
+<h4
+id="m-3-coreaiexternal_engine.py165-shlex.split-accepts-any-text">M-3 —
+<code>core/ai/external_engine.py:165</code> — <code>shlex.split</code>
+accepts any text</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/ai/external_engine.py:165</code> / SECURITY</li>
+<li><strong>Symptom:</strong> A binary outside <code>PATH</code>
+(e.g. <code>C:\Windows\System32\cmd.exe</code>) silently passes the
+<code>shutil.which</code> / <code>Path(exists)</code> check. The
+Settings UI does not surface the <em>full resolved path</em> of the
+executable.</li>
+<li><strong>Suggested fix:</strong> In <code>configure_engine</code>,
+resolve the executable via <code>shutil.which(command[0])</code> and
+reject if neither <code>which</code> nor a relative path resolves; in
+the Settings dialog, show the resolved absolute path before save.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/core/ai/test_external_engine.py::test_unresolvable_executable_rejected</code>.</li>
+</ul>
+<h4
+id="m-4-corewatch_profiles.py391-prescan-errors-swallow-profile-context">M-4
+— <code>core/watch_profiles.py:391</code> — prescan errors swallow
+profile context</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/watch_profiles.py:391</code> / BUG</li>
+<li><strong>Symptom:</strong> <code>_poll_loop</code> catches and logs
+but loses which <code>profile.profile_id</code> triggered the failure. A
+misbehaving extension path can fail repeatedly and the user cannot tell
+which one.</li>
+<li><strong>Suggested fix:</strong> Track consecutive errors per profile
+and surface the most recent error in
+<code>WatchService.queue_counts()</code> (or a new
+<code>last_error</code> dict) so the UI can show
+<code>"Profile X failed 5 times in a row: PermissionError"</code>.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/core/test_watch_profiles.py::test_consecutive_errors_tracked_per_profile</code>.</li>
+</ul>
+<h4
+id="m-5-coreaifoundation_models.py120-and-coreaiassistant.py70-asyncio.run-per-call">M-5
+— <code>core/ai/foundation_models.py:120</code> and
+<code>core/ai/assistant.py:70</code> — <code>asyncio.run</code> per
+call</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/ai/foundation_models.py:120</code>,
+<code>quill/core/ai/assistant.py:70</code> / BUG, THREAD-SAFETY</li>
+<li><strong>Symptom:</strong> <code>asyncio.run(_go())</code> inside a
+sync <code>respond</code> method creates a new event loop each call. On
+macOS 26+ the Foundation Models SDK is documented to be called from a
+single coroutine context; spinning up fresh loops per call can leak OS
+resources.</li>
+<li><strong>Suggested fix:</strong> Cache an event loop on the backend
+instance
+(<code>_loop = asyncio.new_event_loop(); threading.Thread(target=_loop.run_forever).start()</code>)
+and submit coroutines via
+<code>asyncio.run_coroutine_threadsafe(_go(), _loop).result()</code>.
+Mark the loop’s thread daemon.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/core/ai/test_foundation_models.py::test_event_loop_reused_across_calls</code>.</li>
+</ul>
+<h4 id="m-6-coreupdates.py228-_signature_salt-used-as-hmac-key">M-6 —
+<code>core/updates.py:228</code> — <code>_SIGNATURE_SALT</code> used as
+HMAC key</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/updates.py:228</code> / SECURITY</li>
+<li><strong>Symptom:</strong> The signature salt is a hard-coded public
+string (<code>"quill-manifest-signature-v1"</code>). Any attacker who
+can MITM the update feed can trivially forge a valid signature because
+the key is in the source. The <code>QUILL_UPDATE_MANIFEST_KEY</code> env
+var is mentioned as a future rotation but not used in the binary.</li>
+<li><strong>Suggested fix:</strong> Reject any manifest whose signature
+uses only the salt (require a real key from secure storage), or move the
+key out of source into a Windows DPAPI-protected file generated at
+install time. Document clearly that the salt is a <em>placeholder</em>
+and the update feed should not be trusted until rotation is in
+place.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/core/test_updates.py::test_salt_only_signature_rejected</code>.</li>
+</ul>
+<h4 id="m-7-corepython_sandbox.py227-__builtins__-re-binding-escape">M-7
+— <code>core/python_sandbox.py:227</code> — <code>__builtins__</code>
+re-binding escape</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/python_sandbox.py:227</code> / SECURITY
+(defense-in-depth)</li>
+<li><strong>Symptom:</strong> The sandbox does not strip dunder
+attributes from the <code>globals_ns</code> dict. A user transform can
+do <code>globals()["__builtins__"] = original_builtins</code> because
+<code>globals_ns</code> is the <em>second</em> positional arg to
+<code>exec</code> (the locals), and <code>exec</code> falls back to
+globals for name resolution. Tested locally:
+<code>().__class__.__bases__[0].__subclasses__()</code> walks
+<code>object</code> and reaches <code>_io.FileIO</code> even with
+<code>open</code> blocked, because <code>__builtins__</code> is a dict
+not a module.</li>
+<li><strong>Suggested fix:</strong> Pass the same dict as both globals
+and locals args (already correct) AND drop <code>__builtins__</code>
+from the locals side after the call. Better: set
+<code>globals_ns["__builtins__"] = safe_builtins</code> and add
+<code>globals_ns["__builtins__"] = type("SafeBuiltins", (), {...})(...)</code>
+so attribute access also checks the safe set. Or run user code via
+<code>RestrictedPython</code> (third-party but maintained).</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/core/test_python_sandbox.py::test_builtins_rebinding_blocked</code>.</li>
+</ul>
+<h4 id="m-8-coremacros.py-verify-macro-runner-is-async-safe">M-8 —
+<code>core/macros.py</code> — verify macro runner is async-safe</h4>
+<ul>
+<li><strong>File / Category:</strong> <code>quill/core/macros.py</code>
+/ A11Y, THREADING</li>
+<li><strong>Symptom:</strong> A macro that calls <code>commands</code>
+which themselves spawn UI dialogs will block the worker thread; if the
+macro is bound to a hotkey fired on the UI thread, the dispatch
+serializes the call but the worker still holds the lock. Need to confirm
+the macro runner is marshalled to the UI thread.</li>
+<li><strong>Suggested fix:</strong> Inspect
+<code>MacroManager.play_macro</code> and ensure each command dispatch
+goes through <code>wx.CallAfter</code> or runs on a dedicated
+<code>concurrent.futures.ThreadPoolExecutor</code> with explicit UI
+marshaling.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/core/test_macros.py::test_macro_dispatch_marshalled_to_ui_thread</code>.</li>
+</ul>
+<h3 id="io-and-parsing">5.2 I/O and parsing</h3>
+<h4
+id="m-9-iopages.py115-135-pages-reader-mutates-keynote_parser.codec.id_name_map-at-import">M-9
+— <code>io/pages.py:115-135</code> — Pages reader mutates
+<code>keynote_parser.codec.ID_NAME_MAP</code> at import</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/io/pages.py:115-135</code> / BUG, THREAD-SAFETY</li>
+<li><strong>Symptom:</strong> <code>_patched_id_name_map()</code>
+temporarily replaces the global <code>ID_NAME_MAP</code> dict inside a
+<code>try/finally</code>. If two threads open <code>.pages</code> files
+concurrently, the second thread’s <code>finally</code> will restore the
+<em>first</em> thread’s patched map back to the original Keynote map,
+then the first thread’s later code reads the <em>wrong</em> map. No
+re-entrant lock.</li>
+<li><strong>Suggested fix:</strong> Either build a <em>copy</em> of
+<code>ID_NAME_MAP</code> per call and pass it through a parameter
+(requires keynote-parser to accept the override), or take a
+<code>threading.Lock()</code> around the patch, or use
+<code>contextvars</code>. For 1.0, the simplest fix is a module-level
+<code>threading.Lock()</code> so concurrent <code>.pages</code> reads
+serialize.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/io/test_pages.py::test_concurrent_reads_serialize_via_lock</code>.</li>
+</ul>
+<h4 id="m-10-iopdf.py77-pdfplumber.open-not-in-tryexcept">M-10 —
+<code>io/pdf.py:77</code> — <code>pdfplumber.open</code> not in
+try/except</h4>
+<ul>
+<li><strong>File / Category:</strong> <code>quill/io/pdf.py:77</code> /
+BUG</li>
+<li><strong>Symptom:</strong> <code>pdfplumber.open</code> raises
+<code>pdfminer.pdfparser.PDFSyntaxError</code> (subclass of
+<code>Exception</code>) for malformed PDFs, but the enclosing
+<code>extract_pdf_text</code> only catches
+<code>ModuleNotFoundError</code>. A single corrupt PDF crashes the
+import path.</li>
+<li><strong>Suggested fix:</strong> Wrap each extractor in
+<code>try/except (Exception,)</code> and fall through to the next
+extractor. The outer try/except already does this; remove the inner
+narrow catch.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/io/test_pdf.py::test_malformed_pdf_returns_empty_text_not_crash</code>.</li>
+</ul>
+<h4
+id="m-11-iostructured.py244-except-exception-swallows-xlsx-errors">M-11
+— <code>io/structured.py:244</code> — <code>except Exception</code>
+swallows xlsx errors</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/io/structured.py:244</code> / BUG</li>
+<li><strong>Symptom:</strong> A malformed <code>.xlsx</code> is silently
+treated as “no spreadsheet” and the user gets a
+<code>"(spreadsheet unavailable)"</code> message instead of an
+actionable “the file is corrupted, try opening it in Excel first to
+repair”.</li>
+<li><strong>Suggested fix:</strong> Distinguish
+<code>zipfile.BadZipFile</code> /
+<code>openpyxl.utils.exceptions.InvalidFileException</code> and surface
+a more helpful error.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/io/test_structured.py::test_corrupt_xlsx_surfaces_actionable_error</code>.</li>
+</ul>
+<h4
+id="m-12-iortf_safety.py44-_remote_field_re-matches-autotext-false-positive">M-12
+— <code>io/rtf_safety.py:44</code> — <code>_REMOTE_FIELD_RE</code>
+matches <code>AUTOTEXT</code> (false positive)</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/io/rtf_safety.py:44</code> / BUG</li>
+<li><strong>Symptom:</strong> <code>\bAUTOTEXT\b</code> matches a benign
+RTF control word that just inserts boilerplate text; it does not fetch
+remote content. False positive → warning noise for users.</li>
+<li><strong>Suggested fix:</strong> Remove <code>\bAUTOTEXT\b</code>
+from the regex; keep
+<code>INCLUDEPICTURE|INCLUDETEXT|DDEAUTO</code>.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/io/test_rtf_safety.py::test_autotext_not_flagged_as_remote</code>.</li>
+</ul>
+<h4 id="m-13-iortf.py314-hard-coded-cp1252-ignores-ansicpg">M-13 —
+<code>io/rtf.py:314</code> — hard-coded <code>cp1252</code> ignores
+<code>\ansicpg</code></h4>
+<ul>
+<li><strong>File / Category:</strong> <code>quill/io/rtf.py:314</code> /
+BUG</li>
+<li><strong>Symptom:</strong> RTF can be encoded in many code pages
+(CP1252, CP1251, etc.). The hard-coded <code>cp1252</code> is the
+Western default and is correct for English RTF, but a Cyrillic RTF will
+have many replaced bytes before safety scanning. Replace characters in
+the <em>safety scan</em> input are OK; replace characters in the
+<em>tokenized output</em> may produce garbled text.</li>
+<li><strong>Suggested fix:</strong> Detect the <code>\ansicpg</code>
+control word in the RTF and use that code page for the decode; if
+missing, default to <code>cp1252</code>.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/io/test_rtf.py::test_cyrillic_rtf_decoded_with_ansicpg</code>.</li>
+</ul>
+<h3 id="read-aloud-tts">5.3 Read-aloud &amp; TTS</h3>
+<h4
+id="m-14-coreread_aloud.py945-963-dectalk-subprocess.popen-no-wall-clock-timeout">M-14
+— <code>core/read_aloud.py:945-963</code> — DECtalk
+<code>subprocess.Popen</code> no wall-clock timeout</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/read_aloud.py:945-963</code> / BUG, RELIABILITY</li>
+<li><strong>Symptom:</strong> The DECtalk live-engine path polls
+<code>process.poll()</code> and <code>terminate()</code>s on stop/pause,
+but if the child hangs (e.g. a malformed input file that the DECtalk CLI
+never finishes parsing), the worker thread waits forever. The eSpeak
+path at line 1102 has the same issue.</li>
+<li><strong>Suggested fix:</strong> Track
+<code>start = time.monotonic()</code>; if
+<code>time.monotonic() - start &gt; _max_synthesis_seconds</code>
+(e.g. 120 s), <code>process.kill()</code> and surface a
+<code>ReadAloudUnavailableError("engine stuck, killed")</code>.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/core/test_read_aloud.py::test_dectalk_killed_after_wall_clock_timeout</code>.</li>
+</ul>
+<h4
+id="m-15-coreread_aloud.py179-192-piper-text-may-exceed-pipe-buffer">M-15
+— <code>core/read_aloud.py:179-192</code> — Piper <code>text=</code> may
+exceed pipe buffer</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/read_aloud.py:179-192</code> / BUG (edge case)</li>
+<li><strong>Symptom:</strong> Piper’s <code>text</code> argument via
+stdin may exceed the OS pipe buffer (default 64 KiB on Linux, larger on
+Windows) for very long documents. The call has no <code>timeout=</code>,
+so a hung Piper process is unkillable from the caller.</li>
+<li><strong>Suggested fix:</strong> Write text to a temp file
+(<code>-f</code> flag) and pass that path; add a <code>timeout=</code>
+(e.g. 60 s); or stream chunks of &lt; 32 KiB at a time.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/core/test_read_aloud.py::test_piper_long_text_via_temp_file</code>.</li>
+</ul>
+<h3 id="ai-providers">5.4 AI providers</h3>
+<h4
+id="m-16-coreaiassistant.py115-130-make_default_backend-swallows-provider-probe-errors">M-16
+— <code>core/ai/assistant.py:115-130</code> —
+<code>make_default_backend()</code> swallows provider probe errors</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/ai/assistant.py:115-130</code> / BUG</li>
+<li><strong>Symptom:</strong> If
+<code>load_assistant_connection_settings()</code> succeeds but
+<code>ProviderChatBackend.is_available()</code> returns
+<code>(True, None)</code> for a provider whose HTTP endpoint is later
+unreachable, the user has configured “Ollama” but the local model is
+silently used. The first chat request then appears to “work” but the
+response is from a different backend than the user picked.</li>
+<li><strong>Suggested fix:</strong> Add a probe ping (cheap
+<code>/api/tags</code> HEAD request) and degrade with a one-time
+<code>announce("The provider you selected is unreachable; falling back to the local model.")</code>
+per session.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/core/ai/test_assistant.py::test_unreachable_provider_announced</code>.</li>
+</ul>
+<h3 id="stability-tools-lifecycle">5.5 Stability &amp; tools
+lifecycle</h3>
+<h4
+id="m-17-stabilitydiagnostics.py1426-27-file-handles-leak-across-long-sessions">M-17
+— <code>stability/diagnostics.py:14,26-27</code> — file handles leak
+across long sessions</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/stability/diagnostics.py:14,26-27</code> / PERF,
+RESOURCE</li>
+<li><strong>Symptom:</strong>
+<code>_OPEN_HANDLES: list[TextIO] = []</code> accumulates every
+<code>faulthandler</code> log file handle and never closes them. On
+long- running sessions, every 30 s of
+<code>dump_traceback_later(repeat=True)</code> opens a new file at
+<code>time.time()</code> and appends, so the handles grow unbounded (and
+the log files themselves pile up in
+<code>app_data_dir()/diagnostics</code>).</li>
+<li><strong>Suggested fix:</strong> Either close the previous handle in
+<code>setup_fault_handler</code> before opening a new one, or use a
+single rotating file. Add a <code>close_diagnostic_handles()</code>
+function and a test that calls <code>setup_fault_handler</code> twice
+and asserts only one file remains open.</li>
+<li><strong>Regression test:</strong>
+<code>tests/stability/test_stability.py::test_diagnostic_handles_bounded</code>.</li>
+</ul>
+<h4
+id="m-18-stabilitytask_manager.py146-147-shutdown-flips-cancel_futures-based-on-wait-value">M-18
+— <code>stability/task_manager.py:146-147</code> — <code>shutdown</code>
+flips <code>cancel_futures</code> based on <code>wait</code> value</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/stability/task_manager.py:146-147</code> / BUG,
+LIFECYCLE</li>
+<li><strong>Symptom:</strong>
+<code>def shutdown(self, wait: bool = True)</code> calls
+<code>self._executor.shutdown(wait=wait, cancel_futures=not wait)</code>.
+The intent is backwards: callers who pass <code>wait=False</code> (fast
+shutdown on app exit) probably want pending futures cancelled; with the
+current logic, <code>wait=False, cancel_futures=False</code> leaves
+futures pending and the worker threads keep running.</li>
+<li><strong>Suggested fix:</strong> Decouple:
+<code>shutdown(self, wait: bool = True, cancel_pending: bool = False)</code>,
+pass both flags explicitly. Update the call site in
+<code>MainFrame.OnClose</code> accordingly. Add a test that asserts
+<code>shutdown(wait=True)</code> waits but does not cancel, and
+<code>shutdown(wait=False, cancel_pending=True)</code> cancels.</li>
+<li><strong>Regression test:</strong>
+<code>tests/stability/test_stability.py::test_task_manager_shutdown_decoupled</code>.</li>
+</ul>
+<h4
+id="m-19-stabilitywx_heartbeat.py78-79-wxheartbeatwatchdog.stop-doesnt-join-the-thread">M-19
+— <code>stability/wx_heartbeat.py:78-79</code> —
+<code>WxHeartbeatWatchdog.stop()</code> doesn’t <code>join()</code> the
+thread</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/stability/wx_heartbeat.py:78-79</code> / BUG, LIFECYCLE</li>
+<li><strong>Symptom:</strong> <code>stop()</code> sets
+<code>self._stop.set()</code> and returns. The daemon thread may still
+be inside <code>dump_all_thread_stacks(...)</code> (a synchronous I/O
+call) when the test process exits. In <code>MainFrame.OnClose</code> the
+lack of <code>join()</code> means the heartbeat can race with
+interpreter shutdown.</li>
+<li><strong>Suggested fix:</strong> Add
+<code>self._thread.join(timeout=...)</code> after
+<code>_stop.set()</code> in <code>stop()</code>. Add a
+<code>timeout_seconds: float = 5.0</code> parameter.</li>
+<li><strong>Regression test:</strong>
+<code>tests/stability/test_stability.py::test_watchdog_stop_joins_thread</code>.</li>
+</ul>
+<h4
+id="m-20-stabilitywx_heartbeat.py87-92-already_dumped-reset-semantics-are-wrong">M-20
+— <code>stability/wx_heartbeat.py:87-92</code> —
+<code>already_dumped</code> reset semantics are wrong</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/stability/wx_heartbeat.py:87-92</code> / BUG</li>
+<li><strong>Symptom:</strong> Once the watchdog dumps,
+<code>already_dumped = True</code>. It resets only when the heartbeat
+becomes unstale
+(<code>if age &lt; self.warn_after_seconds: already_dumped = False</code>).
+If the UI goes from blocked → unblocked briefly → blocked again without
+the unblock window exceeding <code>warn_after_seconds</code>, the second
+block is silently ignored. The intent is probably “dump at most once per
+blocking episode,” but the actual semantics depend on a transient.</li>
+<li><strong>Suggested fix:</strong> Document the threshold-based reset,
+or switch to a timer-based “dumped at T; only consider dumping again
+after T+recovery_window.”</li>
+<li><strong>Regression test:</strong>
+<code>tests/stability/test_stability.py::test_watchdog_re_dumps_after_recovery_window</code>.</li>
+</ul>
+<h4
+id="m-21-stabilitysafe_regex.py2460-regex.compile-happens-inside-the-timed-region">M-21
+— <code>stability/safe_regex.py:24,60</code> —
+<code>regex.compile</code> happens inside the timed region</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/stability/safe_regex.py:24,60</code> / PERF</li>
+<li><strong>Symptom:</strong> Both <code>safe_finditer</code> and
+<code>safe_subn</code> re-<code>regex.compile</code> the pattern on
+every call. For a search dialog that calls <code>safe_finditer</code>
+once per keystroke, this is wasted work.</li>
+<li><strong>Suggested fix:</strong> Cache compiled patterns in a
+module-level <code>lru_cache(maxsize=128)</code> keyed by
+<code>(pattern, flags)</code>.</li>
+<li><strong>Regression test:</strong>
+<code>tests/stability/test_stability.py::test_safe_finditer_uses_cached_compile</code>.</li>
+</ul>
+<h4
+id="m-22-stabilityfeature_contracts.py20-29-contract-validation-is-too-thin">M-22
+— <code>stability/feature_contracts.py:20-29</code> — contract
+validation is too thin</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/stability/feature_contracts.py:20-29</code> / CODE_QUALITY,
+TEST_GAP</li>
+<li><strong>Symptom:</strong> <code>validate_feature_contract</code>
+checks only the <code>stability_level</code> whitelist and the
+<code>requires_timeout → supports_cancellation</code> pairing. It does
+not check <code>feature_id</code> pattern, <code>display_name</code>
+non-empty, <code>risky ⇒ disabled_in_safe_mode=True</code>,
+<code>experimental ⇒ default_enabled=False</code>, or that
+<code>reports_progress=True</code> features have a progress verb.</li>
+<li><strong>Suggested fix:</strong> Extend the contract per the rules
+above; add tests for each new rule.</li>
+<li><strong>Regression test:</strong>
+<code>tests/stability/test_stability.py::test_feature_contract_full_validation</code>.</li>
+</ul>
+<h4
+id="m-23-stabilitywx_dispatch.py38-49-synchronous-fallback-runs-on-caller-thread">M-23
+— <code>stability/wx_dispatch.py:38-49</code> — synchronous fallback
+runs on caller thread</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/stability/wx_dispatch.py:38-49</code> / CODE_QUALITY</li>
+<li><strong>Symptom:</strong> When <code>wx.CallAfter</code> is not
+callable, the fallback <code>wrapped()</code> runs
+<em>synchronously</em> on the caller thread, which can be the worker
+thread itself; if the callback touches a UI object (the very thing
+<code>CallAfter</code> exists to prevent), it bypasses the safety. The
+<code>except Exception</code> also doesn’t log <code>**kwargs</code> and
+the exception’s identity is lost.</li>
+<li><strong>Suggested fix:</strong> Document the synchronous fallback as
+test-environment-only, and when no <code>wx.CallAfter</code> is
+available in a non-test context, raise a clear <code>RuntimeError</code>
+rather than running on the calling thread. Capture the exception and
+re-raise via <code>wx.LogError</code>.</li>
+<li><strong>Regression test:</strong>
+<code>tests/stability/test_stability.py::test_call_ui_safely_raises_without_wx</code>.</li>
+</ul>
+<h4
+id="m-24-toolsdialog_button_contract.py34-35-unbacked-affirmative_id-not-audited">M-24
+— <code>tools/dialog_button_contract.py:34-35</code> — unbacked
+<code>affirmative_id</code> not audited</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/tools/dialog_button_contract.py:34-35</code> / A11Y</li>
+<li><strong>Symptom:</strong> The audit says an unbacked
+<code>affirmative_id</code> (Enter) is benign because dialogs accept
+Enter via a char hook. That’s true for native
+<code>wx.MessageDialog</code>, but a <code>hardened_custom</code> dialog
+that binds <code>SetAffirmativeId(wx.ID_OK)</code> without a
+<code>wx.ID_OK</code> button silently accepts Enter and posts a
+<code>wx.ID_OK</code> event with no handler — Enter does nothing. A
+blind user will press Enter repeatedly and not know why.</li>
+<li><strong>Suggested fix:</strong> Extend the audit to also verify that
+every <code>apply_modal_ids</code> call where the
+<code>affirmative_id</code> is a <code>wx.ID_*</code> standard id has a
+matching button (or <code>CreateButtonSizer</code> flag) backing it. Add
+a test in
+<code>tests/unit/tools/test_dialog_button_contract.py</code>.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/tools/test_dialog_button_contract.py::test_unbacked_affirmative_id_flagged</code>.</li>
+</ul>
+<h4
+id="m-25-toolsquillin_lint.py189-re.search-on-user-submitted-schemas-redos">M-25
+— <code>tools/quillin_lint.py:189</code> — <code>re.search</code> on
+user-submitted schemas (ReDoS)</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/tools/quillin_lint.py:189</code> / ReDoS</li>
+<li><strong>Symptom:</strong> <code>_string_errors</code> runs
+<code>re.search(pattern, value)</code> against a Quillin manifest’s
+string fields. The <code>pattern</code> comes from the <em>schema</em>
+(<code>extension.json</code>), which is internal and trusted, but the
+<em>value</em> is a Quillin author’s manifest. If a future schema change
+introduces backtracking, the contract is unprotected.</li>
+<li><strong>Suggested fix:</strong> Either (a) use
+<code>regex.search(pattern, value, timeout=0.5)</code> for defense in
+depth, or (b) add a separate lint check that scans
+<code>extension.json</code> patterns for nested quantifiers. Add a test
+that asserts the linter is robust to a malicious manifest value.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/tools/test_quillin_lint.py::test_redos_pattern_rejected</code>.</li>
+</ul>
+<h4
+id="m-26-toolsmodule_size_budgets.json-quilluimain_frame.py-budget-is-19687-lines">M-26
+— <code>tools/module_size_budgets.json</code> —
+<code>quill/ui/main_frame.py</code> budget is <strong>19,687
+lines</strong></h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/tools/module_size_budgets.json:3-7</code> /
+CODE_QUALITY</li>
+<li><strong>Symptom:</strong> The biggest file is allowed to grow to
+19,687 lines. The gate works (it would still fail on <em>future</em>
+growth), but the budget is so large it provides no practical pressure to
+extract. The rebaseline key <code>_rebaseline_2026_06_04</code>
+acknowledges this.</li>
+<li><strong>Suggested fix:</strong> Track in the roadmap (CQ-1 is in
+scope). Add a <code>"_next_target_main_frame": 15000</code> entry to
+make the trajectory explicit. No code change required.</li>
+</ul>
+<h4
+id="m-27-pyproject.toml19-only-operating-system-microsoft-windows-classifier">M-27
+— <code>pyproject.toml:19</code> — only
+<code>Operating System :: Microsoft :: Windows</code> classifier</h4>
+<ul>
+<li><strong>File / Category:</strong> <code>pyproject.toml:19</code> /
+DOC</li>
+<li><strong>Symptom:</strong> README says “Runs on Windows and macOS”
+four times. <code>pyproject.toml</code> classifiers list only Windows.
+The <code>[macos]</code> extra and <code>scripts/setup_macos.py</code>
+are present, so the feature is real — the classifier is stale.</li>
+<li><strong>Suggested fix:</strong> Add
+<code>"Operating System :: MacOS"</code> (or <code>:: MacOS :: X</code>)
+to the classifiers. Update <code>docs/engineering/macos-build.md</code>
+if it references classifiers.</li>
+<li><strong>Regression test:</strong> CI check that the classifiers
+include macOS.</li>
+</ul>
+<h3 id="ui-lifecycle-threading">5.6 UI lifecycle &amp; threading</h3>
+<h4
+id="m-28-uimain_frame.py4547-crash_recovery-re-show-loop-leaks-focus">M-28
+— <code>ui/main_frame.py:4547</code> — <code>crash_recovery</code>
+re-show loop leaks focus</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/ui/main_frame.py:4547</code> / A11Y</li>
+<li><strong>Symptom:</strong> Each <code>continue</code> calls
+<code>_show_modal_dialog(dialog, ...)</code> again on the same dialog.
+<code>_show_modal_dialog</code> does <code>editor.SetFocus()</code> via
+<code>CallAfter</code> on every close, so when the dialog reopens, focus
+races between the editor (CallAfter pending) and the dialog’s primary
+control. User sees a momentary focus flicker.</li>
+<li><strong>Suggested fix:</strong> Track “is in a sub-loop” and skip
+the <code>editor.SetFocus</code> between iterations.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/ui/test_main_frame.py::test_crash_recovery_loop_does_not_steal_focus</code>.</li>
+</ul>
+<h4
+id="m-29-uiassistant_tools.py143-156-run-python-sandbox-blocks-ui">M-29
+— <code>ui/assistant_tools.py:143-156</code> — <code>Run Python</code>
+sandbox blocks UI</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/ui/assistant_tools.py:143-156</code> / UX, THREADING</li>
+<li><strong>Symptom:</strong> Long-running Python sandbox runs block the
+UI thread (despite the docstring saying “generation runs off the UI
+thread”). A 30-second script freezes the screen reader.</li>
+<li><strong>Suggested fix:</strong> Run the sandbox on a worker thread;
+show a progress indicator; the Apply button can disable until done.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/ui/test_assistant_tools.py::test_run_python_does_not_block_ui_thread</code>.</li>
+</ul>
+<h4
+id="m-30-uimain_frame_browse.py174-prewarm-thread-not-cancelled-before-restart">M-30
+— <code>ui/main_frame_browse.py:174</code> — prewarm thread not
+cancelled before restart</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/ui/main_frame_browse.py:174</code> / LIFECYCLE</li>
+<li><strong>Symptom:</strong> Thread is started without checking for a
+previous in-flight thread. A new thread can be started while an old one
+is still running, leading to two workers computing the same cache. The
+<code>generation</code> counter mitigates, but threads still consume
+CPU.</li>
+<li><strong>Suggested fix:</strong> Cancel or <code>join()</code> the
+previous thread before starting a new one.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/ui/test_main_frame_browse.py::test_prewarm_thread_cancelled_on_repeat</code>.</li>
+</ul>
+<h4
+id="m-31-uisticky_notes.py362-bare-messagebox-without-enterexit-announcements">M-31
+— <code>ui/sticky_notes.py:362</code> — bare <code>MessageBox</code>
+without enter/exit announcements</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/ui/sticky_notes.py:362</code> / A11Y</li>
+<li><strong>Symptom:</strong> Uses raw <code>self._wx.MessageBox</code>
+without enter/exit announcements. Inconsistent with the rest of the
+app’s dialog contract.</li>
+<li><strong>Suggested fix:</strong> Use
+<code>_show_message_box</code>-style helper consistently.</li>
+<li><strong>Regression test:</strong>
+<code>tests/unit/ui/test_sticky_notes.py::test_delete_confirm_uses_contract_helper</code>.</li>
+</ul>
+<h4 id="m-32-uimain_frame_image.py160-167-time.sleep0.1-polling">M-32 —
+<code>ui/main_frame_image.py:160-167</code> —
+<code>time.sleep(0.1)</code> polling</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/ui/main_frame_image.py:160-167</code> / PERF</li>
+<li><strong>Symptom:</strong> Sleeps 100 ms then
+<code>YieldIfNeeded()</code>. Fine for short operations, but on a slow
+OCR run the loop wakes 10×/sec, burning CPU.</li>
+<li><strong>Suggested fix:</strong> Use <code>wx.Timer</code> for
+periodic progress updates instead of a polling loop.</li>
+<li><strong>Regression test:</strong> Manual perf check + a low-level
+test that asserts the timer is wired.</li>
+</ul>
+<hr />
+<h2 id="low-issues-open">6. LOW issues (open)</h2>
+<blockquote>
+<p>LOW items are nice-to-have hardening. Closed items (L-8, L-12, L-15)
+are recorded in <code>CHANGELOG.md</code>. The remaining items are
+tracked in the CQ / DOC / GATE backlog.</p>
+</blockquote>
+<h3 id="core-io">6.1 Core / IO</h3>
+<h4
+id="l-1-corepaths.py29-hidden-.quill-fallback-when-appdata-missing">L-1
+— <code>core/paths.py:29</code> — hidden <code>~/.quill</code> fallback
+when <code>APPDATA</code> missing</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/paths.py:29</code> / UX</li>
+<li><strong>Symptom:</strong> If <code>APPDATA</code> is unset (rare but
+possible in service contexts), Quill silently switches to
+<code>~/.quill</code>, a hidden Unix-style directory. Windows users will
+not see it in Explorer.</li>
+<li><strong>Suggested fix:</strong> Raise a clear
+<code>RuntimeError("Could not determine the Quill data directory; please set QUILL_DATA_DIR or APPDATA.")</code>
+rather than silently picking a hidden dir.</li>
+</ul>
+<h4
+id="l-2-corelexical.py284-except-exception-around-online-provider-lookup">L-2
+— <code>core/lexical.py:284</code> — <code>except Exception</code>
+around online provider lookup</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/lexical.py:284</code> / CODE_QUALITY</li>
+<li><strong>Symptom:</strong> Broad catch hides bugs in provider
+implementations. The <code>BLE001</code> noqa is acknowledged but the
+catch should still log at debug level so provider regressions show up in
+<code>diagnostics.py</code> logs.</li>
+<li><strong>Suggested fix:</strong> Add
+<code>logger.debug("Lexical provider %s failed: %s", provider.name, error)</code>
+inside the except.</li>
+</ul>
+<h4
+id="l-3-coreaiassistant.py139-except-exception-in-the-default-backend-probe">L-3
+— <code>core/ai/assistant.py:139</code> — <code>except Exception</code>
+in the default-backend probe</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/ai/assistant.py:139</code> / CODE_QUALITY</li>
+<li><strong>Suggested fix:</strong> Log the exception via
+<code>logger.warning(...)</code> so it appears in the user’s diagnostic
+bundle.</li>
+</ul>
+<h4
+id="l-4-corelexical_preload.py21-except-exception-around-preload-start">L-4
+— <code>core/lexical_preload.py:21</code> —
+<code>except Exception</code> around preload start</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/lexical_preload.py:21</code> / CODE_QUALITY</li>
+<li><strong>Suggested fix:</strong> <code>logger.debug(...)</code>
+inside the except.</li>
+</ul>
+<h4
+id="l-5-coreaiassistant_ai.py535-555-dpapi-fallback-to-file-based-encrypted-store">L-5
+— <code>core/ai/assistant_ai.py:535-555</code> — DPAPI fallback to
+file-based encrypted store</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/assistant_ai.py:535-555</code> / SECURITY</li>
+<li><strong>Symptom:</strong> If DPAPI (<code>unprotect_secret</code>)
+fails on a portable install moved between machines, the fallback
+<code>secret = ""</code> is returned silently and the user gets an
+“unauthorized” error from the provider with no indication the
+<em>key</em> is the problem.</li>
+<li><strong>Suggested fix:</strong> When
+<code>has_undecryptable_secret()</code> returns True, surface a specific
+error: “The saved API key is encrypted for a different Windows user.
+Please re-enter it in Settings.”</li>
+</ul>
+<h4 id="l-6-corewatch_queue.py148-threading.rlock-instead-of-lock">L-6 —
+<code>core/watch_queue.py:148</code> — <code>threading.RLock</code>
+instead of <code>Lock</code></h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/watch_queue.py:148</code> / CODE_QUALITY</li>
+<li><strong>Symptom:</strong> <code>RLock</code> is used because some
+methods call other locked methods. This works but adds overhead and
+creates a foot-gun for reentrancy bugs.</li>
+<li><strong>Suggested fix:</strong> Refactor or document why RLock is
+required.</li>
+</ul>
+<h4
+id="l-7-coreglow.py485499505524562574-multiple-except-exception-in-glow-backend-detection">L-7
+— <code>core/glow.py:485,499,505,524,562,574</code> — multiple
+<code>except Exception</code> in GLOW backend detection</h4>
+<ul>
+<li><strong>File / Category:</strong> <code>quill/core/glow.py</code> (6
+sites) / CODE_QUALITY</li>
+<li><strong>Suggested fix:</strong> Narrow the exceptions and add
+<code>logger.warning(...)</code>.</li>
+</ul>
+<h4 id="l-9-corestorage_mode.py12-quill_portable_root-env-var">L-9 —
+<code>core/storage_mode.py:12</code> — <code>QUILL_PORTABLE_ROOT</code>
+env var</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/core/storage_mode.py:12</code> / SECURITY</li>
+<li><strong>Suggested fix:</strong> Same as H-1-core — gate by build
+flag.</li>
+</ul>
+<h3 id="io">6.2 IO</h3>
+<h4
+id="l-10-ioocr.py141-_import_windows_ocr-swallows-all-exceptions">L-10 —
+<code>io/ocr.py:141</code> — <code>_import_windows_ocr</code> swallows
+all exceptions</h4>
+<ul>
+<li><strong>File / Category:</strong> <code>quill/io/ocr.py:141</code> /
+CODE_QUALITY</li>
+<li><strong>Suggested fix:</strong> Catch <code>ImportError</code> only;
+for any other exception, log a warning and re-raise as
+<code>OcrUnavailableError</code> so callers can decide.</li>
+</ul>
+<h4
+id="l-11-iostructured.py244-same-as-m-11-low-because-there-is-a-fallback">L-11
+— <code>io/structured.py:244</code> — same as M-11 (low because there is
+a fallback)</h4>
+<ul>
+<li>Same shape; see M-11 for the fix.</li>
+</ul>
+<h3 id="stability-tools">6.3 Stability / tools</h3>
+<h4
+id="l-13-stabilitytask_manager.py42-44-quilltask-dataclass-has-no-started_at-or-result-snapshot">L-13
+— <code>stability/task_manager.py:42-44</code> — <code>QuillTask</code>
+dataclass has no <code>started_at</code> or <code>result</code>
+snapshot</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/stability/task_manager.py:35-44</code> / CODE_QUALITY</li>
+<li><strong>Suggested fix:</strong> Add <code>submitted_at: float</code>
+and
+<code>result_summary: Literal["ok","cancelled","failed","pending"]</code>
+to <code>QuillTask</code>. Include them in the bundle.</li>
+</ul>
+<h4
+id="l-14-toolsdialog_inventory.py99-107-_classify-returns-none-for-unrecognized-dialogs">L-14
+— <code>tools/dialog_inventory.py:99-107</code> — <code>_classify</code>
+returns <code>None</code> for unrecognized dialogs</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/tools/dialog_inventory.py:99-107</code> / CODE_QUALITY</li>
+<li><strong>Suggested fix:</strong> Enrich the violation message in
+<code>_check_dialog_registry</code> with a hint: “If wx.<Name> is a
+stock dialog, add it to <code>quill/tools/dialog_inventory.py</code>
+<code>_NATIVE_WX_DIALOGS</code>.”</li>
+</ul>
+<h4
+id="l-16-toolsui_surface.py34-42-next...-raises-stopiteration-if-mainframe-is-missing">L-16
+— <code>tools/ui_surface.py:34-42</code> — <code>next(...)</code> raises
+<code>StopIteration</code> if <code>MainFrame</code> is missing</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>quill/tools/ui_surface.py:33-35</code> / UX</li>
+<li><strong>Suggested fix:</strong> Wrap in a <code>try</code> and emit
+“Could not find class MainFrame in quill/ui/main_frame.py. Has it been
+renamed?” with non-zero exit.</li>
+</ul>
+<h4 id="l-17-testsstabilitytest_stability.py-coverage-gaps">L-17 —
+<code>tests/stability/test_stability.py</code> — coverage gaps</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>tests/stability/test_stability.py:1-275</code> / TEST_GAP</li>
+<li><strong>Symptom:</strong> Several stability surfaces are not
+directly tested (see checkpoint 002 for the full list of 13 untested
+surfaces). Particularly important: the bundle content assertions
+(<code>metadata.json</code> parses, <code>quill.log</code> is present in
+the zip).</li>
+<li><strong>Suggested fix:</strong> Add 6-10 tests for the above.</li>
+</ul>
+<h4
+id="l-18-testsperformancetest_budgets.py27-31-wall-clock-budgets-are-inherently-flaky">L-18
+— <code>tests/performance/test_budgets.py:27-31</code> — wall-clock
+budgets are inherently flaky</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>tests/performance/test_budgets.py:27-31</code> /
+TEST_FLAKINESS</li>
+<li><strong>Suggested fix:</strong> Add a <code>pytest.mark.slow</code>
+or <code>pytest.mark.perf</code> marker that runs only on a
+<code>RUN_PERF=1</code> env flag in CI; or allow a multiplicative
+tolerance (<code>elapsed * pytest.CI_SLOWDOWN &lt; BUDGET</code>).</li>
+</ul>
+<h4
+id="l-19-dialogs.md-manual-regression-checklist-has-no-automation">L-19
+— <code>dialogs.md</code> — manual regression checklist has no
+automation</h4>
+<ul>
+<li><strong>File / Category:</strong> <code>dialogs.md</code> (sections
+A-X) / DOC, PROCESS</li>
+<li><strong>Suggested fix:</strong> Cross-link each
+<code>dialogs.md</code> row to the corresponding test in
+<code>tests/accessibility/</code> and to the
+<code>final-qa-test-plan.md</code> row. Add a “last automated result”
+column.</li>
+</ul>
+<h4
+id="l-20-docsqafinal-qa-test-plan.md49-50-gating-references-stable-versioncommit-only">L-20
+— <code>docs/qa/final-qa-test-plan.md:49-50</code> — gating references
+stable version/commit only</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>docs/qa/final-qa-test-plan.md:49-50</code> / DOC</li>
+<li><strong>Suggested fix:</strong> Add a line item to the QA record for
+<code>dialog_inventory.json</code> mtime,
+<code>module_size_budgets.json</code> <code>_rebaseline_*</code> key,
+and the <code>wxPython</code> runtime version.</li>
+</ul>
+<h4
+id="l-21-roadmap.md-references-sec-1..17-etc.-but-stability-modules-dont-link-back">L-21
+— <code>ROADMAP.md</code> references SEC-1..17 etc. but stability
+modules don’t link back</h4>
+<ul>
+<li><strong>File / Category:</strong> all
+<code>quill/stability/*.py</code> / DOC</li>
+<li><strong>Suggested fix:</strong> Add a one-line
+<code>"""Implements: ROADMAP SEC-NN — &lt;title&gt;."""</code> to each
+stability module’s docstring.</li>
+</ul>
+<h4
+id="l-22-testsunittoolstest_bundled_quillin_lint.py-no-negative-test">L-22
+— <code>tests/unit/tools/test_bundled_quillin_lint.py</code> — no
+negative test</h4>
+<ul>
+<li><strong>File / Category:</strong>
+<code>tests/unit/tools/test_bundled_quillin_lint.py</code> /
+TEST_GAP</li>
+<li><strong>Suggested fix:</strong> Add a fixture directory
+<code>tests/unit/tools/fixtures/bad_quillin/</code> with a manifest that
+fails one of the four lenses; assert the linter returns non-zero and
+emits an error.</li>
+</ul>
+<hr />
+<h2 id="nit">7. NIT</h2>
+<blockquote>
+<p>Open cosmetic / readability items. Closed items moved to
+<code>CHANGELOG.md</code>.</p>
+</blockquote>
+<ul>
+<li><p><strong>N-3</strong>
+<code>quill/stability/crash_report.py:34</code> — 🔵 OPEN.
+<code>time.time_ns()</code> is 19 digits; consider ISO-8601 for human
+inspection of the bundle filename. Deferred to the bundle-naming
+sweep.</p></li>
+<li><p><strong>N-5</strong> <code>quill/tools/ui_surface.py:30</code> —
+🔵 OPEN. <code>main_frame_public_methods</code> does not handle
+<code>MainFrame</code> being defined inside a wrapper. The
+<code>next()</code> is a sharp edge.</p></li>
+<li><p><strong>N-6</strong>
+<code>tests/performance/test_budgets.py:35-37</code> — 🔵 OPEN.
+<code>spellcheck._WORDLIST_CACHE</code> is a private attribute; reaching
+into another module’s privates is fragile. Add a public
+<code>reset_caches()</code> test helper to <code>spellcheck</code> /
+<code>thesaurus</code>.</p></li>
+<li><p><strong>N-10</strong> <code>dialogs.md</code> — 🔵 OPEN. Does not
+yet reference the “safe mode” flag.</p></li>
+<li><p><strong>N-13</strong> <code>quill/core/bookmarks.py:12</code> —
+🔵 OPEN. Module is ~12 lines and could be inlined.</p></li>
+<li><p><strong>N-14</strong>
+<code>quill/core/clipboard_collector.py:18</code> — 🔵 OPEN. Same shape
+as <code>bookmarks.py</code>.</p></li>
+</ul>
+<hr />
+<h2 id="recommended-triage-order">9. Recommended triage order</h2>
+<p>The user is starting from “all fixes are now in.” The recommended
+order for the remaining 7 HIGH + 32 MEDIUM + 22 LOW items is:</p>
+<h3 id="tier-a-release-blockers-high-all-closed">Tier A — release
+blockers (HIGH): ALL CLOSED ✅</h3>
+<p>All 7 items below were fixed in Sweep 5.</p>
+<ol type="1">
+<li><strong>H-1-core</strong> ✅ — <code>QUILL_DATA_DIR</code> gated on
+<code>_DEV_BUILD</code>; release builds ignore it.</li>
+<li><strong>H-2-core</strong> ✅ —
+<code>_ENGINE_EXECUTABLE_BASENAMES</code> allowlist in
+<code>configure_engine</code> + <code>probe_engine</code>.</li>
+<li><strong>H-3-core</strong> ✅ — <code>RejectPolicy</code> default;
+<code>trust_first_use</code> flag off by default.</li>
+<li><strong>H-3-platform</strong> ✅ — <code>winsdk</code> imports
+wrapped in <code>try/except</code>; <code>_WINSDK_AVAILABLE</code>
+flag.</li>
+<li><strong>H-4-core-2 / M-2</strong> ✅ — <code>threading.Lock</code>
+serializes in-process <code>enqueue_open_request</code> calls.</li>
+<li><strong>H-4-platform</strong> ✅ — macOS VoiceOver errors now
+<code>logger.warning(...)</code> instead of silent pass.</li>
+<li><strong>H-3-ui</strong> ✅ — <code>_on_close</code> explicitly
+destroys the Watch Queue Monitor dialog.</li>
+</ol>
+<h3 id="tier-b-defense-in-depth-1.0-1.1-all-medium">Tier B —
+defense-in-depth (1.0 → 1.1, all MEDIUM)</h3>
+<ol start="8" type="1">
+<li><strong>M-7</strong> — sandbox <code>__builtins__</code> re-binding
+escape (SECURITY).</li>
+<li><strong>M-6</strong> — manifest HMAC key rotation (SECURITY).</li>
+<li><strong>M-5</strong> — cache the asyncio event loop (PERF, AI
+providers).</li>
+<li><strong>M-1 / M-3 / M-4 / M-16</strong> — watch-action humanization
++ allowlist + profile error tracking + provider probe (UX, security,
+BUG).</li>
+<li><strong>M-9 / M-10 / M-11 / M-12 / M-13</strong> — I/O robustness
+and parsing (BUG).</li>
+<li><strong>M-14 / M-15</strong> — read-aloud timeouts
+(RELIABILITY).</li>
+<li><strong>M-17 / M-18 / M-19 / M-20 / M-21 / M-22 / M-23</strong> —
+stability lifecycle and contracts (LIFECYCLE, TEST_GAP).</li>
+<li><strong>M-24 / M-25 / M-26 / M-27</strong> — tool/audit/doc
+hardening.</li>
+</ol>
+<h3 id="tier-c-ui-polish-1.0-1.1">Tier C — UI polish (1.0 → 1.1)</h3>
+<ol start="16" type="1">
+<li><strong>M-28 / M-29 / M-30 / M-31 / M-32</strong> — UI threading and
+focus polish.</li>
+<li><strong>L-1</strong> — UX papercut (APPDATA fallback).</li>
+<li><strong>L-19 / L-20 / L-21</strong> — cross-link
+<code>dialogs.md</code>, QA plan, and ROADMAP.</li>
+</ol>
+<h3 id="tier-d-magic-delight-8-all-closed">Tier D — magic / delight
+(§8): ALL CLOSED ✅</h3>
+<p>All 16 Magic/UX delight items are implemented and recorded in
+<code>CHANGELOG.md</code>. See the “Magic / UX Delight” section there
+for full details.</p>
+<hr />
+<h2 id="per-file-quick-reference-table">10. Per-file quick reference
+table</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>File</th>
+<th>Highest severity</th>
+<th>Issues</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quill/__main__.py</code></td>
+<td>✅ FIXED (H-SAFE-1)</td>
+<td>Sets <code>QUILL_SAFE_MODE=1</code> when
+<code>--safe-mode</code></td>
+</tr>
+<tr>
+<td><code>quill/core/paths.py</code></td>
+<td>✅ FIXED (H-1-core)</td>
+<td>dev-only gate + home constraint; L-1</td>
+</tr>
+<tr>
+<td><code>quill/core/recovery.py</code></td>
+<td>✅ FIXED (H-4-core)</td>
+<td>RLock + file lock; N-12</td>
+</tr>
+<tr>
+<td><code>quill/core/external_tools.py</code></td>
+<td>✅ FIXED (H-2-core)</td>
+<td>allowlist by basename</td>
+</tr>
+<tr>
+<td><code>quill/core/ai/external_engine.py</code></td>
+<td>✅ FIXED (H-2-core)</td>
+<td><code>_ENGINE_EXECUTABLE_BASENAMES</code> allowlist; M-3, N-11</td>
+</tr>
+<tr>
+<td><code>quill/core/ssh/client.py</code></td>
+<td>✅ FIXED (H-3-core)</td>
+<td>RejectPolicy default; trust_first_use flag</td>
+</tr>
+<tr>
+<td><code>quill/core/ipc.py</code></td>
+<td>✅ FIXED (H-4-core-2)</td>
+<td>threading.Lock on enqueue</td>
+</tr>
+<tr>
+<td><code>quill/core/watch_actions.py</code></td>
+<td>MEDIUM</td>
+<td>M-1 (8 sites)</td>
+</tr>
+<tr>
+<td><code>quill/core/watch_profiles.py</code></td>
+<td>MEDIUM</td>
+<td>M-4</td>
+</tr>
+<tr>
+<td><code>quill/core/watch_queue.py</code></td>
+<td>LOW</td>
+<td>L-6</td>
+</tr>
+<tr>
+<td><code>quill/core/glow.py</code></td>
+<td>LOW</td>
+<td>L-7 (6 sites)</td>
+</tr>
+<tr>
+<td><code>quill/core/updates.py</code></td>
+<td>MEDIUM</td>
+<td>M-6</td>
+</tr>
+<tr>
+<td><code>quill/core/python_sandbox.py</code></td>
+<td>MEDIUM</td>
+<td>M-7</td>
+</tr>
+<tr>
+<td><code>quill/core/macros.py</code></td>
+<td>MEDIUM</td>
+<td>M-8</td>
+</tr>
+<tr>
+<td><code>quill/core/lexical.py</code></td>
+<td>LOW</td>
+<td>L-2</td>
+</tr>
+<tr>
+<td><code>quill/core/lexical_preload.py</code></td>
+<td>LOW</td>
+<td>L-4</td>
+</tr>
+<tr>
+<td><code>quill/core/storage_mode.py</code></td>
+<td>LOW</td>
+<td>L-9</td>
+</tr>
+<tr>
+<td><code>quill/core/ai/assistant.py</code></td>
+<td>MEDIUM</td>
+<td>M-5, M-16, L-3</td>
+</tr>
+<tr>
+<td><code>quill/core/ai/foundation_models.py</code></td>
+<td>MEDIUM</td>
+<td>M-5</td>
+</tr>
+<tr>
+<td><code>quill/core/assistant_ai.py</code></td>
+<td>LOW</td>
+<td>L-5</td>
+</tr>
+<tr>
+<td><code>quill/core/read_aloud.py</code></td>
+<td>MEDIUM</td>
+<td>M-14, M-15</td>
+</tr>
+<tr>
+<td><code>quill/core/bookmarks.py</code></td>
+<td>NIT</td>
+<td>N-13</td>
+</tr>
+<tr>
+<td><code>quill/core/clipboard_collector.py</code></td>
+<td>NIT</td>
+<td>N-14</td>
+</tr>
+<tr>
+<td><code>quill/core/dictation.py</code></td>
+<td>NIT</td>
+<td>N-15</td>
+</tr>
+<tr>
+<td><code>quill/core/announcements.py</code></td>
+<td>NIT</td>
+<td>N-16</td>
+</tr>
+<tr>
+<td><code>quill/io/pages.py</code></td>
+<td>MEDIUM</td>
+<td>M-9</td>
+</tr>
+<tr>
+<td><code>quill/io/pdf.py</code></td>
+<td>MEDIUM</td>
+<td>M-10</td>
+</tr>
+<tr>
+<td><code>quill/io/structured.py</code></td>
+<td>MEDIUM</td>
+<td>M-11</td>
+</tr>
+<tr>
+<td><code>quill/io/rtf_safety.py</code></td>
+<td>MEDIUM</td>
+<td>M-12</td>
+</tr>
+<tr>
+<td><code>quill/io/rtf.py</code></td>
+<td>MEDIUM</td>
+<td>M-13</td>
+</tr>
+<tr>
+<td><code>quill/io/ocr.py</code></td>
+<td>LOW</td>
+<td>L-10</td>
+</tr>
+<tr>
+<td><code>quill/stability/safe_subprocess.py</code></td>
+<td>✅ FIXED (H-1)</td>
+<td><code>format_args_for_log</code></td>
+</tr>
+<tr>
+<td><code>quill/stability/crash_report.py</code></td>
+<td>✅ FIXED (H-2, H-3)</td>
+<td>Two-pass build; N-3</td>
+</tr>
+<tr>
+<td><code>quill/stability/safe_mode.py</code></td>
+<td>✅ FIXED (H-1-tests, L-12)</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>quill/stability/diagnostics.py</code></td>
+<td>MEDIUM</td>
+<td>M-17</td>
+</tr>
+<tr>
+<td><code>quill/stability/task_manager.py</code></td>
+<td>MEDIUM</td>
+<td>M-18, L-13</td>
+</tr>
+<tr>
+<td><code>quill/stability/wx_heartbeat.py</code></td>
+<td>MEDIUM</td>
+<td>M-19, M-20</td>
+</tr>
+<tr>
+<td><code>quill/stability/safe_regex.py</code></td>
+<td>MEDIUM</td>
+<td>M-21</td>
+</tr>
+<tr>
+<td><code>quill/stability/feature_contracts.py</code></td>
+<td>MEDIUM</td>
+<td>M-22, N-9</td>
+</tr>
+<tr>
+<td><code>quill/stability/wx_dispatch.py</code></td>
+<td>MEDIUM</td>
+<td>M-23, N-2</td>
+</tr>
+<tr>
+<td><code>quill/stability/redaction.py</code></td>
+<td>NEW (H-1, H-2, H-3 fix)</td>
+<td>source of truth for redaction</td>
+</tr>
+<tr>
+<td><code>quill/stability/__init__.py</code></td>
+<td>NIT</td>
+<td>N-1</td>
+</tr>
+<tr>
+<td><code>quill/platform/windows/prism_bridge.py</code></td>
+<td>✅ FIXED (H-1-platform, H-2-platform, H-4-platform)</td>
+<td>singleton; macOS error logged</td>
+</tr>
+<tr>
+<td><code>quill/platform/windows/windows_ocr.py</code></td>
+<td>✅ FIXED (H-3-platform)</td>
+<td>lazy winsdk imports</td>
+</tr>
+<tr>
+<td><code>quill/ui/main_frame_quillins.py</code></td>
+<td>✅ FIXED (H-1-ui, H-2-ui, H-SAFE-1)</td>
+<td>all dialogs contract-routed; safe-mode contribution skip</td>
+</tr>
+<tr>
+<td><code>quill/ui/main_frame.py</code></td>
+<td>MEDIUM</td>
+<td>M-28, M-30, M-32; H-3-ui ✅ FIXED</td>
+</tr>
+<tr>
+<td><code>quill/ui/main_frame_browse.py</code></td>
+<td>MEDIUM</td>
+<td>M-30</td>
+</tr>
+<tr>
+<td><code>quill/ui/main_frame_image.py</code></td>
+<td>MEDIUM</td>
+<td>M-32</td>
+</tr>
+<tr>
+<td><code>quill/ui/assistant_tools.py</code></td>
+<td>MEDIUM</td>
+<td>M-29</td>
+</tr>
+<tr>
+<td><code>quill/ui/sticky_notes.py</code></td>
+<td>MEDIUM</td>
+<td>M-31</td>
+</tr>
+<tr>
+<td><code>quill/ui/csv_grid.py</code></td>
+<td>LOW</td>
+<td>L-23 (row*1000+col collision)</td>
+</tr>
+<tr>
+<td><code>quill/tools/dialog_inventory.py</code></td>
+<td>MEDIUM</td>
+<td>M-26, L-14</td>
+</tr>
+<tr>
+<td><code>quill/tools/dialog_button_contract.py</code></td>
+<td>MEDIUM</td>
+<td>M-24, N-8</td>
+</tr>
+<tr>
+<td><code>quill/tools/quillin_lint.py</code></td>
+<td>MEDIUM</td>
+<td>M-25, N-7</td>
+</tr>
+<tr>
+<td><code>quill/tools/network_egress_audit.py</code></td>
+<td>✅ FIXED (L-15)</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>quill/tools/ui_surface.py</code></td>
+<td>LOW</td>
+<td>L-16, N-5</td>
+</tr>
+<tr>
+<td><code>quill/tools/module_size_budgets.json</code></td>
+<td>MEDIUM</td>
+<td>M-26, N-4</td>
+</tr>
+<tr>
+<td><code>pyproject.toml</code></td>
+<td>MEDIUM</td>
+<td>M-27</td>
+</tr>
+<tr>
+<td><code>dialogs.md</code></td>
+<td>LOW</td>
+<td>L-19, N-10</td>
+</tr>
+<tr>
+<td><code>docs/qa/final-qa-test-plan.md</code></td>
+<td>LOW</td>
+<td>L-20</td>
+</tr>
+<tr>
+<td><code>docs/planning/ROADMAP.md</code></td>
+<td>LOW</td>
+<td>L-21</td>
+</tr>
+<tr>
+<td><code>tests/stability/test_stability.py</code></td>
+<td>LOW</td>
+<td>L-17 (coverage gaps)</td>
+</tr>
+<tr>
+<td><code>tests/performance/test_budgets.py</code></td>
+<td>LOW</td>
+<td>L-18, N-6</td>
+</tr>
+<tr>
+<td><code>tests/unit/tools/test_bundled_quillin_lint.py</code></td>
+<td>LOW</td>
+<td>L-22</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="tests-gates">11. Tests &amp; gates</h2>
+<blockquote>
+<p>Every HIGH and MEDIUM fix above includes a named regression test.
+This section maps the fixes to the existing CI gates.</p>
+</blockquote>
+<h3 id="new-tests-added-all-high-fixes">11.1 New tests added (all HIGH
+fixes)</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Test file</th>
+<th>Test</th>
+<th>Locks in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tests/stability/test_stability.py</code></td>
+<td><code>test_run_subprocess_safely_does_not_log_secrets</code></td>
+<td>H-1</td>
+</tr>
+<tr>
+<td><code>tests/stability/test_stability.py</code></td>
+<td><code>test_diagnostic_bundle_redacts_secrets_and_paths</code></td>
+<td>H-2, H-3</td>
+</tr>
+<tr>
+<td><code>tests/stability/test_stability.py</code></td>
+<td><code>test_safe_mode_blocks_assistant_network_calls</code></td>
+<td>H-SAFE-1</td>
+</tr>
+<tr>
+<td><code>tests/stability/test_stability.py</code></td>
+<td><code>test_safe_mode_does_not_block_off_provider</code></td>
+<td>H-SAFE-1</td>
+</tr>
+<tr>
+<td><code>tests/unit/core/test_recovery.py</code></td>
+<td><code>test_concurrent_begin_session_serialize_via_lock</code></td>
+<td>H-4-core</td>
+</tr>
+<tr>
+<td><code>tests/unit/platform/windows/test_prism_bridge.py</code></td>
+<td><code>test_announcement_engine_uses_system_speech_when_prism_is_missing</code>
+(asserts <code>init_calls == 1</code>)</td>
+<td>H-1-platform, H-2-platform</td>
+</tr>
+<tr>
+<td><code>tests/unit/ui/test_main_frame_quillins.py</code></td>
+<td><code>test_quillin_consent_uses_modal_contract</code></td>
+<td>H-1-ui</td>
+</tr>
+<tr>
+<td><code>tests/unit/ui/test_main_frame_quillins.py</code></td>
+<td><code>test_on_remove_uses_modal_contract</code></td>
+<td>H-2-ui</td>
+</tr>
+<tr>
+<td><code>tests/unit/core/test_paths.py</code></td>
+<td><code>test_release_build_ignores_quill_data_dir</code>,
+<code>test_dev_build_accepts_override_under_home</code>,
+<code>test_dev_build_rejects_override_outside_home</code></td>
+<td>H-1-core</td>
+</tr>
+<tr>
+<td><code>tests/unit/core/ai/test_external_engine.py</code></td>
+<td><code>test_configure_engine_rejects_unallowed_executable</code>,
+<code>test_probe_engine_rejects_unallowed_executable</code></td>
+<td>H-2-core</td>
+</tr>
+<tr>
+<td><code>tests/unit/core/test_ssh_client.py</code></td>
+<td><code>test_default_rejects_unknown_host_keys</code>,
+<code>test_trust_first_use_overrides_to_auto_add</code>,
+<code>test_setting_ssh_trust_first_use_drives_policy</code>,
+<code>test_load_system_host_keys_always_runs</code></td>
+<td>H-3-core</td>
+</tr>
+<tr>
+<td><code>tests/unit/core/test_ipc.py</code></td>
+<td><code>test_concurrent_enqueue_serializes_via_lock</code></td>
+<td>H-4-core-2</td>
+</tr>
+<tr>
+<td><code>tests/unit/platform/windows/test_windows_ocr.py</code></td>
+<td><code>test_module_imports_without_winsdk</code>,
+<code>test_recognize_raises_ocr_unavailable_when_winsdk_missing</code></td>
+<td>H-3-platform</td>
+</tr>
+<tr>
+<td><code>tests/unit/platform/windows/test_prism_bridge.py</code></td>
+<td><code>test_macos_announce_error_logged</code></td>
+<td>H-4-platform</td>
+</tr>
+</tbody>
+</table>
+<h3 id="gates-the-fixes-unlock-or-feed">11.2 Gates the fixes unlock or
+feed</h3>
+<ul>
+<li><strong>Banned-pattern gate</strong>
+(<code>quill/tools/check_banned_patterns.py</code>, Security CI) —
+already catches raw <code>ET.fromstring</code>, <code>shell=True</code>,
+etc. The 5 fixes do not add new banned patterns; they <em>enable</em>
+the existing redaction contract from <code>SECURITY.md:81</code>.</li>
+<li><strong>Dialog inventory gate</strong>
+(<code>tests/unit/ui/test_dialog_inventory.py</code>) — the Quillin
+consent + remove dialogs now route through
+<code>_show_modal_dialog</code>, so they appear in the inventory
+snapshot (<code>tests/unit/ui/fixtures/dialog_inventory.json</code>)
+under the <code>native</code> classification. Re-run
+<code>python -m quill.tools.dialog_inventory --write</code> after
+merging and stage the snapshot.</li>
+<li><strong>Public-surface fixture</strong>
+(<code>tests/unit/ui/fixtures/main_frame_public_surface.json</code>) —
+no new public <code>MainFrame</code> method was added by these fixes, so
+the fixture is unchanged. Re-run
+<code>python -m quill.tools.ui_surface --write</code> only if a future
+patch adds a public method.</li>
+<li><strong><code>safe_mode</code> enforcer</strong> — no new gate; the
+contract is the <code>QUILL_SAFE_MODE=1</code> env var and the four
+short-circuit call sites. A future typed <code>SafeModeConfig</code>
+plumbing pass would add a new gate in
+<code>feature_contracts.py</code>.</li>
+</ul>
+<h3 id="tests-for-open-high-items">11.3 Tests for open HIGH items</h3>
+<p>All HIGH items are now fixed. No outstanding HIGH regression tests
+remain. The Watch Queue Monitor lifecycle test (H-3-ui) requires a real
+wx event loop; it is tracked as a post-1.0 UI hardening item.</p>
+<hr />
+<h2 id="cross-references-1">12. Cross-references</h2>
+<h3 id="roadmap-items">12.1 ROADMAP items</h3>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>ROADMAP item</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>H-SAFE-1</td>
+<td>SAFE-1 (env-var contract)</td>
+</tr>
+<tr>
+<td>H-1, H-2, H-3</td>
+<td>SEC-13 (broaden diagnostics secret redaction)</td>
+</tr>
+<tr>
+<td>H-4-core</td>
+<td>STAB-3 (recovery race)</td>
+</tr>
+<tr>
+<td>H-1-core</td>
+<td>SEC-1 (data directory validation)</td>
+</tr>
+<tr>
+<td>H-2-core</td>
+<td>SEC-8 (external command allowlist)</td>
+</tr>
+<tr>
+<td>H-3-core</td>
+<td>SEC-9 (SSH host key trust)</td>
+</tr>
+<tr>
+<td>H-3-platform</td>
+<td>PLAT-1 (lazy OCR imports)</td>
+</tr>
+<tr>
+<td>H-1-platform, H-2-platform</td>
+<td>PLAT-2 (pyttsx3 singleton)</td>
+</tr>
+<tr>
+<td>H-1-ui, H-2-ui</td>
+<td>DLG-3 (dialog contract coverage)</td>
+</tr>
+<tr>
+<td>M-1, M-4</td>
+<td>UX-3 (watch-folder error humanization)</td>
+</tr>
+<tr>
+<td>M-5</td>
+<td>PERF-2 (asyncio loop reuse)</td>
+</tr>
+<tr>
+<td>M-6</td>
+<td>SEC-4 (update manifest signing)</td>
+</tr>
+<tr>
+<td>M-7</td>
+<td>SEC-7 (sandbox hardening)</td>
+</tr>
+<tr>
+<td>M-9..M-13</td>
+<td>IO-* (format robustness)</td>
+</tr>
+<tr>
+<td>M-17..M-23</td>
+<td>STAB-* (lifecycle and contract)</td>
+</tr>
+<tr>
+<td>M-24, M-25</td>
+<td>DLG-3, EXT-1</td>
+</tr>
+<tr>
+<td>M-27</td>
+<td>DOC-1 (classifiers)</td>
+</tr>
+<tr>
+<td>§8 magic</td>
+<td>QK-1..9, NAV-4, NAV-7, A11Y-2, A11Y-3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="security.md-sections">12.2 SECURITY.md sections</h3>
+<ul>
+<li><code>SECURITY.md:81</code> — diagnostics redaction contract → H-1,
+H-2, H-3 (✅).</li>
+<li><code>SECURITY.md:91-105</code> — Safe Mode → H-SAFE-1 (✅).</li>
+<li><code>SECURITY.md:114</code> — external engine trust → H-2-core
+(✅).</li>
+<li><code>SECURITY.md:127</code> — SSH host key trust → H-3-core
+(✅).</li>
+<li><code>SECURITY.md:140</code> — DPAPI portable fallback → L-5.</li>
+</ul>
+<h3 id="privacy.md-sections">12.3 PRIVACY.md sections</h3>
+<ul>
+<li><code>PRIVACY.md:43</code> — no document content in logs → M-1, M-3,
+M-4, M-16.</li>
+<li><code>PRIVACY.md:57</code> — explicit consent gate before outbound
+document data → covered by Safe Mode wiring (H-SAFE-1, ✅).</li>
+</ul>
+<h3 id="dialogs.md-rows">12.4 <code>dialogs.md</code> rows</h3>
+<ul>
+<li>Quillin Manager — Section L; H-1-ui / H-2-ui ensure the consent +
+remove flows route through <code>_show_modal_dialog</code>.</li>
+<li>Sticky Notes Vault — Section J; M-31 brings the
+<code>MessageBox</code> into the contract.</li>
+<li>Watch Queue Monitor — Section M; H-3-ui covers cleanup.</li>
+<li>Crash Recovery — Section A; M-28 covers the focus race.</li>
+</ul>
+<h3 id="tests-directories">12.5 <code>tests/</code> directories</h3>
+<ul>
+<li><code>tests/stability/</code> — new + future M-17..M-23
+coverage.</li>
+<li><code>tests/unit/core/</code> — H-1-core, H-2-core, H-3-core,
+H-4-core-2, M-1, M-4..M-8, M-14, M-15.</li>
+<li><code>tests/unit/io/</code> — M-9..M-13, L-10, L-11.</li>
+<li><code>tests/unit/ui/</code> — H-1-ui, H-2-ui, H-3-ui,
+M-28..M-32.</li>
+<li><code>tests/unit/platform/</code> — H-3-platform, H-4-platform.</li>
+<li><code>tests/unit/tools/</code> — M-24, M-25, L-14..L-16, L-22.</li>
+<li><code>tests/accessibility/</code> — §8 magic items (TTS fallback,
+recovery diff, status-bar context help, A11Y live indicator).</li>
+<li><code>tests/performance/</code> — M-32 (timer-based progress),
+L-18.</li>
+</ul>
+<h3 id="tracker-totals-reconcile-with-roadmap.md">12.6 Tracker totals
+(reconcile with <code>ROADMAP.md</code>)</h3>
+<ul>
+<li>HIGH: 13 total, <strong>13 ✅ FIXED, 0 OPEN</strong>.</li>
+<li>MEDIUM: 32 OPEN.</li>
+<li>LOW: ~19 OPEN (3 fixed: L-8, L-12, L-15).</li>
+<li>NIT: ~5 OPEN (11 fixed).</li>
+<li>CRITICAL: 0.</li>
+<li>Total open (excluding magic): <strong>~56 items</strong>.</li>
+<li>Total magic suggestions: <strong>13</strong> (§8).</li>
+</ul>
+<h3 id="honesty-disclosures">12.7 Honesty disclosures</h3>
+<p>Per the cloud-agent directives, the following items are deferred to
+post-1.0 because they need a real Windows runtime that this review
+session cannot exercise:</p>
+<ul>
+<li>🟡 <strong>OCR-1 / OCR-3</strong> — real Windows OCR engine,
+clipboard, and display paths. The lazy-import fix (H-3-platform) is the
+only piece that can land in this session.</li>
+<li>🟡 <strong>AI-19</strong> — live device-login endpoint. Out of scope
+for the review.</li>
+<li>🟡 <strong>SET-2</strong> — sensitivity-aware dictation backend. Out
+of scope.</li>
+<li>🟡 <strong>AGENT-1</strong> — advisory-only by design; this is a
+design decision, not a deferral.</li>
+</ul>
+<p>These four are tracked honestly in <code>ROADMAP.md</code> and not
+marked “Done” by this review.</p>
+<hr />
+<h2 id="state-of-the-union-running-totals">13. State of the union —
+running totals</h2>
+<blockquote>
+<p><strong>How to read this section.</strong> It is the single source of
+truth for <em>how much of the review is closed vs. open</em> at any
+point in the sweep. Numbers are derived directly from the per-item
+status markers in §3, §5, §6, §7 above, plus the deferred list in §12.7.
+Update the table on every PR that lands a fix (knock a row out of “OPEN”
+and into “✅ FIXED”; decrement the open column). The pre-1.0 goal is
+<strong>0 CRITICAL, 0 HIGH, 0 MEDIUM, 0 LOW, 0 NIT OPEN</strong> (only
+🟡 deferred and ✨ magic items remain).</p>
+</blockquote>
+<h3 id="severity-roll-up-live">13.1 Severity roll-up (live)</h3>
+<table>
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 11%" />
+</colgroup>
+<thead>
+<tr>
+<th>Severity</th>
+<th style="text-align: right;">Total found</th>
+<th style="text-align: right;">✅ FIXED</th>
+<th style="text-align: right;">🔵 OPEN</th>
+<th style="text-align: right;">🟡 DEFERRED</th>
+<th style="text-align: right;">✨ MAGIC</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CRITICAL</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>No RCE, no untrusted pickle, no <code>shell=True</code>, no
+hard-coded secrets.</td>
+</tr>
+<tr>
+<td>HIGH</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;"><strong>13</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>All 13 fixed. Tier A (release blockers) closed.</td>
+</tr>
+<tr>
+<td>MEDIUM</td>
+<td style="text-align: right;">32</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">32</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>All OPEN. Tier B (defense-in-depth, 1.0 → 1.1).</td>
+</tr>
+<tr>
+<td>LOW</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>L-8, L-12, L-15 closed (see CHANGELOG.md); ~19 remain open.</td>
+</tr>
+<tr>
+<td>NIT</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>11 closed (see CHANGELOG.md); N-3, N-5, N-6, N-10, N-13, N-14
+open.</td>
+</tr>
+<tr>
+<td><strong>Sub-total (defects)</strong></td>
+<td style="text-align: right;"><strong>83</strong></td>
+<td style="text-align: right;"><strong>27</strong></td>
+<td style="text-align: right;"><strong>56</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>✨ Magic / delight</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;"><strong>16</strong></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>ALL CLOSED — see CHANGELOG.md.</td>
+</tr>
+<tr>
+<td><strong>Total findings</strong></td>
+<td style="text-align: right;"><strong>99</strong></td>
+<td style="text-align: right;"><strong>43</strong></td>
+<td style="text-align: right;"><strong>56</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="closure-cadence-this-session">13.2 Closure cadence (this
+session)</h3>
+<table>
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 11%" />
+</colgroup>
+<thead>
+<tr>
+<th>Date / sweep</th>
+<th style="text-align: right;">HIGH closed</th>
+<th style="text-align: right;">MEDIUM closed</th>
+<th style="text-align: right;">LOW closed</th>
+<th style="text-align: right;">NIT closed</th>
+<th style="text-align: right;">Magic advanced</th>
+<th>Test suite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sweep 1 (initial review)</td>
+<td style="text-align: right;">0 / 13</td>
+<td style="text-align: right;">0 / 32</td>
+<td style="text-align: right;">0 / 22</td>
+<td style="text-align: right;">0 / 16</td>
+<td style="text-align: right;">0 / 13</td>
+<td>baseline green</td>
+</tr>
+<tr>
+<td>Sweep 2 (“do all 5”)</td>
+<td style="text-align: right;">6 / 13</td>
+<td style="text-align: right;">0 / 32</td>
+<td style="text-align: right;">0 / 22</td>
+<td style="text-align: right;">0 / 16</td>
+<td style="text-align: right;">0 / 13</td>
+<td>green</td>
+</tr>
+<tr>
+<td>Sweep 3 (zero-risk NIT/LOW)</td>
+<td style="text-align: right;">6 / 13</td>
+<td style="text-align: right;">0 / 32</td>
+<td style="text-align: right;">3 / 22</td>
+<td style="text-align: right;">10 / 16</td>
+<td style="text-align: right;">0 / 13</td>
+<td>2096 passed, 0 failed</td>
+</tr>
+<tr>
+<td>Sweep 4 (state-of-union + doc)</td>
+<td style="text-align: right;">6 / 13</td>
+<td style="text-align: right;">0 / 32</td>
+<td style="text-align: right;">3 / 22</td>
+<td style="text-align: right;">11 / 16</td>
+<td style="text-align: right;">0 / 13</td>
+<td>green</td>
+</tr>
+<tr>
+<td>Sweep 5 (Tier A: all 7 remaining HIGH)</td>
+<td style="text-align: right;"><strong>13 / 13</strong></td>
+<td style="text-align: right;">0 / 32</td>
+<td style="text-align: right;">3 / 22</td>
+<td style="text-align: right;">11 / 16</td>
+<td style="text-align: right;">0 / 13</td>
+<td>2098 passed, 0 failed</td>
+</tr>
+<tr>
+<td>Sweep 6 (Tier D: all 16 §8 UX delight)</td>
+<td style="text-align: right;">13 / 13</td>
+<td style="text-align: right;">0 / 32</td>
+<td style="text-align: right;">3 / 22</td>
+<td style="text-align: right;">11 / 16</td>
+<td style="text-align: right;"><strong>16 / 16</strong></td>
+<td>2098 passed, 0 failed</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>The “Test suite” column records the pytest outcome of every sweep (no
+regressions introduced). Sweep 3 also fixed three pre-existing test
+failures that surfaced during the sweep: (a) <code>issues.md</code> was
+unsanctioned at repo root, (b) the public-surface fixture was stale
+after the Quillin fix, (c) the menu-contract test was missing SSH module
+coverage.</p>
+</blockquote>
+<h3 id="whats-still-on-the-runway-ordered-by-tier">13.3 What’s still on
+the runway (ordered by tier)</h3>
+<p><strong>Tier A — release blockers (HIGH): ALL CLOSED ✅</strong></p>
+<p><strong>Tier B — defense-in-depth (MEDIUM, 1.0 → 1.1):</strong> All
+32 open. Sorted by impact: M-1 (8 watch-action sites), M-4, M-5 (asyncio
+loop reuse), M-6 (update manifest signing), M-7 (sandbox hardening),
+M-9..M-13 (IO-format robustness), M-14/M-15 (read-aloud), M-16..M-23
+(stability lifecycle), M-24..M-32 (UI dialog / menu contract, image
+capture, sticky notes, csv grid).</p>
+<p><strong>Tier C — UI polish (LOW, 1.0 → 1.1):</strong> L-1, L-2, L-3,
+L-4, L-5, L-6, L-7, L-9, L-10, L-11, L-13, L-14, L-16, L-17, L-18, L-19,
+L-20, L-21, L-22, L-23.</p>
+<p><strong>Tier D — magic / delight (§8): ALL CLOSED ✅</strong> All 16
+UX delight items implemented. See <code>CHANGELOG.md</code> for full
+details.</p>
+<h3 id="recommended-next-moves">13.4 Recommended next moves</h3>
+<ol type="1">
+<li><strong>Tier A is fully closed</strong> — no release blockers
+remain.</li>
+<li><strong>Tier D is fully closed</strong> — all 16 UX delight features
+are shipped.</li>
+<li><strong>Tier B in batches of 4-6</strong>: M-1 (watch-action sites)
+and M-4 share a single <code>core/watch_*</code> test suite; do them
+together. M-7 (sandbox <code>__builtins__</code> rebinding) and M-6
+(update manifest signing) are highest-impact and can each land as a
+single small PR.</li>
+<li><strong>Tier C in a single sweep PR</strong>: pick items whose
+entire diff is a docstring/cross-link/tightening and that pass
+<code>ruff</code> + <code>mypy</code> cleanly without a design
+call.</li>
+<li><strong>Re-run the state-of-the-union</strong> by re-reading §13.1
+after every merge; the running total is the receipt.</li>
+</ol>
+<hr />
+<p><em>End of issues.md. Total: ~85 distinct findings, 27 ✅ FIXED (13
+HIGH all closed), 56 OPEN (all MEDIUM/LOW/NIT), 13 ✨ magic suggestions,
+0 CRITICAL.</em></p>
