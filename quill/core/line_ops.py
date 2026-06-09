@@ -101,6 +101,16 @@ def move_lines_down(text: str, start: int, end: int) -> tuple[str, int, int]:
     return updated, new_start, new_end
 
 
+def selected_line_bounds(text: str, start: int, end: int) -> tuple[int, int]:
+    """Public: first and last line indices spanned by a selection (issue #133).
+
+    Used by the UI to report how many lines a move affected ("Moved 3 lines up")
+    and to detect a document-edge no-op, so the announcement matches what the
+    block move in :func:`move_lines_up` / :func:`move_lines_down` actually did.
+    """
+    return _selected_line_bounds(text, start, end)
+
+
 def join_selected_lines(text: str, start: int, end: int) -> tuple[str, int, int]:
     """Join every line in the selection, preserving blank-line paragraph breaks.
 

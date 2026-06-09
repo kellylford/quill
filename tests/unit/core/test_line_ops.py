@@ -16,6 +16,7 @@ from quill.core.line_ops import (
     move_lines_down,
     move_lines_up,
     number_lines,
+    selected_line_bounds,
 )
 
 
@@ -76,6 +77,25 @@ def test_move_lines_up_at_top_is_noop() -> None:
     updated, start, end = move_lines_up(text, 0, 0)
     assert updated == text
     assert (start, end) == (0, 0)
+
+
+def test_selected_line_bounds_counts_selected_lines() -> None:
+    text = "line1\nline2\nline3\nline4"
+    # Caret with no selection spans a single line.
+    assert selected_line_bounds(text, 0, 0) == (0, 0)
+    # Selecting line3 through end of line4 spans two lines.
+    start = text.index("line3")
+    first, last = selected_line_bounds(text, start, len(text))
+    assert (first, last) == (2, 3)
+    assert last - first + 1 == 2
+
+
+def test_selected_line_bounds_excludes_trailing_line_start() -> None:
+    # A selection ending exactly at a line start does not pull in the next line.
+    text = "a\nb\nc"
+    start = 0
+    end = text.index("b")  # end sits at the start of line "b"
+    assert selected_line_bounds(text, start, end) == (0, 0)
 
 
 def test_join_selected_lines_collapses_whole_selection() -> None:

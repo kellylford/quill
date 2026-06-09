@@ -70,6 +70,25 @@ def test_atomic_replace_preserves_earlier_history(wx_app) -> None:
         frame.Destroy()
 
 
+def test_move_lines_label_names_count_and_direction() -> None:
+    # Issue #133: the move announcement is singular for one line and names the
+    # count for a multi-line block, so a screen reader hears what actually moved.
+    assert MainFrame._move_lines_label(1, "up") == "Moved line up"
+    assert MainFrame._move_lines_label(3, "up") == "Moved 3 lines up"
+    assert MainFrame._move_lines_label(2, "down") == "Moved 2 lines down"
+
+
+def test_joined_lines_label_counts_source_lines() -> None:
+    # Issue #135: joining a 4-line selection announces the source line count.
+    before = "this\nis\na\ntest"
+    after = "this is a test"
+    assert MainFrame._joined_lines_label(before, after, 0, len(before)) == "Joined 4 lines"
+    # No selection: the caret's paragraph collapses into one line.
+    assert MainFrame._joined_lines_label(before, after, 0, 0) == "Joined 4 lines"
+    # A single-line selection that changes nothing falls back to the plain label.
+    assert MainFrame._joined_lines_label("solo", "solo", 0, 4) == "Joined lines"
+
+
 def test_native_replace_would_corrupt_undo(wx_app) -> None:
     """Document the native behavior the fix avoids: Replace splits into two
     undo entries, so one undo lands on an empty intermediate state."""

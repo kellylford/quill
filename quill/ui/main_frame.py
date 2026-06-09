@@ -167,17 +167,10 @@ from quill.core.file_search import (
 )
 from quill.core.format_ops import (
     continue_markdown_list,
-    convert_indentation_to_spaces,
-    convert_indentation_to_tabs,
     indent_lines,
-    normalize_whitespace,
     outdent_lines,
-    remove_duplicate_lines,
-    reverse_lines,
-    sort_lines,
     toggle_block_comment,
     toggle_line_comment,
-    trim_trailing_whitespace,
 )
 from quill.core.glow import build_audit_report, build_fix_report, fix_text
 from quill.core.glow_updates import (
@@ -231,13 +224,6 @@ from quill.core.lexical import (
     render_lookup,
 )
 from quill.core.lexical_preload import start_lexical_preload
-from quill.core.line_ops import (
-    delete_line,
-    duplicate_line,
-    join_selected_lines,
-    move_lines_down,
-    move_lines_up,
-)
 from quill.core.link_inventory import collect_link_inventory, render_link_inventory_report
 from quill.core.links import build_link_text, find_link_at_cursor, infer_markup_kind
 from quill.core.locations import LocationRing
@@ -489,6 +475,7 @@ from quill.ui.main_frame_ai_actions import AiActionsMixin
 from quill.ui.main_frame_browse import BrowseModeMixin
 from quill.ui.main_frame_image import ImageCaptureMixin
 from quill.ui.main_frame_intellisense import IntellisensePopupMixin
+from quill.ui.main_frame_line_commands import LineCommandsMixin
 from quill.ui.main_frame_menu import MenuBuilderMixin
 from quill.ui.main_frame_power_tools import PowerToolsActionsMixin
 from quill.ui.main_frame_power_tools_menu import PowerToolsMenuMixin
@@ -757,6 +744,7 @@ class MainFrame(
     SessionsMixin,
     StatusBarMixin,
     IntellisensePopupMixin,
+    LineCommandsMixin,
     PowerToolsActionsMixin,
     PowerToolsMenuMixin,
     QuillinsMenuMixin,
@@ -16521,67 +16509,6 @@ class MainFrame(
             "Outdented lines",
         )
 
-    def move_line_up(self) -> None:
-        # Selection-aware (issue #133): a multi-line selection moves as one block.
-        self._apply_selection_operation(move_lines_up, "Moved line up")
-
-    def move_line_down(self) -> None:
-        self._apply_selection_operation(move_lines_down, "Moved line down")
-
-    def duplicate_line(self) -> None:
-        self._apply_line_operation(duplicate_line, "Duplicated line")
-
-    def delete_line(self) -> None:
-        self._apply_line_operation(delete_line, "Deleted line")
-
-    def join_lines(self) -> None:
-        # Selection-aware (issue #135): joins the whole selection, or the
-        # caret's paragraph when there is no selection, instead of only the
-        # current line and the next one.
-        self._apply_selection_operation(join_selected_lines, "Joined lines")
-
-    def sort_lines_ascending(self) -> None:
-        self._apply_text_block_operation(
-            lambda text: sort_lines(text, descending=False),
-            "Sorted lines ascending",
-        )
-
-    def sort_lines_descending(self) -> None:
-        self._apply_text_block_operation(
-            lambda text: sort_lines(text, descending=True),
-            "Sorted lines descending",
-        )
-
-    def reverse_lines(self) -> None:
-        self._apply_text_block_operation(reverse_lines, "Reversed lines")
-
-    def remove_duplicate_lines(self) -> None:
-        self._apply_text_block_operation(
-            remove_duplicate_lines,
-            "Removed duplicate lines",
-        )
-
-    def trim_trailing_whitespace(self) -> None:
-        self._apply_text_block_operation(
-            trim_trailing_whitespace,
-            "Trimmed trailing whitespace",
-        )
-
-    def normalize_whitespace(self) -> None:
-        self._apply_text_block_operation(normalize_whitespace, "Normalized whitespace")
-
-    def convert_indentation_to_spaces(self) -> None:
-        self._apply_text_block_operation(
-            lambda text: convert_indentation_to_spaces(text, self._indent_width()),
-            "Converted indentation to spaces",
-        )
-
-    def convert_indentation_to_tabs(self) -> None:
-        self._apply_text_block_operation(
-            lambda text: convert_indentation_to_tabs(text, self._indent_width()),
-            "Converted indentation to tabs",
-        )
-
     def format_italic(self) -> None:
         if not self._feature_enabled("core.format"):
             self._set_status("Italic is unavailable in this profile")
@@ -17456,6 +17383,8 @@ class MainFrame(
         self,
         operation: Callable[[str, int, int], tuple[str, int, int]],
         status: str,
+        *,
+        no_change_status: str | None = None,
     ) -> None:
         if not self._feature_enabled("core.format"):
             self._set_status(f"{status} is unavailable in this profile")
@@ -17466,6 +17395,11 @@ class MainFrame(
         text = self.editor.GetValue()
         start, end = self.editor.GetSelection()
         updated, new_start, new_end = operation(text, start, end)
+        if no_change_status is not None and updated == text:
+            # The operation was a no-op (e.g. moving the top block up): announce
+            # that accurately instead of a misleading "Moved..." status (#133).
+            self._set_status(no_change_status)
+            return
         self._replace_document_text(updated)
         self.document.set_text(updated)
         if new_start == new_end:
