@@ -479,6 +479,7 @@ from quill.ui.main_frame_line_commands import LineCommandsMixin
 from quill.ui.main_frame_menu import MenuBuilderMixin
 from quill.ui.main_frame_power_tools import PowerToolsActionsMixin
 from quill.ui.main_frame_power_tools_menu import PowerToolsMenuMixin
+from quill.ui.main_frame_profile_picker import ProfilePickerMixin
 from quill.ui.main_frame_quill_key import QuillKeyMixin
 from quill.ui.main_frame_quillins import QuillinsMenuMixin
 from quill.ui.main_frame_selection import SelectionMarksMixin
@@ -745,6 +746,7 @@ class MainFrame(
     StatusBarMixin,
     IntellisensePopupMixin,
     LineCommandsMixin,
+    ProfilePickerMixin,
     PowerToolsActionsMixin,
     PowerToolsMenuMixin,
     QuillinsMenuMixin,
@@ -1081,6 +1083,7 @@ class MainFrame(
         for label, task in (
             ("crash recovery", self._offer_crash_recovery),
             ("first-run onboarding", self._maybe_run_first_run_onboarding),
+            ("startup profile prompt", self.run_startup_profile_prompt),
             ("watch-folder startup", self._maybe_start_watch_folder),
             ("lexical cache warm-up", start_lexical_preload),
         ):
@@ -5393,6 +5396,8 @@ class MainFrame(
         self._refresh_title()
         self._last_intake_report = build_intake_report(loaded)
         self._set_status(build_intake_summary(loaded))
+        # Switch to the profile mapped to this file's extension, if one is set (#138).
+        self.maybe_switch_profile_for_open(selected_path)
 
     def _position_editor_at(self, line: int | None = None, column: int | None = None) -> None:
         if line is None and column is None:
@@ -18063,68 +18068,9 @@ class MainFrame(
         self._refresh_title()
 
     def switch_feature_profile(self) -> None:
-        wx = self._wx
-        entries = self._combined_profile_entries()
-        if not entries:
-            self._set_status("No profiles available")
-            return
-        choices = [
-            name if kind == "built_in" else f"{name} (Custom)"
-            for kind, _profile_id, name in entries
-        ]
-        with wx.SingleChoiceDialog(
-            self.frame,
-            "Choose a feature profile:",
-            "Switch Feature Profile",
-            choices=choices,
-        ) as dialog:
-            if self._show_modal_dialog(dialog, "Switch Feature Profile") != wx.ID_OK:
-                return
-            selection = dialog.GetSelection()
-        if selection == wx.NOT_FOUND:
-            return
-        kind, target_profile_id, target_name = entries[selection]
-        if kind == "built_in" and target_profile_id == self.features.active_profile_id:
-            self._set_status(f"Already using {self.features.active_profile.name}")
-            return
-        preview = self.features.change_profile_preview(target_profile_id)
-        if kind == "custom":
-            custom_profile = self._load_custom_profiles().get(target_profile_id)
-            if custom_profile is None:
-                self._set_status("Custom profile is no longer available")
-                return
-            preview = self._custom_profile_summary(custom_profile)
-        with wx.MessageDialog(
-            self.frame,
-            preview + "\n\nSwitch profiles now?",
-            "Switch Feature Profile",
-            wx.YES_NO | wx.ICON_QUESTION,
-        ) as confirm_dialog:
-            if self._show_modal_dialog(confirm_dialog, "Switch Feature Profile") != wx.ID_YES:
-                self._set_status("Profile switch cancelled")
-                return
-        if kind == "custom":
-            custom_profile = self._load_custom_profiles().get(target_profile_id)
-            if custom_profile is None:
-                self._set_status("Custom profile is no longer available")
-                return
-            self._apply_custom_profile(custom_profile)
-            self._set_status(f"Profile changed to {target_name}.")
-            self._show_message_box(
-                self._custom_profile_summary(custom_profile),
-                "Feature Profile",
-                wx.ICON_INFORMATION | wx.OK,
-            )
-        else:
-            self.features.switch_profile(target_profile_id)
-            profile = self.features.active_profile
-            self._set_status(f"Profile changed to {profile.name}. Undo available.")
-            self._show_message_box(
-                self.features.profile_summary(),
-                "Feature Profile",
-                wx.ICON_INFORMATION | wx.OK,
-            )
-        self._apply_accelerators()
+        # The dedicated, accessible profile picker (Alt+Shift+P) replaced the old
+        # SingleChoiceDialog + confirm + info-box flow (#138).
+        self.open_profile_picker()
 
     def show_feature_profile_health_check(self) -> None:
         report = self.features.health_report(self.commands.list())
