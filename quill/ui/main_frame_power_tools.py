@@ -103,17 +103,15 @@ class PowerToolsActionsMixin:
         self._set_status(status)
 
     def _power_tools_prompt_single(self, title: str, label: str, value: str = "") -> str | None:
-        from quill.ui.web_form import show_web_form
-
-        values = show_web_form(
-            self.frame,
-            self._wx,
-            title=title,
-            fields=[{"name": "value", "label": label, "type": "text", "value": value}],
-        )
-        if values is None:
-            return None
-        return str(values.get("value", ""))
+        # A single text field must be a native dialog, not a WebView form: a
+        # WebView forces the screen reader into virtual-cursor mode for a trivial
+        # prompt such as Number Lines ("Start numbering at:"). wx.TextEntryDialog
+        # is a plain, focus-managed control with no virtual cursor.
+        wx = self._wx
+        with wx.TextEntryDialog(self.frame, label, title, value) as dialog:
+            if self._show_modal_dialog(dialog, title) != wx.ID_OK:
+                return None
+            return str(dialog.GetValue())
 
     def _power_tools_clipboard_text(self) -> str:
         wx = self._wx

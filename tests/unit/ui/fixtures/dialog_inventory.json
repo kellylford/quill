@@ -140,7 +140,7 @@
   "quill/ui/main_frame_image.py::ImageCaptureMixin.describe_image_with_ai::wx.ProgressDialog": "native",
   "quill/ui/main_frame_image.py::ImageCaptureMixin.ocr_image_file::wx.FileDialog": "native",
   "quill/ui/main_frame_image.py::ImageCaptureMixin.ocr_screen_capture::wx.SingleChoiceDialog": "native",
-  "quill/ui/main_frame_power_tools.py::PowerToolsActionsMixin._power_tools_prompt_single::show_web_form": "web",
+  "quill/ui/main_frame_power_tools.py::PowerToolsActionsMixin._power_tools_prompt_single::wx.TextEntryDialog": "native",
   "quill/ui/main_frame_power_tools.py::PowerToolsActionsMixin.calculate_and_insert_date::show_web_form": "web",
   "quill/ui/main_frame_power_tools.py::PowerToolsActionsMixin.insert_file_content::wx.FileDialog": "native",
   "quill/ui/main_frame_quill_key.py::QuillKeyMixin._present_quill_key_help::wx.Dialog": "hardened_custom",
