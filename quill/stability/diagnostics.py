@@ -1,3 +1,12 @@
+"""Thread-stack dump, fault handler, and environment summary helpers.
+
+Implements: ROADMAP STAB-3 (the ``dump_all_thread_stacks`` /
+``setup_fault_handler`` primitives the crash-bundle builder and the
+heartbeat watchdog call when the main thread appears stuck) and the
+``collect_environment_info`` snapshot the About dialog and the
+diagnostic bundle share.
+"""
+
 from __future__ import annotations
 
 import faulthandler

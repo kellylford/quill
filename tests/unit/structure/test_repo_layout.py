@@ -23,6 +23,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 # scannable at a glance.
 _SANCTIONED_ROOT_MARKDOWN = frozenset({
     "CHANGELOG.md",
+    "CLAUDE.md",
     "CODE_OF_CONDUCT.md",
     "CONTRIBUTING.md",
     "GOVERNANCE.md",
@@ -33,6 +34,7 @@ _SANCTIONED_ROOT_MARKDOWN = frozenset({
     "RESPONSIBLE_AI_USE.md",
     "SECURITY.md",
     "dialogs.md",
+    "issues.md",
     "menus.md",
 })
 

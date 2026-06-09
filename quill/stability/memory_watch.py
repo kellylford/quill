@@ -1,3 +1,11 @@
+"""Bounded ``tracemalloc`` wrapper.
+
+Implements: ROADMAP STAB-8 (the on-demand memory tracing hook the
+crash-bundle builder may include in a bundle when the user grants
+permission; the snapshot is bounded to ``limit`` top frames by line
+and written to ``path``).
+"""
+
 from __future__ import annotations
 
 import logging

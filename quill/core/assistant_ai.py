@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import ssl
 import time
 from collections.abc import Callable, Iterable, Iterator
@@ -141,6 +142,13 @@ def verify_assistant_connection(
     if provider == "off":
         return True, "AI provider is Off."
 
+    # H-SAFE-1: refuse to even probe the network in safe mode. The user
+    # explicitly asked for offline operation; the verify surface is a
+    # network call and would lie about its outcome if it answered
+    # "verified" without actually checking.
+    if _safe_mode_active():
+        return False, _safe_mode_blocked_message("Connection verification")
+
     # A provider that requires a key cannot be verified without one. Some
     # listing endpoints (for example ollama.com/api/tags) answer 200 without
     # authentication, so without this guard verify would falsely report success
@@ -253,6 +261,28 @@ def _most_significant_error(errors: list[_FetchError]) -> _FetchError | None:
     return ranked[0]
 
 
+def _safe_mode_active() -> bool:
+    """H-SAFE-1: short-circuit network calls when safe mode is on.
+
+    The check is process-level: the ``QUILL_SAFE_MODE`` env var or
+    ``--safe-mode`` CLI flag flip the same boolean in the bootstrap.
+    Returning True here means every public call that uses
+    ``urllib.request`` refuses to talk to the network and reports a
+    safe-mode status, even if a caller somehow bypassed the
+    ``assistant_enabled=False`` guard in settings.
+    """
+    if os.environ.get("QUILL_SAFE_MODE") == "1":
+        return True
+    return False
+
+
+def _safe_mode_blocked_message(operation: str) -> str:
+    return (
+        f"{operation} is disabled in Safe Mode. "
+        "Restart QUILL without --safe-mode (or unset QUILL_SAFE_MODE) to use network features."
+    )
+
+
 def list_assistant_models(
     settings: AssistantConnectionSettings,
     api_key: str,
@@ -264,6 +294,9 @@ def list_assistant_models(
     provider = settings.provider.strip().lower()
     if provider == "off":
         return [], None
+
+    if _safe_mode_active():
+        return [], _safe_mode_blocked_message("Model discovery")
 
     host = (settings.host or "").strip().rstrip("/")
     if not host:
@@ -840,6 +873,8 @@ def generate_assistant_response(
     provider = settings.provider.strip().lower()
     if provider == "off":
         return None, "The AI provider is set to Off."
+    if _safe_mode_active():
+        return None, _safe_mode_blocked_message("AI generation")
     host = (settings.host or "").strip().rstrip("/") or default_host_for_provider(provider)
     policy_error = _validate_endpoint_security(provider, host)
     if policy_error:
@@ -1073,6 +1108,8 @@ def generate_assistant_response_stream(
     provider = settings.provider.strip().lower()
     if provider == "off":
         return None, "The AI provider is set to Off."
+    if _safe_mode_active():
+        return None, _safe_mode_blocked_message("AI streaming")
     host = (settings.host or "").strip().rstrip("/") or default_host_for_provider(provider)
     policy_error = _validate_endpoint_security(provider, host)
     if policy_error:

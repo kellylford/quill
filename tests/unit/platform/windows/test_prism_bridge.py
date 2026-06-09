@@ -62,6 +62,7 @@ def test_announcement_engine_uses_system_speech_when_prism_is_missing(monkeypatc
     class _FakeSpeechEngine:
         def __init__(self) -> None:
             self.messages: list[str] = []
+            self.init_calls = 0
 
         def say(self, message: str) -> None:
             self.messages.append(message)
@@ -79,7 +80,7 @@ def test_announcement_engine_uses_system_speech_when_prism_is_missing(monkeypatc
     monkeypatch.setattr("quill.platform.windows.prism_bridge.sys.platform", "win32")
     monkeypatch.setattr(
         "quill.platform.windows.prism_bridge.pyttsx3",
-        types.SimpleNamespace(init=lambda: speech_engine),
+        types.SimpleNamespace(init=lambda: _counting_init(speech_engine)),
     )
     monkeypatch.setattr(
         "quill.platform.windows.prism_bridge.import_module",
@@ -89,9 +90,48 @@ def test_announcement_engine_uses_system_speech_when_prism_is_missing(monkeypatc
         "quill.platform.windows.prism_bridge._screen_reader_active",
         lambda: False,
     )
+    # H5/H6: every AnnouncementEngine re-uses a process-wide singleton,
+    # so a fresh engine after a reset must trigger exactly one
+    # pyttsx3.init() across many announcements.
+    from quill.platform.windows import prism_bridge
+
+    prism_bridge.reset_pyttsx3_engine_for_tests()
 
     engine = AnnouncementEngine("auto")
-
     assert engine.announce("hello") is None
-    assert speech_engine.messages == ["hello"]
+    assert engine.announce("world") is None
+    assert speech_engine.messages == ["hello", "world"]
+    assert speech_engine.init_calls == 1
     assert engine.state().active_backend == "speech"
+
+
+def _counting_init(engine):
+    engine.init_calls += 1
+    return engine
+
+
+def test_macos_announce_error_logged(monkeypatch, caplog) -> None:
+    """H-4-platform: a VoiceOver announce failure is logged, not silently swallowed."""
+    import logging
+
+    monkeypatch.setattr("quill.platform.windows.prism_bridge.sys.platform", "darwin")
+    monkeypatch.setattr(
+        "quill.platform.windows.prism_bridge.import_module",
+        lambda _name: (_ for _ in ()).throw(ImportError),
+    )
+
+    def _boom(_msg: str) -> None:
+        raise RuntimeError("VoiceOver not available")
+
+    monkeypatch.setattr(
+        "quill.platform.macos.announce.announce",
+        _boom,
+        raising=False,
+    )
+
+    engine = AnnouncementEngine("auto")
+    with caplog.at_level(logging.WARNING, logger="quill.platform.windows.prism_bridge"):
+        result = engine.announce("test message")
+
+    assert result is None
+    assert any("VoiceOver" in r.message for r in caplog.records)

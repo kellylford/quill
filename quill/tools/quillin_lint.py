@@ -39,6 +39,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import types
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -107,14 +108,14 @@ class LintReport:
 
 # -- executable JSON-Schema subset --------------------------------------------
 
-_JSON_TYPES: dict[str, type | tuple[type, ...]] = {
+_JSON_TYPES: types.MappingProxyType[str, type | tuple[type, ...]] = types.MappingProxyType({
     "object": dict,
     "array": list,
     "string": str,
     "number": (int, float),
     "boolean": bool,
     "null": type(None),
-}
+})
 
 
 def _type_ok(value: object, expected: str) -> bool:

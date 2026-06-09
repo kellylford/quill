@@ -1,3 +1,13 @@
+"""Feature contract and validation.
+
+Implements: ROADMAP FLAG-1 / FLAG-2 (the per-feature stability and
+maturity contract that the feature manager, palette, menu gating, and
+status bar all honour). Every user-facing feature that touches the
+UI, network, or a long-running worker registers a
+:class:`FeatureContract` so Safe Mode, the feature profiles, and the
+Why-Don't-I-See-a-Feature dialog all have a single source of truth.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,10 +21,10 @@ class FeatureContract:
     default_enabled: bool
     disabled_in_safe_mode: bool
     runs_on_wx_main_thread: bool
-    requires_timeout: bool
     supports_cancellation: bool
     reports_progress: bool
     diagnostic_category: str
+    requires_timeout: bool | None = None
 
 
 def validate_feature_contract(contract: FeatureContract) -> None:

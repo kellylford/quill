@@ -67,11 +67,39 @@ def test_snippet_and_handler_paths_both_exist() -> None:
 
 
 def test_consent_prompt_is_a_native_yes_no_dialog() -> None:
-    consent = _QUILLINS[_QUILLINS.index("def _quillin_consent") :][:600]
+    consent = _QUILLINS[_QUILLINS.index("def _quillin_consent") :]
     assert "wx.MessageDialog(" in consent
     assert "wx.YES_NO" in consent
     assert "NO_DEFAULT" in consent  # default is deny
     assert "dialog.Destroy()" in consent
+
+
+def test_consent_prompt_routes_through_dialog_contract() -> None:
+    """H-3-ui: the Quillin consent prompt must go through show_modal_dialog.
+
+    Direct ``.ShowModal()`` would skip the region tracker, the
+    screen-reader entry/exit announcement, and the editor focus
+    return — exactly the regression the dialog contract prevents.
+    """
+    consent = _QUILLINS[_QUILLINS.index("def _quillin_consent") :]
+    assert "self._show_modal_dialog(dialog" in consent
+    assert "apply_modal_ids(dialog" in consent
+    # And: the direct ShowModal() call must be gone from the consent path.
+    assert "dialog.ShowModal()" not in consent
+
+
+def test_remove_quillin_confirm_routes_through_dialog_contract() -> None:
+    """H-4-ui: the destructive Remove Quillin confirm must go through
+    the shared modal helper so the focus-return and region
+    announcement apply."""
+    on_remove = _QUILLINS[
+        _QUILLINS.index("def on_remove") : _QUILLINS.index("def on_remove") + 2200
+    ]
+    assert "self._show_modal_dialog(confirm" in on_remove
+    assert "apply_modal_ids(confirm" in on_remove
+    assert "confirm.Destroy()" in on_remove
+    # And: no direct ShowModal() on the confirm dialog.
+    assert "confirm.ShowModal()" not in on_remove
 
 
 def test_manager_dialog_uses_stock_controls() -> None:

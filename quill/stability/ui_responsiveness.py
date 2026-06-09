@@ -1,3 +1,11 @@
+"""UI responsiveness helpers and ``@timed_operation`` context manager.
+
+Implements: ROADMAP STAB-6 (the ``@timed_operation`` decorator the UI
+wraps around long-running work so the log carries a duration line
+per call) and PERF-3 (the wx-main-thread marker that downstream
+``call_ui_safely`` checks use to decide whether to marshal a call).
+"""
+
 from __future__ import annotations
 
 import functools

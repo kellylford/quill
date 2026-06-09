@@ -1,3 +1,12 @@
+"""Queue-backed logging configuration used during early startup.
+
+Implements: ROADMAP STAB-1 (the rotating-file ``quill.log`` and the
+queue listener that drains log records off the UI thread so a
+flooded log channel never blocks the wx main thread). The handler
+list installed here is what :mod:`quill.stability.crash_report` reads
+when the user saves a diagnostic bundle.
+"""
+
 from __future__ import annotations
 
 import logging

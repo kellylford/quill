@@ -138,14 +138,38 @@ def connect(
     key_path: str = "",
     key_passphrase: str | None = None,
     timeout: float = 15.0,
+    trust_first_use: bool | None = None,
 ) -> SftpConnection:
-    """Open an SSH/SFTP connection. Requires the optional ``paramiko`` package."""
+    """Open an SSH/SFTP connection. Requires the optional ``paramiko`` package.
+
+    Host-key policy (SEC-9): by default an unknown host key causes the
+    connection to be rejected. Set ``trust_first_use=True`` to opt into
+    the legacy ``AutoAddPolicy`` behaviour where the first key seen for a
+    host is silently cached. Callers that already have the user's
+    :class:`~quill.core.settings.Settings` should pass
+    ``trust_first_use=settings.ssh_trust_first_use`` explicitly.
+    """
     paramiko = _import_paramiko()
+    if trust_first_use is None:
+        try:
+            from quill.core.settings import load_settings as _load_settings
+
+            trust_first_use = _load_settings().ssh_trust_first_use
+        except Exception:  # noqa: BLE001 - never let a settings read block connect
+            trust_first_use = False
     client = paramiko.SSHClient()
     client.load_system_host_keys()
-    # Accept and cache unknown host keys (PuTTY-style first-connect behaviour). A
-    # future pass can surface a host-key confirmation prompt in the UI.
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    if trust_first_use:
+        # Legacy PuTTY-style first-connect behaviour: accept and cache
+        # unknown host keys. A future pass can replace this with a
+        # "Trust This Host?" dialog.
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    else:
+        # Default: reject unknown host keys. ``paramiko.RejectPolicy``
+        # is the strongest available; it raises ``SSHException`` on any
+        # key that is not in ``load_system_host_keys`` output, which is
+        # what we want for a first connect.
+        client.set_missing_host_key_policy(paramiko.RejectPolicy())
 
     pkey = None
     if auth == AUTH_KEY and key_path:

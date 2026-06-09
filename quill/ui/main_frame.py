@@ -4394,6 +4394,16 @@ class MainFrame(
         if not self._can_close_all_documents():
             event.Veto()
             return
+        # H-3-ui: destroy the modeless Watch Queue Monitor so it does not
+        # outlive the main frame and leak a window reference.
+        if self._watch_queue_monitor is not None:
+            try:
+                self._watch_queue_monitor.Destroy()
+            except Exception:  # noqa: BLE001
+                pass
+            self._watch_queue_monitor = None
+            self._watch_queue_listbox = None
+            self._watch_queue_pause_button = None
         self._watch_service.stop()
         self._unregister_global_hotkeys()
         self._remove_tray_icon()
@@ -12968,6 +12978,13 @@ class MainFrame(
         pass
 
     def _maybe_start_watch_folder(self) -> None:
+        # H-SAFE-1: safe mode must not start the watcher; the banner is a
+        # contract. The WatchService can still be constructed so other
+        # surfaces (settings UI, diagnostics) can inspect profiles, but
+        # ``start()`` is the side effect we are refusing.
+        if self._safe_mode:
+            self._apply_watch_folder_menu_state()
+            return
         if not bool(getattr(self.settings, "watch_folder_enabled", False)):
             self._apply_watch_folder_menu_state()
             return
@@ -16393,6 +16410,14 @@ class MainFrame(
         dialog.show_modal()
 
     def open_writing_assistant(self, initial_prompt: str = "") -> None:
+        # H-SAFE-1: refuse to even open the AI dialog in safe mode. The
+        # assistant_enabled flag is forced off in safe mode (line 870)
+        # but a user clicking the menu item or a future hot key could
+        # still reach this surface; the dialog is the load-bearing
+        # gate that the network calls are now also protected by.
+        if self._safe_mode:
+            self._set_status("Writing assistant is unavailable in safe mode")
+            return
         dialog = WritingAssistantDialog(
             self.frame,
             self.commands,

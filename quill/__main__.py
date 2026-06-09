@@ -59,6 +59,13 @@ def main() -> int:
         )
         if reset_profile:
             reset_feature_profile_store()
+        # H-SAFE-1: when the user (or the env) asked for safe mode, set
+        # ``QUILL_SAFE_MODE`` so any subsystem that short-circuits on
+        # the env var (assistant_ai, watch folder startup) gets the
+        # same answer even if a future caller forgets to thread the
+        # ``safe_mode`` flag through to it.
+        if safe_mode:
+            os.environ["QUILL_SAFE_MODE"] = "1"
         if not force_new_window and not try_claim_primary_instance():
             for request in launch_requests:
                 enqueue_open_request(

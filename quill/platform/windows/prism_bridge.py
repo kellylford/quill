@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import atexit
+import logging
 import sys
+import threading
 from dataclasses import dataclass, replace
 from importlib import import_module
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 try:
     import pyttsx3  # type: ignore[import-untyped]
@@ -33,6 +38,62 @@ def normalize_backend_name(value: str | None) -> str:
     if raw in _VALID_BACKENDS:
         return raw
     return "auto"
+
+
+# H5/H6: pyttsx3.init() is expensive on Windows (100-300 ms the first
+# time, 30-80 ms on subsequent inits) and rebuilding the engine on
+# every announcement made the screen-reader-less experience feel
+# sluggish after every action feedback. The engine is now a process-
+# wide singleton that is built once and torn down at process exit.
+_pyttsx3_engine: Any | None = None
+_pyttsx3_engine_lock = threading.Lock()
+_pyttsx3_engine_failed: bool = False
+
+
+def _get_pyttsx3_engine() -> Any | None:
+    """Return a cached pyttsx3 engine, or ``None`` if it cannot be built.
+
+    A thread lock guards the singleton construction so two concurrent
+    announcements (rare, but possible during a save that triggers both
+    a status and a separate progress announcement) do not both call
+    ``pyttsx3.init()``.
+    """
+    global _pyttsx3_engine, _pyttsx3_engine_failed
+    if pyttsx3 is None or _pyttsx3_engine_failed:
+        return None
+    if _pyttsx3_engine is not None:
+        return _pyttsx3_engine
+    with _pyttsx3_engine_lock:
+        if _pyttsx3_engine is not None:
+            return _pyttsx3_engine
+        try:
+            engine = pyttsx3.init()
+        except Exception:  # noqa: BLE001 - any failure flips us off permanently
+            _pyttsx3_engine_failed = True
+            return None
+        _pyttsx3_engine = engine
+        atexit.register(_shutdown_pyttsx3_engine)
+        return engine
+
+
+def _shutdown_pyttsx3_engine() -> None:
+    """Tear down the cached engine at process exit."""
+    global _pyttsx3_engine
+    engine = _pyttsx3_engine
+    _pyttsx3_engine = None
+    if engine is None:
+        return
+    try:
+        engine.stop()
+    except Exception:  # noqa: BLE001 - best-effort teardown
+        pass
+
+
+def reset_pyttsx3_engine_for_tests() -> None:
+    """Discard the cached engine. Test-only helper."""
+    global _pyttsx3_engine, _pyttsx3_engine_failed
+    _shutdown_pyttsx3_engine()
+    _pyttsx3_engine_failed = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,8 +168,8 @@ class AnnouncementEngine:
                     from quill.platform.macos.announce import announce as voiceover_announce
 
                     voiceover_announce(message)
-                except Exception:  # noqa: BLE001
-                    pass
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("macOS VoiceOver announce failed: %s", exc)
                 return None
             # Windows/Linux: only speak via system TTS when NO screen reader is
             # running — otherwise it talks over Narrator/NVDA/JAWS (the screen
@@ -118,23 +179,21 @@ class AnnouncementEngine:
                 and pyttsx3 is not None
                 and not _screen_reader_active()
             ):
-                try:
-                    engine = pyttsx3.init()
+                engine = _get_pyttsx3_engine()
+                if engine is not None:
                     try:
                         engine.say(message)
                         engine.runAndWait()
-                    finally:
-                        engine.stop()
-                    self._state = replace(
-                        self._state,
-                        active_backend="speech",
-                        backend_name="System Speech",
-                        last_error="",
-                    )
-                except Exception as exc:  # noqa: BLE001
-                    error = f"System speech announcement failed: {exc}"
-                    self._state = replace(self._state, last_error=error)
-                    return error
+                        self._state = replace(
+                            self._state,
+                            active_backend="speech",
+                            backend_name="System Speech",
+                            last_error="",
+                        )
+                    except Exception as exc:  # noqa: BLE001
+                        error = f"System speech announcement failed: {exc}"
+                        self._state = replace(self._state, last_error=error)
+                        return error
             return None
         speak = getattr(self._runtime_backend, "speak", None)
         if not callable(speak):

@@ -103,7 +103,13 @@ def _safe_from_dict(flat: dict[str, Any]) -> Settings:
     except (TypeError, ValueError):
         # A corrupt value raised on the whole load; keep every field that
         # validates on its own and drop only the offending ones.
-        good = {key: value for key, value in flat.items() if _accepts(key, value)}
+        good: dict[str, Any] = {}
+        for key, value in flat.items():
+            try:
+                Settings.from_dict({key: value})
+                good[key] = value
+            except (TypeError, ValueError):
+                continue
         return Settings.from_dict(good)
 
 

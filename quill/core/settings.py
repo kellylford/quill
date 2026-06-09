@@ -157,6 +157,10 @@ class Settings:
     glow_ai_alt_text_consent: bool = False
     glow_pii_redaction_consent: bool = False
     glow_language_processing_consent: bool = False
+    # SEC-9: SSH host-key trust. When false (the safer default), unknown
+    # host keys cause the connection to be rejected. When true, the first
+    # time we see a key we silently cache it (paramiko.AutoAddPolicy).
+    ssh_trust_first_use: bool = False
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Settings:
@@ -201,12 +205,18 @@ class Settings:
         if plain_text_link_style not in {"text", "text_url", "url", "markdown"}:
             plain_text_link_style = "text_url"
         indent_with_tabs = bool(data.get("indent_with_tabs", False))
-        indent_size = int(data.get("indent_size", 4))
+        try:
+            indent_size = int(data.get("indent_size", 4))
+        except (TypeError, ValueError):
+            indent_size = 4
         auto_check_updates = bool(data.get("auto_check_updates", False))
         beta_updates = bool(data.get("beta_updates", False))
         skipped_update_version = str(data.get("skipped_update_version", "")).strip()
         last_update_check = str(data.get("last_update_check", "")).strip()
-        recent_files_limit = int(data.get("recent_files_limit", 10))
+        try:
+            recent_files_limit = int(data.get("recent_files_limit", 10))
+        except (TypeError, ValueError):
+            recent_files_limit = 10
         tray_enabled = bool(data.get("tray_enabled", False))
         persistent_undo = bool(data.get("persistent_undo", False))
         spellcheck_as_you_type = bool(data.get("spellcheck_as_you_type", False))
@@ -353,23 +363,31 @@ class Settings:
             data.get("bw_auto_open_status_page_on_download_start", False)
         )
         bw_safe_mode_lock = bool(data.get("bw_safe_mode_lock", False))
-        status_page_refresh_announcement_cadence = (
-            str(data.get("status_page_refresh_announcement_cadence", "quiet")).strip().lower()
-            or "quiet"
-        )
+        try:
+            status_page_refresh_announcement_cadence = (
+                str(data.get("status_page_refresh_announcement_cadence", "quiet")).strip().lower()
+                or "quiet"
+            )
+        except (TypeError, ValueError):
+            status_page_refresh_announcement_cadence = "quiet"
         if status_page_refresh_announcement_cadence not in {"quiet", "normal", "verbose"}:
             status_page_refresh_announcement_cadence = "quiet"
-        voice_commands_enabled = bool(data.get("voice_commands_enabled", False))
         watch_folder_enabled = bool(data.get("watch_folder_enabled", False))
         watch_folder_path = str(data.get("watch_folder_path", "")).strip()
         watch_folder_include_subfolders = bool(data.get("watch_folder_include_subfolders", False))
         watch_folder_process_existing = bool(data.get("watch_folder_process_existing", False))
         watch_folder_auto_start = bool(data.get("watch_folder_auto_start", False))
-        watch_folder_poll_interval_seconds = int(data.get("watch_folder_poll_interval_seconds", 5))
+        try:
+            watch_folder_poll_interval_seconds = int(
+                data.get("watch_folder_poll_interval_seconds", 5)
+            )
+        except (TypeError, ValueError):
+            watch_folder_poll_interval_seconds = 5
         if watch_folder_poll_interval_seconds < 2:
             watch_folder_poll_interval_seconds = 2
         if watch_folder_poll_interval_seconds > 300:
             watch_folder_poll_interval_seconds = 300
+        voice_commands_enabled = bool(data.get("voice_commands_enabled", False))
         # SET-2: timing and pacing
         autosave_interval_seconds = _clamp_int(
             data.get("autosave_interval_seconds", 30), 30, 5, 600
@@ -444,6 +462,7 @@ class Settings:
         glow_ai_alt_text_consent = bool(data.get("glow_ai_alt_text_consent", False))
         glow_pii_redaction_consent = bool(data.get("glow_pii_redaction_consent", False))
         glow_language_processing_consent = bool(data.get("glow_language_processing_consent", False))
+        ssh_trust_first_use = bool(data.get("ssh_trust_first_use", False))
         if recent_files_limit < 1:
             recent_files_limit = 1
         if recent_files_limit > 50:
@@ -576,6 +595,7 @@ class Settings:
             glow_ai_alt_text_consent=glow_ai_alt_text_consent,
             glow_pii_redaction_consent=glow_pii_redaction_consent,
             glow_language_processing_consent=glow_language_processing_consent,
+            ssh_trust_first_use=ssh_trust_first_use,
         )
 
 

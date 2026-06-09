@@ -29,7 +29,7 @@ def test_no_dialog_escape_button_traps_in_source() -> None:
 
 def _violations(source: str) -> list[str]:
     tree = ast.parse(source)
-    return [f"{v.scope}:{v.wx_id}" for v in _audit_module("synthetic.py", tree)]
+    return [f"{v.scope}:{v.wx_id}" for v in _audit_module("synthetic.py", source, tree)]
 
 
 def test_audit_flags_escape_id_without_button() -> None:
@@ -114,3 +114,33 @@ class CustomIdDialog:
         apply_modal_ids(self.dialog, affirmative_id=self.ID_INSERT, escape_id=self.ID_DISCARD)
 """
     assert _violations(source) == []
+
+
+def test_audit_respects_noqa_dialog_button_contract_pragma() -> None:
+    # A trailing ``# noqa: dialog_button_contract`` opt-out exempts a single
+    # ``apply_modal_ids`` call from the static audit. This is the documented
+    # escape hatch for stock wx dialogs whose YES/NO buttons are synthesised
+    # at runtime (the static walk cannot see them); the pragma forces a
+    # conscious reviewer decision and keeps the no-pragma path strict.
+    source = """
+class StockDialog:
+    def __init__(self):
+        self.dialog = wx.MessageDialog(parent, "msg", "title", wx.YES_NO | wx.NO_DEFAULT)
+        apply_modal_ids(  # noqa: dialog_button_contract
+            self.dialog, affirmative_id=wx.ID_YES, escape_id=wx.ID_NO)
+"""
+    assert _violations(source) == []
+
+
+def test_audit_still_flags_pragma_omitted_stock_dialog() -> None:
+    # A raw ``wx.Dialog`` (not ``wx.MessageDialog``) with no real button for
+    # the escape id and no pragma must still be flagged -- this is the
+    # original WCAG 2.1.2 (#124) keyboard trap pattern.
+    source = """
+class RawDialog:
+    def __init__(self):
+        self.dialog = wx.Dialog(parent, title="Raw")
+        self.use = wx.Button(self.dialog, label="Use")
+        apply_modal_ids(self.dialog, affirmative_id=wx.ID_OK, escape_id=wx.ID_NO)
+"""
+    assert _violations(source) == ["RawDialog:ID_NO"]

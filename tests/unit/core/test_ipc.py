@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 import quill.core.ipc as ipc
+import quill.core.paths as paths_mod
 from quill.core.ipc import (
     drain_open_requests,
     enqueue_open_request,
@@ -16,9 +17,15 @@ from quill.core.ipc import (
 
 
 @pytest.fixture(autouse=True)
-def _release_lock_after_each_test() -> object:
-    # Each test gets its own QUILL_DATA_DIR, but the held lock handle is module
-    # state — always release it so a held fd can't leak into the next test.
+def _isolate_ipc(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> object:
+    """Route every test to an isolated tmp_path so ipc files never cross tests.
+
+    paths.py now requires QUILL_DEV_BUILD=1 (or _DEV_BUILD=True) before
+    QUILL_DATA_DIR is honoured; set both the env var and the module flag.
+    """
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("QUILL_DEV_BUILD", "1")
+    monkeypatch.setattr(paths_mod, "_DEV_BUILD", True)
     yield
     release_primary_instance()
     ipc._lock_handle = None
@@ -106,3 +113,34 @@ def test_default_action_is_open(monkeypatch: pytest.MonkeyPatch, tmp_path: Path)
     enqueue_open_request(tmp_path / "doc.md")
     drained = drain_open_requests()
     assert drained[0].action == "open"
+
+
+def test_concurrent_enqueue_serializes_via_lock(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """H-4-core-2: two threads writing concurrently must each produce one valid JSONL line."""
+    import threading
+
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    barrier = threading.Barrier(2)
+    errors: list[Exception] = []
+
+    def _enqueue(path: Path) -> None:
+        try:
+            barrier.wait()
+            enqueue_open_request(path)
+        except Exception as exc:
+            errors.append(exc)
+
+    paths = [tmp_path / "a.md", tmp_path / "b.md"]
+    threads = [threading.Thread(target=_enqueue, args=(p,)) for p in paths]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=5)
+
+    assert not errors, f"Thread errors: {errors}"
+    drained = drain_open_requests()
+    assert len(drained) == 2
+    drained_paths = {r.path for r in drained}
+    assert drained_paths == set(paths)

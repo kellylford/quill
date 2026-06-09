@@ -98,5 +98,9 @@ def format_progress(
     Same grammar as :func:`format_announcement`, used when an action begins so
     the user hears the scope before a potentially slow operation runs, e.g.
     ``"Rewriting paragraph, 42 words."``.
+
+    Pure function: no I/O, no logging, no global state, no side effects.
+    Same input always produces the same string. Safe to call from any
+    thread, including the wx main thread and worker threads.
     """
     return format_announcement(verb, obj, count=count, unit=unit)

@@ -1,3 +1,12 @@
+"""wx main-thread heartbeat watchdog.
+
+Implements: ROADMAP STAB-5 (a ``wx.Timer``-driven heartbeat the main
+thread publishes on a tick; if the tick stops, the watchdog logs the
+last known state and dumps thread stacks via
+:func:`quill.stability.diagnostics.dump_all_thread_stacks` so a
+frozen UI leaves a forensic trail in the log).
+"""
+
 from __future__ import annotations
 
 import logging

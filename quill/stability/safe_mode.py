@@ -1,3 +1,14 @@
+"""Safe Mode configuration and detection.
+
+Implements: ROADMAP SAFE-1 (the env-var contract for Safe Mode) and
+H-SAFE-1 from the pre-release review. When ``QUILL_SAFE_MODE=1`` is
+set in the environment, or ``--safe-mode`` is passed on the command
+line, ``should_enable_safe_mode`` returns True and ``build_safe_mode_config``
+produces a :class:`SafeModeConfig` that disables plugins, AI, network
+services, and other non-essential surfaces for the lifetime of the
+process.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
@@ -26,10 +37,3 @@ def should_enable_safe_mode(arguments: Sequence[str], environment: Mapping[str, 
     if "--safe-mode" in arguments:
         return True
     return environment.get("QUILL_SAFE_MODE") == "1"
-
-
-def safe_mode_message() -> str:
-    return (
-        "QUILL started in Safe Mode. Extensions, experimental features, startup restore, "
-        "background indexing, and AI services are disabled for this session."
-    )

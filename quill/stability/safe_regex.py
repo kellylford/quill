@@ -1,3 +1,11 @@
+"""Bounded-time regex helpers built on the third-party ``regex`` package.
+
+Implements: ROADMAP STAB-9 (ReDoS-safe regex: ``safe_finditer`` and
+``safe_subn`` wrap user-supplied patterns with a per-call wall-clock
+budget via :class:`RegexTimeoutError`; callers catch the timeout and
+surface a clear error rather than hanging the worker).
+"""
+
 from __future__ import annotations
 
 import logging

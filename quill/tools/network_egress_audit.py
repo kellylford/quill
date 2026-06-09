@@ -124,7 +124,13 @@ def discover_egress_sites() -> dict[str, str]:
             if isinstance(node, ast.Call) and _callee_name(node) in _EGRESS_CALLEES:
                 rel = path.relative_to(_PACKAGE_ROOT).as_posix()
                 func_name = _enclosing_function_name(tree, node)
-                sites[f"{rel}::{func_name}"] = func_name
+                site = f"{rel}::{func_name}"
+                # Same-site duplicates collapse; cross-function duplicates with
+                # the same enclosing function are not possible by construction
+                # (one entry per function). Two egress calls in the same function
+                # would share the key, so keep the first to preserve the prior
+                # behavior and surface the collision via _first_seen_at().
+                sites.setdefault(site, func_name)
     return sites
 
 

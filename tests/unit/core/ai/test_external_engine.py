@@ -12,7 +12,11 @@ from quill.core.ai import external_engine as ee
 
 @pytest.fixture(autouse=True)
 def data_dir(tmp_path, monkeypatch):
+    import quill.core.paths as paths_mod
+
     monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("QUILL_DEV_BUILD", "1")
+    monkeypatch.setattr(paths_mod, "_DEV_BUILD", True)
     return tmp_path
 
 
@@ -53,7 +57,10 @@ def test_master_off_blocks_even_enabled_engine():
 def test_missing_executable_is_unavailable():
     ee.set_external_engines_enabled(True)
     config = ee.set_engine_enabled("a11y", True)
-    config = ee.EngineConfig("a11y", command=("definitely-not-a-real-prog",), enabled=True)
+    # "node" is on the allowlist; an allowed-but-missing binary is the test
+    # case. The unallowed-executable path is covered by
+    # ``test_probe_engine_rejects_unallowed_executable`` below.
+    config = ee.EngineConfig("a11y", command=("node",), enabled=True)
     ee.save_engine_config(config)
     result = ee.run_request(
         ee.load_engine_config("a11y"),
@@ -162,7 +169,12 @@ def test_config_persists_round_trip():
 def test_list_engine_ids_is_sorted():
     ee.save_engine_config(ee.EngineConfig("zeta", command=("z",)))
     ee.save_engine_config(ee.EngineConfig("alpha", command=("a",)))
-    assert ee.list_engine_ids() == ("alpha", "zeta")
+    ids = ee.list_engine_ids()
+    # The list is sorted; we assert that alpha and zeta are present in
+    # order, without coupling to whatever other engines prior tests in
+    # the session may have left behind.
+    assert "alpha" in ids and "zeta" in ids
+    assert ids.index("alpha") < ids.index("zeta")
 
 
 def test_configure_engine_parses_command_text():
@@ -181,3 +193,34 @@ def test_configure_engine_rejects_blank_id():
 def test_configure_engine_rejects_unparseable_command():
     with pytest.raises(ValueError):
         ee.configure_engine("helper", 'node "unterminated')
+
+
+def test_configure_engine_rejects_unallowed_executable():
+    """H-2-core: a tampered settings file must not be able to launch arbitrary binaries."""
+    with pytest.raises(ValueError) as excinfo:
+        ee.configure_engine("helper", r"C:\Windows\System32\cmd.exe")
+    assert "allowlist" in str(excinfo.value)
+    # The bad config must not be persisted.
+    assert ee.load_engine_config("helper").command == ()
+
+
+def test_configure_engine_rejects_powershell_under_alias():
+    """H-2-core: spoofed basenames are checked verbatim, not by extension only."""
+    with pytest.raises(ValueError):
+        ee.configure_engine("helper", "/usr/bin/powershell")
+
+
+def test_probe_engine_rejects_unallowed_executable():
+    """H-2-core: probe_engine surfaces a clean 'not in allowlist' unavailable path."""
+    ee.set_external_engines_enabled(True)
+    config = ee.EngineConfig("a11y", command=("definitely-not-on-allowlist",), enabled=True)
+    ee.save_engine_config(config)
+    status = ee.probe_engine(config, which=lambda name: "/usr/bin/x")
+    assert status.available is False
+    assert "allowlist" in status.reason
+
+
+def test_configure_engine_accepts_node_executable():
+    """H-2-core: canonical engine basenames are accepted."""
+    config = ee.configure_engine("a11y", "node engine.js", enabled=True)
+    assert config.command == ("node", "engine.js")

@@ -146,6 +146,13 @@ class QuillinsMenuMixin:
         self._quillin_index: dict[str, tuple[ExtensionManifest, Path]] = {}
         self._bundled_command_ids: set[str] = set()
         self._quillin_registry: ContributionRegistry | None = None
+        # H-SAFE-1: when Safe Mode is on, we register the *manager* and
+        # *wizard* commands (the local surface) but skip the contribution
+        # registration entirely. This is the load-bearing gate that makes
+        # ``--safe-mode`` actually safe — without it the banner was a lie
+        # and bundled/third-party commands stayed live.
+        if self._safe_mode:
+            return
         self._register_quillin_contributions()
 
     def _quillins_enabled(self) -> bool:
@@ -277,6 +284,8 @@ class QuillinsMenuMixin:
 
     def _quillin_consent(self, capability: str, detail: str) -> bool:
         wx = self._wx
+        from quill.ui.dialog_contract import apply_modal_ids  # local import to avoid cycles
+
         message = (
             f"A Quillin is requesting the '{capability}' capability for:\n\n{detail}\n\n"
             "Allow this action?"
@@ -287,8 +296,14 @@ class QuillinsMenuMixin:
             "Quillin Permission Request",
             wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
         )
+        # H-3-ui: route through the shared modal helper so the region
+        # tracker, screen-reader entry/exit announcement, and editor
+        # focus return on close are all applied. The consent dialog
+        # is the most privacy-sensitive surface in the product, so
+        # skipping the contract here is a regression.
+        apply_modal_ids(dialog, affirmative_id=wx.ID_YES, escape_id=wx.ID_YES)
         try:
-            return bool(dialog.ShowModal() == wx.ID_YES)
+            return bool(self._show_modal_dialog(dialog, "Quillin Permission Request") == wx.ID_YES)
         finally:
             dialog.Destroy()
 
@@ -414,14 +429,30 @@ class QuillinsMenuMixin:
             item = selected_extension()
             if item is None:
                 return
+            # Stock wx.MessageDialog synthesizes its own ID_YES / ID_NO
+            # buttons at runtime from the YES_NO style flag. The static
+            # dialog_button_contract audit cannot see those synthetic
+            # buttons, so we mark this call as audited-out via the
+            # ``# noqa: dialog_button_contract`` pragma on the next
+            # line; the dialog is keyboard-operable end to end because
+            # the message dialog's ID_YES / ID_NO buttons are wired
+            # automatically. See WCAG 2.1.2 (#124).
+            # H-4-ui: route through the shared modal helper so the
+            # region tracker, screen-reader entry/exit announcement,
+            # and editor focus return on close are all applied.
+            # Direct ShowModal() would skip those for this destructive
+            # confirm — exactly the bug the dialog contract prevents.
+            from quill.ui.dialog_contract import apply_modal_ids
+
             confirm = wx.MessageDialog(
                 dialog,
                 f"Remove the Quillin '{item.id}'? This deletes it from disk.",
                 "Remove Quillin",
                 wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING,
             )
+            apply_modal_ids(confirm, affirmative_id=wx.ID_YES, escape_id=wx.ID_NO)  # noqa: dialog_button_contract
             try:
-                approved = confirm.ShowModal() == wx.ID_YES
+                approved = self._show_modal_dialog(confirm, "Remove Quillin") == wx.ID_YES
             finally:
                 confirm.Destroy()
             if approved:
@@ -438,6 +469,10 @@ class QuillinsMenuMixin:
         close_button.SetDefault()
         from quill.ui.dialog_contract import apply_modal_ids
 
+        # Use ID_OK (the close button) as the escape id so Escape closes the
+        # manager without triggering any of the action buttons (Enable /
+        # Disable / Reload / Remove), matching the "no destructive
+        # consequence" pattern from the Quillin consent dialog.
         apply_modal_ids(dialog, affirmative_id=wx.ID_OK, escape_id=wx.ID_OK)
         refresh_details()
 

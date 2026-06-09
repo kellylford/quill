@@ -1,3 +1,13 @@
+"""Task manager, cancellation tokens, and the ``QuillTask`` dataclass.
+
+Implements: ROADMAP STAB-7 (the wx-free background task surface:
+``TaskManager`` runs a thread pool, ``CancellationToken`` propagates
+cancels, and ``QuillTask`` carries the result back to the UI thread
+through :mod:`quill.stability.wx_dispatch`). The contract is
+intentionally platform-neutral so headless tests and the live UI share
+one scheduler.
+"""
+
 from __future__ import annotations
 
 import concurrent.futures

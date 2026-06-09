@@ -70,6 +70,11 @@ SETTING_GROUPS: tuple[SettingGroup, ...] = (
         "File-manager right-click verbs and how QUILL is offered on files.",
     ),
     SettingGroup("updates", "Updates", "Update checking and release channel."),
+    SettingGroup(
+        "security",
+        "Security and Privacy",
+        "Host-key trust, network consent, and other safety toggles.",
+    ),
 )
 
 _GROUP_IDS = {group.id for group in SETTING_GROUPS}
@@ -901,5 +906,17 @@ SETTING_SPECS: tuple[SettingSpec, ...] = (
         "Add a verb that opens a file and starts reading it aloud.",
         feature_id="read_aloud",
         keywords=("read aloud", "speech", "context menu", "verb"),
+    ),
+    # --- Security and privacy ----------------------------------------------
+    SettingSpec(
+        "ssh_trust_first_use",
+        "Trust SSH hosts on first connection",
+        "security",
+        "bool",
+        "When on, QUILL remembers a host key the first time it is seen "
+        "(paramiko AutoAddPolicy). When off, the safer default, an "
+        "unknown host key rejects the connection so you notice the "
+        "mismatch. Off unless you have a specific reason to change it.",
+        keywords=("ssh", "host key", "trust", "paramiko", "security"),
     ),
 )

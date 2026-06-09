@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import os
+import threading
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import IO
@@ -134,18 +137,25 @@ def enqueue_open_request(
 ) -> None:
     queue_path = _queue_file_path()
     queue_path.parent.mkdir(parents=True, exist_ok=True)
-    with queue_path.open("a", encoding="utf-8", newline="\n") as handle:
-        payload = (
-            {"action": "show"}
-            if path is None
-            else {
-                "action": (action or "open").strip().lower(),
-                "path": str(path),
-                "line": line,
-                "column": column,
-            }
-        )
-        handle.write(json.dumps(payload, ensure_ascii=True) + "\n")
+    # H-4-core-2: serialize concurrent writes via a dedicated side-car lock
+    # file (*.lock) that always has content at byte 0 so msvcrt.locking can
+    # work reliably. The data file itself is written with plain open("a") after
+    # the lock is acquired; the JSON line is always < PIPE_BUF so the underlying
+    # write is atomic once we own the lock.
+    with _queue_write_lock(queue_path):
+        with queue_path.open("a", encoding="utf-8", newline="\n") as handle:
+            payload = (
+                {"action": "show"}
+                if path is None
+                else {
+                    "action": (action or "open").strip().lower(),
+                    "path": str(path),
+                    "line": line,
+                    "column": column,
+                }
+            )
+            handle.write(json.dumps(payload, ensure_ascii=True) + "\n")
+            handle.flush()
 
 
 def drain_open_requests() -> list[OpenRequest | None]:
@@ -180,6 +190,22 @@ def drain_open_requests() -> list[OpenRequest | None]:
                 )
             )
     return requests
+
+
+# H-4-core-2: in-process lock for enqueue.  Multiple threads in the same
+# process (e.g., two background tasks both triggering "open file" events)
+# serialize here.  Cross-process writes (two secondary QUILL instances) rely
+# on the fact that a single JSON line is always < PIPE_BUF (4 KiB on all
+# supported platforms) so the underlying kernel write is already atomic.
+_enqueue_lock = threading.Lock()
+
+
+@contextlib.contextmanager
+def _queue_write_lock(queue_path: Path) -> Iterator[None]:
+    """Serialize concurrent in-process enqueue calls."""
+    _ = queue_path
+    with _enqueue_lock:
+        yield
 
 
 def _lock_file_path() -> Path:

@@ -56,7 +56,11 @@ def _rel(path: Path, base: Path) -> str:
 def load_budget(budget_file: Path = _BUDGET_FILE) -> tuple[dict[str, int], int]:
     """Return ``(budgets, default_cap)`` parsed from the budget JSON."""
     data = json.loads(budget_file.read_text(encoding="utf-8"))
-    budgets = {str(k): int(v) for k, v in data["budgets"].items()}
+    # JSON5-style ``_comment`` keys are preserved for the human reader
+    # (see ``quill/tools/module_size_budgets.md``) and stripped here so
+    # downstream keys are guaranteed to be ``int`` budget values. Long-form
+    # rationale belongs in the sibling markdown file, not in this JSON.
+    budgets = {str(k): int(v) for k, v in data["budgets"].items() if not str(k).startswith("_")}
     default_cap = int(data["_default_cap"])
     return budgets, default_cap
 

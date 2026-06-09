@@ -1,9 +1,18 @@
+"""Safety contract for subprocess execution.
+
+Implements: ROADMAP SEC-4 (documented and validated cwd safety for
+``safe_subprocess``) and SEC-15 (validates ``cwd``, catches
+``OSError``/``FileNotFoundError``, surfaces a clear re-raise).
+"""
+
 from __future__ import annotations
 
 import logging
 import os
 import subprocess
 from collections.abc import Sequence
+
+from quill.stability.redaction import format_args_for_log
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +46,16 @@ def run_subprocess_safely(
         raise ValueError("run_subprocess_safely requires a non-empty args sequence")
     if cwd is not None and not os.path.isdir(cwd):
         raise ValueError(f"cwd must be an existing directory: {cwd!r}")
-    logger.info("Running subprocess args=%r timeout=%s cwd=%r", arg_list, timeout_seconds, cwd)
+    # H-1: log only the redacted form of the args list so secrets
+    # (API keys, Authorization headers, etc.) never reach quill.log
+    # and therefore never reach the crash bundle.
+    safe_args = format_args_for_log(arg_list)
+    logger.info(
+        "Running subprocess %s timeout=%s cwd=%s",
+        safe_args,
+        timeout_seconds,
+        cwd,
+    )
     try:
         result = subprocess.run(
             arg_list,
@@ -47,11 +65,15 @@ def run_subprocess_safely(
             timeout=timeout_seconds,
             check=False,
         )
-        logger.info("Subprocess finished returncode=%s args=%r", result.returncode, arg_list)
+        logger.info(
+            "Subprocess finished returncode=%s %s",
+            result.returncode,
+            safe_args,
+        )
         return result
     except subprocess.TimeoutExpired:
-        logger.exception("Subprocess timed out args=%r timeout=%s", arg_list, timeout_seconds)
+        logger.exception("Subprocess timed out %s timeout=%s", safe_args, timeout_seconds)
         raise
     except OSError as error:
-        logger.exception("Subprocess failed to launch args=%r cwd=%r", arg_list, cwd)
+        logger.exception("Subprocess failed to launch %s cwd=%s", safe_args, cwd)
         raise OSError(f"Could not run {arg_list[0]!r}: {error}") from error

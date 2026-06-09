@@ -289,7 +289,7 @@ def download_release_asset(
     request = Request(url, headers={"User-Agent": "Quill-Updater"})
     chunk_size = 64 * 1024
     with urlopen(request, timeout=timeout, context=_ssl_context()) as response:
-        total = int(getattr(response, "headers", {}).get("Content-Length", 0) or 0)
+        total = int(response.headers.get("Content-Length") or 0)
         done = 0
         if progress is not None:
             progress(0, total)

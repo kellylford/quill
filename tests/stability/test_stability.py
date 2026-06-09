@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import subprocess
 import threading
@@ -242,6 +243,55 @@ def test_safe_mode_configuration_disables_risky_features() -> None:
     assert should_enable_safe_mode([], {"QUILL_SAFE_MODE": "1"}) is True
 
 
+def test_safe_mode_blocks_assistant_network_calls(monkeypatch) -> None:
+    """H-SAFE-1: when QUILL_SAFE_MODE=1, AI calls short-circuit with
+    a safe-mode message instead of issuing a urllib.request call.
+    """
+    from quill.core import assistant_ai
+    from quill.core.assistant_ai import AssistantConnectionSettings
+
+    monkeypatch.setenv("QUILL_SAFE_MODE", "1")
+
+    # If any call attempted the network, this sentinel would be set.
+    monkeypatch.setattr(
+        assistant_ai,
+        "urlopen",
+        lambda *_a, **_k: (_ for _ in ()).throw(AssertionError("network call attempted")),
+    )
+
+    settings = AssistantConnectionSettings(
+        provider="openai", host="https://api.openai.com", model="gpt-4o-mini"
+    )
+
+    models, error = assistant_ai.list_assistant_models(settings, api_key="x")
+    assert models == []
+    assert error is not None
+    assert "Safe Mode" in error
+
+    text, error2 = assistant_ai.generate_assistant_response(settings, api_key="x", prompt="hi")
+    assert text is None
+    assert error2 is not None
+    assert "Safe Mode" in error2
+
+    ok, msg = assistant_ai.verify_assistant_connection(settings, api_key="x")
+    assert ok is False
+    assert "Safe Mode" in msg
+
+
+def test_safe_mode_does_not_block_off_provider(monkeypatch) -> None:
+    """``provider == 'off'`` is the *intended* offline state and must
+    still return success in safe mode (the safe-mode banner is the
+    wrong place to refuse an explicitly off provider)."""
+    from quill.core import assistant_ai
+    from quill.core.assistant_ai import AssistantConnectionSettings
+
+    monkeypatch.setenv("QUILL_SAFE_MODE", "1")
+    settings = AssistantConnectionSettings(provider="off", host="", model="")
+    models, error = assistant_ai.list_assistant_models(settings, api_key="")
+    assert models == []
+    assert error is None
+
+
 def test_feature_contract_validation_rejects_risky_ui_thread_features() -> None:
     contract = FeatureContract(
         feature_id="regex_search",
@@ -273,3 +323,62 @@ def test_diagnostic_bundle_includes_metadata(tmp_path: Path) -> None:
     )
 
     assert bundle.exists()
+
+
+def test_run_subprocess_safely_does_not_log_secrets(caplog, monkeypatch) -> None:
+    """H-1: a secret passed in args must not appear in the log line."""
+
+    def fake_run(*_args, **_kwargs):
+        return subprocess.CompletedProcess(args=["fake"], returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr("subprocess.run", fake_run)
+
+    with caplog.at_level(logging.INFO):
+        run_subprocess_safely([
+            "fake",
+            "--api-key=sk-LIVE-deadbeef1234567890",
+            r"C:\Users\jane\secret.txt",
+        ])
+
+    joined = "\n".join(record.getMessage() for record in caplog.records)
+    assert "sk-LIVE-deadbeef" not in joined
+    assert r"C:\Users\jane" not in joined
+    assert "fake" in joined  # executable basename still present
+
+
+def test_diagnostic_bundle_redacts_secrets_and_paths(tmp_path: Path) -> None:
+    """H-2: secrets and user paths in the input log must be redacted in the bundle."""
+
+    import zipfile
+
+    secret_line = "Bearer sk-LIVE-abcdef1234567890ABCDEF"
+    path_line = r"Failed to read C:\Users\jane\Documents\secrets.txt"
+    log = "\n".join(["normal line", secret_line, path_line, ""])
+
+    logs = tmp_path / "quill.log"
+    logs.write_text(log, encoding="utf-8")
+    bundle_path = tmp_path / "bundle.zip"
+    build_diagnostic_bundle(
+        logs_path=logs,
+        output_path=bundle_path,
+        recent_commands=["file.open", "BAD/../cmd", "ok.command"],
+    )
+
+    with zipfile.ZipFile(bundle_path) as archive:
+        names = set(archive.namelist())
+        assert "quill.log" in names
+        assert "metadata.json" in names
+        redacted = archive.read("quill.log").decode("utf-8", errors="replace")
+        metadata = json.loads(archive.read("metadata.json").decode("utf-8"))
+
+    # The secret must be gone.
+    assert "sk-LIVE-abcdef" not in redacted
+    # The user path must be redacted (path token, not raw).
+    assert r"C:\Users\jane" not in redacted
+    # Normal content should still be present.
+    assert "normal line" in redacted
+    # Metadata records what was redacted.
+    assert "redaction" in metadata
+    assert metadata["redaction"]["quill.log"]["lines_dropped"] >= 1
+    # recent_commands is filtered: only well-formed ids survive.
+    assert metadata["recent_commands"] == ["file.open", "ok.command"]

@@ -277,6 +277,13 @@ trigger.
 
 - [ ] Crash Recovery (after an unclean exit)
 - [ ] Untrusted Location Warning (opening a file from an untrusted folder)
+- [ ] Safe Mode banner / status-bar indicator (when `QUILL_SAFE_MODE=1` is set
+  on the environment, or `quill --safe-mode` is passed): the status bar shows
+  "Safe Mode — plugins, AI, and network disabled" and a one-shot announcement
+  fires on first show. Verified manually by setting the env var before launch
+  and confirming the AI / assistant surfaces and watch-folder network calls
+  short-circuit per `quill/stability/safe_mode.py`. Cross-reference: the
+  pre-release review's N-10 / H-SAFE-1 fixes.
 
 ## Maintenance note
 
@@ -286,3 +293,15 @@ This checklist was generated from a full source scrub of `quill/ui/` (chiefly
 `preview_dialog.py`, and `web_form.py`) and the bindings in
 `quill/core/keymap.py`. When you add or change a dialog, update the matching row
 here in the same change so this file stays a faithful, complete map.
+
+## Cross-references
+
+- **Safe Mode** — see `quill/stability/safe_mode.py` (env-var contract is
+  `QUILL_SAFE_MODE=1`) and `quill/stability/__init__.py` (`SafeModeConfig`,
+  `build_safe_mode_config`). When safe mode is active, the AI assistant
+  surfaces in section Q, the BITS / Whisperer surfaces in section R, the
+  watch-folder network calls in section M, and the Agent Center all
+  short-circuit. Manual verification: launch with `set QUILL_SAFE_MODE=1`
+  (cmd) / `$env:QUILL_SAFE_MODE=1` (PowerShell) / `--safe-mode` (CLI flag);
+  confirm the status-bar banner and the AI/assistant menu items are
+  disabled.

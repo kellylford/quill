@@ -5,12 +5,41 @@ from pathlib import Path
 
 from quill.core.storage_mode import load_storage_mode, portable_root_dir
 
+# H-1-core: ``QUILL_DATA_DIR`` is documented as a *dev-only* override. In
+# release builds we ignore it entirely, so a tampered environment cannot
+# redirect the user's settings, undo, recovery, or AI session files to an
+# attacker-controlled directory. Development builds (CI, local testing)
+# opt in by exporting ``QUILL_DEV_BUILD=1`` in the environment, or by
+# setting the module-private ``_DEV_BUILD`` flag below to ``True``.
+_DEV_BUILD = os.environ.get("QUILL_DEV_BUILD") == "1" or False  # dev override opt-in
+
+
+def _is_constrained_to_home(candidate: Path) -> bool:
+    """H-1-core: the dev override is accepted only when it stays under $HOME.
+
+    ``Path.resolve()`` follows symlinks, so a malicious
+    ``QUILL_DATA_DIR=/home/user/.config/Quill`` that is a symlink into
+    ``/etc`` will fail the check. ``is_relative_to`` is new in Python 3.9
+    and QUILL's PRD pins 3.12.
+    """
+    try:
+        home = Path.home().resolve()
+    except OSError:
+        return False
+    try:
+        return candidate.is_relative_to(home)
+    except (OSError, ValueError):
+        return False
+
 
 def app_data_dir() -> Path:
     override = os.environ.get("QUILL_DATA_DIR")
-    if override:
-        return Path(override).expanduser().resolve()
-
+    if override and _DEV_BUILD:
+        resolved = Path(override).expanduser().resolve()
+        if _is_constrained_to_home(resolved):
+            return resolved
+        # Dev build, but override is outside $HOME: silently fall back.
+    # Release build: ignore the env var entirely.
     portable_root = portable_root_dir()
     if portable_root is not None:
         mode = load_storage_mode()

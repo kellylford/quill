@@ -6,6 +6,12 @@ from dataclasses import dataclass
 from typing import Any
 
 try:  # pragma: no cover - Windows-only runtime hook
+    # `launch_windows_dictation` is set to the real Windows shell
+    # launcher when running on Windows. On macOS/Linux the import
+    # raises ImportError and we fall back to ``None`` so the public
+    # methods return a clean ``DictationUnavailableError`` instead of
+    # crashing at import time. Do not assume the symbol exists outside
+    # Windows; gate every call on ``launch_windows_dictation is not None``.
     from quill.platform.windows.dictation import (
         launch_windows_dictation as _launch_windows_dictation,
     )

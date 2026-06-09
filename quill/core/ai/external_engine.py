@@ -41,6 +41,28 @@ from quill.core.storage import read_json, write_json_atomic
 
 _CONFIG_FILE = "external-engines.json"
 
+# Canonical basenames the external-engine boundary is willing to launch.
+# Anything else is rejected by ``configure_engine`` and ``probe_engine`` as
+# a defense-in-depth check: a tampered ``settings.json`` (cloud sync,
+# backup restore, etc.) must not be able to launch an arbitrary program.
+# This mirrors ``_validate_configured_executable`` in
+# ``quill.core.read_aloud`` and is intentionally an allowlist, not a
+# denylist. Each entry is the platform-appropriate file name for the
+# canonical engine binary.
+_ENGINE_EXECUTABLE_BASENAMES: frozenset[str] = frozenset((
+    # Node-based accessibility backends.
+    "node",
+    "node.exe",
+    # Python-based backends.
+    "python",
+    "python.exe",
+    "python3",
+    "python3.exe",
+    # Generic JSONL shell scripts the user may want to wire up.
+    "quill-engine",
+    "quill-engine.exe",
+))
+
 # A runner takes (command, stdin_text, timeout_seconds) and returns
 # (returncode, stdout_text, stderr_text). Injectable for tests.
 Runner = Callable[[list[str], str, float], "tuple[int, str, str]"]
@@ -156,6 +178,14 @@ def configure_engine(
     command box into a token tuple (via ``shlex``) and saves an
     :class:`EngineConfig`, so the dialog holds no parsing or storage logic.
     Raises ``ValueError`` for a blank engine id or an unparseable command.
+
+    ``command_text`` format: a POSIX-style shell command string (e.g.
+    ``"my-engine --flag value path/to/file"``). The value is normalized
+    via :func:`shlex.split`, which silently consumes leading/trailing
+    whitespace, interprets single and double quotes, and joins lines
+    ending in a backslash. Callers that need exact token preservation
+    should pass an already-tokenized command list to
+    :class:`EngineConfig` directly instead of going through this helper.
     """
 
     cleaned_id = engine_id.strip()
@@ -165,6 +195,13 @@ def configure_engine(
         command = tuple(shlex.split(command_text.strip()))
     except ValueError as error:
         raise ValueError(f"The command could not be understood: {error}") from error
+    if command:
+        executable_basename = Path(command[0]).name.lower()
+        if executable_basename not in _ENGINE_EXECUTABLE_BASENAMES:
+            raise ValueError(
+                f"The program '{command[0]}' is not in the QUILL external-engine allowlist. "
+                "Allowed engines are: " + ", ".join(sorted(_ENGINE_EXECUTABLE_BASENAMES)) + "."
+            )
     config = EngineConfig(
         engine_id=cleaned_id,
         command=command,
@@ -213,6 +250,12 @@ def probe_engine(
             config.engine_id, False, f"No command is configured for the {config.engine_id} engine."
         )
     executable = config.command[0]
+    if Path(executable).name.lower() not in _ENGINE_EXECUTABLE_BASENAMES:
+        return EngineStatus(
+            config.engine_id,
+            False,
+            f"The program '{executable}' is not in the QUILL external-engine allowlist.",
+        )
     if which(executable) is None and not Path(executable).exists():
         return EngineStatus(
             config.engine_id, False, f"The program '{executable}' was not found on this computer."
