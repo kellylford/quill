@@ -847,6 +847,14 @@ class MainFrame(
     })
     _EXTEND_SELECTION_ACTION_EXEMPT_COMMANDS: set[str] = {
         "edit.toggle_extend_selection_mode",
+        "edit.start_selection",
+        "edit.complete_selection",
+        "edit.reselect",
+        "edit.go_to_start_of_selection",
+        "edit.copy_all",
+        "edit.unselect_all",
+        "edit.say_selected",
+        "edit.read_all",
         "edit.find",
         "edit.find_next",
         "edit.find_previous",
@@ -944,6 +952,8 @@ class MainFrame(
         self._last_live_misspelling_feedback_at: float = 0.0
         self._extend_selection_mode = False
         self._extend_selection_anchor: int | None = None
+        self._selection_anchor: int | None = None
+        self._last_selection: tuple[int, int] | None = None
         self._epub_book: EpubBook | None = None
         self._browser_preview_session: _BrowserPreviewSession | None = None
         self._bookmarks: dict[str, int] = {}
@@ -2250,6 +2260,54 @@ class MainFrame(
             self._binding_for("edit.toggle_extend_selection_mode"),
         )
         self.commands.register(
+            "edit.start_selection",
+            "Start Selection",
+            self.start_selection,
+            self._binding_for("edit.start_selection"),
+        )
+        self.commands.register(
+            "edit.complete_selection",
+            "Complete Selection",
+            self.complete_selection,
+            self._binding_for("edit.complete_selection"),
+        )
+        self.commands.register(
+            "edit.reselect",
+            "Reselect",
+            self.reselect,
+            self._binding_for("edit.reselect"),
+        )
+        self.commands.register(
+            "edit.go_to_start_of_selection",
+            "Go to Start of Selection",
+            self.go_to_start_of_selection,
+            self._binding_for("edit.go_to_start_of_selection"),
+        )
+        self.commands.register(
+            "edit.copy_all",
+            "Copy All",
+            self.copy_all,
+            self._binding_for("edit.copy_all"),
+        )
+        self.commands.register(
+            "edit.unselect_all",
+            "Unselect All",
+            self.unselect_all,
+            self._binding_for("edit.unselect_all"),
+        )
+        self.commands.register(
+            "edit.say_selected",
+            "Say Selected",
+            self.say_selected,
+            self._binding_for("edit.say_selected"),
+        )
+        self.commands.register(
+            "edit.read_all",
+            "Read All",
+            self.read_all,
+            self._binding_for("edit.read_all"),
+        )
+        self.commands.register(
             "edit.find",
             "Find...",
             self.find_text,
@@ -2801,6 +2859,14 @@ class MainFrame(
             "edit.undo": self._id_undo,
             "edit.redo": self._id_redo,
             "edit.toggle_extend_selection_mode": self._id_toggle_extend_selection_mode,
+            "edit.start_selection": self._id_start_selection,
+            "edit.complete_selection": self._id_complete_selection,
+            "edit.reselect": self._id_reselect,
+            "edit.go_to_start_of_selection": self._id_go_to_start_of_selection,
+            "edit.copy_all": self._id_copy_all,
+            "edit.unselect_all": self._id_unselect_all,
+            "edit.say_selected": self._id_say_selected,
+            "edit.read_all": self._id_read_all,
             "edit.insert_link": self._id_insert_link,
             "edit.follow_link": self._id_follow_link,
             "edit.find": self._id_find,
@@ -3458,6 +3524,16 @@ class MainFrame(
         f8_key = getattr(wx, "WXK_F8", None)
         if (
             f8_key is not None
+            and self._insert_key_down
+            and event.GetKeyCode() == f8_key
+            and not event.ControlDown()
+            and not event.AltDown()
+            and not event.ShiftDown()
+        ):
+            self.toggle_extend_selection_mode()
+            return
+        if (
+            f8_key is not None
             and event.GetKeyCode() == f8_key
             and self._compare_session is not None
         ):
@@ -3527,6 +3603,18 @@ class MainFrame(
         ):
             self.toggle_dictation()
             return
+        space_key = getattr(wx, "WXK_SPACE", None)
+        if (
+            space_key is not None
+            and event.GetKeyCode() == space_key
+            and event.ShiftDown()
+            and not event.ControlDown()
+            and not event.AltDown()
+        ):
+            _sel_start, _sel_end = self.editor.GetSelection()
+            if _sel_start != _sel_end:
+                self.say_selected()
+                return
         if self._extend_selection_mode and event.GetKeyCode() == wx.WXK_ESCAPE:
             caret = self.editor.GetInsertionPoint()
             self.toggle_extend_selection_mode(False)
@@ -3596,6 +3684,8 @@ class MainFrame(
         start = min(self._extend_selection_anchor, caret)
         end = max(self._extend_selection_anchor, caret)
         self.editor.SetSelection(start, end)
+        if start != end:
+            self._last_selection = (start, end)
 
     def _has_pending_extend_selection(self) -> bool:
         if not self._extend_selection_mode or self._extend_selection_anchor is None:
@@ -6369,10 +6459,118 @@ class MainFrame(
     def toggle_extend_selection_mode(self, enabled: bool | None = None) -> None:
         next_state = (not self._extend_selection_mode) if enabled is None else enabled
         self._extend_selection_mode = next_state
-        self._extend_selection_anchor = self.editor.GetInsertionPoint() if next_state else None
+        if next_state:
+            self._extend_selection_anchor = self.editor.GetInsertionPoint()
+            text = self.editor.GetValue()
+            anchor = self._extend_selection_anchor
+            line, col = line_column_for_position(text, anchor)
+            self._set_status(f"Extend selection mode on. Anchor at line {line}, column {col}.")
+        else:
+            self._extend_selection_anchor = None
+            sel = self._last_selection
+            if sel is not None:
+                text = self.editor.GetValue()
+                s_line, s_col = line_column_for_position(text, sel[0])
+                e_line, e_col = line_column_for_position(text, sel[1])
+                self._set_status(
+                    f"Extend selection mode off. Last region: line {s_line} column {s_col}"
+                    f" to line {e_line} column {e_col}."
+                )
+            else:
+                self._set_status("Extend selection mode off.")
+
+    def start_selection(self) -> None:
+        self._selection_anchor = self.editor.GetInsertionPoint()
+        text = self.editor.GetValue()
+        line, col = line_column_for_position(text, self._selection_anchor)
+        self._set_status(f"Selection started at line {line}, column {col}.")
+
+    def complete_selection(self) -> None:
+        if self._selection_anchor is None:
+            self._set_status("No selection anchor. Press F8 to set one.")
+            return
+        caret = self.editor.GetInsertionPoint()
+        start = min(self._selection_anchor, caret)
+        end = max(self._selection_anchor, caret)
+        self.editor.SetSelection(start, end)
+        if start != end:
+            self._last_selection = (start, end)
+        self._selection_anchor = None
+        text = self.editor.GetValue()
+        s_line, s_col = line_column_for_position(text, start)
+        e_line, e_col = line_column_for_position(text, end)
+        char_count = end - start
         self._set_status(
-            "Extend selection mode on (F8)" if next_state else "Extend selection mode off"
+            f"Selected {char_count} character{'s' if char_count != 1 else ''},"
+            f" line {s_line} column {s_col} to line {e_line} column {e_col}."
         )
+
+    def reselect(self) -> None:
+        if self._last_selection is None:
+            self._set_status("No previous selection to restore.")
+            return
+        start, end = self._last_selection
+        text_len = len(self.editor.GetValue())
+        start = min(start, text_len)
+        end = min(end, text_len)
+        if start == end:
+            self._set_status("Previous selection is no longer valid.")
+            return
+        self.editor.SetSelection(start, end)
+        text = self.editor.GetValue()
+        s_line, s_col = line_column_for_position(text, start)
+        e_line, e_col = line_column_for_position(text, end)
+        char_count = end - start
+        self._set_status(
+            f"Reselected {char_count} character{'s' if char_count != 1 else ''},"
+            f" line {s_line} column {s_col} to line {e_line} column {e_col}."
+        )
+
+    def go_to_start_of_selection(self) -> None:
+        start, end = self.editor.GetSelection()
+        if start == end:
+            self._set_status("No selection.")
+            return
+        self.editor.SetInsertionPoint(start)
+        text = self.editor.GetValue()
+        line, col = line_column_for_position(text, start)
+        self._set_status(f"Moved to start of selection: line {line}, column {col}.")
+
+    def copy_all(self) -> None:
+        text = self.editor.GetValue()
+        if not text:
+            self._set_status("Document is empty.")
+            return
+        if not self._copy_to_clipboard(text):
+            self._set_status("Could not copy to clipboard.")
+            return
+        char_count = len(text)
+        self._set_status(
+            f"All text copied ({char_count} character{'s' if char_count != 1 else ''})."
+        )
+
+    def unselect_all(self) -> None:
+        caret = self.editor.GetInsertionPoint()
+        self.editor.SetSelection(caret, caret)
+        self._set_status("Selection cleared.")
+
+    def say_selected(self) -> None:
+        start, end = self.editor.GetSelection()
+        if start == end:
+            self._set_status("Nothing selected.")
+            return
+        text = self.editor.GetRange(start, end)
+        preview = text[:60].replace("\n", " ")
+        self._set_status_quiet("Say selected: " + preview + ("..." if len(text) > 60 else ""))
+        announce(text)
+
+    def read_all(self) -> None:
+        if self._safe_mode:
+            return
+        if self._read_aloud.state in ("playing", "paused"):
+            self._read_aloud.stop()
+        self.editor.SetInsertionPoint(0)
+        self.toggle_read_aloud()
 
     def toggle_overwrite_mode(self, enabled: bool | None = None) -> None:
         next_state = (not self._overwrite_mode) if enabled is None else enabled

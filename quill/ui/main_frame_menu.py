@@ -88,6 +88,14 @@ class MenuBuilderMixin:
         self._id_redo = wx.NewIdRef()
         self._id_copy_with_source = wx.NewIdRef()
         self._id_toggle_extend_selection_mode = wx.NewIdRef()
+        self._id_start_selection = wx.NewIdRef()
+        self._id_complete_selection = wx.NewIdRef()
+        self._id_reselect = wx.NewIdRef()
+        self._id_go_to_start_of_selection = wx.NewIdRef()
+        self._id_copy_all = wx.NewIdRef()
+        self._id_unselect_all = wx.NewIdRef()
+        self._id_say_selected = wx.NewIdRef()
+        self._id_read_all = wx.NewIdRef()
         self._id_replace = wx.NewIdRef()
         self._id_replace_all = wx.NewIdRef()
         self._id_find_next = wx.NewIdRef()
@@ -176,6 +184,40 @@ class MenuBuilderMixin:
         )
         edit_menu.AppendSeparator()
         selection_menu = wx.Menu()
+        selection_menu.Append(
+            self._id_start_selection,
+            self._menu_label("&Start Selection", "edit.start_selection"),
+        )
+        selection_menu.Append(
+            self._id_complete_selection,
+            self._menu_label("&Complete Selection", "edit.complete_selection"),
+        )
+        selection_menu.Append(
+            self._id_reselect,
+            self._menu_label("&Reselect", "edit.reselect"),
+        )
+        selection_menu.Append(
+            self._id_go_to_start_of_selection,
+            self._menu_label("&Go to Start of Selection", "edit.go_to_start_of_selection"),
+        )
+        selection_menu.Append(
+            self._id_say_selected,
+            self._menu_label("Sa&y Selected", "edit.say_selected"),
+        )
+        selection_menu.AppendSeparator()
+        selection_menu.Append(
+            self._id_copy_all,
+            self._menu_label("Copy &All", "edit.copy_all"),
+        )
+        selection_menu.Append(
+            self._id_unselect_all,
+            self._menu_label("&Unselect All", "edit.unselect_all"),
+        )
+        selection_menu.Append(
+            self._id_read_all,
+            self._menu_label("&Read All", "edit.read_all"),
+        )
+        selection_menu.AppendSeparator()
         selection_menu.Append(
             self._id_select_line,
             self._menu_label("Select &Line", "edit.select_line"),
@@ -1665,6 +1707,20 @@ class MenuBuilderMixin:
         )
         self.frame.Bind(wx.EVT_MENU, lambda _e: self.insert_link(), id=self._id_insert_link)
         self.frame.Bind(wx.EVT_MENU, lambda _e: self.follow_link(), id=self._id_follow_link)
+        self.frame.Bind(wx.EVT_MENU, lambda _e: self.start_selection(), id=self._id_start_selection)
+        self.frame.Bind(
+            wx.EVT_MENU, lambda _e: self.complete_selection(), id=self._id_complete_selection
+        )
+        self.frame.Bind(wx.EVT_MENU, lambda _e: self.reselect(), id=self._id_reselect)
+        self.frame.Bind(
+            wx.EVT_MENU,
+            lambda _e: self.go_to_start_of_selection(),
+            id=self._id_go_to_start_of_selection,
+        )
+        self.frame.Bind(wx.EVT_MENU, lambda _e: self.copy_all(), id=self._id_copy_all)
+        self.frame.Bind(wx.EVT_MENU, lambda _e: self.unselect_all(), id=self._id_unselect_all)
+        self.frame.Bind(wx.EVT_MENU, lambda _e: self.say_selected(), id=self._id_say_selected)
+        self.frame.Bind(wx.EVT_MENU, lambda _e: self.read_all(), id=self._id_read_all)
         self.frame.Bind(wx.EVT_MENU, lambda _e: self.select_line(), id=self._id_select_line)
         self.frame.Bind(
             wx.EVT_MENU,
