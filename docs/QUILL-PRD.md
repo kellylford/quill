@@ -46,6 +46,18 @@ If a sighted person watched a Quill user work, they would see almost nothing on 
 - Not a book reader with pagination and reflow. Quill renders documents as editable text.
 - Not an AI chat product. AI is used only to repair reading order or extract text.
 
+### 2.3 Update Strategy and Micro-Updates
+
+Quill uses `app_updater` (AccessibleApps, MIT license) for cross-platform incremental updates, enabling smaller, faster patches:
+
+- **Incremental delivery**: Updates are distributed as small ZIP packages containing only changed files, not full reinstalls.
+- **Automatic bootstrapper**: Platform-specific bootstrappers (`bootstrap.exe`, `bootstrap-mac.sh`, `bootstrap-lin.sh`) apply updates atomically after app exit and restart.
+- **Accessible UX**: Update checks and progress are announced through the screen reader with clear prompts for user consent.
+- **Backwards-compatible install**: Full installers (Inno Setup on Windows, `.dmg` on macOS) remain available for fresh installs or offline scenarios.
+- **Signed feeds**: Update feeds are cryptographically signed (Ed25519 or RSA) to prevent tampering; signatures are verified client-side.
+
+This enables shipping bug fixes and security patches as micro-updates without re-downloading the entire application, while maintaining security and platform best practices.
+
 ---
 
 ## 3. Target users and primary scenarios

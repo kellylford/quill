@@ -15,10 +15,11 @@
   "_rebaseline_2026_06_10c": "main_frame.py +28, main_frame_menu.py +40 for SEL-1/2/4/5: default bindings for select_paragraph (Ctrl+Alt+P) and select_block (Ctrl+Shift+B), bindings for expand_selection (Alt+Shift+Up) and shrink_selection (Alt+Shift+Down), named mark commands (set_named_mark, jump_to_named_mark, open_review_buffer) with Named Marks submenu and file-dialog for sound browse, and extend_mode status bar indicator.",
   "_rebaseline_2026_06_10d": "main_frame.py +234 and main_frame_menu.py +41 for the new Remote Sites feature (issues #154-#157: FTP/SFTP/HTTP/WebDAV/S3 transports): open_from_remote, save_to_remote, save_copy_remote, manage_remote_sites commands and menu items; file menu restructure; 4 new dialog rows in dialogs.md; dialog_inventory.json + main_frame_public_surface.json regenerated. Budget re-baselined to current measured sizes.",
   "_rebaseline_2026_06_10e": "main_frame.py +13, main_frame_menu.py +98, features.py +9 for §10.4 Milestone 2: NotebookUIMixin added to MRO, splitter layout, notebook_goal status bar cell, 10 new IDs in menu builder, notebook File submenu, Entries Panel toggle, 4 Navigate notebook commands, 10 event bindings, core.notebook feature definition. Budget re-baselined to current measured sizes.",
+  "_rebaseline_2026_06_10f": "main_frame.py +18 for AccessibleApps HTML paste integration: wire html_paste_cleaner.analyze_paste into the paste flow, add HTML detection branch and 'Paste as clean text' / 'as-is' choices, guard auto_clean_html_paste setting. settings.py +1 for auto_clean_html_paste field. Budget re-baselined to current measured sizes.",
   "_next_target_main_frame": 15000,
   "_default_cap": 600,
   "budgets": {
-    "quill/ui/main_frame.py": 20858,
+    "quill/ui/main_frame.py": 20876,
     "quill/ui/assistant_tools.py": 1797,
     "quill/ui/main_frame_power_tools.py": 737,
     "quill/ui/main_frame_menu.py": 2642,
@@ -30,6 +31,6 @@
     "quill/core/settings_specs.py": 954,
     "quill/core/watch_actions.py": 700,
     "quill/io/structured.py": 656,
-    "quill/core/settings.py": 632
+    "quill/core/settings.py": 633
   }
 }

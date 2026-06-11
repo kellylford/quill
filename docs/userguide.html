@@ -69,6 +69,7 @@ SFTP, HTTPS, WebDAV, S3)</a></li>
 Daily Confidence</a></li>
 <li><a href="#translation-and-community-localization">Translation and
 Community Localization</a></li>
+<li><a href="#checking-for-updates">Checking for Updates</a></li>
 <li><a href="#beta-feedback-and-bug-reporting">Beta Feedback and Bug
 Reporting</a></li>
 <li><a href="#a-fast-shortcut-tour">A Fast Shortcut Tour</a></li>
@@ -1788,6 +1789,42 @@ Translation Contributor Plan</a></li>
 <p>The plan documents how to contribute translations, what is and is not
 translated, how string freeze works, and how translator contributions
 are credited in releases.</p>
+<h2 id="checking-for-updates">Checking for Updates</h2>
+<p>Quill can check for and install updates automatically while you
+work.</p>
+<h3 id="manual-update-check">Manual update check</h3>
+<p>To check for updates now:</p>
+<ol type="1">
+<li>Press Alt+H to open the <strong>Help</strong> menu.</li>
+<li>Press U for <strong>Check for Updates</strong>.</li>
+<li>If a newer version is available, Quill will announce it and ask for
+permission to download.</li>
+<li>If you accept, Quill downloads the update in the background and
+announces when it is ready.</li>
+<li>The next time you close and reopen Quill, the update is applied
+automatically.</li>
+</ol>
+<h3 id="automatic-update-checks">Automatic update checks</h3>
+<p>You can enable Quill to check for updates on startup:</p>
+<ol type="1">
+<li>Press Alt+E to open the <strong>Edit</strong> menu.</li>
+<li>Press Shift+S for <strong>Settings</strong>.</li>
+<li>In the <strong>Updates</strong> section, enable <strong>Check for
+updates on startup</strong>.</li>
+</ol>
+<p>When automatic checks are on, Quill will notify you quietly if a new
+version is available, and you can choose to download it when you are
+ready.</p>
+<h3 id="update-size-and-speed">Update size and speed</h3>
+<p>Quill uses incremental updates (“micro-updates”), which are much
+smaller than full reinstalls. Patches often download in seconds rather
+than minutes, and your settings, documents, and preferences are
+preserved.</p>
+<h3 id="staying-on-a-release-channel">Staying on a release channel</h3>
+<p>By default, Quill checks the stable update channel and only offers
+released versions. To opt into beta versions and test new features
+early, enable <strong>Beta channel</strong> in <strong>Settings →
+Updates</strong>.</p>
 <h2 id="beta-feedback-and-bug-reporting">Beta Feedback and Bug
 Reporting</h2>
 <p>Quill is ready for serious beta use, and Quill 0.1.5 Beta now ships a

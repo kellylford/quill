@@ -19,7 +19,12 @@ classifiers = [
   "Operating System :: Microsoft :: Windows",
   "Operating System :: MacOS",
 ]
-dependencies = ["regex>=2026.5.9", "defusedxml>=0.7.1"]
+dependencies = [
+    "regex>=2026.5.9",
+    "defusedxml>=0.7.1",
+    # Cross-platform incremental updates (AccessibleApps, MIT).
+    "autoupdate>=0.1.0",
+]
 
 [project.optional-dependencies]
 ui = [
@@ -33,6 +38,10 @@ ui = [
     # Prism screen-reader speech bridge (Windows) — routes announcements to
     # NVDA/JAWS/Narrator instead of speaking over them.
     "prismatoid>=0.16.5; sys_platform == 'win32'",
+    # Accessible model-based list view for large outlines (AccessibleApps, MIT).
+    "smart_list>=0.1.0",
+    # HTML-to-text converter for intelligent paste cleaning (AccessibleApps, MIT).
+    "html_to_text>=0.1.0",
 ]
 spellcheck = ["pyenchant>=3.3.0"]
 # Edit files over SSH/SFTP (issue #139): browse a remote host, download to edit,

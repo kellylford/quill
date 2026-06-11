@@ -475,6 +475,7 @@ from quill.ui.assistant_tools import (
 from quill.ui.csv_grid import CsvGridSurface
 from quill.ui.dialog_contract import apply_modal_ids, focus_primary_control, show_modal_dialog
 from quill.ui.editor_surface import PLAIN, RICH, surface_kind
+from quill.ui.html_paste_cleaner import analyze_paste
 from quill.ui.main_frame_ai_actions import AiActionsMixin
 from quill.ui.main_frame_browse import BrowseModeMixin
 from quill.ui.main_frame_image import ImageCaptureMixin
@@ -5183,8 +5184,15 @@ class MainFrame(
             or raw_text.startswith("[")
             and "](" in raw_text
         )
+
+        # Detect HTML (before checking markdown, since HTML can look like markdown).
+        html_context = analyze_paste(raw_text)
+        is_html = html_context.is_html
+
         if has_bitmap:
             content_type = "image"
+        elif is_html:
+            content_type = "HTML"
         elif is_url:
             content_type = "URL"
         elif is_markdown:
@@ -5214,6 +5222,9 @@ class MainFrame(
             choices.insert(0, ("Paste as Markdown link", "link"))
         elif content_type == "Markdown":
             choices.insert(0, ("Paste as Markdown (keep formatting)", "markdown"))
+        elif content_type == "HTML":
+            choices.insert(0, ("Paste HTML as clean text", "html_clean"))
+            choices.insert(1, ("Paste HTML as-is", "html_raw"))
         elif content_type == "image":
             choices.insert(0, ("Insert image reference", "image_ref"))
 
@@ -5256,6 +5267,15 @@ class MainFrame(
                 link_text = raw_text.strip().rstrip("/").rsplit("/", 1)[-1] or "link"
                 self.editor.WriteText(f"[{link_text}]({raw_text.strip()})")
         elif mode_key == "markdown":
+            if self.editor is not None:
+                self.editor.WriteText(raw_text)
+        elif mode_key == "html_clean":
+            if self.editor is not None:
+                clean_text = html_context.get_paste_text(clean=True)
+                self.editor.WriteText(clean_text)
+                if self.quill_settings.auto_clean_html_paste:
+                    self._set_status(f"Pasted cleaned HTML ({len(clean_text)} chars)")
+        elif mode_key == "html_raw":
             if self.editor is not None:
                 self.editor.WriteText(raw_text)
         elif mode_key == "image_ref":

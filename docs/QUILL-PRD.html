@@ -74,6 +74,32 @@ documents as editable text.</li>
 <li>Not an AI chat product. AI is used only to repair reading order or
 extract text.</li>
 </ul>
+<h3 id="update-strategy-and-micro-updates">2.3 Update Strategy and
+Micro-Updates</h3>
+<p>Quill uses <code>app_updater</code> (AccessibleApps, MIT license) for
+cross-platform incremental updates, enabling smaller, faster
+patches:</p>
+<ul>
+<li><strong>Incremental delivery</strong>: Updates are distributed as
+small ZIP packages containing only changed files, not full
+reinstalls.</li>
+<li><strong>Automatic bootstrapper</strong>: Platform-specific
+bootstrappers (<code>bootstrap.exe</code>,
+<code>bootstrap-mac.sh</code>, <code>bootstrap-lin.sh</code>) apply
+updates atomically after app exit and restart.</li>
+<li><strong>Accessible UX</strong>: Update checks and progress are
+announced through the screen reader with clear prompts for user
+consent.</li>
+<li><strong>Backwards-compatible install</strong>: Full installers (Inno
+Setup on Windows, <code>.dmg</code> on macOS) remain available for fresh
+installs or offline scenarios.</li>
+<li><strong>Signed feeds</strong>: Update feeds are cryptographically
+signed (Ed25519 or RSA) to prevent tampering; signatures are verified
+client-side.</li>
+</ul>
+<p>This enables shipping bug fixes and security patches as micro-updates
+without re-downloading the entire application, while maintaining
+security and platform best practices.</p>
 <hr />
 <h2 id="target-users-and-primary-scenarios">3. Target users and primary
 scenarios</h2>

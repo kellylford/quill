@@ -90,6 +90,7 @@ class Settings:
     assistant_enabled: bool = False
     assistant_prompt_style: str = "balanced"
     markdown_clipboard_format: str = "html"
+    auto_clean_html_paste: bool = False
     dictation_engine: str = "vosk"
     dictation_language: str = "en-US"
     dictation_model: str = "base"

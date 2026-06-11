@@ -145,6 +145,21 @@ hotkeys to QUILL. Contributing one has its own dedicated path:
   the `manifest.json`), then open a PR with the **Quillin submission** PR
   template.
 
+## Acknowledgments and Attribution
+
+Quill is built on open-source foundations and integrates best practices from the accessibility community:
+
+- **AccessibleApps** (https://github.com/accessibleapps/) contributes several libraries that enhance Quill's accessibility and cross-platform reliability:
+  - `app_updater` (MIT) — cross-platform incremental update delivery and automatic installer bootstrapper.
+  - `smart_list` (MIT) — accessible, model-based list view for large outlines and datasets.
+  - `accessible_output2` (MIT) — optional fallback for speech and braille output when Prism is unavailable.
+  - `html_to_text` (MIT) — convert HTML from web pastes to clean plain text while preserving structure.
+  - `app_elements`, `platform_utils`, `keyboard_handler` — small utilities for dialogs, clipboard, and hotkeys.
+
+- **Prism** (NVIDIA) — modern screen-reader backend for announcements and accessibility bridging.
+
+Contributors who integrate third-party libraries from AccessibleApps or other open-source projects should document the license, purpose, and API contract in the relevant module docstring, and update this section when adding a new external dependency.
+
 ## Reporting bugs and proposing features
 
 - For product/support issues, users can use in-app `Help -> Report a Bug`.
