@@ -53,6 +53,7 @@ COMMAND_FEATURE_MAP: dict[str, str] = {
     "view.toggle_spellcheck_as_you_type": "core.view",
     "view.toggle_intellisense_as_you_type": "core.view",
     "view.toggle_overwrite_mode": "core.view",
+    "view.switch_editing_lens": "core.rich_text_lens",
     "navigate.go_to_line": "core.navigate",
     "navigate.go_to_page": "core.navigate",
     "navigate.back_location": "core.navigate",

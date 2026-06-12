@@ -116,6 +116,17 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         category="accessibility",
         dependencies=("core.dictation",),
     ),
+    "core.rich_text_lens": FeatureDefinition(
+        "core.rich_text_lens",
+        "Rich Text Lens",
+        description=(
+            "Native wxPython rich-text editing surface for .rtf files. Locked off "
+            "pending fuller screen-reader testing; RTF files continue to open as "
+            "plain text in the meantime. Remove locked_off to re-enable."
+        ),
+        category="editor",
+        locked_off=True,
+    ),
     "core.bw_whisperer": FeatureDefinition(
         "core.bw_whisperer",
         "BITS Whisperer",

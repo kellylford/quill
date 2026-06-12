@@ -30,7 +30,7 @@
     "quill/ui/main_frame_menu.py": 2785,
     "quill/core/read_aloud.py": 1243,
     "quill/core/assistant_ai.py": 1230,
-    "quill/core/features.py": 969,
+    "quill/core/features.py": 980,
     "quill/core/glow.py": 810,
     "quill/core/settings_registry.py": 158,
     "quill/core/settings_specs.py": 1034,
@@ -65,5 +65,6 @@
   "_rebaseline_2026_06_11k": "Ask Quill unification: main_frame.py +13 for _ask_quill_chat_dialog cache and reuse guard in open_ask_quill_chat(). assistant_panel.py converted to modeless wx.Frame with inline setup strip; provider_backend.py +SimpleChatBackend; assistant.py fallback to simple chat settings.",
   "_rebaseline_2026_06_11x2": "x2.md Phase 1-3: Translation infrastructure (i18n.py, babel.cfg), Context-Sensitive Help (core/help/, ui/context_help.py), Startup Wizard (setup_wizard.py + setup_wizard_pages.py 619 lines), new settings (language + setup_wizard_completed +8), features.py +12 for core.remote, settings_specs.py +9 for language spec. main_frame.py +16 for first-run wizard auto-launch in _maybe_run_first_run_onboarding. Budget re-baselined to current measured sizes.",
   "_rebaseline_2026_06_11x2b": "main_frame.py +1 line from ruff format pass (trailing newline normalization in x2 diff). Budget updated to 21239.",
-  "_rebaseline_2026_06_12a": "main_frame.py +22 for fix #161: replace CheckListBox with individual CheckBox controls in open_individual_feature_toggles (SR state announcement fix) and filter locked_off features from list."
+  "_rebaseline_2026_06_12a": "main_frame.py +22 for fix #161: replace CheckListBox with individual CheckBox controls in open_individual_feature_toggles (SR state announcement fix) and filter locked_off features from list.",
+  "_rebaseline_2026_06_12b": "features.py +11 for core.rich_text_lens locked_off definition (RTF native lens hidden pending SR testing)."
 }
