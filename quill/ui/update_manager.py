@@ -13,7 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 try:
-    from autoupdate.autoupdate import perform_update
+    from quill._vendor.autoupdate.autoupdate import perform_update
 except ImportError:
     perform_update = None
 
