@@ -214,9 +214,8 @@ class Settings:
         word_open_mode = str(data.get("word_open_mode", "prompt")).strip().lower()
         if word_open_mode not in {"prompt", "text", "structured"}:
             word_open_mode = "prompt"
-        editor_surface = str(data.get("editor_surface", "plain")).strip().lower()
-        if editor_surface not in {"plain", "rich"}:
-            editor_surface = "plain"
+        # core.rich_text_lens is locked_off; always "plain" regardless of stored value.
+        editor_surface = "plain"
         save_as_surface_sync = str(data.get("save_as_surface_sync", "prompt")).strip().lower()
         if save_as_surface_sync not in {"prompt", "always", "never"}:
             save_as_surface_sync = "prompt"

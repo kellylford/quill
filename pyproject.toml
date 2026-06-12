@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "quill"
-version = "0.1.5"
+version = "0.5.0"
 description = "Screen-reader-first writing and document environment for Windows"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -22,8 +22,6 @@ classifiers = [
 dependencies = [
     "regex>=2026.5.9",
     "defusedxml>=0.7.1",
-    # Cross-platform incremental updates (AccessibleApps, MIT).
-    "autoupdate>=0.1.0",
 ]
 
 [project.optional-dependencies]
@@ -38,8 +36,6 @@ ui = [
     # Prism screen-reader speech bridge (Windows) — routes announcements to
     # NVDA/JAWS/Narrator instead of speaking over them.
     "prismatoid>=0.16.5; sys_platform == 'win32'",
-    # Accessible model-based list view for large outlines (AccessibleApps, MIT).
-    "smart_list>=0.1.0",
     # HTML-to-text converter for intelligent paste cleaning (AccessibleApps, MIT).
     "html_to_text>=0.1.0",
 ]

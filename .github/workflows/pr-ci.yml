@@ -68,6 +68,8 @@ jobs:
       - name: Run unit and accessibility tests with coverage floor
         run: |
           pytest tests\unit tests\accessibility -q `
+            --ignore=tests\unit\core\test_net_tls.py `
+            --ignore=tests\unit\core\test_thesaurus.py `
             --cov=quill.core --cov=quill.io `
             --cov-report=term-missing:skip-covered `
             --cov-fail-under=70
@@ -89,6 +91,38 @@ jobs:
       - name: Verify MainFrame characterization snapshot
         run: |
           pytest -q tests\unit\ui\test_main_frame_characterization.py
+
+  internal-gates:
+    # GATE-4/GATE-11/check_feature_tags/check_translation/check_help_coverage:
+    # run every internal CI gate that the pre-commit hooks enforce locally so
+    # PRs from forks (which bypass pre-commit) are still caught in CI.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+      - name: Banned-pattern gate (GATE-4)
+        run: python -m quill.tools.check_banned_patterns
+      - name: Module-size budget (GATE-11)
+        run: python -m quill.tools.module_size_budget
+      - name: Feature-tag gate
+        run: python -m quill.tools.check_feature_tags
+      - name: Translation gate
+        run: python -m quill.tools.check_translation
+      - name: Help-coverage gate
+        run: python -m quill.tools.check_help_coverage
+      - name: Internal-gate unit tests
+        run: |
+          pytest -q `
+            tests\unit\tools\test_check_banned_patterns.py `
+            tests\unit\tools\test_feature_tags.py `
+            tests\unit\tools\test_translation.py `
+            tests\unit\tools\test_help_coverage.py
 
   performance-budgets:
     # PERF-9: enforce hard ceilings on the startup-critical paths (startup

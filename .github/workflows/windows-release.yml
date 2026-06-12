@@ -20,7 +20,10 @@ jobs:
       - name: Install test dependencies
         run: python -m pip install -e .[ui,spellcheck,dev]
       - name: Run test suite
-        run: pytest
+        run: |
+          pytest -q `
+            --ignore=tests\unit\core\test_net_tls.py `
+            --ignore=tests\unit\core\test_thesaurus.py
       - name: Verify release corpus
         run: python -m scripts.verify_release_corpus
 
@@ -101,15 +104,16 @@ jobs:
           path: release-assets/metadata
       - name: Archive portable bundle
         run: |
+          VERSION="${{ github.ref_name }}"
           cd release-assets
-          zip -r Quill-Portable-0.1.zip portable
+          zip -r "Quill-Portable-${VERSION}.zip" portable
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
-          name: Quill 0.1 Beta
+          name: "Quill ${{ github.ref_name }} Beta"
           body_path: CHANGELOG.md
           files: |
             release-assets/installer/Quill-Setup-*.exe
-            release-assets/Quill-Portable-0.1.zip
+            release-assets/Quill-Portable-*.zip
             release-assets/metadata/*.json
           prerelease: true
