@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.10" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>TRANSLATION_STYLE_GUIDE</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<h1 id="quill-translation-style-guide">QUILL Translation Style
+Guide</h1>
+<p>This document gives rules and guidance for translating QUILL's user
+interface. Read it before you begin translating and return to it when
+you have questions about a specific type of string.</p>
+<hr />
+<h2 id="tone-and-register">Tone and Register</h2>
+<p>QUILL speaks to the user in the second person, directly. Use "your
+document", "press this key", not "the user's document" or "one presses
+this key."</p>
+<p>Match the register of the target language's screen reader
+ecosystem:</p>
+<ul>
+<li>French: use "vous" (formal) unless the French language community
+explicitly votes for "tu". Crowdin glossary records the decision.</li>
+<li>German: use "Sie" (formal) by default.</li>
+<li>For other languages, follow the convention used by NVDA's official
+translation into your language.</li>
+</ul>
+<p>If you are uncertain about the appropriate register, ask your
+Language Coordinator before translating strings in bulk.</p>
+<hr />
+<h2 id="mnemonic-markers-">Mnemonic Markers (<code>&amp;</code>)</h2>
+<p>A mnemonic marker is the <code>&amp;</code> character that appears
+before one letter in a menu item or button label. It creates a keyboard
+shortcut: Alt plus that letter activates the menu item or button. Screen
+reader users rely on mnemonics to navigate menus without using arrow
+keys.</p>
+<p>Rules:</p>
+<ol type="1">
+<li>Every menu item and button label in QUILL has exactly one
+<code>&amp;</code>.</li>
+<li>When you translate a string that contains <code>&amp;</code>, your
+translation must also contain exactly one <code>&amp;</code>.</li>
+<li>Place the <code>&amp;</code> before a letter that is unique within
+the same menu or dialog. Two items in the same menu must not share the
+same mnemonic letter.</li>
+<li>The <code>&amp;</code> letter must be a letter that actually appears
+in your translated word, and ideally near the start of the word for
+discoverability.</li>
+</ol>
+<p>If you cannot find a unique letter in the natural word, it is
+acceptable to use any letter from the word as the mnemonic, even if it
+is not the first. Consult your Language Coordinator if a whole menu has
+mnemonic conflicts.</p>
+<p>The CI gate catches missing or double <code>&amp;</code> markers
+automatically. If your translation passes CI, the mnemonic count is
+correct.</p>
+<hr />
+<h2 id="keyboard-shortcuts">Keyboard Shortcuts</h2>
+<p>Modifier key names are not translated. They appear as printed on the
+keyboard in every language:</p>
+<ul>
+<li>Ctrl</li>
+<li>Alt</li>
+<li>Shift</li>
+<li>Enter</li>
+<li>Escape</li>
+<li>Tab</li>
+<li>F1 through F12</li>
+</ul>
+<p>A string like <code>&amp;Open...\tCtrl+O</code> should become (in
+French) <code>&amp;Ouvrir...\tCtrl+O</code> — the <code>\t</code>
+accelerator uses the same Ctrl+O shortcut. The mnemonic
+<code>&amp;O</code> must match the <code>&amp;</code> letter in the
+translated label.</p>
+<p>Do not change the key letter in <code>\t</code> accelerators.
+Accelerators are defined in code and are not affected by translation;
+only the label's <code>&amp;</code> mnemonic is yours to relocate.</p>
+<hr />
+<h2 id="announcement-strings-speech-strings">Announcement Strings
+(Speech Strings)</h2>
+<p>Announcement strings are the text that QUILL sends to the screen
+reader and read-aloud engine. They are marked in the <code>.pot</code>
+file with an extracted comment:</p>
+<pre><code>#. SPEECH: announced after copy-to-tray action
+msgid &quot;Copied to slot {n}&quot;</code></pre>
+<p>The <code>#. SPEECH:</code> comment is visible in the Crowdin editor
+as a string note. Use it to filter speech strings for a dedicated review
+pass.</p>
+<p>Rules for announcement strings:</p>
+<ol type="1">
+<li>Translate for natural speech, not literal label equivalence. A
+string that makes sense visually may sound unnatural when read aloud.
+Restructure the sentence if needed.</li>
+<li>Do not abbreviate in speech strings. If the source says "AI", spell
+it out as your language's full term unless the abbreviation is
+universally understood in your language's technology community.</li>
+<li>Add context if the meaning would be lost without visual UI. "Copied
+to slot 3" makes sense visually because the user can see the Copy Tray.
+In speech, "Copied to Copy Tray slot 3" is clearer.</li>
+<li>Test every announcement string with NVDA set to the target language.
+Ask a native speaker to listen and confirm the announcement sounds
+natural.</li>
+</ol>
+<hr />
+<h2 id="plural-forms">Plural Forms</h2>
+<p>Follow your language's actual plural rules. Do not guess. Reference
+the official gettext plural forms list: <a
+href="https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html">https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html</a></p>
+<p>The <code>Plural-Forms</code> header in your <code>.po</code> file
+must match your language's rules. If the header is wrong, you will see
+errors when the CI gate checks your file.</p>
+<p>Examples:</p>
+<ul>
+<li>French has two forms: singular for 0 and 1, plural for 2 and above.
+<code>Plural-Forms: nplurals=2; plural=(n &gt; 1);</code></li>
+<li>Russian has four forms.</li>
+<li>English has two forms: singular for 1, plural for everything
+else.</li>
+</ul>
+<p>The CI gate checks that every <code>msgstr[n]</code> entry exists for
+languages with more than two plural forms.</p>
+<hr />
+<h2 id="placeholders">Placeholders</h2>
+<p>Placeholders are variable values that QUILL inserts into strings at
+runtime. They appear in two forms:</p>
+<ul>
+<li><code>{name}</code> — Python format string: <code>{count}</code>,
+<code>{filename}</code>, <code>{n}</code></li>
+<li><code>%(name)s</code> — Old-style format: <code>%(count)s</code>,
+<code>%(provider)s</code></li>
+</ul>
+<p>Rules:</p>
+<ol type="1">
+<li>Never translate a placeholder. <code>{n}</code> must remain
+<code>{n}</code> in every language.</li>
+<li>Never remove a placeholder. If the source has <code>{count}</code>
+words selected<code>, your translation must also have </code>{count}` in
+some position.</li>
+<li>You may reorder placeholders within the sentence to match the
+grammar of your language. <code>{filename} is open</code> may become
+<code>{filename} est ouvert</code> or <code>ouvert: {filename}</code> —
+the placeholder can move, but it must be present.</li>
+</ol>
+<p>The CI gate checks that every placeholder present in the source
+string is also present in the translation.</p>
+<hr />
+<h2 id="aria-roles">ARIA Roles</h2>
+<p>ARIA role names (<code>button</code>, <code>dialog</code>,
+<code>listbox</code>, <code>menu</code>, <code>menuitem</code>,
+<code>checkbox</code>, <code>radiogroup</code>, <code>spinbutton</code>)
+are technical identifiers used by assistive technology. Do not translate
+them, even when they appear inside a user-visible string.</p>
+<hr />
+<h2 id="technical-identifiers">Technical Identifiers</h2>
+<p>The following are technical identifiers and must not be
+translated:</p>
+<ul>
+<li>File extensions: <code>.qpf</code>, <code>.sqp</code>,
+<code>.pqp</code>, <code>.po</code>, <code>.pot</code>,
+<code>.mo</code></li>
+<li>Setting key names: <code>language</code>,
+<code>setup_wizard_completed</code>, <code>feature_flags_ai</code></li>
+<li>Command names used in documentation: <code>open_setup_wizard</code>,
+<code>ask_ai</code></li>
+<li>URL paths and domain names</li>
+</ul>
+<hr />
+<h2 id="product-glossary">Product Glossary</h2>
+<p>Refer to the Crowdin project glossary for your language's decisions
+on product name translation. See <code>docs/translating.md</code> for
+the full product glossary list. Once a decision is recorded in the
+glossary, apply it consistently across all strings.</p>
+<hr />
+<h2 id="short-example-english-to-french">Short Example: English to
+French</h2>
+<p><strong>English source string:</strong></p>
+<pre><code>msgid &quot;&amp;New document\tCtrl+N&quot;</code></pre>
+<p>This string:</p>
+<ul>
+<li>Has mnemonic <code>&amp;N</code> (N is the first letter of
+"New").</li>
+<li>Has accelerator <code>\tCtrl+N</code>.</li>
+</ul>
+<p><strong>French translation:</strong></p>
+<pre><code>msgstr &quot;&amp;Nouveau document\tCtrl+N&quot;</code></pre>
+<ul>
+<li>Mnemonic <code>&amp;N</code> is placed on "Nouveau" (N is the first
+letter).</li>
+<li>Accelerator <code>\tCtrl+N</code> is unchanged.</li>
+<li>The menu item reads "Nouveau document" with N underlined in the
+menu.</li>
+</ul>
+<p><strong>A case where the mnemonic must move:</strong></p>
+<p>English: <code>&amp;Save As...\tCtrl+Shift+S</code> French:
+"Enregistrer sous" — "S" is already used by "Save / Enregistrer". The
+Language Coordinator decides to use <code>Enreg&amp;istrer sous</code>
+(mnemonic on <code>i</code>) to avoid a conflict in the File menu. This
+decision is recorded in the Crowdin glossary and applied
+consistently.</p>
+</body>
+</html>

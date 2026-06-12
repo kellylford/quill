@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 from quill.ui.main_frame import MainFrame
@@ -79,16 +78,17 @@ def test_show_profile_onboarding_uses_real_method_not_corrupted_link_dialog() ->
     assert callable(getattr(MainFrame, "_show_profile_onboarding", None))
 
 
-def test_startup_wizard_gates_bw_onboarding_behind_deferred_flag() -> None:
-    # BITS Whisperer is deferred to QUILL 2.0; the startup wizard must only run
-    # its onboarding when the locked-off `core.bw_whisperer` feature is enabled,
-    # so a 1.0 first run never offers transcription setup.
-    source = _main_frame_source()
-    match = re.search(
-        r"if self\._feature_enabled\(\"core\.bw_whisperer\"\):\s*\n"
-        r"\s*self\._show_bw_onboarding\(force=True\)",
-        source,
+def test_startup_wizard_does_not_offer_bw_setup() -> None:
+    # BITS Whisperer is deferred to QUILL 2.0; the setup wizard pages must not
+    # include any BITS Whisperer / transcription onboarding for a 1.0 first run.
+    wizard_source = (
+        Path(__file__).resolve().parents[3] / "quill" / "ui" / "setup_wizard_pages.py"
+    ).read_text(encoding="utf-8")
+    assert "_show_bw_onboarding" not in wizard_source, (
+        "setup_wizard_pages.py must not call _show_bw_onboarding "
+        "(BW is deferred to QUILL 2.0 and the master flag is locked off)"
     )
-    assert match is not None, (
-        "run_startup_wizard must gate _show_bw_onboarding behind core.bw_whisperer"
+    assert "bw_whisperer" not in wizard_source, (
+        "setup_wizard_pages.py must not reference bw_whisperer; "
+        "the wizard must not offer transcription setup in 1.0"
     )

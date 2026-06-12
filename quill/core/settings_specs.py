@@ -164,6 +164,15 @@ SETTING_SPECS: tuple[SettingSpec, ...] = (
         keywords=("recent", "history", "files"),
     ),
     SettingSpec(
+        "language",
+        "Interface language",
+        "general",
+        "text",
+        "BCP 47 language tag for the UI (e.g. 'en', 'fr', 'es'). "
+        "Leave blank to use the operating-system language.",
+        keywords=("language", "locale", "translation", "interface"),
+    ),
+    SettingSpec(
         "confirm_destructive_actions",
         "Confirm destructive actions",
         "general",

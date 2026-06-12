@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.10" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>translating</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<h1 id="translating-quill--community-contributor-guide">Translating
+QUILL — Community Contributor Guide</h1>
+<p>This guide is for anyone who wants to help translate QUILL into their
+language. QUILL uses Crowdin for community translation. You do not need
+any programming knowledge to contribute.</p>
+<hr />
+<h2 id="joining-as-a-translator">Joining as a Translator</h2>
+<ol type="1">
+<li>Create a free account at <a
+href="https://crowdin.com">crowdin.com</a> if you do not already have
+one.</li>
+<li>Go to the QUILL project at crowdin.com/project/quill.</li>
+<li>Click the language you want to translate.</li>
+<li>Click Join to request access.</li>
+<li>A Language Coordinator for your language will approve your request,
+usually within a few days.</li>
+</ol>
+<p>If no Language Coordinator exists yet for your language, open a
+GitHub issue with the label <code>translation</code> and express your
+interest. The Translation Coordinator will guide you through setting up
+a new language team.</p>
+<hr />
+<h2 id="the-four-roles">The Four Roles</h2>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>What you do</th>
+<th>Accounts needed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Translator</td>
+<td>Suggest translations for strings in Crowdin</td>
+<td>Crowdin only</td>
+</tr>
+<tr>
+<td>Proofreader</td>
+<td>Approve or reject translation suggestions for your language</td>
+<td>Crowdin only</td>
+</tr>
+<tr>
+<td>Language Coordinator</td>
+<td>Manage proofreaders, own language quality, review GitHub PRs for
+your language</td>
+<td>GitHub and Crowdin</td>
+</tr>
+<tr>
+<td>Translation Coordinator</td>
+<td>Project-level role: run translation calls before each release,
+onboard new language teams, resolve disputes</td>
+<td>GitHub and Crowdin</td>
+</tr>
+</tbody>
+</table>
+<p>To apply for Proofreader or Language Coordinator, open a GitHub issue
+with the label <code>translation</code>. Describe your language, your
+qualifications, and whether you use a screen reader yourself. Existing
+experience with NVDA, JAWS, or other assistive technology is a strong
+plus.</p>
+<p>The Translation Coordinator is a named maintainer role listed in
+<code>MAINTAINERS.md</code>. It is not a casual volunteer position. The
+Translation Coordinator must be available before every release.</p>
+<hr />
+<h2 id="the-translation-workflow">The Translation Workflow</h2>
+<ol type="1">
+<li>Strings are extracted from QUILL source code using Babel and
+uploaded to Crowdin automatically when a new commit lands on
+<code>main</code>.</li>
+<li>Translators suggest translations in the Crowdin editor.</li>
+<li>Proofreaders review suggestions and mark them as approved or
+rejected.</li>
+<li>When strings are approved, Crowdin opens an automatic pull request
+to the QUILL GitHub repository.</li>
+<li>The CI gate (<code>check_translation.py</code>) runs on the pull
+request. It checks completeness, mnemonic preservation, and placeholder
+preservation.</li>
+<li>A code maintainer merges the pull request. The compiled
+<code>.mo</code> file ships in the next QUILL release.</li>
+</ol>
+<hr />
+<h2 id="what-you-are-translating--the-three-crowdin-components">What You
+Are Translating — The Three Crowdin Components</h2>
+<p><strong>Component 1: UI Strings</strong> All menus, dialog labels,
+button text, status bar messages, and screen reader announcement
+strings. This is the largest component and the highest priority.</p>
+<p>Source file: <code>quill/locale/quill.pot</code> Target files:
+<code>quill/locale/{lang}/LC_MESSAGES/quill.po</code></p>
+<p><strong>Component 2: Context-Sensitive Help</strong> The 109+ help
+topics that appear when the user presses F1 on any control. Each topic
+has a title and a body paragraph. Translating this component makes the
+in-app help accessible in your language.</p>
+<p>Source file: <code>quill/core/help/topics.json</code> Target files:
+<code>quill/core/help/topics_{lang}.json</code></p>
+<p><strong>Component 3: Quillin Manifests</strong> The name and
+description of each bundled QUILL extension (Quillin). Short strings but
+high visibility, as they appear in the Extensions menu and the Quillin
+Manager.</p>
+<p>Source files: each bundled <code>manifest.json</code> Target files:
+<code>manifest_{lang}.json</code> alongside each manifest</p>
+<hr />
+<h2 id="translation-calls-before-each-release">Translation Calls Before
+Each Release</h2>
+<p>Before each QUILL release, the Translation Coordinator sends a
+translation call to all Language Coordinators. The call includes:</p>
+<ul>
+<li>The deadline (typically two weeks before the release branch is
+cut).</li>
+<li>A list of new or changed strings since the last release.</li>
+<li>The current completeness percentage for each language.</li>
+<li>The threshold required to ship: 90% for established languages, 70%
+for a new language in its first release.</li>
+</ul>
+<p>Languages that miss the deadline or fall below the threshold are
+excluded from that release. The startup wizard's language selector does
+not show excluded languages. This protects users from encountering a
+partially translated interface.</p>
+<p>If your language misses a release, it can catch up and ship in the
+next one.</p>
+<hr />
+<h2 id="completeness-thresholds">Completeness Thresholds</h2>
+<ul>
+<li>90% for an established language (one that has shipped in a previous
+release).</li>
+<li>70% for a new language in its very first release.</li>
+</ul>
+<p>Languages below the threshold are shown in the language selector with
+a warning: "This translation is incomplete — some text will appear in
+English." This warning is shown rather than hiding the language
+entirely, so users who prefer even a partial translation can still
+choose it.</p>
+<hr />
+<h2 id="testing-your-translation-locally">Testing Your Translation
+Locally</h2>
+<p>You can test your translation before it is merged by following these
+steps.</p>
+<ol type="1">
+<li><p>Clone the QUILL repository:
+<code>git clone https://github.com/bits-dev/quill.git</code></p></li>
+<li><p>Install QUILL in development mode:
+<code>pip install -e ".[ui,dev]"</code></p></li>
+<li><p>If you are working on a <code>.po</code> file obtained from
+Crowdin, place it at:
+<code>quill/locale/{lang}/LC_MESSAGES/quill.po</code></p></li>
+<li><p>Compile the <code>.po</code> file to a <code>.mo</code> binary:
+<code>pybabel compile -d quill/locale -D quill</code></p></li>
+<li><p>Open QUILL settings and set <code>language</code> to your
+language code, for example <code>fr</code> for French.</p></li>
+<li><p>Launch QUILL: <code>python -m quill</code></p></li>
+<li><p>Navigate the UI and verify that your translations appear
+correctly. Pay particular attention to:</p>
+<ul>
+<li>Menu mnemonics (the underlined shortcut letters in menus)</li>
+<li>Announcement strings (what your screen reader says during
+actions)</li>
+<li>Plural forms (for example, "1 word" vs. "3 words")</li>
+</ul></li>
+</ol>
+<hr />
+<h2 id="the-quill-product-glossary">The QUILL Product Glossary</h2>
+<p>The following terms are QUILL product names. Your Language
+Coordinator decides whether to translate them or leave them in English.
+The Crowdin glossary records the decision for your language. Once the
+decision is made, use it consistently.</p>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Copy Tray</td>
+<td>QUILL's multi-slot clipboard feature</td>
+</tr>
+<tr>
+<td>Ask Quill</td>
+<td>The AI assistant dialog</td>
+</tr>
+<tr>
+<td>Quillin</td>
+<td>A QUILL extension</td>
+</tr>
+<tr>
+<td>Quick Nav</td>
+<td>The rapid in-document navigation mode</td>
+</tr>
+<tr>
+<td>Skill Library</td>
+<td>The library of AI-powered writing skill packs</td>
+</tr>
+<tr>
+<td>Prompt Library</td>
+<td>The library of saved AI prompts</td>
+</tr>
+<tr>
+<td>GLOW</td>
+<td>QUILL's guided-learning workflow system</td>
+</tr>
+</tbody>
+</table>
+<p>If you are unsure whether to translate a term, ask your Language
+Coordinator or open a GitHub issue with the label
+<code>translation</code>.</p>
+<hr />
+<h2 id="translator-credit">Translator Credit</h2>
+<p>Translator names appear in the QUILL release notes for each release
+in which their work ships. If you would prefer to be listed by a
+username rather than your real name, set your Crowdin display name
+accordingly before your translations are merged.</p>
+<hr />
+<h2 id="where-to-ask-questions">Where to Ask Questions</h2>
+<ul>
+<li>Open a GitHub issue with the label <code>translation</code>.</li>
+<li>Post in the QUILL community forums under the Translation
+category.</li>
+</ul>
+<p>The Translation Coordinator monitors both channels and aims to
+respond within three business days.</p>
+</body>
+</html>

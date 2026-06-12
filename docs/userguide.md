@@ -17,6 +17,7 @@ Quill is also in beta. Expect polish, depth, and real daily utility. Also expect
 - [Start Here](#start-here)
 - [What Quill Feels Like](#what-quill-feels-like)
 - [Your First Session](#your-first-session)
+- [Getting Around QUILL](#getting-around-quill)
 - [Command-Line Launching](#command-line-launching)
 - [The Main Window](#the-main-window)
 - [The Menu Bar Reference](#the-menu-bar-reference)
@@ -43,23 +44,31 @@ Quill is also in beta. Expect polish, depth, and real daily utility. Also expect
   - [PDF and OCR-derived text](#pdf-and-ocr-derived-text)
   - [Remote files (FTP, SFTP, HTTPS, WebDAV, S3)](#remote-files-ftp-sftp-https-webdav-s3)
 - [Help, Learning, and Daily Confidence](#help-learning-and-daily-confidence)
+  - [Context-Sensitive Help (F1)](#context-sensitive-help-f1)
+  - [Personalising QUILL](#personalising-quill)
 - [Translation and Community Localization](#translation-and-community-localization)
+  - [How the Translation Pipeline Works](#how-the-translation-pipeline-works)
+  - [Contributing Translations](#contributing-translations)
+  - [Translation Roles and Responsibilities](#translation-roles-and-responsibilities)
+  - [Speech String Guidelines](#speech-string-guidelines)
 - [Checking for Updates](#checking-for-updates)
 - [Beta Feedback and Bug Reporting](#beta-feedback-and-bug-reporting)
 - [A Fast Shortcut Tour](#a-fast-shortcut-tour)
+- [Control Reference](#control-reference)
 
 ## Start Here
 
 If you only have five minutes, do this:
 
-1. Press `Ctrl+N` to create a new document, or press `Ctrl+O` to open one.
-2. Type a few lines.
-3. Press `Ctrl+Shift+P` to open the Command Palette.
-4. Type `guide`, `spell`, `compare`, or `glow` and notice how quickly Quill turns intent into action.
+1. The first time QUILL starts, the **Personalise QUILL** wizard offers to set up your keyboard layout, profile, and optional features in about two minutes. Complete it or dismiss it; you can re-run it from **Help → Personalise QUILL** at any time.
+2. Press `Ctrl+N` to create a new document, or press `Ctrl+O` to open one.
+3. Type a few lines.
+4. Press `Ctrl+Shift+P` to open the Command Palette. Type `guide`, `spell`, `compare`, or `glow` and notice how quickly Quill turns intent into action.
 5. Press `F6` to move into the status bar and hear how Quill treats even the bottom of the window as a working surface.
 6. Press `F7` for spell check, `Ctrl+F` to search, or `Ctrl+K` to insert a link.
+7. Press `F1` on any control to hear what it does and see its keyboard shortcuts.
 
-If you ever feel lost, use **Help → What Can I Do Here?**. Think of that command as the editor quietly putting a mentor beside you.
+If you ever feel lost, press `F1` for immediate help on the focused control, or use **Help → What Can I Do Here?** for document-context guidance. Think of those commands as the editor quietly putting a mentor beside you.
 
 ## What Quill Feels Like
 
@@ -89,6 +98,48 @@ From there, a natural first session looks like this:
 6. Open **Help → Open Keyboard Reference** to see the exact shortcuts that exist in your current configuration, including your keyboard pack and any custom bindings.
 
 That first session matters because it teaches the most important Quill habit: you do not need to hunt. If an action exists, Quill wants you to be able to reach it from where you already are.
+
+## Getting Around QUILL
+
+QUILL is designed so you never need to memorize an action to reach it.
+
+### F1 — help on the focused control
+
+Press `F1` on any focusable control — a dialog field, a button, a menu item, the editor itself — and a small help dialog opens. It tells you what the control does and what keyboard shortcuts apply to it. The full text lands in one read-only field so your screen reader announces everything in one pass when the dialog opens.
+
+- `F1` — help on the focused control
+- `Ctrl+F1` — open the full User Guide
+- `Shift+F1` — open "What Can I Do Here?" for the active document context
+
+See [Context-Sensitive Help (F1)](#context-sensitive-help-f1) for full details.
+
+### The QUILL key
+
+The **QUILL key** is `Ctrl+Shift+Grave` (the key above Tab). Press it once to arm a one-shot prefix, then follow with a second key to perform a command. Press it twice to lock QUILL Quick Nav mode until `Esc`.
+
+Common QUILL-key chords:
+
+| Chord | Command |
+|-------|---------|
+| QUILL key, then `N` | Enter Quick Nav browse mode |
+| QUILL key, then `G` | Open Go to Anything |
+| QUILL key, then `M` | Paste HTML clipboard as Markdown |
+| QUILL key, then `R` | Open file from remote |
+| QUILL key, then `A` | Selection actions |
+| QUILL key, then `?` | Show the QUILL key cheat sheet |
+| QUILL key, then `Esc` | Cancel the prefix |
+
+### Command Palette
+
+`Ctrl+Shift+P` opens the Command Palette — a searchable list of every registered command. Type any part of a command name to filter. Press Enter to run it. This is the fastest way to reach any action without memorizing its key or menu path. Searching `guide`, `spell`, `compare`, or `glow` from the palette is a good first practice.
+
+### Navigation anchors
+
+The status bar (`F6` to focus it) is a working surface, not decoration. Each cell announces meaningful information and most cells open a related dialog when you press Enter or click. `Shift+F6` moves focus back to the editor.
+
+Reach any menu from the keyboard: `Alt+F` for File, `Alt+E` for Edit, `Alt+V` for View, `Alt+T` for Tools, `Alt+H` for Help. All menu items have keyboard mnemonics.
+
+The Navigate menu groups document-level movement: go to line, go to heading, go to entry in notebook, heading organizer, outline navigator, back and forward location history, and structural next/previous. When you need to move across a large document, start there.
 
 ## Command-Line Launching
 
@@ -1327,6 +1378,9 @@ Default keys: **QUILL key, then `R`** opens from remote; **QUILL key, then `Shif
 
 Quill includes several layers of help because confidence does not come from memorizing everything.
 
+- **F1** — context-sensitive help for the focused control. Works anywhere in the application.
+- **Ctrl+F1** — opens this User Guide.
+- **Shift+F1** — opens the document-context "What Can I Do Here?" panel.
 - **Open Welcome Guide** when you want a lighter orientation.
 - **Open User Guide** when you want the full map.
 - **Open Keyboard Reference** when you want exact current bindings.
@@ -1335,15 +1389,125 @@ Quill includes several layers of help because confidence does not come from memo
 
 That last command matters more than it first appears. It turns feature visibility from a mystery into an explanation.
 
+### Context-Sensitive Help (F1)
+
+Press `F1` on any focusable control in QUILL and a small dialog opens that describes:
+
+1. **The dialog you are in** (when you are inside a dialog box) — the dialog name and a plain-language summary of what it does, so you always know your context.
+2. **The focused control** — what the control is, how it works, and what keyboard shortcuts apply to it.
+
+The entire text is in one read-only field so your screen reader announces everything in a single pass when the dialog opens, without you having to navigate past heading elements.
+
+From the help dialog you can:
+
+- Press **Escape** or **Enter on Close** to dismiss and return to where you were.
+- Press **Tab to Open User Guide** to jump to the full documentation section for this control.
+
+**How the three Help keys work together:**
+
+| Key | What it does |
+|-----|--------------|
+| `F1` | Help on the currently focused control (context-sensitive) |
+| `Ctrl+F1` | Open the full User Guide |
+| `Shift+F1` | Open "What Can I Do Here?" for the active document context |
+
+**Tips:**
+
+- In the main editor, F1 shows editor shortcuts and writing tips.
+- In dialogs (Preferences, Find/Replace, Spell Check, etc.), F1 identifies both the dialog and the specific setting.
+- In the Personalise QUILL wizard, F1 on each control explains what each setting does and what you can change later.
+- After using a menu and returning to the editor, QUILL remembers which control had focus last, so F1 still refers to the right control.
+
+### Personalising QUILL
+
+The **Personalise QUILL** wizard runs automatically the first time QUILL starts. You can re-run it at any time from **Help → Personalise QUILL**.
+
+The wizard walks you through eight short pages:
+
+1. **Welcome** — an introduction to what the wizard covers.
+2. **Keyboard and Sound** — choose a keyboard pack and whether QUILL plays audio cues. QUILL auto-detects your screen reader and sets accessible defaults.
+3. **Feature Profile** — choose a starting profile: Essential (minimal), Standard (recommended for most users), Power User (all features on), or Accessibility Focus (screen-reader optimised). You can switch profiles later.
+4. **Remote Access** — enable or hide FTP, SFTP, WebDAV, and S3 remote file commands. Disabling this removes the remote-site menu items entirely, keeping the File menu clean.
+5. **AI Assistance** — turn the AI writing assistant on or off. You can add an API key later; QUILL will prompt you when you first use an AI feature.
+6. **Reading and Accessibility** — configure read-aloud behaviour and screen-reader announcement style.
+7. **Writing Tools** — enable or disable spell-check-as-you-type, abbreviation expansion, and the Copy Tray.
+8. **Startup Behaviour** — choose what QUILL opens when it starts and whether to check for updates automatically.
+9. **Summary** — review all your choices before they are applied. Use Back to revise any page. Nothing changes in QUILL until you press Finish.
+
+**Important:** The wizard is transactional. Your choices are held in memory until you press Finish. If you close or cancel the wizard, no settings are changed.
+
+**Profiles explained:**
+
+| Profile | Best for |
+|---------|----------|
+| Essential | New users, light daily writing, low-distraction setup |
+| Standard | Most users — balanced feature set with AI and tools available |
+| Power User | All features on; suited to advanced writing, extraction, and GLOW workflows |
+| Accessibility Focus | Screen-reader primary; maximises keyboard coverage and announcements |
+
+You can switch profiles at any time from **Tools → Customize & Support → Profiles and Features...** or by pressing `Alt+Shift+P`.
+
 ## Translation and Community Localization
 
-QUILL is building localization as a community effort with a gettext catalog workflow (`POT -> PO -> MO`) and contributor-first onboarding. Translation contributions are welcomed during beta and reviewed with the same quality mindset as code and accessibility changes.
+QUILL uses a standard GNU gettext pipeline (`POT → PO → MO`) for all user-visible strings, aligned with the model used by NV Access for NVDA. This means QUILL translation work feels familiar to anyone who has contributed to NVDA, JAWS scripts, or other accessibility-focused open-source software.
 
-If you want to help translate QUILL or review language quality, use the contributor plan:
+### How the Translation Pipeline Works
 
-- [QUILL Translation Contributor Plan](localization/translation-contributor-plan.md)
+1. **Source strings are marked in code** with `_()` for regular strings, `ngettext()` for plural forms, and `lazy_gettext()` for strings that must be translated at display time rather than at import time.
+2. **The POT file** (`quill/locale/quill.pot`) is the master template, generated automatically by `pybabel extract`. It contains every translatable string in the application.
+3. **PO files** (`quill/locale/<lang>/LC_MESSAGES/quill.po`) contain the actual translations for each language. Translators work in PO files.
+4. **MO files** are compiled from PO files by `pybabel compile` and are the binary files QUILL loads at runtime.
+5. **QUILL selects the active language** at startup from your `language` setting (BCP 47 tag, e.g., `fr`, `es`, `pt-BR`). If blank, QUILL follows the operating-system language.
 
-The plan documents how to contribute translations, what is and is not translated, how string freeze works, and how translator contributions are credited in releases.
+Speech strings — text that will be read aloud by a screen reader rather than displayed visually — are marked with a `# SPEECH:` comment in the source code. Translators should preserve the natural spoken rhythm of these strings, not just their semantic meaning.
+
+### Contributing Translations
+
+To contribute a translation:
+
+1. **Fork the QUILL repository** and create a branch named `l10n/<lang>` (e.g., `l10n/fr`).
+2. **Copy `quill.pot` to your language folder:** `quill/locale/fr/LC_MESSAGES/quill.po`
+3. **Translate each `msgid` into a `msgstr`.** Leave `msgstr` empty for strings you have not yet translated; the English fallback will be used.
+4. **Run the CI translation check** to verify placeholder integrity and completeness: `python -m quill.tools.check_translation`
+5. **Open a pull request.** The Translation Coordinator reviews and merges approved translations.
+
+**Tools that help:**
+
+- [Poedit](https://poedit.net/) — free, accessible PO file editor with spell check.
+- [Virtaal](https://virtaal.translatehouse.org/) — lightweight alternative.
+- Crowdin (when QUILL's project is live) — browser-based collaborative translation with a review queue.
+
+**Do not translate:**
+
+- Placeholder tokens: `{name}`, `%(count)s`, `{path}` — leave these exactly as they are in the `msgid`.
+- ARIA role names: `"dialog"`, `"button"`, `"listbox"` — these are passed to platform accessibility APIs unchanged.
+- Internal command identifiers: `"file.open"`, `"glow.audit"` — these are not user-visible.
+- File extensions and format names: `.docx`, `EPUB`, `PDF`.
+
+### Translation Roles and Responsibilities
+
+QUILL follows a four-tier model aligned with NV Access community practice:
+
+| Role | Responsibilities |
+|------|----------------|
+| **Translator** | Translate strings from English into the target language. |
+| **Proofreader** | Review translations for accuracy, tone, and natural language flow. |
+| **Language Coordinator** | Own quality for one language; approve or request changes from translators and proofreaders. |
+| **Translation Coordinator** | Oversee the whole translation project, manage Crowdin, coordinate string freeze, credit contributors. |
+
+To become a translator or proofreader: open a GitHub issue with the label `translation` and state the language you want to work on.
+
+### Speech String Guidelines
+
+QUILL marks screen-reader-targeted strings with `# SPEECH:` in the source code. When translating these strings:
+
+- **Prioritise spoken clarity over literal accuracy.** A string that reads well when spoken aloud is more important than a string that is grammatically perfect but awkward when heard.
+- **Match the rhythm.** Short speech strings should stay short. QUILL's screen-reader users hear these strings dozens of times per session; brevity is a form of accessibility.
+- **Preserve emphasis signals.** Where the English string uses word order or phrasing to signal importance (e.g., the key word comes first), try to mirror that in translation.
+- **Test with a screen reader.** If possible, test your translated strings with NVDA or JAWS before submitting.
+- **Ask if unsure.** Open a GitHub issue tagged `translation` and `speech` if you are uncertain how a speech string should be adapted.
+
+String freeze happens before each release candidate. No new strings are added after freeze, and translators have a two-week window to complete their language before the release is built.
 
 ## Checking for Updates
 
@@ -1598,3 +1762,15 @@ Skills are multi-step AI workflows. Where a prompt is one instruction, a skill i
 **Authoring and sharing skills.** A skill is a `.sqp` (Skill Quill Pack) file — a plain Markdown document with YAML front matter. Open any `.sqp` file in QUILL to read and edit it. Share skills by sharing the file. See `docs/scripting.md` §20 for the full authoring reference, and `docs/skills-tutorial.md` for a guided walkthrough.
 
 **Validating a skill file.** Run `python -m quill.tools.sqp_validator yourskill.sqp` to check for errors before sharing or shipping.
+
+## Control Reference
+
+The Control Reference is a full listing of every focusable control in QUILL, organized by section. For each control it shows: what the control does, what keyboard shortcuts apply to it, and which section of this guide covers it in depth.
+
+See [docs/CONTROL_REFERENCE.md](CONTROL_REFERENCE.md) for the full reference.
+
+The reference is auto-generated from `quill/core/help/topics.json`. To regenerate it after adding new topics:
+
+```powershell
+python -m quill.tools.build_docs
+```

@@ -473,6 +473,7 @@ from quill.ui.assistant_tools import (
     RunPythonDialog,
     WritingAssistantDialog,
 )
+from quill.ui.context_help import ContextHelpMixin
 from quill.ui.csv_grid import CsvGridSurface
 from quill.ui.dialog_contract import apply_modal_ids, focus_primary_control, show_modal_dialog
 from quill.ui.editor_surface import PLAIN, RICH, surface_kind
@@ -787,6 +788,7 @@ class MainFrame(
     PowerToolsActionsMixin,
     PowerToolsMenuMixin,
     QuillinsMenuMixin,
+    ContextHelpMixin,
 ):
     _ANNOUNCEMENT_BACKEND_LABELS: dict[str, str] = {
         "auto": "Automatic (use Prism when available)",
@@ -932,6 +934,13 @@ class MainFrame(
             self.settings.announcement_backend = "status_only"
             self.settings.announcement_trace_enabled = False
             self.settings.assistant_enabled = False
+        try:
+            from quill.core.i18n import init_locale
+
+            lang = getattr(self.settings, "language", None) or None
+            self._active_language = init_locale(lang)
+        except Exception:
+            self._active_language = "en"
         self.keymap = dict(DEFAULT_KEYMAP) if safe_mode else load_keymap()
         self.recent_files = [] if safe_mode else load_recent_files()
         self._trusted_locations = set() if safe_mode else load_trusted_locations()
@@ -1039,6 +1048,7 @@ class MainFrame(
         )
         self._snippet_expansion_guard = False
         self._init_abbreviations()
+        self._init_context_help()
         self._intellisense_popup: _IntellisensePopup | None = None
         self._intellisense_context: IntellisenseContext | None = None
         self._intellisense_fragment_text = ""
@@ -20383,32 +20393,25 @@ class MainFrame(
         self._set_status("Reset to Essential profile")
         self._refresh_title()
 
+    def show_help_on_control(self) -> None:
+        """F1: show context-sensitive help for the currently focused control."""
+        self.show_control_help(user_guide_opener=self.open_user_guide_section)
+
+    def open_user_guide_section(self, section: str | None = None) -> None:
+        """Open the user guide, optionally scrolling to *section*."""
+        self.open_user_guide()
+
     def run_startup_wizard(self) -> None:
-        wx = self._wx
-        self.show_startup_wizard_page()
-        proceed = self._show_message_box(
-            "The Startup Wizard overview opened in preview. Start guided setup now?\n\n"
-            "This will walk through profile, AI, assistant, speech, and watch folder setup.",
-            "Startup Wizard",
-            wx.ICON_QUESTION | wx.YES_NO,
-        )
-        if proceed != wx.YES:
-            self._set_status("Startup Wizard opened")
-            return
-        if not self._show_trust_consent_onboarding(force=True):
-            self._set_status("Startup consent is required to continue setup.")
-            return
-        self._show_profile_onboarding(force=True)
-        self._offer_ai_onboarding()
-        self._show_assistant_onboarding(force=True)
-        self._show_glow_onboarding(force=True)
-        self._show_speech_onboarding(force=True)
-        # BITS Whisperer is deferred to QUILL 2.0 (the master `core.bw_whisperer`
-        # flag is locked off), so a 1.0 first run never offers transcription setup.
-        if self._feature_enabled("core.bw_whisperer"):
-            self._show_bw_onboarding(force=True)
-        self._show_watch_folder_onboarding(force=True)
-        self._set_status("Startup Wizard completed")
+        from quill.core.settings import save_settings
+        from quill.ui.setup_wizard import run_setup_wizard
+
+        feature_manager: FeatureManager = self.feature_manager  # type: ignore[attr-defined]
+        changed = run_setup_wizard(self.frame, self.settings, feature_manager)
+        if changed:
+            save_settings(self.settings)
+            feature_manager.save()
+            self._apply_accelerators()
+            self._set_status("Personalise QUILL completed")
 
     def run_profile_onboarding(self) -> None:
         # Backward-compatible alias for older command IDs and automation scripts.
@@ -20419,6 +20422,26 @@ class MainFrame(
             editor = getattr(self, "editor", None)
             if editor is not None and hasattr(editor, "SetFocus"):
                 self._wx.CallAfter(editor.SetFocus)
+
+        # New unified first-run wizard: run when setup_wizard_completed is False
+        # (i.e., a fresh install that has not seen the wizard yet).  After the
+        # wizard finishes or is cancelled, skip the legacy per-feature prompts so
+        # they do not double-up on top of the new flow.
+        if not getattr(self.settings, "setup_wizard_completed", True):
+            try:
+                self.run_startup_wizard()
+            except Exception:
+                self._report_startup_task_failure("first-run setup wizard")
+            for _flag in (
+                "_first_run_profile_prompt",
+                "_first_run_assistant_prompt",
+                "_first_run_glow_prompt",
+                "_first_run_speech_prompt",
+                "_first_run_watch_folder_prompt",
+            ):
+                setattr(self, _flag, False)
+            _focus_editor()
+            return
 
         if any((
             getattr(self, "_first_run_trust_consent_prompt", False),

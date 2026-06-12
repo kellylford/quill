@@ -176,6 +176,10 @@ class Settings:
     ollama_base_url: str = "http://localhost:11434"
     # AI prompts (Phase 3): separate default model for prompt-library runs.
     ai_prompt_default_model: str = ""
+    # I18N: BCP 47 language tag for the UI; empty string means "use OS default".
+    language: str = ""
+    # WIZARD: True once the first-run setup wizard has completed.
+    setup_wizard_completed: bool = False
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Settings:
@@ -491,6 +495,8 @@ class Settings:
             or "http://localhost:11434"
         )
         ai_prompt_default_model = str(data.get("ai_prompt_default_model", ""))
+        language = str(data.get("language", "")).strip()
+        setup_wizard_completed = bool(data.get("setup_wizard_completed", False))
         abbreviation_expansion = bool(data.get("abbreviation_expansion", True))
         abbreviation_expansion_sound = bool(data.get("abbreviation_expansion_sound", False))
         abbreviation_expansion_sound_file = str(data.get("abbreviation_expansion_sound_file", ""))
@@ -641,6 +647,8 @@ class Settings:
             abbreviation_expansion_sound=abbreviation_expansion_sound,
             abbreviation_expansion_sound_file=abbreviation_expansion_sound_file,
             multi_press_window_ms=multi_press_window_ms,
+            language=language,
+            setup_wizard_completed=setup_wizard_completed,
         )
 
 

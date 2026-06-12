@@ -23,20 +23,20 @@
   "_next_target_main_frame": 15000,
   "_default_cap": 600,
   "budgets": {
-    "quill/ui/main_frame.py": 21216,
+    "quill/ui/main_frame.py": 21239,
     "quill/ui/assistant_tools.py": 1809,
     "quill/ui/assistant_panel.py": 646,
     "quill/ui/main_frame_power_tools.py": 777,
     "quill/ui/main_frame_menu.py": 2785,
     "quill/core/read_aloud.py": 1243,
     "quill/core/assistant_ai.py": 1230,
-    "quill/core/features.py": 949,
+    "quill/core/features.py": 969,
     "quill/core/glow.py": 810,
     "quill/core/settings_registry.py": 158,
-    "quill/core/settings_specs.py": 1025,
+    "quill/core/settings_specs.py": 1034,
     "quill/core/watch_actions.py": 700,
     "quill/io/structured.py": 656,
-    "quill/core/settings.py": 665,
+    "quill/core/settings.py": 673,
     "quill/core/copy_tray.py": 139,
     "quill/ui/main_frame_copy_tray.py": 332,
     "quill/ui/copy_tray_dialog.py": 267,
@@ -50,7 +50,9 @@
     "quill/ui/main_frame_quillins.py": 608,
     "quill/core/prompt_library.py": 364,
     "quill/ui/prompt_library_dialog.py": 485,
-    "quill/ui/skill_library_dialog.py": 539
+    "quill/ui/skill_library_dialog.py": 539,
+    "quill/ui/setup_wizard_pages.py": 619,
+    "quill/core/keymap.py": 606
   },
   "_rebaseline_2026_06_11c": "Phase 1+2 abbreviations and multi-press: main_frame.py +15 for AbbreviationsMixin MRO/init/hook; main_frame_menu.py +31 for abbreviation menu items; settings_specs.py +24 for 4 specs; settings.py +11 for 3 fields; main_frame_copy_tray.py +55 for MultiPressDispatcher (peek double, dialog triple); main_frame_statusbar.py +6 for abbreviations cell. New files: abbreviations.py (205), multi_press.py (59), main_frame_abbreviations.py (147), abbreviation_manager_dialog.py (250).",
   "_rebaseline_2026_06_11d": "Phase 1+2 gap closure: abbreviations.py +49 for AbbreviationLibrary class API (add/remove/enable/disable/update/all/enabled_only/find_by_trigger) and builtins update; copy_tray.py +28 for pinned field, pin/unpin methods, first_empty_slot, search_slots; main_frame_copy_tray.py +163 for copy_to_next_slot, search dialog, paste-label refresh, 12-slot binding fix; abbreviation_manager_dialog.py +152 for search field and Import/Export buttons; main_frame.py +66 for copy_tray_slots status bar, new commands, Command Palette multi-press dispatcher; main_frame_menu.py +21 for 10-12 slot bindings fix and new tray commands; settings.py +2 for multi_press_window_ms; settings_specs.py +12 for multi_press_window_ms spec; main_frame_statusbar.py +9 for copy_tray_slots cell.",
@@ -60,5 +62,7 @@
   "_rebaseline_2026_06_11h": "Ruff formatter pass grew several files: import sort fix in main_frame.py (+2), auto-fix passes in ai_chat_dialog.py (+14), prompt_library_dialog.py (+29), settings_specs.py (+3), settings.py (+5), abbreviation_manager_dialog.py (+2), copy_tray_dialog.py (+6), main_frame_quillins.py (+2). All growth is formatter normalization, not new feature code.",
   "_rebaseline_2026_06_11i": "Skill Library UI: main_frame.py +30 for open_skill_library(), _get_skill_files(), command registration, and command map entry; main_frame_menu.py +10 for _id_skill_library, menu item in AI submenu, and EVT_MENU binding. New file skill_library_dialog.py (539 lines). UX improvements: cancel button, intermediate step outputs, early not-configured guard, step name in progress status.",
   "_rebaseline_2026_06_11j": "UX polish: prompt_library_dialog.py +12 for _check_ai_configured() early guard shown at dialog open when no AI model is set.",
-  "_rebaseline_2026_06_11k": "Ask Quill unification: main_frame.py +13 for _ask_quill_chat_dialog cache and reuse guard in open_ask_quill_chat(). assistant_panel.py converted to modeless wx.Frame with inline setup strip; provider_backend.py +SimpleChatBackend; assistant.py fallback to simple chat settings."
+  "_rebaseline_2026_06_11k": "Ask Quill unification: main_frame.py +13 for _ask_quill_chat_dialog cache and reuse guard in open_ask_quill_chat(). assistant_panel.py converted to modeless wx.Frame with inline setup strip; provider_backend.py +SimpleChatBackend; assistant.py fallback to simple chat settings.",
+  "_rebaseline_2026_06_11x2": "x2.md Phase 1-3: Translation infrastructure (i18n.py, babel.cfg), Context-Sensitive Help (core/help/, ui/context_help.py), Startup Wizard (setup_wizard.py + setup_wizard_pages.py 619 lines), new settings (language + setup_wizard_completed +8), features.py +12 for core.remote, settings_specs.py +9 for language spec. main_frame.py +16 for first-run wizard auto-launch in _maybe_run_first_run_onboarding. Budget re-baselined to current measured sizes.",
+  "_rebaseline_2026_06_11x2b": "main_frame.py +1 line from ruff format pass (trailing newline normalization in x2 diff). Budget updated to 21239."
 }

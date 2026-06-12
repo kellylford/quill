@@ -2,6 +2,13 @@
 
 This file describes maintainer responsibilities and operational expectations.
 
+## Named maintainers
+
+| Role | Name | Contact |
+|---|---|---|
+| Code Maintainer | Jeff Bishop | jeff@jeffbishop.com |
+| Translation Coordinator | Vacant — see below | open a GitHub issue with label `translation` |
+
 ## Maintainer team
 
 - Community Access maintainers (`@Community-Access`)
@@ -45,9 +52,29 @@ If a maintainer is unavailable, another maintainer should take ownership of:
 2. Release-blocking regressions
 3. Accessibility regressions
 
+## Role descriptions
+
+**Code Maintainer** — Reviews and merges pull requests, triages bug reports
+and feature requests, cuts releases, enforces code quality gates and CI
+requirements, and sets technical direction for the project.
+
+**Translation Coordinator** — Sends translation calls to Language Coordinators
+before each release, onboards new language teams, maintains the Crowdin project
+configuration, resolves translation disputes that Language Coordinators
+escalate, and ensures the Translation Style Guide stays current. Must be
+available during the two-week pre-release window. This is a named maintainer
+role, not a casual volunteer position.
+
+To apply for Translation Coordinator, open a GitHub issue with the label
+`translation`. For full information about translation contribution, including
+the four-tier role model and how to get started, see
+[docs/translating.md](docs/translating.md).
+
 ## Related docs
 
 - `CONTRIBUTING.md`
 - `GOVERNANCE.md`
 - `SECURITY.md`
 - `RELEASE.md`
+- `docs/translating.md`
+- `docs/TRANSLATION_STYLE_GUIDE.md`

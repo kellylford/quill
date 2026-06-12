@@ -84,6 +84,8 @@ dev = [
   "pytest-cov>=5.0",
   "ruff>=0.6",
   "mypy>=2.1.0",
+  # I18N: string extraction, .po update, .mo compile
+  "Babel>=2.14",
 ]
 
 [project.scripts]

@@ -997,6 +997,7 @@ class MenuBuilderMixin:
         self._id_report_bug = wx.NewIdRef()
         self._id_open_logs_folder = wx.NewIdRef()
         self._id_open_diagnostics_folder = wx.NewIdRef()
+        self._id_help_on_control = wx.NewIdRef()
         self._id_context_help = wx.NewIdRef()
         self._id_help_status_page = wx.NewIdRef()
         self._id_why_dont_i_see_feature = wx.NewIdRef()
@@ -1494,8 +1495,12 @@ class MenuBuilderMixin:
 
         help_menu = wx.Menu()
         help_menu.Append(
+            self._id_help_on_control,
+            self._menu_label("Help on This &Control\tF1", "help.help_on_control"),
+        )
+        help_menu.Append(
             self._id_context_help,
-            self._menu_label("&What Can I Do Here?", "help.what_can_i_do_here"),
+            self._menu_label("&What Can I Do Here?\tShift+F1", "help.what_can_i_do_here"),
         )
         help_menu.Append(
             self._id_help_status_page,
@@ -1508,7 +1513,7 @@ class MenuBuilderMixin:
         help_menu.AppendSeparator()
         self._id_open_user_guide = wx.NewIdRef()
         self._id_open_third_party_notices = wx.NewIdRef()
-        help_menu.Append(self._id_open_user_guide, "Open User &Guide")
+        help_menu.Append(self._id_open_user_guide, "Open User &Guide\tCtrl+F1")
         help_menu.Append(
             self._id_open_third_party_notices,
             "Open &Third-Party Notices",
@@ -1517,7 +1522,7 @@ class MenuBuilderMixin:
         help_menu.Append(self._id_open_keyboard_reference, "Open Keyboard &Reference")
         help_menu.Append(
             self._id_profile_onboarding,
-            self._menu_label("&Startup Wizard...", "help.startup_wizard"),
+            self._menu_label("&Personalise QUILL...", "help.startup_wizard"),
         )
         help_menu.Append(
             self._id_whisperer_about,
@@ -1647,6 +1652,11 @@ class MenuBuilderMixin:
         # macOS routes the application-menu "About" to wx.ID_ABOUT — wire it to
         # the same custom dialog so the Apple-menu About shows the links too.
         self.frame.Bind(wx.EVT_MENU, lambda _e: self.show_about_quill(), id=wx.ID_ABOUT)
+        self.frame.Bind(
+            wx.EVT_MENU,
+            lambda _e: self.show_help_on_control(),
+            id=self._id_help_on_control,
+        )
         self.frame.Bind(
             wx.EVT_MENU,
             lambda _e: self.show_context_help(),

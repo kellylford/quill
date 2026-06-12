@@ -4324,3 +4324,176 @@ The governing rules remain the same throughout the roadmap: local-first processi
 - [x] Add bundled `ai-writing-skills` Quillin with 4 sample skills (Accessible Rewrite, Research and Draft, Meeting Notes to Action Items, Argument Strengthener).
 - [x] Add `tests/unit/core/test_skill_pack.py`: 23 tests covering parsing, validation, runner, condition branching, depth limit, and all bundled files.
 - [x] Add `quill/platform/windows/credential_store.py`: unified credential access with env-var, portable DPAPI file, and Credential Manager backends. Activated by `QUILL_PORTABLE=1`. Update `ai_chat_dialog.py` and `assistant_ai.py` to use it.
+
+---
+
+## §22. Startup Wizard — Personalise QUILL
+
+### §22.1 Overview
+
+The Startup Wizard is a first-run wizard that lets every user shape QUILL to their work and accessibility needs before the main frame appears. It is also re-runnable at any time via Help > Personalise QUILL. Features the user disables are completely hidden — no menus, no commands, no phantom shortcuts.
+
+The wizard is a `wx.adv.Wizard` subclass with nine `wx.adv.WizardPageSimple` pages. Every page announces its heading via a live region on `EVT_WIZARD_PAGE_CHANGED`. Focus on page change lands on the first interactive control. Show/hide of conditional sub-sections uses `sizer.Show()` + `Layout()` so no hidden control can receive keyboard focus.
+
+### §22.2 The Nine Pages
+
+1. **Welcome** — introductory text; no configuration.
+2. **Keyboard and Sound** — QUILL key (Caps Lock / Insert / None), sound effects, and (conditional) interface language selector when `.mo` files are present.
+3. **AI Writing Assistance** — enable/disable AI; if enabled, choose provider (OpenAI, OpenRouter, Ollama, Set up later), API key or Ollama host, and default model.
+4. **Remote File Editing** — enable/disable SSH/SFTP; optional inline site-entry form (friendly name, host, port, username).
+5. **QUILL Extensions (Quillins)** — enable/disable Quillin support; option to auto-install bundled extensions; read-only list of bundled Quillins.
+6. **Power Tools** — enable/disable the Power Tools menu and commands.
+7. **Notebook Workspace** — enable/disable multi-document notebook mode.
+8. **Keyboard Profile** — choose a starting keyboard profile (QUILL Default, Minimal, Screen Reader Friendly) from profiles scanned in `quill/core/keymap/`.
+9. **Summary and Finish** — read-only two-column list of every decision made in pages 2-8; Finish writes settings atomically.
+
+### §22.3 Feature Gating via FeatureManager
+
+`quill/core/feature_flags.py` defines a frozen `FeatureFlags` dataclass and `is_enabled(flag: str) -> bool`. The wizard writes a `feature_flags` block into `settings.json` via `write_json_atomic`. `MainFrame.__init__` loads flags before building menus, the command registry, and keybindings.
+
+The two network-capable gated features are:
+
+- `core.remote` — SSH/SFTP remote editing. When disabled, the Remote menu and all SSH commands are absent.
+- `future.ai` — AI writing assistance. When disabled, Ask Quill, Prompt Library, Skill Library, grammar check, and all AI commands are absent.
+
+Commands with `feature_tag = None` are always present (core editing). Commands whose tag is disabled are excluded from the command palette search and their keyboard bindings are not registered, so `Ctrl+?` discovery shows no ghost shortcuts.
+
+### §22.4 First-Run Detection and Re-run
+
+`setup_wizard_completed` in `settings.json` (type bool, default False) controls first-run detection. When the field is absent or False, `MainFrame.__init__` runs `run_setup_wizard(parent=None)` before any UI is shown, then reloads settings before building menus.
+
+Re-run opens the wizard in update mode with all pages pre-filled. Changed flags trigger `_apply_feature_flags()`, which rebuilds the affected menu groups, refreshes the command palette, re-applies the keymap profile, and announces the change — no restart required.
+
+### §22.5 Settings Additions
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `setup_wizard_completed` | bool | False | Suppresses wizard on next launch |
+| `feature_flags_ai` | bool | True | Master switch for all AI features |
+| `feature_flags_remote` | bool | True | Master switch for remote editing |
+| `feature_flags_quillins` | bool | True | Master switch for Quillins |
+| `feature_flags_power_tools` | bool | True | Master switch for Power Tools |
+| `feature_flags_notebook` | bool | True | Master switch for Notebook workspace |
+| `keymap_profile` | str | "default" | Active keyboard profile name |
+
+### §22.6 Implementation Status
+
+**SHIPPED.** Phases 1-3 complete: `setup_wizard.py`, `setup_wizard_pages.py`, `feature_flags.py`, `feature_registry.py`, and `check_feature_tags.py` CI gate are all in production. Phase 4 (additional keymap profiles beyond the shipped defaults) is in progress.
+
+---
+
+## §23. Context-Sensitive Help System
+
+### §23.1 Overview
+
+QUILL provides three help keystrokes that give the user immediate, contextual assistance without leaving the keyboard:
+
+| Key | Command | Behaviour |
+|---|---|---|
+| F1 | Help on This Control | Shows a small dialog describing the focused control |
+| Ctrl+F1 | Open User Guide | Opens docs/html/USER_GUIDE.html in the system browser |
+| Shift+F1 | What Can I Do Here? | Document-type context report (enhanced) |
+
+`F1` always returns something useful. There are three fallback levels: (1) named schema topic via `ctrl.GetName()`, (2) generic description by `ctrl.GetClassName()`, (3) control name + tooltip + prompt to open the User Guide.
+
+### §23.2 Architecture
+
+```
+quill/core/help/topics.json          schema: topic id, title, body, keystrokes, user_guide_section
+quill/core/help/renderer.py          render_live(), render_doc(), generate_markdown()
+quill/ui/context_help.py             ContextHelpDialog, ContextHelpMixin, describe_focused()
+quill/tools/build_docs.py            generates docs/CONTROL_REFERENCE.md from topics.json
+quill/tools/check_help_coverage.py   CI gate: stale entries fail; coverage gaps warn
+```
+
+Topic IDs are derived from `ctrl.GetName()`. Dialog controls are prefixed with the dialog's accessible name: `connect_to_ssh_server.host_or_ip_address`. This works because the dialog contract already requires every interactive control to carry a meaningful `SetName()`.
+
+`ContextHelpMixin` is added to `MainFrame`'s MRO. It tracks the last-focused control via `EVT_CHILD_FOCUS` so that navigating to `Help > Help on This Control` via the menu bar still describes the correct control.
+
+### §23.3 ContextHelpDialog Screen-Reader Design
+
+The dialog contains a single read-only `wx.TextCtrl` (multi-line, no border, dialog background colour) with combined title and body text, plus a Close button. Using one TextCtrl means NVDA reads the dialog title then the entire content line by line on open, without the user tabbing between controls first. Focus lands on the TextCtrl. Closing the dialog restores focus to the described control.
+
+The dialog is registered in `dialog_inventory.json`. `affirmative_id = wx.ID_CLOSE`. Escape also closes it.
+
+### §23.4 Topics Coverage
+
+The schema (`quill/core/help/topics.json`) currently contains 109 topics covering:
+
+- Main editor surface, status bar, document tabs
+- All major dialogs: Find/Replace, Spell Check, AI Assistant, Remote/SSH, Preferences pages
+- Startup Wizard pages (F1 on any wizard control explains the effect of each choice)
+- Feature profiles, keyboard packs, read-aloud settings, GLOW workflows
+
+Full coverage target is 250 topics (all `SetName()` calls in `quill/ui/`).
+
+### §23.5 CI Gate
+
+`quill/tools/check_help_coverage.py` enforces two rules:
+
+- **Blocking:** A topic ID in `topics.json` has no matching `SetName()` call in `quill/ui/`. Stale entries describe UI that no longer exists.
+- **Warning (non-blocking until `--strict`):** A `SetName()` call in `quill/ui/` has no matching topic. Coverage gap printed to stdout during the authoring sprint.
+
+### §23.6 Implementation Status
+
+**SHIPPED.** Phase A (infrastructure: `topics.json`, `renderer.py`, `context_help.py`, F1/Ctrl+F1/Shift+F1 wiring) complete. Phase B (schema authoring sprint, 109 of 250 topics complete) in progress. Phase D (coverage gate) complete. Phases C (documentation HTML build) and E (user guide restructure) in progress.
+
+---
+
+## §24. Translation and Community Localization
+
+### §24.1 Overview
+
+QUILL uses GNU gettext for all user-visible strings, with Babel for POT extraction and Crowdin for community translation management. The design follows the NV Access NVDA translation model, which has produced high-quality, screen-reader-tested translations across 50+ languages.
+
+Speech announcement strings are first-class translation targets. They are marked with `#. SPEECH:` extracted comments in the POT file so translators can filter them for review and test them with a native screen reader in the target language.
+
+### §24.2 Pipeline
+
+```
+quill/core/i18n.py          _(), ngettext(), lazy_gettext(), init_locale()
+babel.cfg                   Babel extraction configuration
+quill/locale/quill.pot      Master string template (auto-generated by pybabel extract)
+quill/locale/{lang}/LC_MESSAGES/quill.po   Per-language translation (community, via Crowdin)
+quill/locale/{lang}/LC_MESSAGES/quill.mo   Compiled binary (generated by pybabel compile)
+quill/tools/check_translation.py           CI gate
+```
+
+`init_locale()` is called in `MainFrame.__init__` before any UI string. The `language` setting (BCP 47 tag, default empty = OS locale) controls the active locale. The startup wizard's Page 2 shows a language selector when more than one `.mo` file is present.
+
+### §24.3 Crowdin Components
+
+Three Crowdin components manage translation content:
+
+1. **UI strings** — source `quill/locale/quill.pot`, target `quill/locale/{lang}/LC_MESSAGES/quill.po`
+2. **Context-sensitive help** — source `quill/core/help/topics.json`, target `quill/core/help/topics_{lang}.json`
+3. **Quillin manifests** — source each bundled `manifest.json`, target `manifest_{lang}.json`
+
+Auto-PR on approved translation; PRs land on `main` after the CI gate passes.
+
+### §24.4 Four-Tier Role Model
+
+| Role | Responsibilities |
+|---|---|
+| Translator | Suggests translations in Crowdin |
+| Proofreader | Approves or rejects suggestions for their language |
+| Language Coordinator | Manages proofreaders, owns language quality, reviews PRs |
+| Translation Coordinator | Project-level; runs translation calls, onboards teams, resolves disputes |
+
+The Translation Coordinator is a named maintainer role in `MAINTAINERS.md`.
+
+### §24.5 Language Priority
+
+- **Tier 1 (target: ship with QUILL 1.0):** French (fr), German (de), Spanish (es)
+- **Tier 2 (close follow-on):** Portuguese/Brazilian Portuguese (pt_BR), Japanese (ja), Italian (it)
+- **Tier 3 (RTL, requires layout work):** Arabic (ar), Hebrew (he)
+
+Completeness thresholds: 90% for established languages, 70% for a language's first release. Languages below threshold are excluded from that release's language selector.
+
+### §24.6 CI Gate
+
+`quill/tools/check_translation.py` checks: POT currency (dry-run pybabel extract + diff), completeness threshold per language, mnemonic `&` preservation, placeholder `{n}` / `%(count)s` preservation, and no empty translated strings.
+
+### §24.7 Implementation Status
+
+**Phase 1 infrastructure complete:** `quill/core/i18n.py`, `babel.cfg`, `check_translation.py` gate, `language` setting, and `init_locale()` call are all in production. **Phase 2 (string marking sprint)** is in progress — sweeping all user-visible strings in `quill/ui/` and `quill/core/` to wrap them with `_()`. Pilot languages (fr, de, es) are pending community formation and a named Translation Coordinator.

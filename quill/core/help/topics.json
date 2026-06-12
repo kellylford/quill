@@ -1,0 +1,703 @@
+[
+  {
+    "id": "main.search_text",
+    "title": "Search Text",
+    "body": "Type the text you want to find in the document. The search updates as you type. Press Enter or F3 to jump to the next match.",
+    "keystrokes": ["Ctrl+F - Open Find", "F3 - Next match", "Shift+F3 - Previous match", "Escape - Close"],
+    "user_guide_section": "search-and-replace"
+  },
+  {
+    "id": "main.replace_text",
+    "title": "Replace Text",
+    "body": "Type the replacement text here. Press Alt+R or click Replace to replace the current match, or Alt+A to replace all matches in the document.",
+    "keystrokes": ["Ctrl+H - Open Find/Replace", "Alt+R - Replace current", "Alt+A - Replace all"],
+    "user_guide_section": "search-and-replace"
+  },
+  {
+    "id": "main.find_case_sensitive",
+    "title": "Case Sensitive Search",
+    "body": "When checked, the search matches the exact letter case. 'Apple' will not match 'apple' when this is on.",
+    "user_guide_section": "search-and-replace"
+  },
+  {
+    "id": "main.find_whole_word",
+    "title": "Whole Word Search",
+    "body": "When checked, only complete words are matched. Searching for 'cat' will not match 'scatter' or 'concatenate'.",
+    "user_guide_section": "search-and-replace"
+  },
+  {
+    "id": "main.find_regex",
+    "title": "Regular Expression Search",
+    "body": "When checked, the search term is treated as a regular expression. For example, '\\\\bword\\\\b' matches whole words and '\\\\d+' matches one or more digits.",
+    "keystrokes": ["Ctrl+F then Alt+X - Toggle regex"],
+    "user_guide_section": "search-and-replace",
+    "see_also": ["main.search_text"]
+  },
+  {
+    "id": "main.editor",
+    "title": "Document Editor",
+    "body": "The main writing surface. Type here to create or edit your document. QUILL supports plain text, Markdown, HTML, and other formats depending on the active file type. Your changes are autosaved automatically.",
+    "keystrokes": [
+      "Ctrl+S - Save",
+      "Ctrl+Z - Undo",
+      "Ctrl+Y - Redo",
+      "Ctrl+F - Find",
+      "F6 - Move to status bar",
+      "F1 - Help on this control",
+      "Ctrl+F1 - Open User Guide",
+      "Shift+F1 - What Can I Do Here?"
+    ],
+    "user_guide_section": "writing-and-editing"
+  },
+  {
+    "id": "main.status_line",
+    "title": "Status Bar",
+    "body": "The status bar shows live information about your document: line and column, word count, encoding, autosave state, and active tasks. Press F6 to move focus into it, then arrow left and right between cells. Press Enter or Space on a cell to activate it.",
+    "keystrokes": ["F6 - Enter status bar", "Arrow keys - Move between cells", "Enter - Activate cell"],
+    "user_guide_section": "the-main-window"
+  },
+  {
+    "id": "main.notebook_tabs",
+    "title": "Document Tabs",
+    "body": "Each open file has a tab here. Switch between documents with Ctrl+Tab and Ctrl+Shift+Tab. Right-click a tab for options: close this tab, close others, reveal in File Explorer. A dot on the tab label means the file has unsaved changes.",
+    "keystrokes": ["Ctrl+Tab - Next tab", "Ctrl+Shift+Tab - Previous tab", "Ctrl+W - Close tab"],
+    "user_guide_section": "the-main-window"
+  },
+  {
+    "id": "prefs.theme",
+    "title": "Theme",
+    "body": "Choose between a light theme, dark theme, or let QUILL follow the system setting. The change takes effect immediately.",
+    "user_guide_section": "appearance"
+  },
+  {
+    "id": "prefs.keyboard_pack",
+    "title": "Keyboard Pack",
+    "body": "Select the keyboard layout QUILL uses for all shortcuts. 'QUILL Default' is the recommended starting point. You can import custom packs from Tools > Keymap.",
+    "user_guide_section": "keyboard-and-sound"
+  },
+  {
+    "id": "prefs.language",
+    "title": "Interface Language",
+    "body": "Choose the language for menus, dialogs, and announcements. Leave blank to use your operating system's language setting. Changes take effect after restarting QUILL.",
+    "user_guide_section": "general-preferences"
+  },
+  {
+    "id": "prefs.soft_wrap",
+    "title": "Soft Wrap",
+    "body": "When on, long lines wrap visually to fit the window. The document text itself is not changed. Turn off to see each line end only at a hard line break.",
+    "user_guide_section": "editing"
+  },
+  {
+    "id": "prefs.spellcheck_as_you_type",
+    "title": "Spell Check As You Type",
+    "body": "When on, QUILL flags misspellings with an underline as you write. Press Ctrl+Period to jump to the next misspelling.",
+    "keystrokes": ["Ctrl+. - Next misspelling", "F7 - Open Spell Check dialog"],
+    "user_guide_section": "spelling"
+  },
+  {
+    "id": "prefs.read_aloud_engine",
+    "title": "Read Aloud Engine",
+    "body": "Select the speech engine used when you press the Read Aloud shortcut. 'System (pyttsx3)' works on all Windows machines. Piper, Kokoro, and DECtalk require extra setup.",
+    "keystrokes": ["Alt+R - Read Aloud"],
+    "user_guide_section": "read-aloud"
+  },
+  {
+    "id": "prefs.font_size",
+    "title": "Editor Font Size",
+    "body": "Sets the display size of the editor text in points. This affects only the on-screen appearance; the document content is not changed. Use a larger size for low-vision comfort.",
+    "user_guide_section": "appearance"
+  },
+  {
+    "id": "prefs.font_face",
+    "title": "Editor Font",
+    "body": "Choose the font used in the editor. Monospace fonts such as Consolas or Courier New are recommended for code and structured text; proportional fonts suit prose.",
+    "user_guide_section": "appearance"
+  },
+  {
+    "id": "prefs.line_spacing",
+    "title": "Line Spacing",
+    "body": "Adjusts the vertical space between lines in the editor. Increase this for easier reading, especially with larger font sizes. Does not affect the saved file.",
+    "user_guide_section": "appearance"
+  },
+  {
+    "id": "prefs.show_line_numbers",
+    "title": "Show Line Numbers",
+    "body": "When on, a line-number gutter appears on the left side of the editor. Useful for code and structured documents. Toggle quickly with View > Line Numbers.",
+    "user_guide_section": "editing"
+  },
+  {
+    "id": "prefs.autosave_interval",
+    "title": "Autosave Interval",
+    "body": "How often QUILL automatically saves your work, in seconds. Set to 0 to disable autosave entirely. The default is 30 seconds. Autosave writes a recovery copy separate from the main file.",
+    "user_guide_section": "trust-recovery-sessions-and-safety"
+  },
+  {
+    "id": "prefs.tab_width",
+    "title": "Tab Width",
+    "body": "The number of spaces shown for each tab character. 4 is a common default. This affects display only unless you also enable 'Indent with Spaces'.",
+    "user_guide_section": "editing"
+  },
+  {
+    "id": "prefs.indent_with_spaces",
+    "title": "Indent with Spaces",
+    "body": "When on, pressing Tab inserts spaces instead of a tab character. Useful for code where consistent spacing matters more than actual tab characters.",
+    "user_guide_section": "editing"
+  },
+  {
+    "id": "prefs.spellcheck_language",
+    "title": "Spell Check Language",
+    "body": "Choose the dictionary language used for spell checking. QUILL ships with English by default. Additional dictionaries can be installed from Tools > Spell Check.",
+    "user_guide_section": "spelling"
+  },
+  {
+    "id": "prefs.read_aloud_rate",
+    "title": "Read Aloud Rate",
+    "body": "Controls the words-per-minute speed for the selected read-aloud engine. Higher values read faster. Press Alt+R to test the setting with your current text.",
+    "user_guide_section": "read-aloud"
+  },
+  {
+    "id": "prefs.read_aloud_voice",
+    "title": "Read Aloud Voice",
+    "body": "Choose the voice used when QUILL reads text aloud. Available voices depend on your system and the selected engine. Install additional SAPI5 voices through Windows Settings.",
+    "user_guide_section": "read-aloud"
+  },
+  {
+    "id": "prefs.read_aloud_volume",
+    "title": "Read Aloud Volume",
+    "body": "Sets the output volume for read-aloud playback, from 0 (silent) to 100 (full). This is separate from your system volume; adjusting it will not affect other applications.",
+    "user_guide_section": "read-aloud"
+  },
+  {
+    "id": "prefs.confirm_destructive_actions",
+    "title": "Confirm Destructive Actions",
+    "body": "When on, QUILL asks for confirmation before actions that cannot be easily undone, such as closing an unsaved document or replacing all matches in a long document. Recommended for most users.",
+    "user_guide_section": "general-preferences"
+  },
+  {
+    "id": "prefs.check_updates_on_start",
+    "title": "Check for Updates on Startup",
+    "body": "When on, QUILL silently checks for a newer version each time it starts. If one is available, it announces quietly without interrupting your work. You can also check manually from Help > Check for Updates.",
+    "user_guide_section": "checking-for-updates"
+  },
+  {
+    "id": "prefs.startup_file",
+    "title": "Startup File",
+    "body": "Choose which file QUILL opens when it starts. 'Last session' reopens what you had open when you last quit. 'Blank document' starts fresh. 'Specific file' opens the same file every time.",
+    "user_guide_section": "general-preferences"
+  },
+  {
+    "id": "prefs.recent_files_limit",
+    "title": "Recent Files Limit",
+    "body": "The maximum number of files to show in the File > Recent Files list. Set to 0 to disable the recent files list. Higher limits help if you work across many files.",
+    "user_guide_section": "general-preferences"
+  },
+  {
+    "id": "prefs.sound_enabled",
+    "title": "Sound Effects",
+    "body": "When on, QUILL plays short audio cues for mode changes, error events, and important announcements. If you use a screen reader, QUILL adjusts sound behaviour to avoid clashing with speech output.",
+    "user_guide_section": "keyboard-and-sound"
+  },
+  {
+    "id": "prefs.auto_clean_html_paste",
+    "title": "Auto Clean HTML on Paste",
+    "body": "When on, QUILL automatically strips unsafe or inaccessible HTML markup when you paste HTML content. You can choose to paste as-is instead from the paste confirmation prompt.",
+    "user_guide_section": "working-with-different-document-types"
+  },
+  {
+    "id": "ai.provider",
+    "title": "AI Provider",
+    "body": "Choose where QUILL sends your text for AI assistance. OpenRouter and OpenAI require an API key stored in Windows Credential Manager. Ollama runs locally with no network calls.",
+    "user_guide_section": "ai-assistant",
+    "see_also": ["ai.model"]
+  },
+  {
+    "id": "ai.model",
+    "title": "AI Model",
+    "body": "Select the AI model to use with the chosen provider. Different models have different strengths and costs. Leave blank to use the provider's recommended default.",
+    "user_guide_section": "ai-assistant",
+    "see_also": ["ai.provider"]
+  },
+  {
+    "id": "ai.api_key_note",
+    "title": "API Key (Credential Manager)",
+    "body": "API keys are stored securely in Windows Credential Manager, never in QUILL settings files. Use 'Store API Key...' to add or update your key. The key name is listed in the dialog title.",
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "ai.base_url",
+    "title": "API Base URL",
+    "body": "The server URL for a self-hosted or custom AI endpoint. For standard OpenAI, leave this blank. For Ollama, the default is http://localhost:11434. For custom deployments, enter your endpoint URL.",
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "ai.system_prompt",
+    "title": "System Prompt",
+    "body": "Optional instructions that are sent to the AI model at the start of every session, before your own text. Use this to set tone, focus, or persona. For example: 'You are a plain-language editor. Rewrite for a general audience.'",
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "ai.temperature",
+    "title": "AI Temperature",
+    "body": "Controls how creative or deterministic the AI's responses are. Lower values (0.0-0.3) give consistent, focused answers. Higher values (0.7-1.0) give more varied, creative output. Most writing tasks work well at 0.3-0.7.",
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "ai.context_window_text",
+    "title": "AI Context Preview",
+    "body": "Shows the text that will be sent to the AI model for this request. QUILL sends your selection if you have one, or the entire document if nothing is selected. Long documents may be truncated to fit the model's context window.",
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "ssh.host",
+    "title": "SSH / SFTP Host",
+    "body": "Enter the hostname or IP address of the remote server. For SFTP this is the server you connect to over SSH. Example: sftp.example.com",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "ssh.port",
+    "title": "SSH / SFTP Port",
+    "body": "The port number for the SSH connection. The standard SSH port is 22. Change this only if your server uses a non-standard port.",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "ssh.username",
+    "title": "SSH / SFTP Username",
+    "body": "The username you use to log in to the remote server. This is your account name on the SSH host.",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "ssh.auth_method",
+    "title": "SSH Authentication Method",
+    "body": "Choose between password authentication and public-key (SSH key file) authentication. Key-based auth is more secure and does not require typing a password each session.",
+    "user_guide_section": "remote-access",
+    "see_also": ["ssh.key_path", "ssh.password"]
+  },
+  {
+    "id": "ssh.password",
+    "title": "SSH Password",
+    "body": "The password for password-based SSH authentication. QUILL can optionally save this in Windows Credential Manager so you are not prompted each time. Leave blank to be prompted on each connection.",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "ssh.key_path",
+    "title": "SSH Key File",
+    "body": "Path to your private SSH key file (typically id_rsa or id_ed25519 in your .ssh folder). Used for key-based authentication. QUILL supports RSA, ECDSA, and Ed25519 key types.",
+    "user_guide_section": "remote-access",
+    "see_also": ["ssh.passphrase"]
+  },
+  {
+    "id": "ssh.passphrase",
+    "title": "SSH Key Passphrase",
+    "body": "The passphrase that unlocks your private SSH key. Leave blank if your key has no passphrase. QUILL can save this in Windows Credential Manager for convenience.",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "ssh.trust_first_use",
+    "title": "Trust New SSH Host Keys",
+    "body": "When on, QUILL automatically accepts and saves the SSH server's host key the first time you connect. When off (default), QUILL rejects unknown host keys for security. Only enable this if you are on a trusted network.",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "ssh.site_name",
+    "title": "Site Name",
+    "body": "A short, descriptive label for this connection. Appears in the site list and recent connections menu. Choose something memorable like 'Work server' or 'Personal VPS'.",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "ssh.timeout",
+    "title": "Connection Timeout",
+    "body": "How many seconds QUILL will wait for an SSH connection before giving up. Increase this on slow or high-latency connections. The default is 10 seconds.",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "ssh.remote_path",
+    "title": "Remote Path",
+    "body": "The starting directory on the remote server. Leave blank to start in your home directory. Example: /var/www/html or /home/user/documents",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "remote_site.name",
+    "title": "Site Name",
+    "body": "A label for this remote connection. Shown in the Open from Remote and Save to Remote menus. Use something descriptive: 'Production server' or 'Documentation host'.",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "remote_site.protocol",
+    "title": "Protocol",
+    "body": "The file transfer method for this site. SFTP (SSH File Transfer Protocol) is the most secure choice for most servers. FTP is unencrypted and not recommended for sensitive files. WebDAV and S3 suit cloud storage.",
+    "user_guide_section": "remote-access",
+    "see_also": ["ssh.host"]
+  },
+  {
+    "id": "remote_site.host",
+    "title": "Remote Host",
+    "body": "Hostname or IP address for this remote site. For SFTP, this is your SSH server. For S3, this is your bucket endpoint. For WebDAV, enter the full base URL.",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "remote_site.port",
+    "title": "Remote Port",
+    "body": "Port for the remote connection. Defaults: FTP 21, SFTP 22, HTTPS/WebDAV 443. Leave blank to use the default for the chosen protocol.",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "remote_site.username",
+    "title": "Remote Username",
+    "body": "Your login name on the remote server. For S3, this is your access key ID. For WebDAV, it is your account username.",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "remote_site.remote_path",
+    "title": "Remote Path",
+    "body": "The folder on the remote server where files are listed by default. For S3, enter the bucket name and optional prefix. Example: my-bucket/documents/",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "remote_site.save_credentials",
+    "title": "Save Credentials",
+    "body": "When checked, QUILL stores the password or secret key in Windows Credential Manager so you are not prompted each time you connect. Your credentials are encrypted by Windows and are never written to QUILL settings files.",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "spell_check.unknown_word",
+    "title": "Unrecognised Word",
+    "body": "This is the word QUILL does not recognise. Use the suggestions list below to choose a replacement, or type your own correction in the Change To field. Press Ignore to leave this occurrence unchanged.",
+    "keystrokes": ["Alt+I - Ignore", "Alt+A - Ignore All", "Alt+C - Change", "Alt+L - Change All"],
+    "user_guide_section": "spelling"
+  },
+  {
+    "id": "spell_check.suggestions",
+    "title": "Spell Check Suggestions",
+    "body": "A list of possible correct spellings. Arrow up and down to hear each option. Press Enter or Alt+C to replace the word with the selected suggestion. If no suggestion is right, type your correction in the Change To field above.",
+    "user_guide_section": "spelling",
+    "see_also": ["spell_check.change_to"]
+  },
+  {
+    "id": "spell_check.change_to",
+    "title": "Change To",
+    "body": "Type a replacement word here, or select a suggestion from the list. When you are satisfied with the text in this field, press Alt+C (Change) to replace this one occurrence or Alt+L (Change All) to replace every occurrence.",
+    "user_guide_section": "spelling"
+  },
+  {
+    "id": "spell_check.context",
+    "title": "Spell Check Context",
+    "body": "Shows the sentence containing the misspelled word. The unknown word is highlighted so you can see it in context before deciding whether to change or ignore it.",
+    "user_guide_section": "spelling"
+  },
+  {
+    "id": "spell_check.add_to_dictionary",
+    "title": "Add to Dictionary",
+    "body": "Adds the current word to your personal dictionary so QUILL no longer flags it. Useful for proper names, technical terms, and domain-specific jargon. Entries in your personal dictionary persist across sessions.",
+    "user_guide_section": "spelling"
+  },
+  {
+    "id": "glow_audit.issue_list",
+    "title": "GLOW Issue List",
+    "body": "Lists all findings from the GLOW review. Arrow through the list to hear each issue. Press Enter or Tab to move to the detail panel and read the full explanation. Select one or more issues and press Fix Selected to apply automatic repairs.",
+    "keystrokes": ["Tab - Move to detail", "Alt+F - Fix selected", "Ctrl+A - Select all issues"],
+    "user_guide_section": "glow-workflows-inside-quill"
+  },
+  {
+    "id": "glow_audit.detail_text",
+    "title": "Issue Detail",
+    "body": "Shows the full description of the selected GLOW issue: what was found, why it matters, and what the automatic fix will do. Read this before applying a fix to understand the change.",
+    "user_guide_section": "glow-workflows-inside-quill"
+  },
+  {
+    "id": "glow_audit.severity_filter",
+    "title": "Severity Filter",
+    "body": "Filter the issue list by severity level. Error shows items that will likely break accessibility or structure. Warning shows items worth reviewing. Info shows stylistic or enhancement suggestions.",
+    "user_guide_section": "glow-workflows-inside-quill"
+  },
+  {
+    "id": "glow_preview.before_text",
+    "title": "Before (Original)",
+    "body": "Shows the original document text as it was before the GLOW fix was applied. Use this panel to verify what changed. Press Ctrl+C to copy the original if you want to compare it manually.",
+    "user_guide_section": "glow-workflows-inside-quill"
+  },
+  {
+    "id": "glow_preview.after_text",
+    "title": "After (Fixed)",
+    "body": "Shows the document text after the GLOW fix. Compare this to the Before panel to understand the change. Press Accept to apply the fix to your document, or Reject to discard it.",
+    "user_guide_section": "glow-workflows-inside-quill"
+  },
+  {
+    "id": "go_to_line.line_number",
+    "title": "Line Number",
+    "body": "Type the line number to jump to and press Enter. QUILL moves the cursor to the beginning of that line. The current line number is shown in the status bar. Lines are counted from 1.",
+    "keystrokes": ["Ctrl+G - Open Go to Line", "Enter - Jump to line", "Escape - Cancel"],
+    "user_guide_section": "search-replace-and-deep-navigation"
+  },
+  {
+    "id": "word_count.stats_text",
+    "title": "Word Count Statistics",
+    "body": "Shows the word, character, line, paragraph, and sentence count for the document or selection. If you have a selection, the counts reflect only the selected text. Use Ctrl+A to count the whole document.",
+    "keystrokes": ["Ctrl+Shift+W - Open Word Count"],
+    "user_guide_section": "tools-for-reading-review-and-inspection"
+  },
+  {
+    "id": "find_replace.search_field",
+    "title": "Search For",
+    "body": "Type the text or pattern to find. Press Enter or F3 to jump to the first match. The search bar highlights matches as you type. Use the checkboxes below to control case sensitivity, whole-word, and regex matching.",
+    "keystrokes": ["Enter / F3 - Find next", "Shift+F3 - Find previous", "Escape - Close"],
+    "user_guide_section": "search-and-replace"
+  },
+  {
+    "id": "find_replace.replace_field",
+    "title": "Replace With",
+    "body": "Type the replacement text here. When using regex mode, you can use \\\\1, \\\\2 etc. to refer to capture groups from the search pattern. Leave blank to delete all matches.",
+    "user_guide_section": "search-and-replace"
+  },
+  {
+    "id": "find_replace.scope",
+    "title": "Search Scope",
+    "body": "Choose whether to search the whole document or only the current selection. 'Selection' is useful when you want to replace text within one paragraph or section without affecting the rest of the document.",
+    "user_guide_section": "search-and-replace"
+  },
+  {
+    "id": "copy_tray.slot_list",
+    "title": "Copy Tray Slots",
+    "body": "The Copy Tray holds up to 12 saved text clips. Arrow through the list to hear each slot's label and preview. Press Enter to paste the selected slot into the editor. Ctrl+1 through Ctrl+9 paste the first nine slots directly.",
+    "keystrokes": ["Ctrl+1..9 - Paste slot 1-9", "Ctrl+Alt+1..9 - Copy to slot 1-9"],
+    "user_guide_section": "writing-and-editing"
+  },
+  {
+    "id": "copy_tray.slot_content",
+    "title": "Slot Content",
+    "body": "The text stored in the selected Copy Tray slot. You can edit this text directly. Changes are saved automatically when you move to another slot. Press Ctrl+C to copy this content to the clipboard.",
+    "user_guide_section": "writing-and-editing"
+  },
+  {
+    "id": "copy_tray.pin_slot",
+    "title": "Pin This Slot",
+    "body": "When a slot is pinned, it is not overwritten by 'Copy to Next Slot' operations. Use pinned slots for text you want to keep long-term, such as frequently used phrases or template text.",
+    "user_guide_section": "writing-and-editing"
+  },
+  {
+    "id": "prompt_library.prompt_list",
+    "title": "Prompt Library",
+    "body": "A list of saved AI prompts. Arrow through the list to hear each prompt's name. Press Enter or Tab to read the full prompt text in the preview panel. Double-click or press Use Prompt to apply it to the current selection.",
+    "keystrokes": ["Enter / Tab - Preview prompt", "Alt+U - Use prompt", "Alt+N - New prompt"],
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "prompt_library.prompt_body",
+    "title": "Prompt Text",
+    "body": "The full text of the selected prompt. Edit it here before applying. QUILL replaces {{selection}} with your current document selection when the prompt is run.",
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "skill_library.skill_list",
+    "title": "Skill Library",
+    "body": "Lists available AI-driven skills (multi-step workflows). Arrow through to hear each skill's name and description. Press Enter or Run Skill to execute the selected skill on your document or selection.",
+    "keystrokes": ["Enter - Preview skill", "Alt+R - Run skill", "Escape - Close"],
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "skill_library.skill_description",
+    "title": "Skill Description",
+    "body": "Shows what the selected skill does, what inputs it uses, and what output it produces. Read this before running to understand the effect. Skills that modify your document can be undone with Ctrl+Z.",
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "ai_chat.message_input",
+    "title": "Ask Quill Message",
+    "body": "Type your question or instruction here. Press Enter or Ctrl+Enter to send. QUILL sends your selected text as context when you have a selection in the editor. Press Escape to close Ask Quill without sending.",
+    "keystrokes": ["Ctrl+Enter - Send message", "Escape - Close Ask Quill", "Ctrl+K - Open Ask Quill"],
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "ai_chat.conversation_history",
+    "title": "Conversation History",
+    "body": "Shows the full conversation with the AI assistant. Arrow through to re-read previous turns. Press Ctrl+A to select all text and Ctrl+C to copy. Press Ctrl+Shift+Delete to clear the conversation and start fresh.",
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "ai_chat.provider_selector",
+    "title": "AI Provider (Ask Quill)",
+    "body": "Choose which AI service to use for this conversation. Changing the provider here is temporary for this session only. To change the default, use Tools > Customize & Support > Preferences > AI.",
+    "user_guide_section": "ai-assistant",
+    "see_also": ["ai_chat.model_selector"]
+  },
+  {
+    "id": "ai_chat.model_selector",
+    "title": "AI Model (Ask Quill)",
+    "body": "Choose the AI model for this conversation. The list shows models available for the selected provider. QUILL remembers your last-used model per provider.",
+    "user_guide_section": "ai-assistant",
+    "see_also": ["ai_chat.provider_selector"]
+  },
+  {
+    "id": "abbreviation_manager.trigger_list",
+    "title": "Abbreviation List",
+    "body": "Lists all saved text abbreviations. Arrow through to hear each trigger and its expansion. Press Enter or Edit to modify the selected entry. Abbreviations are expanded automatically as you type when enabled.",
+    "keystrokes": ["Alt+N - New abbreviation", "Alt+E - Edit selected", "Delete - Remove selected"],
+    "user_guide_section": "writing-and-editing"
+  },
+  {
+    "id": "abbreviation_manager.trigger_field",
+    "title": "Abbreviation Trigger",
+    "body": "The short text that triggers the expansion. Type this in the editor and press Space, Enter, or Tab to expand it. Triggers are case-sensitive by default. Use only characters that would not normally appear at the end of a word.",
+    "user_guide_section": "writing-and-editing"
+  },
+  {
+    "id": "abbreviation_manager.expansion_field",
+    "title": "Expansion Text",
+    "body": "The full text that replaces the trigger. You can include newlines and special characters. Use {{cursor}} to place the cursor at a specific point after expansion.",
+    "user_guide_section": "writing-and-editing"
+  },
+  {
+    "id": "keymap_editor.command_list",
+    "title": "Command List",
+    "body": "Lists all QUILL commands. Arrow through to find the one you want to rebind. Type in the search box at the top to filter by command name. Press Tab to move to the binding fields.",
+    "keystrokes": ["Tab - Move to binding fields", "Escape - Cancel changes"],
+    "user_guide_section": "profiles-keyboard-packs-and-customization"
+  },
+  {
+    "id": "keymap_editor.new_binding",
+    "title": "New Keyboard Binding",
+    "body": "Press the key combination you want to assign to the selected command. QUILL will warn you if the binding is already used by another command. Press Delete to remove the current binding entirely.",
+    "user_guide_section": "profiles-keyboard-packs-and-customization"
+  },
+  {
+    "id": "wizard.profile_choice",
+    "title": "Feature Profile",
+    "body": "Profiles control which QUILL features are visible. Choose the one that best fits how you work. You can always change your profile later from Help > Personalise QUILL.",
+    "user_guide_section": "feature-profiles"
+  },
+  {
+    "id": "wizard.ai_enable",
+    "title": "Enable AI Assistance",
+    "body": "Turns the AI writing assistant on or off. When on, you can ask QUILL to rewrite, summarise, or continue your text. An API key is required and can be added later.",
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "wizard.remote_enable",
+    "title": "Enable Remote Access",
+    "body": "Turns FTP, SFTP, WebDAV, and S3 remote file access on or off. When off, these options are hidden from the File menu to keep things simple.",
+    "user_guide_section": "remote-access"
+  },
+  {
+    "id": "wizard.keyboard_pack",
+    "title": "Keyboard Layout",
+    "body": "Choose the keyboard shortcut layout that feels most familiar. QUILL Default uses QUILL's own layout, optimised for screen-reader users. Other packs mimic Word, Notepad++, or VS Code if you are transitioning from those tools.",
+    "user_guide_section": "keyboard-and-sound"
+  },
+  {
+    "id": "wizard.sound_enabled",
+    "title": "Sound Effects",
+    "body": "Whether QUILL plays audio cues for mode changes and events. QUILL detects your screen reader automatically and adjusts sounds to avoid clashing with speech output. You can adjust this further from Preferences.",
+    "user_guide_section": "keyboard-and-sound"
+  },
+  {
+    "id": "wizard.startup_behaviour",
+    "title": "Startup Behaviour",
+    "body": "Choose what QUILL does when it starts. 'Open last session' restores what you had open. 'Blank document' starts with a fresh empty file. 'Open specific file' opens the same file each time.",
+    "user_guide_section": "general-preferences"
+  },
+  {
+    "id": "wizard.check_updates",
+    "title": "Check for Updates on Startup",
+    "body": "When on, QUILL silently checks for a new version each time it starts and notifies you when one is available. Recommended if you want to stay current without remembering to check manually.",
+    "user_guide_section": "checking-for-updates"
+  },
+  {
+    "id": "wizard.spell_enabled",
+    "title": "Spell Check as You Type",
+    "body": "When on, QUILL underlines misspelled words as you type and lets you jump between errors with Ctrl+Period. You can turn this off and use the full spell check dialog (F7) instead.",
+    "user_guide_section": "spelling"
+  },
+  {
+    "id": "wizard.summary_text",
+    "title": "Wizard Summary",
+    "body": "A recap of the choices you made in the wizard. Review each setting before pressing Finish. Use Back to return to any page and change a setting. Nothing is applied to QUILL until you press Finish.",
+    "user_guide_section": "feature-profiles"
+  },
+  {
+    "id": "preferences",
+    "title": "Preferences",
+    "body": "The Preferences dialog lets you customise QUILL's behaviour, appearance, and integrations. Changes in most groups take effect immediately. Use the category list on the left to navigate between groups.",
+    "keystrokes": ["F1 - Help on focused control", "Ctrl+F1 - Open User Guide", "Escape - Close without saving"],
+    "user_guide_section": "general-preferences"
+  },
+  {
+    "id": "find_replace",
+    "title": "Find and Replace",
+    "body": "Find text in the document and optionally replace it. Type in the Search For field and press F3 to find the next match, or press Replace to swap the current match, or Replace All to change every occurrence at once.",
+    "keystrokes": ["F3 - Find next", "Shift+F3 - Find previous", "Ctrl+H - Open this dialog", "Escape - Close"],
+    "user_guide_section": "search-and-replace"
+  },
+  {
+    "id": "spell_check",
+    "title": "Spell Check",
+    "body": "QUILL is checking your document for misspelled words. The current word is shown at the top. Choose from the suggestions list, type your own correction, or skip the word with Ignore. When finished, QUILL reports how many corrections were made.",
+    "keystrokes": ["F7 - Open Spell Check", "Alt+I - Ignore once", "Alt+A - Ignore all", "Alt+C - Change"],
+    "user_guide_section": "spelling"
+  },
+  {
+    "id": "go_to_line",
+    "title": "Go to Line",
+    "body": "Type a line number and press Enter to jump there instantly. The current line number is shown in the status bar. Useful for navigating long documents or jumping to an error reported by an external tool.",
+    "keystrokes": ["Ctrl+G - Open Go to Line", "Enter - Jump", "Escape - Cancel"],
+    "user_guide_section": "search-replace-and-deep-navigation"
+  },
+  {
+    "id": "word_count_dialog",
+    "title": "Word Count",
+    "body": "Shows detailed statistics for your document or current selection: words, characters (with and without spaces), lines, paragraphs, and an estimated reading time. If text is selected, counts apply to that selection only.",
+    "keystrokes": ["Ctrl+Shift+W - Open Word Count"],
+    "user_guide_section": "tools-for-reading-review-and-inspection"
+  },
+  {
+    "id": "copy_tray",
+    "title": "Copy Tray",
+    "body": "The Copy Tray holds up to 12 saved text clips that you can paste at any time. Use it as a persistent clipboard for frequently reused text, template snippets, or content you are assembling from multiple sources.",
+    "keystrokes": ["Ctrl+Shift+T - Open Copy Tray", "Ctrl+1..9 - Paste slot 1-9"],
+    "user_guide_section": "writing-and-editing"
+  },
+  {
+    "id": "skill_library",
+    "title": "Skill Library",
+    "body": "Skills are AI-driven multi-step workflows for tasks like rewriting sections, generating summaries, extracting data, or transforming text. Select a skill, read its description, then press Run Skill to apply it to your document or selection.",
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "prompt_library",
+    "title": "Prompt Library",
+    "body": "Manages saved AI prompts. Import, export, create, and organise prompts for common writing tasks. Use a prompt by selecting it and pressing Use Prompt, or assign it to a keyboard shortcut from Tools > Keymap.",
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "ai_chat",
+    "title": "Ask Quill",
+    "body": "Ask Quill is a conversational AI assistant embedded in QUILL. Type your question or instruction, and QUILL sends it to the configured AI provider with your selected text as context. Responses appear in the conversation panel.",
+    "keystrokes": ["Ctrl+Enter - Send message", "Ctrl+K - Open Ask Quill", "Escape - Close"],
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "abbreviation_manager",
+    "title": "Abbreviation Manager",
+    "body": "Create and manage text abbreviations that expand automatically as you type. For example, 'addr' can expand to your full mailing address. Abbreviations are saved to your profile and carry across sessions.",
+    "user_guide_section": "writing-and-editing"
+  },
+  {
+    "id": "keymap_editor",
+    "title": "Keymap Editor",
+    "body": "Inspect and rebind any QUILL command. Search for a command by name, select it, and press the key combination you want to assign. QUILL warns you of conflicts before saving. Changes apply immediately.",
+    "keystrokes": ["Escape - Cancel changes"],
+    "user_guide_section": "profiles-keyboard-packs-and-customization"
+  },
+  {
+    "id": "setup_wizard",
+    "title": "Personalise QUILL",
+    "body": "This wizard helps you set up QUILL for the way you work. Move through the pages with Back and Next. None of your choices are saved to QUILL until you press Finish on the last page. You can re-run this wizard at any time from Help > Personalise QUILL.",
+    "keystrokes": ["Alt+N - Next page", "Alt+B - Back", "Alt+F - Finish", "Escape - Cancel"],
+    "user_guide_section": "feature-profiles"
+  },
+  {
+    "id": "context_help",
+    "title": "Context Help",
+    "body": "This is the context-sensitive help dialog. It shows information about the control you were focused on when you pressed F1. Tab to the 'Open User Guide' button for the full documentation section, or press Escape to close.",
+    "keystrokes": ["F1 - Open this dialog", "Escape - Close", "Ctrl+F1 - Open User Guide"],
+    "user_guide_section": "help-learning-and-daily-confidence"
+  }
+]

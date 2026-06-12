@@ -429,6 +429,9 @@ KEYBOARD_PACKS: dict[str, KeyboardPack] = {
 }
 
 
+_PROFILES_DIR = Path(__file__).resolve().parent / "keymap"
+
+
 def keymap_path() -> Path:
     return app_data_dir() / "keymap.json"
 
@@ -436,6 +439,39 @@ def keymap_path() -> Path:
 def load_keymap() -> dict[str, str]:
     raw = read_json(keymap_path(), default={})
     return merge_keymaps(raw)
+
+
+def load_keymap_profile(name: str) -> dict[str, str]:
+    """Return the merged keymap for a named JSON profile in quill/core/keymap/.
+
+    Falls back to DEFAULT_KEYMAP if the profile file is not found.
+    Profile names map to ``profile_<name>.json``; spaces are replaced with
+    underscores and the string is lower-cased.  Example: ``"Minimal"``
+    loads ``profile_minimal.json``.
+    """
+    slug = name.lower().replace(" ", "_")
+    profile_path = _PROFILES_DIR / f"profile_{slug}.json"
+    data = read_json(profile_path, default={})
+    if not isinstance(data, dict):
+        return DEFAULT_KEYMAP.copy()
+    bindings = data.get("bindings", {})
+    if not isinstance(bindings, dict):
+        return DEFAULT_KEYMAP.copy()
+    merged = DEFAULT_KEYMAP.copy()
+    merged.update({k: v for k, v in bindings.items() if isinstance(v, str)})
+    return merged
+
+
+def list_keymap_profiles() -> list[str]:
+    """Return the display names of available JSON profiles."""
+    profiles: list[str] = []
+    if not _PROFILES_DIR.is_dir():
+        return profiles
+    for path in sorted(_PROFILES_DIR.glob("profile_*.json")):
+        data = read_json(path, default={})
+        if isinstance(data, dict) and "_name" in data:
+            profiles.append(str(data["_name"]))
+    return profiles
 
 
 def save_keymap(keymap: dict[str, str]) -> None:

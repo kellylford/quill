@@ -212,6 +212,14 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         category="safety",
         locked_on=True,
     ),
+    "core.notes": FeatureDefinition(
+        "core.notes",
+        "Sticky Notes",
+        aliases=("notes", "sticky", "sticky notes"),
+        description="Inline sticky notes attached to document positions.",
+        dependencies=("core.editor",),
+        category="core",
+    ),
     "core.notebook": FeatureDefinition(
         "core.notebook",
         "Notebook (Workspace)",
@@ -219,6 +227,18 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         description="Multi-document workspace with entries, goals, and snapshots (§10.4).",
         dependencies=("core.file",),
         category="core",
+    ),
+    "core.remote": FeatureDefinition(
+        "core.remote",
+        "Remote Access",
+        aliases=("remote", "ftp", "sftp", "webdav", "s3", "remote sites"),
+        description=(
+            "Open, save, and manage files over FTP, SFTP, WebDAV, and S3 "
+            "remote sites (issues #154-#157). Disabling this hides the "
+            "remote-sites file menu and the Manage Remote Sites dialog."
+        ),
+        category="core",
+        dependencies=("core.file",),
     ),
     "core.ocr": FeatureDefinition(
         "core.ocr", "OCR", category="accessibility", dependencies=("core.file",)

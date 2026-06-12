@@ -29,3 +29,6 @@ msg.txt
 zfix*
 /Status
 keys.txt
+
+# Claude Code local state (jobs, worktrees, memory)
+.claude/
