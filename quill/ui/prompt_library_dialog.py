@@ -139,6 +139,18 @@ class PromptLibraryDialog:
         self._prompts: list[Prompt] = []
         self._rebuild_list()
         self._search.SetFocus()
+        self._check_ai_configured()
+
+    def _check_ai_configured(self) -> None:
+        model_id = (
+            getattr(self._settings, "ai_prompt_default_model", "")
+            or self._settings.ai_chat_default_model
+            or ""
+        )
+        if not model_id:
+            self._status.SetLabel(
+                "No AI model configured. Open Preferences > AI to set a provider and model."
+            )
 
     # -- public API -----------------------------------------------------------
 

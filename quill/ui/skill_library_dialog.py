@@ -17,6 +17,7 @@ from quill.core.skill_pack import (
     SkillPack,
     SkillParameter,
     SkillValidationError,
+    StepResult,
     parse_skill,
     run_skill,
     validate_skill,
@@ -25,6 +26,10 @@ from quill.ui.dialog_contract import apply_modal_ids
 
 if TYPE_CHECKING:
     from quill.core.settings import Settings
+
+
+class _SkillCancelled(Exception):
+    pass
 
 
 class SkillLibraryDialog:
@@ -53,6 +58,7 @@ class SkillLibraryDialog:
         }
         self._on_insert = on_insert
         self._running = False
+        self._cancel_event = threading.Event()
 
         self.dialog = wx.Dialog(
             parent,
@@ -95,16 +101,17 @@ class SkillLibraryDialog:
         apply_modal_ids(self.dialog)
 
         self._list.Bind(wx.EVT_LISTBOX, self._on_select)
-        self._list.Bind(wx.EVT_LISTBOX_DCLICK, self._on_run)
-        self._run_btn.Bind(wx.EVT_BUTTON, self._on_run)
+        self._list.Bind(wx.EVT_LISTBOX_DCLICK, self._on_run_or_cancel)
+        self._run_btn.Bind(wx.EVT_BUTTON, self._on_run_or_cancel)
         self._import_btn.Bind(wx.EVT_BUTTON, self._on_import)
         close_btn.Bind(wx.EVT_BUTTON, lambda _e: self.close())
         self.dialog.Bind(wx.EVT_CLOSE, lambda _e: self.close())
 
         self._populate()
+        self._check_ai_configured()
 
     # ------------------------------------------------------------------
-    # Populate
+    # Populate + configuration check
     # ------------------------------------------------------------------
 
     def _populate(self) -> None:
@@ -120,6 +127,17 @@ class SkillLibraryDialog:
         if self._list.GetCount():
             self._list.SetSelection(0)
             self._on_select(None)
+
+    def _check_ai_configured(self) -> None:
+        model_id = (
+            getattr(self._settings, "ai_prompt_default_model", "")
+            or self._settings.ai_chat_default_model
+            or ""
+        )
+        if not model_id:
+            self._status.SetLabel(
+                "No AI model configured. Open Preferences > AI to set a provider and model."
+            )
 
     # ------------------------------------------------------------------
     # Selection
@@ -138,20 +156,24 @@ class SkillLibraryDialog:
         parts = []
         if pack.description:
             parts.append(pack.description)
-        n = len(pack.steps)
-        parts.append(f"{n} step{'s' if n != 1 else ''}.")
+        step_headings = " → ".join(s.heading for s in pack.steps)
+        parts.append(f"Steps: {step_headings}.")
         if pack.parameters:
             labels = ", ".join(p.label or p.name for p in pack.parameters)
             parts.append(f"Parameters: {labels}.")
         self._desc.SetValue("  ".join(parts))
 
     # ------------------------------------------------------------------
-    # Run
+    # Run / Cancel
     # ------------------------------------------------------------------
 
-    def _on_run(self, _event: object) -> None:
+    def _on_run_or_cancel(self, _event: object) -> None:
         if self._running:
+            self._cancel_event.set()
+            self._run_btn.Disable()
+            self._status.SetLabel("Cancelling after current step completes...")
             return
+
         idx = self._list.GetSelection()
         if idx == wx.NOT_FOUND:
             return
@@ -192,8 +214,9 @@ class SkillLibraryDialog:
         base_url = ollama_url if provider_id.startswith("ollama") else ""
 
         total = len(pack.steps)
+        self._cancel_event.clear()
         self._running = True
-        self._run_btn.Disable()
+        self._run_btn.SetLabel("&Cancel")
 
         def _set_status(msg: str) -> None:
             self._status.SetLabel(msg)
@@ -203,8 +226,15 @@ class SkillLibraryDialog:
             step_n = [0]
 
             def send_fn(prompt: str) -> str:
-                step_n[0] += 1
-                wx.CallAfter(_set_status, f"Running step {step_n[0]} of {total}...")
+                n = step_n[0] + 1
+                step_n[0] = n
+                heading = pack.steps[n - 1].heading if n <= len(pack.steps) else ""
+                status = f"Running step {n} of {total}"
+                if heading:
+                    status += f": {heading}"
+                wx.CallAfter(_set_status, status + "...")
+                if self._cancel_event.is_set():
+                    raise _SkillCancelled()
                 return send_prompt(
                     provider_id, model_id, prompt, api_key=api_key, base_url=base_url
                 )
@@ -212,18 +242,24 @@ class SkillLibraryDialog:
             try:
                 results = run_skill(pack, ctx, send_fn)
                 wx.CallAfter(self._on_done, pack, results)
+            except _SkillCancelled:
+                wx.CallAfter(self._on_cancelled)
             except Exception as exc:
                 wx.CallAfter(self._on_error, str(exc))
 
         threading.Thread(target=worker, daemon=True).start()
 
-    def _on_done(self, pack: SkillPack, results: list) -> None:
+    def _reset_run_button(self) -> None:
         self._running = False
-        self._run_btn.Enable()
-        self._status.SetLabel("")
+        self._run_btn.SetLabel("&Run")
+        self._run_btn.Enable(self._list.GetSelection() != wx.NOT_FOUND)
 
-        final = next((r for r in reversed(results) if not r.skipped), None)
-        if final is None:
+    def _on_done(self, pack: SkillPack, results: list[StepResult]) -> None:
+        self._reset_run_button()
+
+        active = [r for r in results if not r.skipped]
+        if not active:
+            self._status.SetLabel("")
             wx.MessageBox(
                 "The skill ran but produced no output.",
                 "Skill result",
@@ -231,6 +267,8 @@ class SkillLibraryDialog:
                 self.dialog,
             )
             return
+
+        self._status.SetLabel("")
 
         last_step = pack.steps[-1]
         accept_into = "none"
@@ -252,7 +290,7 @@ class SkillLibraryDialog:
 
         rdlg = _SkillResultDialog(
             self.dialog,
-            final.output_text,
+            active,
             label,
             accept_into=accept_into,
             on_accept=on_accept,
@@ -260,9 +298,12 @@ class SkillLibraryDialog:
         rdlg.show()
         rdlg.dialog.Destroy()
 
+    def _on_cancelled(self) -> None:
+        self._reset_run_button()
+        self._status.SetLabel("Skill cancelled.")
+
     def _on_error(self, msg: str) -> None:
-        self._running = False
-        self._run_btn.Enable()
+        self._reset_run_button()
         self._status.SetLabel("")
         wx.MessageBox(
             f"The skill failed:\n\n{msg}",
@@ -410,32 +451,47 @@ class _SkillParameterDialog:
 
 
 class _SkillResultDialog:
-    """Show skill output with optional Accept and Copy buttons."""
+    """Show skill output — all step outputs for transparency, Accept and Copy buttons."""
 
     def __init__(
         self,
         parent: object,
-        text: str,
+        results: list[StepResult],
         label: str,
         *,
         accept_into: str = "none",
         on_accept: Callable[[str], None] | None = None,
     ) -> None:
-        self._text = text
+        final = results[-1] if results else None
+        self._accept_text = final.output_text if final else ""
         self._on_accept = on_accept
+
+        # Build display text: all steps separated by headings when more than one.
+        if len(results) > 1:
+            sections = [f"--- {r.step_heading} ---\n{r.output_text}" for r in results]
+            display_text = "\n\n".join(sections)
+        else:
+            display_text = self._accept_text
 
         self.dialog = wx.Dialog(
             parent,
             title=label,
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
-        self.dialog.SetMinSize(wx.Size(540, 420))
+        self.dialog.SetMinSize(wx.Size(560, 460))
 
         root = wx.BoxSizer(wx.VERTICAL)
 
+        if len(results) > 1:
+            note = wx.StaticText(
+                self.dialog,
+                label=f"All {len(results)} steps shown. Accept inserts the final step only.",
+            )
+            root.Add(note, 0, wx.LEFT | wx.TOP | wx.RIGHT, 8)
+
         ctrl = wx.TextCtrl(
             self.dialog,
-            value=text,
+            value=display_text,
             style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_WORDWRAP,
         )
         ctrl.SetName(label)
@@ -443,10 +499,11 @@ class _SkillResultDialog:
 
         btns = wx.BoxSizer(wx.HORIZONTAL)
         if accept_into != "none" and on_accept is not None:
-            if accept_into == "selection":
-                accept_label = "&Accept (insert into document)"
-            else:
-                accept_label = "&Accept (copy to clipboard)"
+            accept_label = (
+                "&Accept (insert into document)"
+                if accept_into == "selection"
+                else "&Accept (copy to clipboard)"
+            )
             accept_btn = wx.Button(self.dialog, label=accept_label)
             accept_btn.Bind(wx.EVT_BUTTON, self._on_do_accept)
             btns.Add(accept_btn, 0, wx.RIGHT, 6)
@@ -472,10 +529,10 @@ class _SkillResultDialog:
 
     def _on_do_accept(self, _event: object) -> None:
         if self._on_accept:
-            self._on_accept(self._text)
+            self._on_accept(self._accept_text)
         self.dialog.EndModal(wx.ID_OK)
 
     def _on_copy(self, _event: object) -> None:
         if wx.TheClipboard.Open():
-            wx.TheClipboard.SetData(wx.TextDataObject(self._text))
+            wx.TheClipboard.SetData(wx.TextDataObject(self._accept_text))
             wx.TheClipboard.Close()
