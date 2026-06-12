@@ -162,7 +162,7 @@ class SkillLibraryDialog:
         ctx = dict(self._context)
         if pack.parameters:
             pdlg = _SkillParameterDialog(self.dialog, pack)
-            if pdlg.dialog.ShowModal() != wx.ID_OK:
+            if pdlg.show() != wx.ID_OK:
                 return
             ctx.update(pdlg.get_values())
 
@@ -257,7 +257,7 @@ class SkillLibraryDialog:
             accept_into=accept_into,
             on_accept=on_accept,
         )
-        rdlg.dialog.ShowModal()
+        rdlg.show()
         rdlg.dialog.Destroy()
 
     def _on_error(self, msg: str) -> None:
@@ -388,6 +388,9 @@ class _SkillParameterDialog:
             ctrl = wx.TextCtrl(self.dialog, value=default)
         return ctrl
 
+    def show(self) -> int:
+        return self.dialog.ShowModal()
+
     def get_values(self) -> dict[str, str]:
         result: dict[str, str] = {}
         for param in self._pack.parameters:
@@ -463,6 +466,9 @@ class _SkillResultDialog:
         close_btn.Bind(wx.EVT_BUTTON, lambda _e: self.dialog.EndModal(wx.ID_CLOSE))
         self.dialog.Bind(wx.EVT_CLOSE, lambda _e: self.dialog.EndModal(wx.ID_CLOSE))
         ctrl.SetFocus()
+
+    def show(self) -> int:
+        return self.dialog.ShowModal()
 
     def _on_do_accept(self, _event: object) -> None:
         if self._on_accept:
