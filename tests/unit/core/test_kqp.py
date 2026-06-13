@@ -168,15 +168,16 @@ def test_import_runs_validator_before_merge(tmp_path: Path) -> None:
 
 def test_round_trip(tmp_path: pytest.TempPathFactory) -> None:
     keymap = DEFAULT_KEYMAP.copy()
-    # Use key sequences not assigned to any other command in DEFAULT_KEYMAP.
-    keymap["edit.find"] = "Ctrl+Shift+Grave, F"
+    # Use key sequences not assigned to any other command in DEFAULT_KEYMAP and
+    # not subject to a legacy rebinding (e.g. "Ctrl+Shift+Grave, F" -> Ctrl+F).
+    keymap["edit.find"] = "Ctrl+Shift+Grave, Z"
     keymap["tools.thesaurus"] = "Ctrl+Shift+Grave, Y"
     target = tmp_path / "trip.kqp"
     export_keyboard_pack(target, keymap, name="Trip Pack", description="Round trip test")
     name, description, merged = import_keyboard_pack(target)
     assert name == "Trip Pack"
     assert description == "Round trip test"
-    assert merged["edit.find"] == "Ctrl+Shift+Grave, F"
+    assert merged["edit.find"] == "Ctrl+Shift+Grave, Z"
     assert merged["tools.thesaurus"] == "Ctrl+Shift+Grave, Y"
     # Untouched defaults survive.
     assert merged["file.save"] == DEFAULT_KEYMAP["file.save"]
