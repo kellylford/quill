@@ -525,6 +525,17 @@ Accessibility:
 - The whole conversation renders as an accessible WebView document: each turn is a heading (speaker) you can jump between, new replies are announced automatically, and the message box lives inside the page. Press `Escape` to close the chat. Verified in NVDA, JAWS, and VoiceOver.
 - You can also connect optional providers (Ollama local/cloud, or a custom endpoint) instead of the on-device model.
 
+Choosing the provider and model from the chat:
+
+- A bar at the top of Ask Quill always shows the **active provider and model** so you know what is answering.
+- Select **Change provider or model** to reveal the inline picker. Choose a provider and model, enter a key if needed, and **Save** — this also sets that choice as the default, so the next chat uses it.
+
+Putting chat content into your document:
+
+- The **Insert into document** controls at the bottom let you drop chat content straight into the editor.
+- Choose the **scope** — **Last response** or **Entire transcript** — and the **format** — **Plain text**, **Markdown**, or **HTML** — then select **Insert**. The whole transcript includes the speaker labels; the last response is inserted as just its content.
+- **Copy Last Response** copies the most recent reply to the clipboard.
+
 Behavior notes:
 
 - The assistant answers in chat by default; greetings and questions are never turned into document edits.
@@ -532,25 +543,39 @@ Behavior notes:
 - If model/runtime is unavailable, Quill reports this clearly and does not apply destructive changes.
 - **Train Writing Style** (`Tools -> AI Assistant -> Train Writing Style...`) lets you teach the assistant your own writing style from samples or the current document.
 
-### Writing Assistant and AI Hub setup
+### The AI Hub (one place to configure every provider)
 
-For release-safe beta validation, Word and CSV open in the normal plain-text editor surface. AI connection and chat flows remain available.
+The **AI Hub** is now the single place to set up and manage AI. The former
+separate **AI Model and Connection** and **Forget API Key** menu items were
+merged into it, so there is one home for providers, models, keys, and testing.
+Open it from `Tools -> AI Assistant -> AI Hub...`.
 
-Provider setup:
+The Hub lets you work through every provider, each with its own key and default
+model — switching providers never loses another provider's configuration:
 
-1. Open `Tools -> AI Assistant -> AI Hub...` (or `Tools -> AI Assistant -> AI Model & Connection...`).
-2. Choose provider: `Ollama (local)`, `Ollama Cloud`, `OpenAI`, `Claude`, `OpenRouter`, `Google Gemini`, or `Custom OpenAI-compatible`.
-3. Enter host and model (cloud defaults are prefilled).
-4. Enter API key only if required.
-5. Use `Verify Connection`.
-6. Use `List Models` to select from endpoint-reported models with search filtering.
-7. Use `Recommend Model` for guided picks tuned for local hardware or cloud framing.
-8. Save settings. Quill auto-verifies and updates AI status/detail lines.
-9. Use `Prompt Studio` to save reusable templates and `Agent Center` to generate guided task prompts.
+1. Choose a provider: `Ollama (local)`, `Ollama Cloud`, `OpenAI`, `Claude`,
+   `OpenRouter`, `Google Gemini`, or a `Custom OpenAI-compatible` endpoint.
+2. The host, default model, and that provider's saved key fill in automatically.
+   Cloud hosts are prefilled, so setup is usually just a key and a model.
+3. Enter the API key (only cloud providers need one). It is stored securely on
+   this device and kept per provider.
+4. **Verify Connection** checks the endpoint and credentials.
+5. **List Models** fetches the endpoint's models with a search filter;
+   **Recommend Model** suggests a model tuned to your hardware or task.
+6. **Test Chat** sends a tiny prompt and confirms the selected provider and model
+   actually answer — quick quality confirmation before you rely on them.
+7. **Forget this provider's key** clears just that one provider's key.
+8. **On-device model...** opens the local model (GGUF) settings for llama.cpp.
+9. Save (OK). The chosen provider/model becomes active immediately and Quill
+   announces plain-language verification feedback (ready, auth failure, timeout,
+   or endpoint unreachable).
 
-Ollama Cloud onboarding remains available here as well. Users with API keys can use the free personal-use tier, which has lower usage limits.
+Use `Prompt Studio` to save reusable templates and `Agent Center` to generate
+guided task prompts. Ollama Cloud's free personal-use tier (with lower limits) is
+available here too.
 
-After save, Quill announces plain-language verification feedback (for example, ready, auth failure, timeout, or endpoint unreachable).
+For release-safe beta validation, Word and CSV open in the normal plain-text
+editor surface; AI connection and chat flows remain available.
 
 #### Reading & Dictation
 
@@ -1690,7 +1715,7 @@ Quill ships with several trusted, first-party Quillins enabled by default. These
 - **Text Tools**: Provides advanced text transformations and analysis, including:
   - **Line Numbering**: Prefix lines with sequential numbers.
   - **Hard Wrap**: Wrap text at a specific character width.
-  - **Regex Tools**: Count or extract patterns across the document.
+  - **Regular Expression Tools**: Count or extract patterns across the document.
   - **Block Filtering**: Find lines that are common to two blocks or exist only in the first.
 - **Insert Tools**: Provides smart placeholders for quick insertion, such as the current **Date** and **Date/Time**.
 
@@ -1717,7 +1742,7 @@ QUILL includes a built-in AI assistant. You can run it on-device (llama.cpp with
 
 ### Setting up an AI provider
 
-Open **Tools > AI Assistant > AI Hub...** (or **AI Model & Connection...**) to configure your provider.
+Open **Tools > AI Assistant > AI Hub...** to configure your providers. The AI Hub is the single place for every provider's key, model, **Test Chat**, and per-provider key removal — the former **AI Model and Connection** and **Forget API Key** menu items were merged into it.
 
 - **OpenRouter** — paste your API key into the OpenRouter API Key field. OpenRouter gives you access to many models (Claude, GPT-4o, Gemini, and more) with a single key.
 - **OpenAI** — paste your OpenAI API key.
@@ -1751,9 +1776,9 @@ When portable mode is on, keys are stored in a file called `keys.enc` inside the
 
 You can also set a **Default model for prompt runs** (`ai_prompt_default_model`). Leave it blank to share the same model across Ask AI and the Prompt Library, or set a different model here if you want a more capable model for prompt-library work.
 
-### Ask AI (Alt+Q)
+### Ask AI (quick one-off question)
 
-`Tools > AI Assistant > Ask AI...` opens a dialog where you type a question and read the answer without leaving QUILL.
+`Tools > AI Assistant > Ask AI...` opens a simple dialog where you type a question and read the answer without leaving QUILL. For the full conversational experience — with the active provider/model shown, in-dialog provider and model switching, and inserting replies into your document — use **Ask Quill Chat** on **Alt+Q** (see "Ask Quill Chat setup" above).
 
 - **Provider** and **Model** choices are pre-filled with the last values you used.
 - If a provider and model are already configured, focus lands directly in the Prompt field so you can start typing immediately. If not yet configured, focus starts on the Provider choice to guide you through setup.
