@@ -124,8 +124,6 @@ PRIVATE_SETTINGS_FIELDS: frozenset[str] = frozenset({
     "read_aloud_piper_model",
     "read_aloud_piper_model_dir",
     "read_aloud_espeak_executable",
-    "read_aloud_melotts_executable",
-    "read_aloud_chatterbox_executable",
     "read_aloud_openvoice_executable",
     "watch_folder_path",
     "last_update_check",

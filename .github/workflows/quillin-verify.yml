@@ -4,7 +4,7 @@ name: Quillin Verify
 # submitted to, QUILL must pass the submission linter in --strict mode (schema
 # check + contract validator + structure/capability hygiene) and the linter's
 # own test suite. A red check here blocks merge — the "magical" submission gate
-# described in docs/quillin-submission.md.
+# described in docs/quillins.md.
 
 on:
   push:

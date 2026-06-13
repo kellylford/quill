@@ -1,7 +1,7 @@
 """First-party contribution facade — the trusted half of the Quillins grammar.
 
 This is the single piece of *new* core surface introduced by the menus-as-data /
-Quillin migration (``docs/quillin-migration-plan.md`` Wave 0). It lets QUILL's own
+Quillin migration (``docs/quillins.md`` Wave 0). It lets QUILL's own
 built-in features describe themselves with the **same contribution vocabulary**
 that third-party Quillins use — a :class:`~quill.core.quillins.model.ExtensionCommand`
 (``id``, ``title``, handler), its placement in a menu, and its hotkey — and feed

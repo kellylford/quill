@@ -10,7 +10,7 @@ Why this shape:
 
 * The rich pane shows bold, italic, headings, bullets and links as *formatting*
   rather than markup, and announces the formatting under the caret out loud
-  (``docs/rtf.md`` "a spoken formatting model"). It is a navigable, read-only view;
+  (``docs/QUILL-PRD.md`` "a spoken formatting model"). It is a navigable, read-only view;
   writers edit in the Markdown lens, where QUILL's offset-based commands are exact.
 * Fully bidirectional rich editing with cross-session undo is the proposal's
   explicitly hardest problem; it is tracked honestly as in-progress rather than

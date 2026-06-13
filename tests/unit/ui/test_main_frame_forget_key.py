@@ -12,11 +12,13 @@ def _source() -> str:
     )
 
 
-def test_forget_key_menu_item_is_present() -> None:
+def test_forget_key_menu_item_removed_from_menu() -> None:
     source = _source()
-    # An id is allocated and a Forget API Key menu item is appended.
+    # The id and handler remain (per-provider "Forget this provider's key" now
+    # lives in the AI Hub), but the standalone global "Forget API Key" menu item
+    # was removed as part of the AI Hub consolidation (AICONS-1).
     assert "self._id_ai_forget_key = wx.NewIdRef()" in source
-    assert '"&Forget API Key"' in source
+    assert '"&Forget API Key"' not in source
 
 
 def test_forget_key_menu_item_is_bound() -> None:

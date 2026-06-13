@@ -1,7 +1,7 @@
 """Text Tools - a bundled Layer 2 Quillin (Tier C).
 
 Six on-demand text transforms converted out of QUILL's core/UI Python into a
-genuine sandboxed Quillin (``docs/quillin-conversion-roadmap.md`` Wave 1):
+genuine sandboxed Quillin (``docs/quillins.md`` Wave 1):
 number lines, hard-wrap lines, count/extract regex matches, and the two
 cursor-split set operations. Each runs out-of-process through the same
 capability-gated host path offered to third-party authors, proving the platform

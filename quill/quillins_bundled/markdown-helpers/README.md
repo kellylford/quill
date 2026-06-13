@@ -34,5 +34,5 @@ request — would still pass the per-action consent gate at runtime.
 2. Edit `manifest.json`: pick a reverse-DNS `id`, declare the **minimum**
    capabilities, and contribute your commands.
 3. Lint it: `python -m quill.tools.quillin_lint path\to\your-quillin --strict`.
-4. Read the submission guide: [`docs/quillin-submission.md`](../../../docs/quillin-submission.md)
-   and the [Quillin Author Covenant](../../../docs/quillin-code-of-conduct.md).
+4. Read the submission guide: [`docs/quillins.md`](../../../docs/quillins.md)
+   and the [Quillin Author Covenant](../../../docs/quillins.md).

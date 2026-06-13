@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import io
 import zipfile
-from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -23,7 +22,6 @@ from quill._vendor.autoupdate.autoupdate import (
     find_update,
     perform_update,
 )
-from quill.ui.update_manager import QuillUpdateManager
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
@@ -272,86 +270,3 @@ def test_call_callback_swallows_exceptions() -> None:
 
     # Should not propagate
     _call_callback(bad_callback, 1, 2, x=3)
-
-
-# ---------------------------------------------------------------------------
-# QuillUpdateManager
-# ---------------------------------------------------------------------------
-
-
-def _make_manager(endpoint: str = FEED_URL) -> QuillUpdateManager:
-    frame = SimpleNamespace(set_status_message=MagicMock())
-    return QuillUpdateManager(frame, endpoint, CURRENT_VERSION)
-
-
-def test_manager_announces_when_autoupdate_unavailable() -> None:
-    mgr = _make_manager()
-    with patch("quill.ui.update_manager.perform_update", None):
-        with patch.object(mgr, "_announce") as mock_announce:
-            mgr.check_for_updates()
-            mock_announce.assert_called_once()
-            assert "not installed" in mock_announce.call_args[0][0].lower()
-
-
-def test_manager_ignores_concurrent_check() -> None:
-    mgr = _make_manager()
-    mgr.is_updating = True
-
-    with patch("quill.ui.update_manager.perform_update") as mock_pu:
-        with patch.object(mgr, "_announce") as mock_announce:
-            mgr.check_for_updates()
-            mock_pu.assert_not_called()
-            mock_announce.assert_called_once()
-            assert "progress" in mock_announce.call_args[0][0].lower()
-
-
-def test_manager_sets_is_updating_before_calling_perform_update() -> None:
-    mgr = _make_manager()
-    state_during_call: list[bool] = []
-
-    def capture_state(**_: object) -> None:
-        state_during_call.append(mgr.is_updating)
-
-    with patch("quill.ui.update_manager.perform_update", side_effect=capture_state):
-        mgr.check_for_updates()
-
-    assert state_during_call == [True]
-
-
-def test_manager_clears_is_updating_on_exception() -> None:
-    mgr = _make_manager()
-
-    with patch("quill.ui.update_manager.perform_update", side_effect=RuntimeError("net error")):
-        with patch.object(mgr, "_announce"):
-            mgr.check_for_updates()
-
-    assert not mgr.is_updating
-
-
-def test_manager_announces_update_ready_via_on_update_complete() -> None:
-    mgr = _make_manager()
-
-    with patch.object(mgr, "_announce") as mock_announce:
-        mgr._on_update_complete()
-
-    assert mock_announce.called
-    text = mock_announce.call_args[0][0].lower()
-    assert "ready" in text or "restart" in text
-
-
-def test_manager_progress_sets_status_bar() -> None:
-    frame = SimpleNamespace(set_status_message=MagicMock())
-    mgr = QuillUpdateManager(frame, FEED_URL, CURRENT_VERSION)
-
-    mgr._on_download_progress(512, 1024)
-
-    frame.set_status_message.assert_called_once()
-    msg = frame.set_status_message.call_args[0][0]
-    assert "50%" in msg
-
-
-def test_manager_progress_handles_zero_total() -> None:
-    frame = SimpleNamespace(set_status_message=MagicMock())
-    mgr = QuillUpdateManager(frame, FEED_URL, CURRENT_VERSION)
-    # Should not raise ZeroDivisionError
-    mgr._on_download_progress(0, 0)

@@ -112,14 +112,10 @@ class IntellisensePopupMixin:
 
     def _handle_intellisense_key_down(self, event: object) -> bool:
         wx = self._wx
-        space_key = getattr(wx, "WXK_SPACE", ord(" "))
-        if event.ControlDown() and not event.AltDown() and not event.ShiftDown():
-            if event.GetKeyCode() == space_key:
-                if not self._feature_enabled("core.intellisense"):
-                    self._set_status("Word prediction is unavailable in this profile")
-                    return True
-                self._show_intellisense_popup(manual=True)
-                return True
+        # The manual word-prediction trigger is the edit.word_prediction command
+        # (Ctrl+. by default) via show_word_prediction(). Ctrl+Space is left free
+        # for edit.select_chunk per keymap §4.22, so it is intentionally not
+        # intercepted here.
         popup = getattr(self, "_intellisense_popup", None)
         if popup is None or not popup.is_visible():
             return False

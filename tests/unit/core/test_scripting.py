@@ -26,6 +26,19 @@ class _FakeHost:
             "edit.copy": "Copy",
         }
         self.announcements: list[str] = []
+        self.settings_data: dict[str, object] = {
+            "theme": "dark",
+            "ai_chat_default_provider": "ollama",
+        }
+        self.profiles = [("essential", "Essential"), ("writer", "Writer")]
+        self.active_profile_pair = ("essential", "Essential")
+        self.enabled_features = {"core.editor"}
+        self.bookmarks_data = [("Intro", 0), ("End", 42)]
+        self.quillins_data = ["word-count", "markdown-helpers"]
+        self.macro_recording: str | None = None
+        self.last_macro: str | None = None
+        self.macro_played = False
+        self.spell_db = {"happy": ["glad", "cheerful"]}
 
     def console_get_editor_text(self) -> str:
         return self.text
@@ -73,6 +86,50 @@ class _FakeHost:
         lines = self.text.count("\n") + 1
         chars = len(self.text)
         return {"words": words, "lines": lines, "chars": chars, "paragraphs": 1}
+
+    def console_get_setting(self, name):
+        return self.settings_data.get(name)
+
+    def console_all_settings(self):
+        return dict(self.settings_data)
+
+    def console_active_profile(self):
+        return self.active_profile_pair
+
+    def console_available_profiles(self):
+        return list(self.profiles)
+
+    def console_switch_profile(self, profile_id):
+        for pid, pname in self.profiles:
+            if pid == profile_id:
+                self.active_profile_pair = (pid, pname)
+
+    def console_feature_enabled(self, feature_id):
+        return feature_id in self.enabled_features
+
+    def console_list_bookmarks(self):
+        return list(self.bookmarks_data)
+
+    def console_list_quillins(self):
+        return list(self.quillins_data)
+
+    def console_start_macro(self, name):
+        self.macro_recording = name
+
+    def console_stop_macro(self):
+        name = self.macro_recording
+        self.macro_recording = None
+        self.last_macro = name
+        return name
+
+    def console_play_last_macro(self):
+        self.macro_played = True
+
+    def console_recording_macro(self):
+        return self.macro_recording
+
+    def console_spell_suggest(self, word):
+        return list(self.spell_db.get(word, []))
 
 
 @pytest.fixture
@@ -204,3 +261,88 @@ def test_help_returns_string(api):
 
 def test_repr(api):
     assert "QuillScriptAPI" in repr(api)
+
+
+# --- New q.* facades (QDC API completion) -------------------------------------
+
+
+def test_selection_facade(api, host):
+    host.selection = "sel"
+    assert api.selection.text() == "sel"
+    api.selection.replace("new")
+    assert host.selection == "new"
+
+
+def test_doc_facade(api, host):
+    assert api.doc.name() == "test.txt"
+    assert api.doc.text() == "Hello world\nSecond line"
+    assert api.doc.stats().words == 4
+    api.doc.set_text("changed")
+    assert host.text == "changed"
+
+
+def test_editor_facade(api, host):
+    api.editor.insert("ins")
+    assert host.selection == "ins"
+    api.editor.goto_line(3)
+    assert host.cursor_line == 3
+    api.editor.goto_offset(7)
+    assert host.cursor_offset == 7
+
+
+def test_settings_facade(api):
+    assert api.settings.get("ai_chat_default_provider") == "ollama"
+    assert "theme" in api.settings.all()
+
+
+def test_profile_facade(api):
+    assert api.profile.current() == ("essential", "Essential")
+    assert ("writer", "Writer") in api.profile.names()
+    api.profile.switch("writer")
+    assert api.profile.current() == ("writer", "Writer")
+    assert api.profile.feature_enabled("core.editor") is True
+    assert api.profile.feature_enabled("nope") is False
+
+
+def test_bookmarks_facade(api):
+    assert ("Intro", 0) in api.bookmarks.list()
+
+
+def test_quillins_facade(api):
+    assert "word-count" in api.quillins.list()
+
+
+def test_macros_facade(api, host):
+    api.macros.start("m1")
+    assert api.macros.recording() == "m1"
+    assert api.macros.stop() == "m1"
+    assert api.macros.recording() is None
+    api.macros.play()
+    assert host.macro_played is True
+
+
+def test_begin_end_macro_aliases(api):
+    api.begin_macro("m2")
+    assert api.macros.recording() == "m2"
+    assert api.end_macro() == "m2"
+
+
+def test_spell_facade(api):
+    assert api.spell.suggest("happy") == ["glad", "cheerful"]
+    assert api.spell.suggest("unknownword") == []
+
+
+def test_diagnostics_facade(api):
+    assert "QUILL" in api.diagnostics.summary()
+    assert "QUILL" in api.diagnostics.document_summary()
+
+
+def test_describe_command(api):
+    assert "file.save" in api.describe_command("file.save")
+    assert "unknown" in api.describe_command("not.real")
+
+
+def test_help_lists_new_facades(api):
+    result = api.help()
+    assert "q.macros" in result
+    assert "q.selection" in result

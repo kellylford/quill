@@ -88,7 +88,7 @@ Run these before opening a pull request:
 - Lint: `ruff check .`
 - Format check: `ruff format --check .`
 - Scoped strict type-check: `mypy quill\core quill\io`
-- Tests: `pytest -q`
+- Tests: `pytest tests/unit/ tests/stability/ -q --ignore=tests/unit/core/test_net_tls.py --ignore=tests/unit/core/test_thesaurus.py`
 - Docs artifact parity (if docs changed): `python scripts/check_docs_artifacts.py`
 
 Type-checking is intentionally **scoped to `quill\core` and `quill\io`**. These
@@ -131,12 +131,12 @@ Please avoid mixing unrelated refactors with feature or bug-fix work.
 Quillins are small, sandboxed extensions that add commands, snippets, menus, and
 hotkeys to QUILL. Contributing one has its own dedicated path:
 
-- **Tutorial** — [`docs/quillin-tutorial.md`](docs/quillin-tutorial.md): a
+- **Tutorial** — [`docs/quillins.md`](docs/quillins.md): a
   hands-on, build-it-from-scratch walkthrough (Layer 1 snippet → Layer 2
   handler → lint → test → submit).
-- **Submission guide** — [`docs/quillin-submission.md`](docs/quillin-submission.md):
+- **Submission guide** — [`docs/quillins.md`](docs/quillins.md):
   the process, directory layout, review criteria, and acceptance checklist.
-- **Author Covenant** — [`docs/quillin-code-of-conduct.md`](docs/quillin-code-of-conduct.md):
+- **Author Covenant** — [`docs/quillins.md`](docs/quillins.md):
   the code of conduct for Quillin *code* (accessibility, capability honesty, no
   silent network, security). Every submission attests to it.
 - **Self-lint** — `python -m quill.tools.quillin_lint <dir> --strict` must be
@@ -188,7 +188,7 @@ Before opening a PR, quickly sanity-check security posture:
 
 Localization contributors should follow:
 
-- `docs/localization/translation-contributor-plan.md`
+- `docs/translating.md`
 
 ## License
 

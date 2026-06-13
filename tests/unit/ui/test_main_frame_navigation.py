@@ -186,6 +186,8 @@ def _build_frame(text: str, insertion_point: int = 0) -> MainFrame:
     frame._compare_session = None
     frame._compare_ignore_trailing_spaces = True
     frame._compare_ignore_line_endings = True
+    frame._external_change_watcher = None
+    frame._external_change_timer = None
     frame._document_tabs = [type("Tab", (), {"editor": frame.editor, "document": frame.document})()]
     frame._active_tab_index = 0
     frame.notebook.AddPage(object(), frame.document.name, select=True)
@@ -436,6 +438,30 @@ def test_statusbar_hides_file_path_when_title_uses_full_path() -> None:
     items = frame._statusbar_items()
 
     assert "file_path" not in items
+
+
+def test_statusbar_hides_cells_for_disabled_features() -> None:
+    """A feature-gated status-bar cell must drop out when its feature is off.
+
+    The original behaviour rendered the cell with the text "Unavailable in
+    current profile" instead of hiding it, which contradicted the user-facing
+    promise that toggling a feature flag removes its affordance from the UI.
+    """
+    frame = _build_frame("hello", insertion_point=0)
+    frame.features = types.SimpleNamespace(
+        is_enabled=lambda feature_id: feature_id not in {"core.read_aloud", "core.analysis"}
+    )
+    frame._status_message = "Ready"
+
+    items = frame._statusbar_items()
+
+    # Cells that map to enabled features stay; cells that map to disabled
+    # features disappear entirely so the bar reflects the active profile.
+    assert "word_count" not in items
+    assert "read_aloud" not in items
+    # Cells with no feature mapping (or always-on features) remain.
+    assert "message" in items
+    assert "line_column" in items
 
 
 def test_statusbar_hides_modified_message_when_title_shows_dirty_state() -> None:

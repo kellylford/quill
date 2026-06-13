@@ -33,6 +33,7 @@ from quill.core.features import (
     FeatureManager,
 )
 from quill.core.settings import Settings
+from quill.ui.dialog_contract import apply_modal_ids
 
 _log = logging.getLogger(__name__)
 
@@ -517,6 +518,7 @@ class SetupWizardDialog(wx.Dialog):
         self.SetMinSize((500, 420))
         self.Fit()
         self.CentreOnParent()
+        apply_modal_ids(self, affirmative_id=wx.ID_OK, cancel_id=wx.ID_CANCEL)
 
     def _build_pages(self) -> list[wx.Panel]:
         return [

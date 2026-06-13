@@ -54,11 +54,21 @@ class SessionBrowserDialog:
             self.branch_list.SetSelection(current)
         root.Add(self.branch_list, 1, wx.EXPAND | wx.ALL, 12)
 
+        root.Add(
+            wx.StaticText(self.dialog, label="Branch details"),
+            0,
+            wx.LEFT | wx.RIGHT | wx.TOP,
+            12,
+        )
         self.compare_view = wx.TextCtrl(
             self.dialog,
+            value=(
+                "Select a branch above, then choose Compare with current to see "
+                "the turns unique to each branch."
+            ),
             style=wx.TE_MULTILINE | wx.TE_READONLY,
         )
-        self.compare_view.SetName("Branch comparison")
+        self.compare_view.SetName("Branch details")
         root.Add(self.compare_view, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 12)
 
         buttons = wx.BoxSizer(wx.HORIZONTAL)

@@ -84,18 +84,6 @@ ESPEAK_ENGLISH_VOICES: list[tuple[str, str]] = [
     ("en-gb-x-rp", "English (RP variant)"),
 ]
 
-MELOTTS_ENGLISH_VOICES: list[tuple[str, str]] = [
-    ("en-us", "MeloTTS English (US)"),
-    ("en-br", "MeloTTS English (British)"),
-    ("en-india", "MeloTTS English (India)"),
-]
-
-CHATTERBOX_ENGLISH_VOICES: list[tuple[str, str]] = [
-    ("english_narrator", "Narrator (English)"),
-    ("english_warm", "Warm (English)"),
-    ("english_clear", "Clear (English)"),
-]
-
 OPENVOICE_ENGLISH_VOICES: list[tuple[str, str]] = [
     ("en-base", "OpenVoice Base (English)"),
     ("en-bright", "OpenVoice Bright (English)"),
@@ -237,42 +225,6 @@ def discover_espeak_executable(configured_path: str = "") -> Path | None:
     return None
 
 
-def discover_melotts_executable(configured_path: str = "") -> Path | None:
-    validated = _validate_configured_executable(
-        configured_path, ("melotts.exe", "melo-tts.exe", "melotts")
-    )
-    if validated is not None:
-        return validated
-    app_root = os.environ.get("QUILL_APP_ROOT", "").strip()
-    if app_root:
-        bundled = Path(app_root) / "tools" / "speech" / "melotts"
-        for relative in ("melotts.exe", "melo-tts.exe", "bin/melotts.exe"):
-            probe = bundled / relative
-            if probe.exists():
-                return probe.resolve()
-    found = shutil.which("melotts") or shutil.which("melotts.exe")
-    if found:
-        return Path(found).resolve()
-    return None
-
-
-def discover_chatterbox_executable(configured_path: str = "") -> Path | None:
-    validated = _validate_configured_executable(configured_path, ("chatterbox.exe", "chatterbox"))
-    if validated is not None:
-        return validated
-    app_root = os.environ.get("QUILL_APP_ROOT", "").strip()
-    if app_root:
-        bundled = Path(app_root) / "tools" / "speech" / "chatterbox"
-        for relative in ("chatterbox.exe", "bin/chatterbox.exe"):
-            probe = bundled / relative
-            if probe.exists():
-                return probe.resolve()
-    found = shutil.which("chatterbox") or shutil.which("chatterbox.exe")
-    if found:
-        return Path(found).resolve()
-    return None
-
-
 def discover_openvoice_executable(configured_path: str = "") -> Path | None:
     validated = _validate_configured_executable(configured_path, ("openvoice.exe", "openvoice"))
     if validated is not None:
@@ -309,14 +261,6 @@ def list_piper_voices(model_search_path: str = "") -> list[VoiceOption]:
 
 def list_espeak_english_voices() -> list[VoiceOption]:
     return [VoiceOption(id=vid, name=name) for vid, name in ESPEAK_ENGLISH_VOICES]
-
-
-def list_melotts_english_voices() -> list[VoiceOption]:
-    return [VoiceOption(id=vid, name=name) for vid, name in MELOTTS_ENGLISH_VOICES]
-
-
-def list_chatterbox_english_voices() -> list[VoiceOption]:
-    return [VoiceOption(id=vid, name=name) for vid, name in CHATTERBOX_ENGLISH_VOICES]
 
 
 def list_openvoice_english_voices() -> list[VoiceOption]:
@@ -432,42 +376,6 @@ def _synthesize_with_cli_engine(
             if detail
             else f"{engine_label} exited with code {completed.returncode}."
         )
-
-
-def synthesize_with_melotts(
-    text: str,
-    output_path: Path,
-    *,
-    executable_path: Path,
-    voice: str = "en-us",
-    rate: int = 180,
-) -> None:
-    _synthesize_with_cli_engine(
-        text,
-        output_path,
-        executable_path=executable_path,
-        voice=voice,
-        rate=rate,
-        engine_label="MeloTTS",
-    )
-
-
-def synthesize_with_chatterbox(
-    text: str,
-    output_path: Path,
-    *,
-    executable_path: Path,
-    voice: str = "english_narrator",
-    rate: int = 180,
-) -> None:
-    _synthesize_with_cli_engine(
-        text,
-        output_path,
-        executable_path=executable_path,
-        voice=voice,
-        rate=rate,
-        engine_label="Chatterbox",
-    )
 
 
 def synthesize_with_openvoice(
@@ -646,12 +554,6 @@ class ReadAloudController:
         espeak_executable: str = "",
         espeak_voice: str = "en",
         espeak_rate: int = 175,
-        melotts_executable: str = "",
-        melotts_voice: str = "en-us",
-        melotts_rate: int = 180,
-        chatterbox_executable: str = "",
-        chatterbox_voice: str = "english_narrator",
-        chatterbox_rate: int = 180,
         openvoice_executable: str = "",
         openvoice_voice: str = "en-base",
         openvoice_rate: int = 180,
@@ -670,8 +572,6 @@ class ReadAloudController:
             "piper",
             "kokoro",
             "espeak",
-            "melotts",
-            "chatterbox",
             "openvoice",
         }
         if normalized_engine == "pyttsx3" and pyttsx3 is None:
@@ -690,16 +590,6 @@ class ReadAloudController:
                 "eSpeak-NG executable was not found. "
                 "Install eSpeak-NG or configure the path in Read Aloud Settings."
             )
-        if (
-            normalized_engine == "melotts"
-            and discover_melotts_executable(melotts_executable) is None
-        ):
-            raise ReadAloudUnavailableError("MeloTTS executable was not found")
-        if (
-            normalized_engine == "chatterbox"
-            and discover_chatterbox_executable(chatterbox_executable) is None
-        ):
-            raise ReadAloudUnavailableError("Chatterbox executable was not found")
         if normalized_engine == "openvoice":
             if not openvoice_consent:
                 raise ReadAloudUnavailableError(
@@ -775,26 +665,6 @@ class ReadAloudController:
                         or Path(espeak_executable).expanduser(),
                         voice=espeak_voice,
                         rate=espeak_rate,
-                        on_progress=on_progress,
-                    )
-                elif normalized_engine == "melotts":
-                    self._run_melotts_live(
-                        spans,
-                        text,
-                        executable=discover_melotts_executable(melotts_executable)
-                        or Path(melotts_executable).expanduser(),
-                        voice=melotts_voice,
-                        rate=melotts_rate,
-                        on_progress=on_progress,
-                    )
-                elif normalized_engine == "chatterbox":
-                    self._run_chatterbox_live(
-                        spans,
-                        text,
-                        executable=discover_chatterbox_executable(chatterbox_executable)
-                        or Path(chatterbox_executable).expanduser(),
-                        voice=chatterbox_voice,
-                        rate=chatterbox_rate,
                         on_progress=on_progress,
                     )
                 elif normalized_engine == "openvoice":
@@ -1151,50 +1021,6 @@ class ReadAloudController:
                 raise ReadAloudUnavailableError(f"eSpeak-NG exited with code {exit_code}.")
             with self._lock:
                 self._cursor = span.end
-
-    def _run_melotts_live(
-        self,
-        spans: list[SentenceSpan],
-        text: str,
-        *,
-        executable: Path,
-        voice: str,
-        rate: int,
-        on_progress: Callable[[int, int], None] | None,
-    ) -> None:
-        def gen(sentence: str, out: Path) -> None:
-            synthesize_with_melotts(
-                sentence,
-                out,
-                executable_path=executable,
-                voice=voice,
-                rate=rate,
-            )
-
-        self._cache_seed = ("melotts", str(executable), voice, rate)
-        self._run_wav_sentences(spans, text, on_progress=on_progress, generate_sentence_wav=gen)
-
-    def _run_chatterbox_live(
-        self,
-        spans: list[SentenceSpan],
-        text: str,
-        *,
-        executable: Path,
-        voice: str,
-        rate: int,
-        on_progress: Callable[[int, int], None] | None,
-    ) -> None:
-        def gen(sentence: str, out: Path) -> None:
-            synthesize_with_chatterbox(
-                sentence,
-                out,
-                executable_path=executable,
-                voice=voice,
-                rate=rate,
-            )
-
-        self._cache_seed = ("chatterbox", str(executable), voice, rate)
-        self._run_wav_sentences(spans, text, on_progress=on_progress, generate_sentence_wav=gen)
 
     def _run_openvoice_live(
         self,

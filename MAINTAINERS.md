@@ -77,4 +77,4 @@ the four-tier role model and how to get started, see
 - `SECURITY.md`
 - `RELEASE.md`
 - `docs/translating.md`
-- `docs/TRANSLATION_STYLE_GUIDE.md`
+- `docs/translating.md`

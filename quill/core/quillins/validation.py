@@ -2,7 +2,7 @@
 
 QUILL ships no ``jsonschema`` dependency (see ``pyproject.toml`` — runtime deps
 are only ``regex`` and ``defusedxml``), so the normative manifest contract from
-``docs/scripting.md`` §13 is enforced here in pure, strictly-typed Python, the
+``docs/quillins.md`` §13 is enforced here in pure, strictly-typed Python, the
 same hand-rolled-validator style used by the other ``quill/core`` stores.
 
 The published JSON Schema artifact lives at
@@ -385,7 +385,7 @@ def validate_manifest(
         )
         _validate_command_references(contributions, contributed_ids, builtin_command_ids, errors)
 
-    # docs/scripting.md §15 rule 6: a handler command requires an entry module
+    # docs/quillins.md §15 rule 6: a handler command requires an entry module
     # (Python or Node) and the ui.command capability.
     if any_handler:
         if main is None:

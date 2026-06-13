@@ -1,6 +1,6 @@
 """Tests for the first-party Host facade and the migrated line-transform feature.
 
-These pin Wave 2 of the Quillin migration (``docs/quillin-migration-plan.md``
+These pin Wave 2 of the Quillin migration (``docs/quillins.md``
 §9): the ``number_lines`` / ``hard_wrap_lines`` handlers now act through the
 wx-free :class:`quill.core.contributions.Host` facade. A fake host exercises the
 handler logic with no ``wx`` at all, and the live :class:`MainFrameHost` adapter

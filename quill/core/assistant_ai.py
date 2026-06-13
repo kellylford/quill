@@ -65,7 +65,6 @@ _SUPPORTED_PROVIDERS = {
     "claude",
     "openrouter",
     "gemini",
-    "azure_openai",
     "custom",
 }
 _CLOUD_PROVIDERS = frozenset({
@@ -73,7 +72,6 @@ _CLOUD_PROVIDERS = frozenset({
     "claude",
     "openrouter",
     "gemini",
-    "azure_openai",
     "ollama_cloud",
 })
 
@@ -462,13 +460,16 @@ def _extract_model_names(payload: object) -> list[str]:
 
 
 def _extract_names_from_model_item(item: dict[str, object]) -> list[str]:
-    candidates = (
+    id_candidates = (
         str(item.get("name", "")).strip(),
         str(item.get("id", "")).strip(),
         str(item.get("model", "")).strip(),
-        str(item.get("display_name", "")).strip(),
     )
-    return [value for value in candidates if value]
+    primary = [v for v in id_candidates if v]
+    if primary:
+        return primary
+    display = str(item.get("display_name", "")).strip()
+    return [display] if display else []
 
 
 def _model_endpoint_candidates(provider: str, host: str) -> list[str]:
@@ -483,12 +484,6 @@ def _model_endpoint_candidates(provider: str, host: str) -> list[str]:
         return [f"{host}/v1/models"]
     if normalized == "gemini":
         return [f"{host}/v1/models", f"{host}/v1beta/models"]
-    if normalized == "azure_openai":
-        version = quote("2024-10-21")
-        return [
-            f"{host}/openai/models?api-version={version}",
-            f"{host}/openai/deployments?api-version={version}",
-        ]
     return [f"{host}/api/tags", f"{host}/v1/models"]
 
 
@@ -548,8 +543,6 @@ def _build_auth_headers(provider: str, host: str, api_key: str) -> dict[str, str
         headers["anthropic-version"] = "2023-06-01"
     if provider == "gemini":
         headers["x-goog-api-key"] = secret
-    if provider == "azure_openai":
-        headers["api-key"] = secret
     return headers
 
 
@@ -663,6 +656,90 @@ def clear_assistant_api_key() -> bool:
     return had_credential or had_file
 
 
+# --- Per-provider credentials (AI Hub: configure every provider) ----------
+#
+# The legacy single-key store above keeps the *active* provider's key (so the
+# generation path and existing readers are unchanged). These helpers add a key
+# *per provider* so a user can configure OpenAI, Claude, Gemini, ... each with
+# its own key and switch between them without re-entering anything. Keys live in
+# the OS credential manager under a per-provider target; there is no plaintext
+# fallback file for these (the active key still uses the DPAPI fallback).
+
+
+def provider_credential_target(provider: str) -> str:
+    """Per-provider credential-manager target name."""
+    normalized = provider.strip().lower() or "ollama"
+    return f"QUILL:assistant:{normalized}:api-key"
+
+
+def load_provider_api_key(provider: str) -> str:
+    """Return the stored key for *provider*, or "" if none."""
+    return _cs_load(provider_credential_target(provider)) or ""
+
+
+def save_provider_api_key(provider: str, api_key: str) -> bool:
+    """Store (or clear, when empty) the key for *provider*. Returns True on save."""
+    secret = api_key.strip()
+    target = provider_credential_target(provider)
+    if not secret:
+        _cs_delete(target)
+        return False
+    try:
+        _cs_save(target, secret)
+    except Exception:  # noqa: BLE001 - credential store unavailable
+        return False
+    return True
+
+
+def clear_provider_api_key(provider: str) -> None:
+    """Forget the stored key for a single provider."""
+    _cs_delete(provider_credential_target(provider))
+
+
+def provider_models_path() -> Path:
+    """Path to the per-provider default-model map."""
+    return assistant_connection_path().parent / "assistant-provider-models.json"
+
+
+def load_provider_model(provider: str) -> str:
+    """Return the saved default model for *provider*, or "" if none."""
+    raw = read_json(provider_models_path(), default={})
+    if not isinstance(raw, dict):
+        return ""
+    return str(raw.get(provider.strip().lower(), "")).strip()
+
+
+def save_provider_model(provider: str, model: str) -> None:
+    """Remember (or clear, when empty) the default model for *provider*."""
+    key = provider.strip().lower() or "ollama"
+    raw = read_json(provider_models_path(), default={})
+    data = dict(raw) if isinstance(raw, dict) else {}
+    value = model.strip()
+    if value:
+        data[key] = value
+    else:
+        data.pop(key, None)
+    write_json_atomic(provider_models_path(), data)
+
+
+def set_active_provider(settings: AssistantConnectionSettings, api_key: str) -> None:
+    """Make *settings* the active connection and persist its key per-provider.
+
+    Writes the per-provider key, saves the active connection settings, and mirrors
+    the key into the legacy active-key store so the generation path (which reads
+    ``load_assistant_api_key``) uses the selected provider immediately. This is the
+    "switch provider" primitive the AI Hub needs to let users work through every
+    provider without losing each one's key.
+    """
+    provider = settings.provider.strip().lower() or "ollama"
+    if api_key.strip():
+        save_provider_api_key(provider, api_key)
+    if settings.model.strip():
+        save_provider_model(provider, settings.model)
+    save_assistant_connection_settings(settings)
+    save_assistant_api_key(api_key)
+
+
 def assistant_secret_unlock_failed() -> bool:
     """Return True when a secret is saved on disk but cannot be unlocked here.
 
@@ -728,10 +805,6 @@ def chat_endpoint(provider: str, host: str, model: str) -> str:
         return f"{host}/v1/messages"
     if normalized == "gemini":
         return f"{host}/v1beta/models/{quote(model)}:generateContent"
-    if normalized == "azure_openai":
-        # Azure targets a *deployment* in the path, not a model in the body.
-        version = quote("2024-10-21")
-        return f"{host}/openai/deployments/{quote(model)}/chat/completions?api-version={version}"
     if normalized == "ollama":
         return f"{host}/api/chat"
     return f"{host}/v1/chat/completions"
@@ -769,12 +842,6 @@ def build_chat_body(
         return {"contents": [{"role": "user", "parts": [{"text": prompt}]}]}
     if normalized == "ollama":
         return {"model": model, "messages": [user_message], "stream": stream}
-    if normalized == "azure_openai":
-        # The deployment is in the URL, so the body omits the model.
-        body = {"messages": [user_message], "max_tokens": max_tokens}
-        if stream:
-            body["stream"] = True
-        return body
     body = {"model": model, "messages": [user_message], "max_tokens": max_tokens}
     if stream:
         body["stream"] = True
@@ -827,7 +894,7 @@ def parse_chat_response(provider: str, payload: object) -> str | None:
         if isinstance(response, str):
             return response.strip() or None
         return None
-    # OpenAI-compatible: openai, openrouter, custom, ollama_cloud, azure_openai.
+    # OpenAI-compatible: openai, openrouter, custom, ollama_cloud.
     choices = payload.get("choices")
     if isinstance(choices, list) and choices:
         first = choices[0]
@@ -927,6 +994,37 @@ def generate_assistant_response(
     if last_error is None:
         return None, "Could not reach AI endpoint."
     return None, last_error.message
+
+
+def test_chat(
+    settings: AssistantConnectionSettings,
+    api_key: str,
+    *,
+    timeout_seconds: float = 30.0,
+) -> tuple[bool, str]:
+    """Send a tiny prompt to confirm a provider/model actually answers.
+
+    Powers the AI Hub "Test Chat" button. Returns ``(ok, message)`` with a
+    plain-language, screen-reader-friendly result. Pure aside from the single
+    generation call, so it is unit-tested by patching ``generate_assistant_response``.
+    """
+    provider = settings.provider.strip().lower()
+    if provider == "off":
+        return False, "The AI provider is set to Off. Choose a provider first."
+    text, error = generate_assistant_response(
+        settings,
+        api_key,
+        "Reply with the single word: pong",
+        max_tokens=16,
+        timeout_seconds=timeout_seconds,
+    )
+    if error:
+        return False, error
+    reply = (text or "").strip()
+    if not reply:
+        return False, "Connected, but the model returned an empty response."
+    snippet = reply if len(reply) <= 80 else reply[:77] + "..."
+    return True, f"Test chat succeeded with {provider_display_name(provider)}. Reply: {snippet}"
 
 
 # --- Streaming chat generation (AI-14, AI-1) ------------------------------

@@ -76,12 +76,6 @@ class Settings:
     read_aloud_espeak_executable: str = ""
     read_aloud_espeak_voice: str = "en"
     read_aloud_espeak_rate: int = 175
-    read_aloud_melotts_executable: str = ""
-    read_aloud_melotts_voice: str = "en-us"
-    read_aloud_melotts_rate: int = 180
-    read_aloud_chatterbox_executable: str = ""
-    read_aloud_chatterbox_voice: str = "english_narrator"
-    read_aloud_chatterbox_rate: int = 180
     read_aloud_openvoice_executable: str = ""
     read_aloud_openvoice_voice: str = "en-base"
     read_aloud_openvoice_rate: int = 180
@@ -261,8 +255,6 @@ class Settings:
             "piper",
             "kokoro",
             "espeak",
-            "melotts",
-            "chatterbox",
             "openvoice",
         }
         if read_aloud_engine not in _valid_engines:
@@ -313,27 +305,6 @@ class Settings:
             read_aloud_espeak_rate = 80
         if read_aloud_espeak_rate > 450:
             read_aloud_espeak_rate = 450
-        read_aloud_melotts_executable = str(data.get("read_aloud_melotts_executable", "")).strip()
-        read_aloud_melotts_voice = (
-            str(data.get("read_aloud_melotts_voice", "en-us")).strip().lower() or "en-us"
-        )
-        read_aloud_melotts_rate = int(data.get("read_aloud_melotts_rate", 180))
-        if read_aloud_melotts_rate < 80:
-            read_aloud_melotts_rate = 80
-        if read_aloud_melotts_rate > 450:
-            read_aloud_melotts_rate = 450
-        read_aloud_chatterbox_executable = str(
-            data.get("read_aloud_chatterbox_executable", "")
-        ).strip()
-        read_aloud_chatterbox_voice = (
-            str(data.get("read_aloud_chatterbox_voice", "english_narrator")).strip().lower()
-            or "english_narrator"
-        )
-        read_aloud_chatterbox_rate = int(data.get("read_aloud_chatterbox_rate", 180))
-        if read_aloud_chatterbox_rate < 80:
-            read_aloud_chatterbox_rate = 80
-        if read_aloud_chatterbox_rate > 450:
-            read_aloud_chatterbox_rate = 450
         read_aloud_openvoice_executable = str(
             data.get("read_aloud_openvoice_executable", "")
         ).strip()
@@ -422,7 +393,7 @@ class Settings:
         )
         # OCR-2: image-to-text engine selection
         ocr_engine = str(data.get("ocr_engine", "auto")).strip().lower()
-        if ocr_engine not in {"auto", "windows", "tesseract"}:
+        if ocr_engine not in {"auto", "windows"}:
             ocr_engine = "auto"
         # SHELL-1: file-manager "Send to Quill" context-menu verbs
         shell_integration_enabled = bool(data.get("shell_integration_enabled", False))
@@ -573,12 +544,6 @@ class Settings:
             read_aloud_espeak_executable=read_aloud_espeak_executable,
             read_aloud_espeak_voice=read_aloud_espeak_voice,
             read_aloud_espeak_rate=read_aloud_espeak_rate,
-            read_aloud_melotts_executable=read_aloud_melotts_executable,
-            read_aloud_melotts_voice=read_aloud_melotts_voice,
-            read_aloud_melotts_rate=read_aloud_melotts_rate,
-            read_aloud_chatterbox_executable=read_aloud_chatterbox_executable,
-            read_aloud_chatterbox_voice=read_aloud_chatterbox_voice,
-            read_aloud_chatterbox_rate=read_aloud_chatterbox_rate,
             read_aloud_openvoice_executable=read_aloud_openvoice_executable,
             read_aloud_openvoice_voice=read_aloud_openvoice_voice,
             read_aloud_openvoice_rate=read_aloud_openvoice_rate,

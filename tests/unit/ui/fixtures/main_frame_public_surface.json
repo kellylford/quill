@@ -5,6 +5,7 @@
   "apply_bw_recommended_provider",
   "apply_keyboard_pack",
   "check_bw_faster_whisper_engine",
+  "check_external_changes_now",
   "check_for_glow_updates",
   "check_for_updates",
   "check_grammar_with_ai",

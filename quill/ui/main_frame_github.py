@@ -87,7 +87,7 @@ class GitHubRemoteMixin:
             "Open GitHub File URL",
         ) as dlg:
             dlg.SetName("GitHub file URL")
-            if dlg.ShowModal() != wx.ID_OK:
+            if self._show_modal_dialog(dlg, "Open GitHub File URL") != wx.ID_OK:
                 return
             url = dlg.GetValue().strip()
         if not url:
@@ -140,7 +140,7 @@ class GitHubRemoteMixin:
             value=f"Update {Path(origin.path).name}",
         ) as dlg:
             dlg.SetName("Commit message")
-            if dlg.ShowModal() != wx.ID_OK:
+            if self._show_modal_dialog(dlg, "Save to GitHub") != wx.ID_OK:
                 return
             message = dlg.GetValue().strip()
         if not message:

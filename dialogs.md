@@ -39,7 +39,7 @@ Automated companion tests and the manual QA plan:
 - **Announcement and SR detection tests** — `tests/accessibility/test_accessibility_suite.py`
   and `tests/accessibility/test_announcement_grammar.py` cover screen-reader announcement
   capture, SR detection, and announcement grammar. Run with `pytest tests/accessibility/ -q`.
-- **Manual QA procedure** — `docs/qa/final-qa-test-plan.md` §6 ("Dialog estate pass")
+- **Manual QA procedure** — `docs/QUILL-PRD.md` §6 ("Dialog estate pass")
   describes the full human-executed pass against this checklist, including the SR coverage
   matrix (NVDA full, JAWS spot, Narrator sanity) and the A11Y-4 sign-off criteria.
 

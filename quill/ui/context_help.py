@@ -27,6 +27,7 @@ from collections.abc import Callable
 import wx
 
 from quill.core.help import HelpRenderer, HelpTopic
+from quill.ui.dialog_contract import apply_modal_ids
 
 _log = logging.getLogger(__name__)
 
@@ -145,6 +146,7 @@ class ContextHelpDialog(wx.Dialog):
         self.SetMinSize((440, 220))
         self.Fit()
         self.CentreOnParent()
+        apply_modal_ids(self, affirmative_id=wx.ID_OK, escape_id=wx.ID_OK)
         # Explicitly focus the TextCtrl so the SR reads all content on open.
         self._body_text.SetFocus()
 
@@ -231,8 +233,31 @@ class ContextHelpMixin:
             ctrl_topic=ctrl_topic,
             user_guide_opener=user_guide_opener,
         )
-        result = dlg.ShowModal()
+        result = self._show_modal_dialog(dlg, "Context Help")
         dlg.Destroy()
         if result == wx.ID_HELP and user_guide_opener is not None:
             section = ctrl_topic.user_guide_section
             user_guide_opener(section)
+
+    def show_topic_help(
+        self, topic_id: str, user_guide_opener: Callable[..., None] | None = None
+    ) -> None:
+        """Show the context-help dialog for a specific topic id.
+
+        Used when the focused control has no help-topic name of its own but maps
+        to a known topic — e.g. F1 in the main document window resolving to the
+        ``main.editor`` topic without giving the editor an unfriendly accessible
+        name.
+        """
+        renderer = _get_renderer()
+        ctrl_topic = renderer.get(topic_id) or renderer.get_or_missing(topic_id)
+        dlg = ContextHelpDialog(
+            self._help_frame,
+            dialog_topic=None,
+            ctrl_topic=ctrl_topic,
+            user_guide_opener=user_guide_opener,
+        )
+        result = self._show_modal_dialog(dlg, "Context Help")
+        dlg.Destroy()
+        if result == wx.ID_HELP and user_guide_opener is not None:
+            user_guide_opener(ctrl_topic.user_guide_section)

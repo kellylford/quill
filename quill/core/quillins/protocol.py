@@ -1,6 +1,6 @@
 """Line-delimited JSON RPC framing shared by the Quillins host and worker.
 
-Layer 2 Quillins run **out-of-process** for isolation (``docs/scripting.md`` §3,
+Layer 2 Quillins run **out-of-process** for isolation (``docs/quillins.md`` §3,
 §6): a buggy or malicious extension cannot freeze the editor, corrupt the
 buffer, or touch ``wx``. The two processes speak a tiny, line-delimited JSON
 protocol over stdio — the same framing style as :mod:`quill.core.ipc`.

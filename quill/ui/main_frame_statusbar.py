@@ -32,6 +32,17 @@ class StatusBarMixin:
         ordered = [item for item in self.settings.status_bar_order if item in allowed]
         hidden = {item for item in self.settings.status_bar_hidden if item in allowed}
         visible = [item for item in ordered if item not in hidden]
+        # Hide cells whose governing feature is disabled so the bar reflects
+        # the active feature profile rather than showing "Unavailable" cells.
+        feature_manager = getattr(self, "features", None)
+        if feature_manager is not None:
+            status_bar_features = getattr(self, "_STATUS_BAR_FEATURES", {}) or {}
+            visible = [
+                item
+                for item in visible
+                if item not in status_bar_features
+                or feature_manager.is_enabled(status_bar_features[item])
+            ]
         if (
             getattr(self.settings, "title_bar_path_mode", "name") == "full_path"
             and "file_path" in visible

@@ -54,21 +54,12 @@ def test_chat_endpoint_per_provider() -> None:
     )
     assert chat_endpoint("claude", "https://api.anthropic.com", "x").endswith("/v1/messages")
     assert ":generateContent" in chat_endpoint("gemini", "https://g.example", "gemini-2.0-flash")
-    azure = chat_endpoint("azure_openai", "https://r.openai.azure.com", "my-deploy")
-    assert "/openai/deployments/my-deploy/chat/completions" in azure
-    assert "api-version=" in azure
     assert chat_endpoint("ollama", "http://localhost:11434", "llama3").endswith("/api/chat")
 
 
 def test_build_chat_body_claude_requires_max_tokens() -> None:
     body = build_chat_body("claude", "claude-3-5-sonnet-latest", "hi", max_tokens=256)
     assert body["max_tokens"] == 256
-    assert body["messages"] == [{"role": "user", "content": "hi"}]
-
-
-def test_build_chat_body_azure_omits_model() -> None:
-    body = build_chat_body("azure_openai", "my-deploy", "hi")
-    assert "model" not in body
     assert body["messages"] == [{"role": "user", "content": "hi"}]
 
 
@@ -139,17 +130,6 @@ def test_generate_claude_returns_text(monkeypatch: pytest.MonkeyPatch) -> None:
     text, error = generate_assistant_response(settings, "sk-test", "hi")
     assert error is None
     assert text == "claude reply"
-
-
-def test_generate_azure_targets_deployment(monkeypatch: pytest.MonkeyPatch) -> None:
-    captured = _capture_urlopen(monkeypatch, {"choices": [{"message": {"content": "azure reply"}}]})
-    settings = AssistantConnectionSettings(
-        provider="azure_openai", host="https://res.openai.azure.com", model="my-deploy"
-    )
-    text, error = generate_assistant_response(settings, "sk-test", "hi")
-    assert error is None
-    assert text == "azure reply"
-    assert "/openai/deployments/my-deploy/chat/completions" in str(captured["url"])
 
 
 def test_generate_ollama_local_uses_api_chat(monkeypatch: pytest.MonkeyPatch) -> None:

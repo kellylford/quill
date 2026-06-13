@@ -69,7 +69,7 @@ class SshEditingMixin:
             with wx.PasswordEntryDialog(
                 self.frame, f"Password for {site.username or ''}@{site.host}", "SSH Password"
             ) as dialog:
-                if dialog.ShowModal() != wx.ID_OK:
+                if self._show_modal_dialog(dialog, "SSH Password") != wx.ID_OK:
                     return None
                 password = dialog.GetValue()
         return ConnectionRequest(

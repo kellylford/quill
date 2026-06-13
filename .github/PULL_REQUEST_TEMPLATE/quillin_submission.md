@@ -1,7 +1,7 @@
 <!--
 Use this template for a Quillin submission. Open your PR with
 ?template=quillin_submission.md appended to the compare URL, or copy this in.
-See docs/quillin-submission.md for the full process.
+See docs/quillins.md for the full process.
 -->
 
 ## Quillin submission
@@ -37,7 +37,7 @@ capability (`fs.read`, `fs.write`, `net`) and how a refusal is handled.
 
 ## Author Covenant
 
-- [ ] I have read [`docs/quillin-code-of-conduct.md`](../../docs/quillin-code-of-conduct.md)
+- [ ] I have read [`docs/quillins.md`](../../docs/quillins.md)
       and attest this Quillin upholds every promise in it
 - [ ] Minimum capabilities only; no silent network, telemetry, or tracking
 - [ ] Readable source (no obfuscation); no sandbox-escape; no malware

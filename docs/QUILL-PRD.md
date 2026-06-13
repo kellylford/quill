@@ -1739,7 +1739,7 @@ A group of small, individually unremarkable features whose absence would feel ch
 - **External-change watcher**: detect when the file changes outside Quill; offer to reload (auto-reload if the editor is unmodified).
 - **Insert date / time**: `Ctrl+Alt+D` (with a one-time format chooser that the user can re-open from Settings).
 - **Templates**: `File > New From Template…`. Templates live in `%APPDATA%\Quill\templates\`. Ships with: Markdown article, Meeting notes, Daily journal, Letter, Issue report, README, Changelog, MIT license header, Markdown blog post with front-matter.
-- **Word prediction**: `Ctrl+Space` opens an IntelliSense-style picker for document words plus HTML and Markdown tag completions. It can also run automatically while typing when enabled in Settings.
+- **Word prediction**: `Ctrl+.` opens an IntelliSense-style picker for document words plus HTML and Markdown tag completions. It can also run automatically while typing when enabled in Settings.
 - **Snippets**: per-format snippet packs with trigger + Tab expansion. `Ctrl+Alt+Space` opens Insert Snippet; `Ctrl+Alt+Shift+Space` opens Manage Snippets. Off by default in prose, on by default in code. Editable in Settings.
 - **Save options** (per document and per workspace): trim trailing whitespace on save, ensure final newline, normalise line endings on save.
 - **Smart paste**: by default, strip rich-text formatting when pasting from sources that include it.
@@ -1766,7 +1766,7 @@ Marks are **temporary jump points**; bookmarks (5.10) are named and more durable
 - `Ctrl+Shift+X` exchanges point (cursor) and mark, useful for jumping to where the user was and back.
 - `Edit → Mark Ring → List Marks…` shows the ring in a stock `wx.ListBox` with document, line, column, and surrounding text snippet.
 - Up to 50 marks in a circular buffer per session. Marks do not persist across sessions in v1.0.
-- All keystrokes reassignable. `Ctrl+Space` is reserved for Word Prediction by default, so users who rely on another screen-reader chord can reassign it; the conflict detector (8.4) flags the well-known cases at install time.
+- All keystrokes reassignable. `Ctrl+.` is reserved for Word Prediction by default, so users who rely on another screen-reader chord can reassign it; the conflict detector (8.4) flags the well-known cases at install time.
 
 ### 5.25 Read Aloud (secondary voice, not the screen reader)
 
@@ -1799,7 +1799,7 @@ partial profile can never start a worker.
   and failed items so users can track and retry automation without a visual dashboard.
 - Watch work runs off the UI thread through `watch_worker`/`watch_queue`; results marshal back through
   `wx.CallAfter` and surface in the status/notification channel. No silent failures.
-- The Startup Wizard includes watch onboarding so first-run users can configure automation immediately.
+- Watch-folder automation is configured from Preferences (Watch Folder Automation). A first-run wizard onboarding step for it is planned (see docs/planning.md).
 
 ### 5.25c BITS Whisperer phased transcription rollout
 
@@ -2095,7 +2095,7 @@ A dedicated menu surfacing transforms that are otherwise reachable via Tools or 
 - List Manager: `Format -> List -> List Manager...` (`Ctrl+Alt+L`) opens a keyboard-first tree editor for moving, promoting/demoting, adding, editing, and deleting list items.
 - Magical tag helpers: Insert HTML Tag… (with attribute picker) and Insert Markdown Tag… (semantic snippet picker).
 - Snippet helpers: Insert Snippet… (`Ctrl+Alt+Space`) and Manage Snippets… (`Ctrl+Alt+Shift+Space`) with searchable filtering, placeholder prompts, and starter-pack onboarding.
-- Prediction helpers: Word Prediction… (`Ctrl+Space`) with words, HTML tags, and Markdown tag completions.
+- Prediction helpers: Word Prediction… (`Ctrl+.`) with words, HTML tags, and Markdown tag completions.
 - Surface-aware formatting shortcuts (Markdown/HTML only): `Ctrl+B` bold, `Ctrl+I` italic, and heading levels `Ctrl+Alt+1` through `Ctrl+Alt+6`.
 - Re-flow: Wrap to Column…, Re-flow Paragraph.
 
@@ -2119,7 +2119,7 @@ A dedicated menu surfacing transforms that are otherwise reachable via Tools or 
 
 ### 5.29c Word prediction and tag IntelliSense
 
-- `Ctrl+Space` opens a prediction picker that reuses the same accessible searchable-pattern UX as other insertion dialogs.
+- `Ctrl+.` opens a prediction picker that reuses the same accessible searchable-pattern UX as other insertion dialogs.
 - Predictions draw from the current document words, the merged spell dictionaries, and the HTML/Markdown tag vocabularies Quill already ships.
 - When enabled in General Preferences, the same helper can auto-refresh while typing so the prediction list follows the current fragment.
 - Accepting a prediction inserts the chosen word or tag completion at the caret; Escape dismisses the popup without changing text.
@@ -2327,7 +2327,7 @@ A five-step welcome flow the first time Quill launches. Each step is a normal mo
 1. **Profile**: System, Word-like, Vim, Emacs.
 2. **Theme**: System, Light, Dark, High Contrast.
 3. **Spell-check languages**: multi-select from the bundled launch set; the active document language is added automatically when later opened.
-4. **AI provider**: Off (default), Ollama local, Ollama Cloud, OpenAI, Azure OpenAI, Anthropic/Claude, OpenRouter, Gemini, or a custom OpenAI-compatible endpoint. Providers include sensible default hosts where possible; advanced custom mode allows manual endpoint override. If a provider is picked, the API-key dialog opens when required; the key is stored via Windows Credential Manager with a DPAPI-encrypted fallback (10.11). Network is never used without explicit per-action consent.
+4. **AI provider**: Off (default), Ollama local, Ollama Cloud, OpenAI, Anthropic/Claude, OpenRouter, Gemini, or a custom OpenAI-compatible endpoint. (Azure OpenAI is not currently supported; it is a possible future addition — see AI-15.) Providers include sensible default hosts where possible; advanced custom mode allows manual endpoint override. If a provider is picked, the API-key dialog opens when required; the key is stored via Windows Credential Manager with a DPAPI-encrypted fallback (10.11). Network is never used without explicit per-action consent.
 5. **Telemetry**: confirms it stays off (default). A short plain-language sentence explains what telemetry would collect if turned on later.
 
 The onboarding completion writes `%APPDATA%\Quill\onboarding-complete.json`. Trust and privacy consent acknowledgement is stored separately in `%APPDATA%\Quill\trust-consent.json` and is versioned so policy text updates can require re-acknowledgement. Re-running `Help → Run Onboarding Again` reopens the flow without resetting anything else.
@@ -3498,7 +3498,6 @@ Every direct dependency is listed below with the pinned version range Quill 1.0 
 | `pypdfium2` | 4.30+ | Apache-2.0 / BSD | PDF text, tier-1 path B | Native PDFium binary |
 | `pdfminer.six` | 20240706+ | MIT | PDF text fallback path C | Used when A and B both score badly |
 | `pikepdf` | 9.0+ | MPL-2.0 | PDF metadata + password handling | Wraps QPDF |
-| `pytesseract` | 0.3.10+ | Apache-2.0 | Tesseract OCR bridge | Tesseract binary bundled separately |
 | `Pillow` | 10.4+ | HPND | Image handling for OCR and SVG raster fall-back | |
 | `cyhunspell` | 2.0+ | MPL-2.0 | Hunspell binding for spell check | Hunspell dictionaries bundled per language |
 | `regex` | 2024.7+ | Apache-2.0 / PSF | Unicode regex for find/replace | Replaces stdlib `re` where Unicode classes matter |
@@ -3553,7 +3552,7 @@ LibreOffice, Calibre, Ghostscript, and unrar are **not** bundled; they are optio
 
 ### 10.3 Per-feature technical specifications
 
-Each feature in section 5 has an engineering spec here. The full table is large; the canonical form lives in `docs/engineering/` once development begins. The table below is the v1.0 commitment.
+Each feature in section 5 has an engineering spec here. The full table is large; the canonical form lives in `docs/QUILL-PRD.md` once development begins. The table below is the v1.0 commitment.
 
 | Feature | Module(s) | Key APIs / Libraries | Threading | Storage | A11y wiring |
 | --- | --- | --- | --- | --- | --- |
@@ -3740,7 +3739,7 @@ All JSON files validate against schemas in `quill/core/schemas/`. All writes are
   - translator comments and placeholder-preservation rules,
   - beta translation push and pre-release string freeze,
   - CI quality gates for extraction, syntax, compile, and placeholder validation.
-- Contributor process and policy reference: `docs/localization/translation-contributor-plan.md`.
+- Contributor process and policy reference: `docs/translating.md`.
 
 ### 10.14 Performance budgets and instrumentation
 
@@ -3964,7 +3963,7 @@ Quill is opinionated about what it is _not_. The following are intentionally and
 - **Cloud-sync of documents.** Sync is for keymap and settings only (8.8). Document storage stays on the user's machine and chosen cloud-drive folder.
 - **Mobile, web, macOS, or Linux ports.** Cross-platform is post-v2 at earliest. The `core/` layer has no `wx` so it remains _possible_, not _committed_.
 - **Voice input / dictation.** Use Windows dictation; Quill does not reinvent the mic/STT stack. An opt-in Hey QUILL command layer may sit on top of dictation and dispatch existing Quill commands, but it stays silent and only listens while dictation is active.
-- **AI authoring assistant.** The current build exposes a local Writing Assistant shell, prompt presets, Prompt Studio reusable prompt templates, Agent Center guided profiles, AI Hub launch surface, AI connection preferences (Ollama local/cloud, OpenAI, Claude, OpenRouter, Gemini, Azure OpenAI, custom OpenAI-compatible), provider verification/model discovery, searchable model filtering, status-detail accessibility announcements, and a sandboxed Python tool. The quick writing actions (Rewrite Selection, Summarize Selection, Continue Writing, Fix Grammar) each guard on the AI-enabled setting regardless of entry point (menu, command palette, or keybinding) and fall back to a sensible scope when there is no selection (paragraph at cursor for rewrite/grammar, whole document for summarize), announcing the chosen scope and word count. The AI status line also detects a saved key that cannot be decrypted on the current device (for example after a portable install is moved to another Windows account) and prompts the user to re-enter the key rather than reporting a generic authentication error. Longer-horizon autocomplete policy tuning and richer model-catalog management remain future work.
+- **AI authoring assistant.** The current build exposes a local Writing Assistant shell, prompt presets, Prompt Studio reusable prompt templates, Agent Center guided profiles, AI Hub launch surface, AI connection preferences (Ollama local/cloud, OpenAI, Claude, OpenRouter, Gemini, custom OpenAI-compatible), provider verification/model discovery, searchable model filtering, status-detail accessibility announcements, and a sandboxed Python tool. The quick writing actions (Rewrite Selection, Summarize Selection, Continue Writing, Fix Grammar) each guard on the AI-enabled setting regardless of entry point (menu, command palette, or keybinding) and fall back to a sensible scope when there is no selection (paragraph at cursor for rewrite/grammar, whole document for summarize), announcing the chosen scope and word count. The AI status line also detects a saved key that cannot be decrypted on the current device (for example after a portable install is moved to another Windows account) and prompts the user to re-enter the key rather than reporting a generic authentication error. Longer-horizon autocomplete policy tuning and richer model-catalog management remain future work.
 - **Project workspaces and Find in Folder.** Deferred to v1.2 (see 17.2).
 - **Embedded media playback inside documents.** Out of scope for the editor.
 - **PDF form filling and signing.** Out of scope.
@@ -4208,7 +4207,7 @@ Deferred to v1.1:
 
 ### 21.12 Documentation and readiness
 
-- [x] Engineering docs baseline (`docs/engineering/*`).
+- [x] Engineering docs baseline (`docs/QUILL-PRD.md`).
 - [x] Roadmap mapping and architecture/module contracts.
 - [x] PRD updates for HTML/Markdown tag picker and formatting shortcuts.
 - [x] User guide and keyboard reference auto-generation pipeline.
@@ -4333,19 +4332,21 @@ The governing rules remain the same throughout the roadmap: local-first processi
 
 The Startup Wizard is a first-run wizard that lets every user shape QUILL to their work and accessibility needs before the main frame appears. It is also re-runnable at any time via Help > Personalise QUILL. Features the user disables are completely hidden — no menus, no commands, no phantom shortcuts.
 
-The wizard is a `wx.adv.Wizard` subclass with nine `wx.adv.WizardPageSimple` pages. Every page announces its heading via a live region on `EVT_WIZARD_PAGE_CHANGED`. Focus on page change lands on the first interactive control. Show/hide of conditional sub-sections uses `sizer.Show()` + `Layout()` so no hidden control can receive keyboard focus.
+The wizard (`SetupWizardDialog` in `quill/ui/setup_wizard_pages.py`) is a single `wx.Dialog` hosting nine `wx.Panel` pages shown one at a time with Back / Next / Finish navigation. Choices are held in pending state and applied to `Settings`/`FeatureManager` atomically only when the user clicks Finish, so backing out changes nothing. Every page heading is a real control with an accessible name; focus on page change lands on the first interactive control.
 
-### §22.2 The Nine Pages
+### §22.2 The Nine Pages (as built)
 
 1. **Welcome** — introductory text; no configuration.
-2. **Keyboard and Sound** — QUILL key (Caps Lock / Insert / None), sound effects, and (conditional) interface language selector when `.mo` files are present.
-3. **AI Writing Assistance** — enable/disable AI; if enabled, choose provider (OpenAI, OpenRouter, Ollama, Set up later), API key or Ollama host, and default model.
-4. **Remote File Editing** — enable/disable SSH/SFTP; optional inline site-entry form (friendly name, host, port, username).
-5. **QUILL Extensions (Quillins)** — enable/disable Quillin support; option to auto-install bundled extensions; read-only list of bundled Quillins.
-6. **Power Tools** — enable/disable the Power Tools menu and commands.
-7. **Notebook Workspace** — enable/disable multi-document notebook mode.
-8. **Keyboard Profile** — choose a starting keyboard profile (QUILL Default, Minimal, Screen Reader Friendly) from profiles scanned in `quill/core/keymap/`.
-9. **Summary and Finish** — read-only two-column list of every decision made in pages 2-8; Finish writes settings atomically.
+2. **Keyboard and Sound** — keyboard pack and whether QUILL plays sounds for mode changes.
+3. **Feature Profile** — choose Essential, Writer, Developer and Power Text, Accessibility Professional, or Full QUILL.
+4. **Remote Access** — enable/disable the FTP / SFTP / WebDAV / S3 open and save features.
+5. **AI Assistance** — enable/disable AI features (API key added later).
+6. **Reading and Accessibility** — Read Aloud and the spoken-announcement verbosity (Minimal / Normal / Verbose).
+7. **Writing Tools** — spell check as you type, word prediction and tag IntelliSense, and curly-quote autoformatting.
+8. **Startup Behaviour** — start with no document open, check for updates on startup, and system tray icon.
+9. **Summary** — review every decision; Finish applies them.
+
+Planned wizard additions not yet present (tracked in `docs/planning.md`): an interface-language selector page, a watch-folder onboarding step, a GLOW consent step, and dedicated Quillins / Power Tools / Notebook / keyboard-profile pages.
 
 ### §22.3 Feature Gating via FeatureManager
 
@@ -4459,7 +4460,7 @@ quill/locale/{lang}/LC_MESSAGES/quill.mo   Compiled binary (generated by pybabel
 quill/tools/check_translation.py           CI gate
 ```
 
-`init_locale()` is called in `MainFrame.__init__` before any UI string. The `language` setting (BCP 47 tag, default empty = OS locale) controls the active locale. The startup wizard's Page 2 shows a language selector when more than one `.mo` file is present.
+`init_locale()` is called in `MainFrame.__init__` before any UI string. The `language` setting (BCP 47 tag, default empty = OS locale) controls the active locale. A startup-wizard language selector (shown when more than one `.mo` file is present) is planned; the shipped wizard does not yet include it.
 
 ### §24.3 Crowdin Components
 
@@ -4626,3 +4627,3053 @@ The tab's `source_label` is set to `GitHub: owner/repo (branch)` and shown in th
 - Phase 3: Repository browser dialog.
 - Phase 4: Remote document integration (origin metadata, title, save-back).
 - Phase 5: Gate compliance (banned patterns, dialog inventory, module size budget, mypy overrides).
+
+
+---
+
+# Appendix: Engineering documentation
+
+_Folded in from the former docs/QUILL-PRD.md on 2026-06-13._
+
+# QUILL engineering documentation
+
+_Consolidated from the former docs/engineering/ folder on 2026-06-13. Each section preserves the original document in full._
+
+
+---
+
+<!-- Source: docs/engineering/thread-safety.md -->
+
+# Thread-safety invariants
+
+This note documents the concurrency invariants for Quill's module-level and
+shared caches (CQ-17). It is the canonical reference for how the lazily-loaded
+caches stay correct when several threads touch them at once — the writing thread,
+the file-I/O and compute pools, and watch-folder worker threads.
+
+## Concurrency model recap
+
+- The UI thread owns the wxPython widgets and the editor buffer.
+- File I/O and heavier compute run on worker threads / thread pools.
+- Cross-thread UI updates marshal back through `wx.CallAfter` / `wx.CallLater`.
+
+Because a lazily-loaded cache can be touched from more than one of these threads
+on first use, each such cache is guarded by a lock. There are no unguarded
+module-level mutable caches in `quill/core`.
+
+## Pattern 1 — module-level lazy caches (double-checked locking)
+
+Read-mostly data that is expensive to build once and then never changes uses a
+module-level `threading.Lock` plus double-checked locking: an unlocked fast-path
+read of the cached value, then the lock, a re-check, and population under the
+lock. The cached value is always an immutable snapshot (a `frozenset`, or a dict
+that is never mutated after publication), so readers that win the fast path never
+observe a half-built structure.
+
+| Cache | Module | Lock | Cached state |
+| --- | --- | --- | --- |
+| Word-list fallback | [quill/core/spellcheck.py](../../quill/core/spellcheck.py) | `_BACKEND_LOCK` | `_WORDLIST_CACHE` (`frozenset`) |
+| Enchant dictionary handle | [quill/core/spellcheck.py](../../quill/core/spellcheck.py) | `_BACKEND_LOCK` | `_ENCHANT_DICT`, `_ENCHANT_TRIED` |
+| Thesaurus index | [quill/core/thesaurus.py](../../quill/core/thesaurus.py) | `_LOAD_LOCK` | `_INDEX` (dict, never mutated after build), `_LOAD_ERROR` |
+
+Invariants for this pattern:
+
+1. The cache slot is only ever written while holding the lock.
+2. Once published, the cached object is treated as immutable. To refresh it,
+   replace the whole slot under the lock; never mutate in place.
+3. The fast-path read outside the lock is safe because it reads a single
+   reference that is either `None` (not yet built) or a fully-built snapshot.
+4. A failed load still publishes a definitive result (an empty cache plus an
+   error string) so the expensive attempt is not retried on every call.
+
+## Pattern 2 — per-instance mutable-set caches
+
+Caches that are genuinely mutated over time hold a per-instance
+`threading.Lock` and take it around every read and write of the shared mutable
+state.
+
+| Cache | Module | Lock | Shared state |
+| --- | --- | --- | --- |
+| Watch-folder seen-set | [quill/core/watch_folder.py](../../quill/core/watch_folder.py) | `self._lock` | `self._seen_files` (`set[str]`) |
+
+Invariants for this pattern:
+
+1. Every access to the mutable set — `clear`, membership test, and `add` — is
+   performed inside `with self._lock`.
+2. The lock is held only for the brief set operation, never across slow work
+   such as file I/O or dispatching an action, so worker threads do not serialise
+   behind each other.
+
+## Stability helpers
+
+The stability layer follows the same per-instance discipline: the task manager
+([quill/stability/task_manager.py](../../quill/stability/task_manager.py)), the
+wx dispatch queue ([quill/stability/wx_dispatch.py](../../quill/stability/wx_dispatch.py)),
+and the heartbeat ([quill/stability/wx_heartbeat.py](../../quill/stability/wx_heartbeat.py))
+each own a `threading.Lock` and take it around their shared bookkeeping.
+
+## Rule for new caches
+
+Any new module-level or shared cache must adopt one of the two patterns above:
+a double-checked `Lock` with an immutable published snapshot for read-mostly
+data, or a per-instance `Lock` taken around every access for mutable state. Do
+not add an unguarded module-level mutable cache to `quill/core`.
+
+
+---
+
+<!-- Source: docs/engineering/docs-artifacts-pipeline.md -->
+
+# Docs-artifact regeneration pipeline
+
+This note documents how Quill keeps each `docs/**/*.md` source in sync with its
+rendered `.html` and `.epub` artifacts, and how the GitHub Actions workflows that
+enforce and automate that stay correct. It is the canonical reference for the
+[Docs artifacts](../../.github/workflows/docs-artifacts.yml) workflow, the
+docs-parity guard ([scripts/check_docs_artifacts.py](../../scripts/check_docs_artifacts.py)),
+and the `workflow-lint` gate in [PR CI](../../.github/workflows/pr-ci.yml).
+
+## What the pipeline guarantees
+
+Every Markdown file under `docs/` ships alongside a matching HTML and EPUB build,
+so readers who consume the published artifacts never see a stale rendering of a
+source that has since changed. Two mechanisms cooperate:
+
+- A **parity guard** that fails CI when an edited `docs/**/*.md` is missing an
+  updated `.html` or `.epub` sibling in the same change.
+- An **auto-regeneration workflow** that rebuilds artifacts for changed sources
+  and, on a same-repo pull request, pushes them back to the PR branch so the
+  author does not have to install Pandoc.
+
+## The parity guard
+
+[scripts/check_docs_artifacts.py](../../scripts/check_docs_artifacts.py) diffs a
+base and head ref, and for every changed `docs/**/*.md` source that still exists,
+requires that both its `.html` and `.epub` siblings also changed in that range.
+It recurses into subdirectories (`docs/planning`, `docs/qa`, ...), not just the
+top level. The guard runs as the "Verify docs artifacts are regenerated" step in
+[Accessibility CI](../../.github/workflows/accessibility-ci.yml) and is a
+required check.
+
+## The auto-regeneration workflow
+
+[Docs artifacts](../../.github/workflows/docs-artifacts.yml) triggers only when a
+`docs/**.md` source changes. It has two design constraints that drove its
+current shape, both learned from real failures.
+
+### Constraint 1 — EPUB output is non-deterministic
+
+Pandoc embeds a fresh UUID and build timestamp in every EPUB, so regenerating an
+unchanged source produces different bytes each run. HTML output, by contrast, is
+deterministic. A naive "regenerate everything and commit the diff" approach
+therefore reports false staleness on every run and fails forever.
+
+The workflow handles this by:
+
+1. Scoping regeneration to only the Markdown that changed in the push/PR range
+   (mirroring the parity guard), not the whole tree.
+2. Always rebuilding the **deterministic HTML**, but generating an EPUB **only
+   when it is missing** — never rewriting an existing one, so the random-UUID
+   churn cannot manifest.
+3. Basing the "is this stale?" decision on deterministic HTML drift plus
+   genuinely untracked new files, never on EPUB byte differences.
+
+### Constraint 2 — `main` is a protected branch
+
+The workflow cannot push regenerated artifacts to `main`: branch protection
+requires changes to arrive through a pull request, so a direct push is rejected
+(`GH006: Protected branch update failed`). Attempting it was the original chronic
+failure. The reconcile step now branches on context:
+
+- **Same-repo pull request:** commit the regenerated artifacts and push them back
+  to the PR's source branch, so the eventual merge into `main` is already in sync.
+- **Push to `main`, or a fork PR:** do not attempt a push. Fail loudly with the
+  exact diff and a "regenerate locally" message, so a human regenerates the
+  artifacts and brings them in through a pull request.
+
+### Regenerating locally
+
+When the workflow or the parity guard reports a stale artifact, regenerate it
+with the same Pandoc invocations CI uses:
+
+```bash
+pandoc <source>.md -f gfm -t html5 -s -o <source>.html
+pandoc <source>.md -f gfm -t epub3      -o <source>.epub
+```
+
+Commit both artifacts with the source (through a pull request for `main`).
+
+## Workflow linting (`workflow-lint`)
+
+The `workflow-lint` job in [PR CI](../../.github/workflows/pr-ci.yml) runs
+[actionlint](https://github.com/rhysd/actionlint) (pinned to a specific image)
+over every workflow on each push and pull request. It statically validates YAML
+structure, action input contracts, and shell-safety patterns.
+
+This gate exists because a real script-injection vector slipped into the docs
+workflow: an untrusted `${{ github.head_ref }}` was interpolated directly into an
+inline `git push` script, where a crafted branch name could execute arbitrary
+shell. The fix — and the rule the gate now enforces automatically — is to pass
+workflow context through the step `env:` block and reference it as a shell
+variable, never to expand untrusted `${{ github.* }}` values inline.
+
+## Verifying the workflow logic
+
+Because the reconcile logic is shell rather than Python, it is validated two ways:
+
+1. **Static analysis** with actionlint, now wired into CI as `workflow-lint`.
+2. **Behavioral simulation** against a throwaway git repository with a bare remote
+   whose `pre-receive` hook rejects writes to `main` (simulating branch
+   protection) and a mock `pandoc` that mirrors the measured behavior
+   (deterministic HTML, random-bytes EPUB). The simulation exercises the
+   in-sync, fail-loud, recursive-subdirectory, missing-EPUB, no-churn, and
+   PR-push-back paths.
+
+When changing the reconcile logic, re-run actionlint locally and re-run the
+behavioral simulation before relying on CI.
+
+
+---
+
+<!-- Source: docs/engineering/macos-build.md -->
+
+# Building Quill for macOS
+
+The macOS build reuses the cross-platform wxPython core plus the
+`quill/platform/macos/` adapters. See issue #42 for the full plan.
+
+## Prerequisites
+
+- macOS 12+ (Apple Silicon or Intel), Python 3.11+
+- `pip install -e ".[ui,macos]"` (wxPython, pyttsx3, pyobjc, py2app)
+- For distribution: an Apple **Developer ID Application** certificate and a
+  `notarytool` keychain profile (`xcrun notarytool store-credentials`).
+
+## Build
+
+```bash
+python scripts/setup_macos.py py2app   # -> dist/Quill.app
+```
+
+## Sign, notarize, package
+
+```bash
+export IDENTITY="Developer ID Application: Your Name (TEAMID)"
+export NOTARY_PROFILE="quill-notary"
+./scripts/build_macos.sh              # -> dist/Quill.dmg (signed, notarized, stapled)
+```
+
+## Platform adapters (macOS)
+
+- App entry point: `quill/platform/macos/macos_app.py` (py2app bundle main)
+- Screen reader detect: `quill/platform/macos/sr_detect.py` (VoiceOver)
+- Increase Contrast: `quill/platform/macos/high_contrast.py`
+- Secrets: `quill/platform/macos/keychain.py` (Keychain, replaces DPAPI)
+- Announcements: `quill/platform/macos/announce.py` (VoiceOver via NSAccessibility; needs pyobjc)
+- File types: `quill/platform/macos/shell_integration.py` (CFBundleDocumentTypes)
+- OS dispatch: `quill/platform/dispatch.py`
+
+## Remaining integration (tracked in #42)
+
+- Route the app's announce handler to `macos.announce.announce` on macOS (ties to #29).
+- Migrate secret/high-contrast/screen-reader call sites to `quill.platform.dispatch`.
+- Verify the app launches under VoiceOver; keyboard-only QA.
+
+
+---
+
+<!-- Source: docs/engineering/security-advisory-workflow.md -->
+
+# Security Advisory Workflow
+
+This runbook defines how QUILL handles private vulnerability coordination.
+
+## Intake
+
+1. Receive report through `SECURITY.md` private channel.
+2. Acknowledge receipt and open a private advisory in GitHub Security Advisories.
+3. Classify severity and affected versions.
+
+## Triage
+
+1. Reproduce issue in a controlled environment.
+2. Assess exploitability, user impact, and affected surfaces.
+3. Record mitigation options and patch strategy.
+
+## Patch and validation
+
+1. Implement fix on a private branch when needed.
+2. Validate with standard checks:
+   - `ruff check .`
+   - `pytest -q`
+3. Add regression tests where appropriate.
+
+## Disclosure
+
+1. Coordinate disclosure date with reporter when possible.
+2. Publish patched release and advisory details.
+3. Include clear upgrade/mitigation guidance for users.
+
+## Post-incident actions
+
+1. Add follow-up hardening tasks.
+2. Update security checks/process docs if gaps were found.
+
+
+---
+
+<!-- Source: docs/engineering/dialog-estate-report.md -->
+
+# QUILL Dialog Estate Report (DLG-3)
+
+_Last updated: 2026-06-04_
+
+This report is the human-readable companion to the machine-enforced dialog
+governance described in **PRD §9.13 (Dialog estate governance)** and tracked in
+`docs/planning/ROADMAP.md` as DLG-3.0 through DLG-3.8. It records where the dialog-unification
+work stands after the triage and Phase 3 hardening pass.
+
+## Headline
+
+- **154** dialog surfaces inventoried across `quill/**/*.py`.
+- Classification: **100 native**, **49 hardened_custom**, **5 web**.
+- Triage of all 49 `hardened_custom` surfaces: **0 convert / 48 harden / 1 keep-web**.
+- **All 49** `hardened_custom` dialogs now wire the shared `dialog_contract`
+  (`apply_modal_ids` + an accessible show path), enforced by a new AST guard.
+
+## How the estate is governed
+
+| Mechanism | File | Role |
+| --- | --- | --- |
+| Source-generated inventory | `quill/tools/dialog_inventory.py` | AST-scans every `wx.Dialog(...)`, stock wx dialog, and `show_web_form(...)`; assigns a stable key `<module>::<enclosing_qualname>::<kind>` and a sanctioned classification. |
+| Committed snapshot | `tests/unit/ui/fixtures/dialog_inventory.json` | The source of truth; CI fails if the live scan disagrees. |
+| Inventory gate | `tests/unit/ui/test_dialog_inventory.py` | Fails on any new, moved, removed, or reclassified surface. |
+| Banned-pattern gate | `quill/tools/check_banned_patterns.py` | Cross-checks every surface against the snapshot; fails on unregistered/misclassified dialogs (Security CI). |
+| Shared contract helpers | `quill/ui/dialog_contract.py` | `apply_modal_ids(...)` (affirmative/escape IDs) and `show_modal_dialog(...)` (region + announcement hooks). |
+| **Hardening guard (new)** | `tests/unit/ui/test_dialog_hardening_contract.py` | AST-asserts every `hardened_custom` surface wires `apply_modal_ids` + an accessible show/`ShowModal`/`Show` path. Blocks future drift at author time. |
+
+## Triage outcome
+
+A live audit on the Windows wx 4.2.5 (Phoenix, wxWidgets 3.2.9) runtime, plus a
+source scan for custom-drawn paint code
+(`EVT_PAINT` / `wx.lib.agw` / `OnPaint` / `wx.PaintDC` / owner-draw / `wx.html2`),
+returned **zero** custom-drawn dialogs. Every `hardened_custom` surface is already
+a stock-widget `wx.Dialog` container (ListBox, TextCtrl, SearchCtrl, TreeCtrl,
+multi-action button rows). "Convert to native" is therefore, in the literal wx
+sense, already true — the genuine work is **contract hardening**, not rewrites.
+
+| Bucket | Count | Meaning |
+| --- | --- | --- |
+| Convert (flatten to a stock one-shot) | **0** | No dialog is a lossless single confirm/choice/text entry; flattening any would drop live search, lists, previews, or multi-action rows. |
+| Harden (enhanced-native onto one contract) | **48** | Genuinely multi-control native dialogs that converge on one focus/default/lifecycle grammar via `dialog_contract`. |
+| Keep web | **1** | `AskQuillChatDialog` (rich streaming chat surface) stays on the sanctioned web surface. |
+
+## Phase status
+
+| Phase | Item | Status | Notes |
+| --- | --- | --- | --- |
+| 0 | Source-generated registry + gates | **Done** | Inventory engine + snapshot + two gates shipped. |
+| 1 | Strengthened A11Y-4 dialog-contract guard | **Done** | `_check_dialog_registry` + Dialog Excellence Mandates. |
+| T | Triage all 49 `hardened_custom` dialogs | **Done** | 0 convert / 48 harden / 1 keep-web. |
+| 2 | Native conversion wave (flatten to one-shot) | **Done (no applicable work)** | Triage found zero lossless conversion candidates; honest no-op. |
+| 3 | Enhanced-native contract standardization | **Done** | All 49 wire the shared contract; new AST guard prevents drift. |
+| 4 | Web-surface standardization | **Todo** | Confirm the 5 web surfaces have native-fallback parity and no raw HTML in onboarding tabs. |
+| 5 | Startup/onboarding hardening | **Todo** | Deterministic focus across chained startup modals; consent preserved. |
+| 6 | Assistant/AI dialog consolidation (folds DLG-2) | **Todo** | `assistant_tools.py`/`ai_model_panel.py`/`style_panel.py`/`assistant_panel.py` async/"busy" semantics. |
+| 7 | CQ-16 characterization around dialog-launch paths | **Todo** | Return-value/side-effect regression tests before any CQ-1 split. |
+| 8 | Manual NVDA/JAWS/Narrator SR pass | **Todo** | Requires a live Windows screen-reader runtime; cannot be machine-verified. |
+
+## Phase 3 — what changed
+
+A machine-derived AST audit of every `hardened_custom` scope found **5** surfaces
+that did not fully wire the shared contract. Four were brought onto it; the fifth
+was already correct.
+
+| Dialog | Module | Action |
+| --- | --- | --- |
+| `_present_quill_key_help` | `quill/ui/main_frame.py` | Added `apply_modal_ids(ID_OK, ID_OK)`; routed direct `ShowModal()` through `_show_modal_dialog` (adds region/announce hooks). |
+| `_offer_crash_recovery` | `quill/ui/main_frame.py` | Added `apply_modal_ids(ID_YES, ID_NO)` alongside existing `SetDefaultItem`/`SetEscapeId`. |
+| `_present_quick_nav` | `quill/ui/main_frame.py` | Added `apply_modal_ids(ID_OK, ID_CANCEL)`; routed direct `ShowModal()` through `_show_modal_dialog`. |
+| `_choose_searchable_option` | `quill/ui/main_frame.py` | Added `apply_modal_ids(ID_OK, ID_CANCEL)` + deterministic `search.SetFocus()`. |
+| `show_watch_folder_status` | `quill/ui/main_frame.py` | No change — correctly-hardened **modeless** monitor (`Show()` + `EVT_CLOSE` → `Destroy`); the contract audit's "missing show" was a false positive for modeless windows. |
+
+No dialog was flattened; live search, lists, and preview panes are preserved.
+
+## Tests and validation
+
+- `tests/unit/ui/test_dialog_hardening_contract.py` — new durable guard (2 tests).
+- `tests/unit/ui/test_dialog_contract.py`, `test_dialog_inventory.py` — green.
+- `tests/unit/ui/test_main_frame_navigation.py`, `test_main_frame_quill_key.py`,
+  `test_main_frame_share_dialogs.py` — 113 passed (exercise the edited methods).
+- `ruff format` + `ruff check` — clean.
+- Banned-pattern gate — no violations.
+- Dialog inventory — unchanged at 154 surfaces (100/49/5); no reclassification.
+
+## Honest remaining work
+
+- **Phases 4–7** are real engineering still to do (web parity, startup focus
+  chains, assistant/AI async semantics, CQ-16 characterization).
+- **Phase 8** is a manual NVDA/JAWS/Narrator pass that **cannot** be
+  machine-verified; it needs a human tester on a live Windows screen-reader
+  runtime, with each `dialogs.md` row carrying pass/fail evidence.
+
+
+---
+
+<!-- Source: docs/engineering/installer-evaluation.md -->
+
+# Windows installer evaluation and rethink
+
+This document evaluates the QUILL Windows installer (Inno Setup), grounded in
+what QUILL actually ships, and records the changes made plus a forward-looking
+vision. The `.iss` is generated by `build_inno_setup_script()` in
+`scripts/build_windows_distribution.py`; edit the generator, never the emitted
+`installer/quill.iss` (a test enforces they stay in sync).
+
+## What QUILL actually installs
+
+From `scripts/build_windows_distribution.py` and the portable bundle layout:
+
+- A private embedded Python runtime (`python/`, amd64, pinned 3.12.x) with
+  wxPython, pyttsx3, and the other runtime wheels preinstalled, plus the
+  vendored `quill-glow-core` contract wheel. End users install no Python.
+- The `quill` package source, the `run-quill.cmd` launcher, `manifest.json`,
+  `README.txt`.
+- Docs: `docs/userguide.html` and `docs/userguide.md` (PRD and engineering docs
+  are published to GitHub Pages instead of bundled).
+- Optional tools under `tools/`, included only when the build was run with the
+  matching `--*-dir` / `--bundle-*` flag:
+  - `tools/pandoc` (document conversion)
+  - `tools/speech/{dectalk,espeak-ng,kokoro,piper,openvoice}` (Read Aloud
+    engines; DECtalk further split into per-voice subfolders)
+  - `tools/nodejs` (portable Node for Node Quillins and the QDC TypeScript
+    console)
+
+The installer mirrors this with opt-in [Components] and `skipifsourcedoesntexist`
+so a build that omits a tool still produces a valid installer.
+
+## What the installer already does well
+
+- Per-user by default (`PrivilegesRequired=lowest`) with an elevation override
+  dialog, so a standard user can install without an admin prompt.
+- Non-destructive file associations: registers only under `OpenWithList` and
+  `SystemFileAssociations` (HKCU), never seizing a user's chosen default app.
+- Send-to-Quill right-click verbs (OCR, Open, Read aloud) generated from the
+  single `quill.core.shell_verbs` registry, so the installer, the runtime
+  registry writer, the CLI `--action` map, and the Settings toggles cannot
+  drift. All opt-in and `uninsdeletekey`-clean.
+- Screen-reader-accessible decisions made through native `MsgBox`/`Exec`
+  dialogs rather than custom wizard pages.
+- Honest uninstall: prompts (defaulting to No) before removing the user's
+  `%APPDATA%\Quill` data, instead of silently keeping or wiping it.
+- `CloseApplications=force` to avoid in-use-binary upgrade failures.
+- Optional Node bootstrap via winget when the Node component is selected but no
+  portable Node was bundled, with a graceful failure message.
+- Solid LZMA2 compression.
+
+## Gaps found
+
+1. No architecture directives. The bundle is amd64, but the script never set
+   `ArchitecturesAllowed` / `ArchitecturesInstallIn64BitMode`, so on a 64-bit OS
+   it installed into the 32-bit `Program Files (x86)` and would even attempt to
+   run on a 32-bit Windows it can never support.
+2. No minimum OS. The zero-install OCR backend (`Windows.Media.Ocr`), the winget
+   Node bootstrap, and modern wxPython all require Windows 10+, but the installer
+   would run on Windows 7/8.1 and then fail at runtime.
+3. No association-cache refresh. The fileassoc/shellverbs tasks write Explorer
+   keys, but `ChangesAssociations` was not set, so Explorer would not refresh
+   icons/Open-With menus until the next shell restart.
+4. A dead component. `aiassistant` ("Install the Writing Assistant setup
+   guide and AI connection shortcut") gated no `[Files]` payload at all -- it
+   installed nothing. Showing it implies a choice that does not exist.
+5. Add/Remove Programs icon. `UninstallDisplayIcon` pointed at `run-quill.cmd`,
+   which has no icon, so ARP showed a blank/generic glyph.
+
+## Changes made in this pass
+
+All in `build_inno_setup_script()` (and `installer/quill.iss` regenerated, test
+updated):
+
+- Added `ArchitecturesAllowed=x64compatible` and
+  `ArchitecturesInstallIn64BitMode=x64compatible` (covers x64 and ARM64-via-
+  emulation; requires Inno Setup 6.3+).
+- Added `MinVersion=10.0` to require Windows 10/11.
+- Added `ChangesAssociations=yes` so Explorer refreshes after the assoc tasks.
+- Removed the dead `aiassistant` component; documented that the Writing
+  Assistant ships with the core bundle.
+- Pointed `UninstallDisplayIcon` at `{app}\python\pythonw.exe` (a file that
+  carries a real icon), falling back gracefully when no bundled runtime exists.
+
+These are correctness and honesty fixes that do not change the bundle contents
+or the opt-in model.
+
+## Forward-looking vision (not yet implemented)
+
+Deliberately deferred because each needs an asset, a signing identity, or a
+product decision:
+
+- Branded icon. Ship a real `quill.ico`, wire `SetupIconFile`, give every
+  shortcut an `IconFilename`, and use it for ARP. Today there is no `.ico` in
+  the repo, so this is blocked on an art asset.
+- Code signing. Sign `Quill-Setup-<version>.exe` (and ideally the launcher) so
+  SmartScreen and AT users see a verified publisher. This is a release-pipeline
+  and certificate decision, configured at `ISCC` compile time, not in the
+  script body.
+- In-installer voice acquisition. Today bundled speech engines must be present
+  at build time. A "download recommended Read Aloud voice now?" post-install
+  step (mirroring the winget Node flow, with explicit consent and a checksum)
+  would let a lean installer fetch Piper/Kokoro on demand.
+- Update channel. The app already vendors an autoupdate library; the installer
+  could register an update feed URL and an `AppMutex` so in-app updates close
+  the running instance cleanly. Needs the app to expose a known mutex name.
+- Repair / modify entry. Expose component add/remove without a full reinstall.
+- Optional first-run accessibility prep: offer to launch QUILL straight into the
+  "Personalise QUILL" wizard with the user's detected screen reader.
+
+## Build and verify
+
+```powershell
+# Regenerate the committed installer script after editing the generator:
+python -c "from scripts.build_windows_distribution import build_inno_setup_script; from pathlib import Path; Path('installer/quill.iss').write_text(build_inno_setup_script('0.5.0'), encoding='utf-8')"
+
+# Full distribution build (bundled Python + optional tools), then compile:
+python scripts/build_windows_distribution.py --bundle-python --compile-installer
+
+# Guard tests:
+python -m pytest tests/unit/scripts/test_build_windows_distribution.py -q
+```
+
+
+---
+
+<!-- Source: docs/engineering/blocked-items-completion-guide.md -->
+
+# Blocked-items completion guide — the exact path to Done on the environment-gated 1.0 features
+
+Status as of 2026-06-03. A small set of QUILL 1.0 items are honestly "In progress"
+or "Todo" in `docs/planning/ROADMAP.md` because they are genuinely blocked on something that cannot
+be produced or verified from a non-live development environment: there is no live AI
+provider endpoint and no Windows 11 packaged-install cycle available here. None is
+faked Done.
+
+This document is the precise, file-by-file runbook for what a maintainer (on a real
+Windows 11 machine with live provider credentials) must do to drive each remaining
+item to verified Done. Nothing here is hand-waving: every step names the file,
+function, and acceptance test. It is the operational companion to the `docs/planning/ROADMAP.md`
+tracker — the tracker records *what* remains; this guide records *exactly how* to
+finish it.
+
+> This guide was previously the working file `zfix2.md`. It is preserved here under
+> a descriptive name so the completion steps survive scratch-file cleanup.
+
+---
+
+## Summary table
+
+| ID | Title | State now | What's already built & tested | What only you can finish | Effort |
+| --- | --- | --- | --- | --- | --- |
+| AI-19 | Accessible subscription sign-in (OAuth device flow) | In progress | The full RFC 8628 device-flow state machine (`device_login.py`), fully unit-tested with an injected poster | Real HTTPS poster, consent dialog, DPAPI token storage, AIBackend wiring, live end-to-end run | M |
+| SHELL-2 | Structured-Markdown OCR verb (AI pass) | In progress | The assistant `structure` operation + `_apply_ocr_structuring` worker wiring, unit + contract tested | One live-key run to verify quality/threading on real OCR output; quality tuning | S |
+| SHELL-3 | Windows 11 modern context menu (IExplorerCommand) | Todo | The classic Explorer verb path (SHELL-1) ships and is verifiable | A compiled `IExplorerCommand` COM handler + sparse MSIX package + installer registration + real install/uninstall verification | M–L |
+
+When all three reach Done, **Tier 2 is golden (60/60)** and the QUILL 1.0 subtotal
+drops by three remaining.
+
+---
+
+## AI-19 — Accessible subscription sign-in (no pasted API key)
+
+### What already exists (do not rebuild)
+
+- `quill/core/ai/device_login.py` — a complete, wx-free, strict-typed OAuth 2.0
+  Device Authorization Grant (RFC 8628) state machine. Public API:
+  - `DeviceFlowConfig`, `DeviceCodeGrant`, `PollResult` (frozen dataclasses).
+  - `request_device_code(config, *, poster)` — starts the flow.
+  - `poll_once(config, grant, *, poster)` — classifies one poll into
+    pending / slow_down / authorized / denied / expired / error.
+  - `run_device_login(...)` — drives the full polling loop honoring `interval`,
+    backing off on `slow_down`, stopping at `expires_in`.
+  - `announce_device_code(grant)` — the screen-reader instruction string.
+  - `describe_login_result(result)` — the spoken outcome.
+  - Every network exchange is an **injected** `poster`, so the engine is already
+    tested without a live endpoint (7 tests) and adds no new egress site.
+- `quill/platform/windows/credential_manager.py` — DPAPI-backed Windows Credential
+  Manager storage already exists:
+  - `credential_manager_available()`, `load_generic_credential(target_name)`,
+    `save_generic_credential(...)`, `delete_generic_credential(target_name)`,
+    `StoredCredential`.
+- `quill/core/assistant_ai.py` — `AssistantConnectionSettings` (the saved provider
+  connection, including `api_key`), `load_assistant_connection_settings()`, and
+  `_build_auth_headers(provider, host, api_key)` is where the credential is
+  consumed for outbound requests.
+
+### Exact remaining work (Windows + live provider only)
+
+1. **Real HTTPS poster.** Add a `urlopen`-based poster (TLS-verified) that satisfies
+   the `Poster` protocol in `device_login.py`. Put it in a new
+   `quill/platform/windows/` or `quill/core/ai/` module (keep `device_login.py`
+   itself poster-free so the GATE-9 egress inventory stays explicit — register the
+   new `urlopen` site in the egress audit).
+   - Acceptance: a unit test that the poster issues a POST with the correct
+     `application/x-www-form-urlencoded` body and parses a JSON reply; TLS
+     verification is on (no `ssl._create_unverified_context`).
+
+2. **Consent / progress dialog `DeviceLoginDialog`** in `quill/ui/`.
+   - Shows: the device code, the verification URL, and the expiry; an
+     "Open in browser" button; an "I've authorized — continue" button; a Cancel
+     path. Must follow the A11Y-4 dialog contract (outer sizer, default button,
+     `Destroy` on close, focus return to editor).
+   - Speaks `announce_device_code(grant)` on open and `describe_login_result(...)`
+     on completion.
+   - Acceptance: a source-contract test (the cloud-safe bar) asserting the dialog
+     uses `show_modal_dialog`, shows code/URL/expiry, and wires the three buttons;
+     add a row to `dialogs.md` with the menu path that opens it.
+
+3. **DPAPI token storage.** On `authorized`, persist the returned token via
+   `save_generic_credential(target_name="Quill/<provider>/oauth", ...)`. Never log
+   the token; never write it to the JSON connection file in plaintext.
+   - Acceptance: round-trip test through the credential manager (save → load →
+     delete) under a `target_name` namespaced per provider.
+
+4. **AIBackend wiring.** Teach `assistant_ai.py` / the provider backend to resolve
+   credentials as: device-login token (if present in DPAPI) → else pasted
+   `api_key`. The provider must then send the device-login token in
+   `_build_auth_headers`.
+   - Acceptance: a unit test that, given a stored device-login token and an empty
+     pasted key, the auth header carries the token; given both, the device-login
+     token wins (or whatever precedence you choose — document it).
+
+5. **Surface the entry point.** Add a "Sign in with your <provider> account" button
+   to the AI provider configuration surface (the assistant setup) that launches the
+   flow. Gate behind `FeatureManager` like every other AI surface.
+
+6. **Live end-to-end verification** (the actual blocker). On a real Windows machine
+   with a provider that genuinely offers an OAuth **device authorization grant** for
+   API access:
+   - Start the flow → QUILL shows the code + URL → you authorize in the browser →
+     QUILL polls and retrieves the token → the token is used for subsequent AI
+     requests → **no pasted key required**.
+   - Confirm the whole flow is keyboard- and screen-reader-accessible at every step
+     (NVDA/JAWS/Narrator parity).
+   - **Reality check:** confirm your target provider actually exposes a public
+     device-authorization endpoint for API tokens. Several major API providers do
+     **not** (they issue API keys from a dashboard instead). If yours doesn't, AI-19
+     cannot be honestly closed against that provider — pick one that does (or keep
+     the engine ready and mark AI-19 Done only once one real provider validates it).
+
+### Done definition for AI-19
+
+A blind user signs in with an existing subscription via the device flow, with no
+visible 51-character secret, the token is stored in DPAPI, and at least one real
+provider serves AI responses using that token — all keyboard/screen-reader
+accessible and registered in the GATE-9 egress audit.
+
+---
+
+## SHELL-2 — Structured-Markdown OCR verb (AI structuring pass)
+
+### What already exists (built and tested this session)
+
+- `quill/core/ai/assistant.py` — new `structure` operation in `_OPERATION_PROMPTS`:
+  reflows raw OCR text into clean Markdown (joins scan-broken lines, groups
+  paragraphs, infers headings/lists/tables) and **forbids** summarizing, adding, or
+  inventing content. Reuses the existing chunking, `_wrap`, and backend, so large
+  scans are handled. Unit-tested in `tests/unit/core/ai/test_structure_operation.py`
+  (registration, OCR text reaches the model, the no-summarize instruction).
+- `quill/ui/main_frame_image.py` — `_run_ocr_on_path(..., structured: bool = False)`
+  and a new `_apply_ocr_structuring(...)` helper that, **inside the existing OCR
+  worker thread** (off the UI thread, sharing the progress dialog), structures the
+  recognized text via the assistant when one is available and reports available, and
+  otherwise degrades safely to plain OCR with a status note saying why. The review
+  dialog title and the insert status line reflect whether the structured pass ran.
+- `quill/ui/main_frame.py` — `_handle_shell_request` passes
+  `structured=action == "ocr-structured"`.
+- Source-contract tests in `tests/unit/ui/test_ocr_review_dialog.py` assert the
+  worker wiring and the structured-verb dispatch.
+
+### Exact remaining work (needs a live AI key)
+
+1. **One live run.** On Windows with a configured, available assistant backend:
+   right-click an image/PDF → "OCR with Quill (structured Markdown)". Confirm the
+   recognized text comes back as structured Markdown (headings/lists/paragraphs),
+   inserted into the editor, with the "Structured OCR text inserted" status.
+2. **Quality tuning.** Inspect the output on harder inputs — multi-column PDFs,
+   tables, headers/footers, page numbers. If the model summarizes or drops content,
+   tighten the `structure` prompt in `_OPERATION_PROMPTS` (it is the single source
+   of truth) and re-run. No code path changes needed — only the prompt string.
+3. **Threading/latency check.** Confirm the off-thread `assistant.transform(...)`
+   call is thread-safe with your backend and that the progress dialog stays
+   responsive (the worker already runs off the UI thread; verify no backend
+   requires UI-thread affinity). If a backend needs main-thread marshaling, route
+   the structuring call through `wx.CallAfter`-bounded handoff instead.
+
+### Done definition for SHELL-2
+
+The structured verb produces faithful structured Markdown from real OCR output on a
+live backend, with no content loss, responsive UI, and accessible status
+announcements. Then flip SHELL-2 to Done in `ROADMAP.md` (tracker + both living
+lists + a dated activity-log entry) and regenerate `docs/planning/ROADMAP.html` and
+`docs/planning/ROADMAP.epub`.
+
+---
+
+## SHELL-3 — Windows 11 modern context menu (IExplorerCommand) + installer
+
+### What already exists
+
+- `quill/platform/windows/shell_integration.py` — the **classic** (pre-Win11)
+  `HKCU\Software\Classes\SystemFileAssociations\<ext>\shell\Quill.<verb>` verb path
+  ships in SHELL-1 and is buildable and verifiable locally. On Windows 11 these
+  verbs appear under "Show more options" (the legacy menu).
+
+### Why this can't be finished from here
+
+The Windows 11 **primary** context menu (the non-"Show more options" menu) only
+shows verbs provided by a registered `IExplorerCommand` COM handler packaged in a
+sparse/MSIX package. That requires a compiled in-proc COM component and a real
+package install — none of which a pure-Python repo can produce or verify in this
+environment.
+
+### Exact remaining work (real Windows 11 + packaging toolchain)
+
+1. **Build the `IExplorerCommand` handler.** A compiled in-proc COM server (C++/WinRT
+   or Rust, or a packaged .NET COM component) that implements `IExplorerCommand`
+   (and `IExplorerCommandState` / `IEnumExplorerCommand` for the submenu). It must
+   surface the **same** verbs as the core registry — drive its labels/actions from
+   `quill/core/shell_verbs.py` (`default_shell_verbs()`, `verb_for_action`,
+   `verbs_for_extension`) so there is exactly one source of truth. Each invoked verb
+   launches `quill --action <verb> "<path>"` (reuse `verb_launcher_command(action)`
+   from `shell_integration.py`).
+   - Submenu shape: a top "Send to Quill" flyout enumerating Open / OCR / OCR
+     structured Markdown / Read aloud, filtered by file extension via
+     `verbs_for_extension`.
+
+2. **Sparse package + registration.** Author a sparse MSIX package manifest that
+   declares the `IExplorerCommand` handler under the relevant
+   `windows.fileTypeAssociation` / `desktop4:FileExplorerContextMenus` extension, and
+   register/unregister it on install/uninstall.
+
+3. **Installer wiring.** Wire the package register/unregister into the QUILL
+   installer (`installer/quill.iss` and/or `scripts/build_windows_distribution.py`)
+   so a normal install adds the modern menu and uninstall removes it cleanly. Keep
+   the classic-menu fallback for non-packaged/portable installs.
+
+4. **Live install/uninstall verification.** On Windows 11: install → confirm the
+   verbs appear in the **primary** right-click menu (not just "Show more options")
+   for the correct file types → run each verb → confirm uninstall removes them with
+   no orphaned registry/package state. Confirm keyboard and Narrator accessibility of
+   the menu entries.
+
+### Done definition for SHELL-3
+
+QUILL's "Send to Quill" verbs appear in the Windows 11 primary context menu via a
+registered `IExplorerCommand`, driven by the same `shell_verbs.py` registry,
+installed and removed cleanly by the installer, and verified on a real Win11 box.
+Then flip SHELL-3 to Done in `docs/planning/ROADMAP.md` and regenerate
+`docs/planning/ROADMAP.html` and `docs/planning/ROADMAP.epub`.
+
+---
+
+## Per-change discipline reminder (applies to all three)
+
+- Format then lint only the **specific** changed files: `ruff format <files>`,
+  `ruff check <files>`. Do not run whole-tree format (it reflows unrelated drift).
+- Strict `mypy` on any changed `quill/core` / `quill/io` file — must report
+  "Success: no issues found"; those layers stay wx-free.
+- Add at least one behavior test (or source-contract test where wx can't load) per
+  change; keep the targeted `pytest` green.
+- After editing `docs/planning/ROADMAP.md`: update the **tracker totals**, **both living lists**,
+  and add a **dated activity-log entry**, then regenerate the artifacts with
+  `pandoc -s docs/planning/ROADMAP.md -o docs/planning/ROADMAP.html` and
+  `pandoc -s docs/planning/ROADMAP.md -o docs/planning/ROADMAP.epub`, committing all three together.
+- New user-facing dialog (e.g. `DeviceLoginDialog`) → add a row to `dialogs.md`.
+- New public `MainFrame` method → regenerate the surface fixture with
+  `python -m quill.tools.ui_surface --write`.
+- Stage **specific files only**. Never `git add -A`.
+
+---
+
+## Appendix A (merged from former zfix4) — SHELL-3 live verification & issue status
+
+This appendix preserves the full SHELL-3 live-verification checklist and intake issue
+status that previously lived in `zfix4.md`.
+
+### Part 1 — SHELL-3 verification steps
+
+#### What already shipped (commit `1d3bfc4`, on `main`)
+
+- `build_shell_verb_registry_lines()` in
+  `scripts/build_windows_distribution.py` generates the Inno `[Registry]`
+  verb keys directly from `quill.core.shell_verbs.default_shell_verbs()`.
+- A new opt-in `[Tasks]` checkbox, `shellverbs`, gates every verb key; all
+  keys carry `uninsdeletekey` for clean uninstall.
+- The committed `installer/quill.iss` is regenerated to include the verbs.
+- Six contract tests in
+  `tests/unit/scripts/test_build_windows_distribution.py` assert per-verb /
+  per-extension coverage, opt-in + uninstall-clean flags, the launch command
+  shape, and end-to-end presence in the generated `.iss`.
+
+These are all green (ruff + strict mypy + pytest). **What remains is purely a
+live Windows install/uninstall pass — it cannot be done in a non-live
+environment and is the only thing standing between SHELL-3 and Done.**
+
+#### Prerequisite: install the Inno Setup 6 compiler (ISCC)
+
+The build box does **not** currently have ISCC. Install it once:
+
+```powershell
+winget install --id JRSoftware.InnoSetup --source winget
+```
+
+Confirm it resolves (either of these should print a path):
+
+```powershell
+Get-Command ISCC.exe -ErrorAction SilentlyContinue
+@("C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+  "C:\Program Files\Inno Setup 6\ISCC.exe") | Where-Object { Test-Path $_ }
+```
+
+#### Step 1 — Build the portable bundle + installer
+
+From the repo root, with the venv active:
+
+```powershell
+# Build the portable tree, regenerate installer/quill.iss, and compile the
+# installer in one pass. --bundle-python makes the result self-contained.
+python -m scripts.build_windows_distribution --bundle-python --compile-installer
+```
+
+Expected: `windows-distribution\installer\Quill-Setup-<version>.exe` (and/or
+`...\Output\Quill-Setup-<version>.exe`) is produced. If `--compile-installer`
+is not wired as a flag in your build, compile manually:
+
+```powershell
+& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+  windows-distribution\installer\quill.iss
+```
+
+#### Step 2 — Install with the "Send to Quill" verbs enabled
+
+1. Run `Quill-Setup-<version>.exe`.
+2. On the **Select Additional Tasks** page, **check**
+   *"Add 'Send to Quill' actions (OCR, Open, Read aloud) to the file
+   right-click menu"* (it is unchecked by default, by design).
+3. Finish the install.
+
+Accessibility check while you are here: the task checkbox label must be read
+clearly by your screen reader, and the wizard must not auto-close before the
+final status is announced (it is configured `CloseApplications=force`,
+`RestartApplications=no`).
+
+#### Step 3 — Verify the verbs appear and run (the core test)
+
+The classic registry verbs surface under **"Show more options"** on
+Windows 11, and directly in the **Shift+F10** keyboard context menu.
+
+1. In **File Explorer**, navigate to a test **`.png`** (or `.jpg`, `.tif`).
+2. Give it focus and press **Shift+F10** (keyboard context menu).
+   - On Win11 you may need to arrow to **"Show more options"** first.
+3. Confirm these items are present and screen-reader friendly:
+   - **OCR with Quill**
+   - **OCR with Quill (structured Markdown)** — only meaningful when AI is on
+   - **Read aloud in Quill**
+   (For a `.txt`/`.md`/`.html` file you should instead see **Open in Quill**
+   and **Read aloud in Quill**.)
+4. Activate **OCR with Quill**.
+5. Confirm: a running QUILL instance is reused (or one launches), focus lands
+   on the **OCR review dialog**, and an announcement states what happened.
+6. Repeat once for a **`.pdf`** to confirm document handling.
+
+> If a verb does **not** appear, the most likely causes are: the `shellverbs`
+> task was left unchecked at install, or another app owns an overriding
+> per-extension association. Re-run the installer and confirm the task is
+> ticked. The keys are written to **HKCU** (never HKLM), so no elevation is
+> needed and no other user is affected.
+
+#### Step 4 — Confirm the registry keys exist (optional, precise)
+
+```powershell
+# Should list a "Quill.ocr" subkey with a (default) value of "OCR with Quill"
+reg query "HKCU\Software\Classes\SystemFileAssociations\.png\shell\Quill.ocr" /ve
+reg query "HKCU\Software\Classes\SystemFileAssociations\.png\shell\Quill.ocr\command" /ve
+```
+
+The `\command` default value should be:
+`"<install>\run-quill.cmd" --action ocr "%1"`.
+
+#### Step 5 — Uninstall and confirm clean removal
+
+1. Uninstall QUILL (Settings → Apps, or the Start-menu uninstaller).
+2. When prompted about removing personal data, either choice is fine for this
+   test (that prompt covers `%APPDATA%\Quill`, not the shell verbs).
+3. Re-run the `reg query` commands from Step 4 — both must now return
+   **"ERROR: The system was unable to find the specified registry key"**,
+   proving `uninsdeletekey` cleaned up the verbs.
+4. Re-check **Shift+F10** on the test `.png`: the Quill verbs must be gone.
+
+#### Step 6 — Flip SHELL-3 to Done
+
+Once Steps 1–5 pass on real hardware:
+
+- In `docs/planning/ROADMAP.md`: change the **SHELL-3** row Status from `In progress` to
+  `Done`, move `SHELL-3` out of the two living *Work-in-progress* lists into
+  the *Completed* Tier 2 list, and update the tracker totals
+  (Tier 2 becomes `60 | 58 | 2 | AI-19, SHELL-2`; bump the 1.0 subtotal and
+  grand total Done counts by 1).
+- Add a dated activity-log entry recording the live verification pass.
+- Regenerate the artifacts: `pandoc -s docs/planning/ROADMAP.md -o docs/planning/ROADMAP.html`
+  and `pandoc -s docs/planning/ROADMAP.md -o docs/planning/ROADMAP.epub`.
+- Stage `docs/planning/ROADMAP.md` + `docs/planning/ROADMAP.html` + `docs/planning/ROADMAP.epub` only and commit.
+
+### Part 2 — What's left, issue by issue
+
+#### Umbrella #113 — Open & OCR from the file manager
+
+**Status: substantially delivered on Windows; keep open as the umbrella.**
+The shared groundwork it asked for is done: the action-bearing entry point
+(`quill --action <verb> "<path>"`), routing through the existing
+single-instance IPC, the qualifying file-type sets, and the initial action
+set (Open, OCR, Read aloud) all ship via SHELL-1. Close this only when its
+three sub-issues are resolved.
+
+#### #114 — Windows Explorer context menu
+
+**Status: classic/Show-more-options path is code-complete and tested; needs
+the Part 1 live pass to call done. One sub-item is intentionally deferred.**
+
+| Sub-item from #114 | Status |
+| --- | --- |
+| Classic registry verbs (`SystemFileAssociations\<ext>\shell\…`) per image ext + `.pdf` | **Done in code** (SHELL-1 runtime writer + SHELL-3 installer registration) |
+| Verb invokes shared `--action` entry point over single-instance IPC | **Done** (SHELL-1) |
+| Installer registration + clean uninstall | **Done in code** (SHELL-3); **needs live verify** (Part 1) |
+| Reachable via Shift+F10; clear labels; focus + announcement after invoke | **Done in code**; confirmed by the Part 1 manual pass |
+| **Modern Win11 menu via `IExplorerCommand` (packaged COM)** | **Deferred to QUILL 2.0** — the OS gates the primary menu behind compiled COM + package identity (sparse/MSIX). Out of scope for 1.0. |
+
+**To finish #114 for 1.0:** run Part 1, then post a status comment noting the
+modern-menu `IExplorerCommand` piece is tracked as a 2.0 follow-up, and close.
+
+#### #115 — macOS Finder integration
+
+**Status: Blocked, correctly. Not a 1.0 item.**
+Depends on the macOS port (#42), which is not done. The OCR engine work it
+describes (Apple Vision backend) also lands with the macOS port. No action now.
+
+#### #116 — Structured OCR (AI-gated)
+
+**Status: functionally delivered (SHELL-2), pending one live-AI verification;
+the geometry/bounding-box enhancement is an optional follow-up.**
+
+| Sub-item from #116 | Status |
+| --- | --- |
+| Gate behind AI + explicit `ocr_structured` opt-in setting | **Done** (SHELL-1/SHELL-2) |
+| Dedicated `transform`-style op returning structured Markdown | **Done** — assistant `structure` operation |
+| Feed structured result into the OCR review dialog | **Done** — `_apply_ocr_structuring` in the OCR worker |
+| Plain-text behavior unchanged when AI off | **Done** — degrades safely with a status note |
+| **Capture layout geometry (bounding boxes) for tables/columns** | **Not started** — optional quality enhancement; `OcrLine` has no boxes yet. Nice-to-have, can be a 2.0 follow-up. |
+
+**To finish #116 for 1.0:** one live-key end-to-end run + structuring-quality
+tuning on real multi-column / table OCR output (this is the SHELL-2 remainder),
+then close noting the geometry enhancement is a future improvement.
+
+---
+
+## Open Tier 2 roadmap items (the honest blockers)
+
+After SHELL-1 (Done) and this SHELL-3 work, Tier 2 stands at **57 of 60**.
+The three open items and what each genuinely needs:
+
+| ID | What's left | Blocker class |
+| --- | --- | --- |
+| **SHELL-3** | The Part 1 live install → right-click → run → uninstall pass | Windows runtime + Inno Setup install cycle |
+| **SHELL-2** | One live-AI run + prompt-quality tuning on real OCR; then flip to Done | Configured/available AI backend |
+| **AI-19** | Real HTTPS device-login poster, `DeviceLoginDialog`, DPAPI token storage, AIBackend wiring, live sign-in (RFC 8628 state machine already built + tested) | Live provider OAuth device endpoint + Windows runtime |
+
+**Closest to Done:** SHELL-3 and SHELL-2 — each needs a single live pass with
+no further code. AI-19 still needs real code plus a live provider.
+
+### Explicitly out of scope for 1.0 (do not work on)
+
+- Win11 modern primary-menu `IExplorerCommand` sparse package (the deferred
+  half of #114) — 2.0.
+- OCR bounding-box geometry capture (the deferred half of #116) — 2.0.
+- macOS Finder (#115) — blocked on the macOS port (#42).
+
+
+---
+
+# Appendix: Accessibility documentation
+
+_Folded in from the former docs/QUILL-PRD.md on 2026-06-13 (ACR/VPAT conformance report + announcement-grammar style guide)._
+
+# QUILL accessibility documentation
+
+_Consolidated from the former docs/accessibility/ folder on 2026-06-13. Each section preserves the original document in full._
+
+
+---
+
+<!-- Source: docs/accessibility/acr-vpat.md -->
+
+# Accessibility Conformance Report (ACR)
+
+## Report details
+
+- Product: **Quill**
+- Version: **1.0.0**
+- Report date: **2026-05-28**
+- Contact: **<accessibility@quill.local>**
+
+## Standards and guidelines
+
+- WCAG 2.1 Level A: _To be assessed_
+- WCAG 2.1 Level AA: _To be assessed_
+- Section 508: _To be assessed_
+
+## VPAT summary table
+
+| Criteria | Conformance Level | Remarks |
+| --- | --- | --- |
+| 1.1.1 Non-text Content | Supports / Partially Supports / Does Not Support | _Fill in evidence_ |
+| 1.3.1 Info and Relationships | Supports / Partially Supports / Does Not Support | _Fill in evidence_ |
+| 2.1.1 Keyboard | Supports / Partially Supports / Does Not Support | _Fill in evidence_ |
+| 2.4.3 Focus Order | Supports / Partially Supports / Does Not Support | _Fill in evidence_ |
+| 4.1.2 Name, Role, Value | Supports / Partially Supports / Does Not Support | _Fill in evidence_ |
+
+## Assessment notes
+
+- Add screen-reader coverage notes (NVDA, Narrator, JAWS).
+- Add keyboard-only walkthrough findings.
+- Add known limitations and remediation targets.
+
+
+---
+
+<!-- Source: docs/accessibility/announcement-style-guide.md -->
+
+# Announcement style guide
+
+This guide defines the shared grammar for every status message and
+screen-reader announcement in Quill. A single predictable shape lets users of
+NVDA, JAWS, and Narrator parse an outcome in one pass and builds trust that the
+app always reports what it just did.
+
+The grammar is implemented in [quill/core/announcements.py](../../quill/core/announcements.py)
+(`format_announcement`, `format_progress`, `pluralize`). Use those helpers
+rather than hand-building strings, and keep this document in sync with them.
+
+## The grammar
+
+```text
+<Verb> <object>[, <count> <unit>(s)][, <detail>].
+```
+
+- **Verb.** The action. Use past tense for outcomes ("Rewrote", "Saved",
+  "Replaced") and present participle for progress that precedes a slow action
+  ("Rewriting", "Summarizing").
+- **Object.** What was acted on: "paragraph", "document", "selection". Optional
+  for verb-only outcomes such as "Copied".
+- **Count and unit.** An optional quantity with an automatically pluralized
+  unit and a thousands separator: "42 words", "1 word", "1,200 words",
+  "2 matches".
+- **Detail.** An optional trailing clause, its own comma segment.
+- The sentence is capitalized and ends with a period (unless it already ends in
+  `.`, `!`, or `?`).
+
+## Examples
+
+| Situation | Announcement |
+| --- | --- |
+| Rewrote the paragraph at the cursor | Rewrote paragraph, 42 words. |
+| Summarized the whole document | Summarized document, 1,200 words. |
+| Saved the file | Saved document. |
+| Copied with no measurable object | Copied. |
+| Replaced a one-word selection | Replaced selection, 1 word. |
+| Nothing was selectable to act on | Nothing to rewrite. |
+| Starting a slow rewrite | Rewriting paragraph, 42 words. |
+
+## Rules
+
+1. **Always report the outcome.** Every action that changes the document or
+   state announces what happened, including the scope it chose when there was
+   no selection (paragraph at the cursor, or the whole document).
+2. **State the scope and count for content actions.** When an action operates on
+   a body of text, include the object and the word count so the user knows the
+   size of what changed.
+3. **Say so when nothing happened.** If there is nothing to act on, announce it
+   ("Nothing to rewrite.") instead of staying silent or sending an empty
+   request.
+4. **Keep it one short sentence.** No nested clauses beyond a single optional
+   detail segment. Screen-reader users should not have to wait through a
+   paragraph.
+5. **No raw punctuation tricks.** Do not pad with parentheses or trailing
+   ellipses; the helpers produce a clean sentence.
+6. **Reuse the helpers.** Do not duplicate phrasing logic. Import
+   `format_announcement` / `format_progress` from `quill.core.announcements`.
+
+## Verb reference (common actions)
+
+| Action | Progress verb | Outcome verb |
+| --- | --- | --- |
+| Rewrite | Rewriting | Rewrote |
+| Summarize | Summarizing | Summarized |
+| Fix grammar | Checking grammar in | Fixed grammar in |
+| Continue writing | Continuing | Continued |
+| Save | Saving | Saved |
+| Replace | Replacing | Replaced |
+| Copy | Copying | Copied |
+
+
+---
+
+# Appendix: QA test plan
+
+_Folded in from the former docs/QUILL-PRD.md on 2026-06-13._
+
+# QUILL QA documentation
+
+_Consolidated from the former docs/qa/ folder on 2026-06-13. Each section preserves the original document in full._
+
+
+---
+
+<!-- Source: docs/qa/final-qa-test-plan.md -->
+
+# QUILL 1.0 final-QA test plan
+
+Status: living document — execution owned by the maintainer for the Tier 6
+release gate (DLG-3.8). This is the authoritative manual and exploratory test
+plan for the QUILL 1.0 release. It complements, and does not replace, the
+machine-enforced gate ladder (PR CI, Security CI, Accessibility CI) and the
+`dialogs.md` manual dialog regression checklist.
+
+## 1. Purpose and scope
+
+This plan defines the final, human-executed quality pass required before QUILL
+1.0 ships. Its job is to verify, on a real Windows runtime with real assistive
+technology, the behaviours that static analysis and headless unit tests
+**cannot** prove: screen-reader announcements, focus journeys, audio output,
+OCR against live images, the device-login network round trip, and the felt
+quality of the writing experience.
+
+In scope:
+
+- Every user-facing dialog enumerated in `dialogs.md`.
+- Keyboard operability and focus management across the whole shell.
+- Screen-reader parity (NVDA, JAWS, Narrator) for announcements and navigation.
+- The QUILL key, browse mode, and Quick Nav surfaces.
+- File, session, and document lifecycle (open, edit, save, recover).
+- AI / assistant tool flows, including consent gating and async "busy" states.
+- OCR capture and review.
+- Startup, onboarding, trust-consent, and crash-recovery paths.
+- Read-aloud / speech output.
+- Installer and first-run on a clean machine.
+- Performance and stability under realistic documents.
+
+Out of scope for 1.0 (deferred to 2.0, tracked in `ROADMAP.md`): axe-core / Nu
+Html Checker validation, BITS Whisperer, the GLOW watch-action binding
+(WATCH-8), and the Accessibility Agents workstream.
+
+## 2. Test environments
+
+Run the full pass on at least one machine from each row. Record the exact build
+identifier (version + commit) on every result.
+
+| Environment | OS | Screen reader | Notes |
+| --- | --- | --- | --- |
+| Primary | Windows 11 (latest) | NVDA (latest stable) | Baseline for every case |
+| Secondary | Windows 11 (latest) | JAWS (latest) | Spot-check the high-traffic surfaces |
+| Sanity | Windows 10 + Windows 11 | Narrator | Confirm no hard breakage |
+| Clean-install | Fresh Windows VM, no Python | (NVDA) | Installer + first-run only |
+| High contrast | Windows 11, High Contrast on | NVDA | Visual + announcement parity |
+
+Build under test: record `version` from About Quill and the commit SHA. A pass
+is only valid against a single, named build.
+
+## 3. Entry and exit criteria
+
+Entry criteria (all must hold before a final-QA pass begins):
+
+- All required CI gates are green on `main`: PR CI, Security CI, Accessibility
+  CI, GATE-6 (public surface), GATE-11 (module size), A11Y-4 (banned patterns
+  and dialog registry), and the DLG-3 `dialog_inventory.json` snapshot.
+- `dialogs.md` and the `dialog_inventory.json` snapshot agree with the source
+  (run `python -m quill.tools.dialog_inventory` and confirm no diff).
+- The build installs cleanly on the clean-install environment.
+
+Exit criteria (all must hold to sign off 1.0):
+
+- Every section below has a recorded result against the named build.
+- Every `dialogs.md` row carries pass/fail evidence (see §5).
+- No open Critical or High severity defect (see §11).
+- Each known limitation is documented in the ACR/VPAT and release notes.
+
+## 4. Severity model
+
+| Severity | Definition | Release impact |
+| --- | --- | --- |
+| Critical | Data loss, crash, silent network egress, or a screen-reader user cannot complete a core task | Blocks release |
+| High | A core task is severely degraded, or an announcement/focus contract is broken | Blocks release unless explicitly waived |
+| Medium | A non-core task is degraded, or an announcement is imprecise | Fix or document before release |
+| Low | Cosmetic, or a minor wording nit | Track for a follow-up |
+
+## 5. Evidence capture
+
+For every test case record: build id, environment row, screen reader + version,
+pass/fail, and a one-line observation. For dialog cases, capture the exact
+announced title and the announced text of the default and cancel actions. For
+failures, capture: reproduction steps, expected vs actual announcement/focus,
+severity, and a linked issue.
+
+Store the completed evidence alongside this plan (a dated copy of the filled
+`dialogs.md` plus a results sheet) so each release has a durable record.
+
+### 5.1 Evidence artifacts to record alongside the build id
+
+For every pass, record the following alongside the build identifier in the
+results sheet. They are the machine-checked receipts that the build under
+test actually agrees with the in-repo enforcement gates.
+
+- **`dialog_inventory.json` mtime** (`tests/unit/ui/fixtures/dialog_inventory.json`):
+  the snapshot must be regenerated by `python -m quill.tools.dialog_inventory --write`
+  whenever a dialog is added, moved, or removed. If the in-source AST scan
+  disagrees with the committed snapshot, `tests/unit/ui/test_dialog_inventory.py`
+  fails the build; a stale snapshot in a 1.0 release tag is a release-blocker.
+- **`module_size_budgets.json` `_rebaseline_*` keys** (`quill/tools/module_size_budgets.json`):
+  if any `_rebaseline_<module>` key is set, the corresponding `quill/**/*.py`
+  file is allowed to exceed the default 600-line cap. Record the rebaseline
+  set in the results sheet so reviewers can audit each oversized module by
+  hand.
+- **`wxPython` runtime version** (`python -c "import wx; print(wx.__version__)"`):
+  QUILL supports `wxPython 4.2.x` with `wxWidgets 3.2.x`. A test pass on
+  wx 4.1 or wxWidgets 3.0 is not a 1.0 result.
+- **Public surface fixture** (`tests/unit/ui/fixtures/main_frame_public_surface.json`):
+  regenerate with `python -m quill.tools.ui_surface --write` if any
+  `MainFrame` public method is added or removed. The fixture is the
+  GATE-6 characterization receipt.
+- **`quill-glow-core` engine hash** (if GLOW is exercised on the build):
+  the shared engine in `quill/core/glow.py` is the cross-platform spine;
+  record the engine version any time a GLOW surface is in the pass.
+
+If any of the five artifacts above changed during the pass, the diff must
+be present in the commit history of the release branch; a release tag
+without these diffs is not a clean 1.0.
+
+## 6. Dialog estate pass (covers DLG-2, DLG-3.6, DLG-3.8)
+
+The authoritative list is `dialogs.md` (sections A–X). Do not duplicate it here;
+execute it directly. The contract every dialog must satisfy is the A11Y-4
+contract restated at the top of `dialogs.md`:
+
+1. It opens from the listed command or menu path.
+2. Tab and Shift+Tab reach every control in a sensible order.
+3. The screen reader announces the dialog title and each control.
+4. Enter activates the default action; Escape and the close button cancel.
+5. On close, focus returns to the editor.
+6. The dialog never traps, freezes, or goes silent.
+
+Screen-reader coverage matrix for the dialog estate:
+
+| Surface group (`dialogs.md`) | NVDA | JAWS | Narrator |
+| --- | --- | --- | --- |
+| A. File / session | Full | Spot | Sanity |
+| B. Settings, palette, menu editor | Full | Spot | Sanity |
+| C. Navigate (Go To, Outline, bookmarks) | Full | — | Sanity |
+| D–F. Text analysis, accessibility, intake | Full | — | Sanity |
+| G. Read aloud + OCR (incl. OCR Review) | Full | Spot | Sanity |
+| H. Sticky notes | Full | Spot | Sanity |
+| I–P. Formats, compare, keyboard, macros | Full | — | Sanity |
+| Q. AI and assistant (DLG-2 / DLG-3.6) | Full | Spot | Sanity |
+| R. BITS Whisperer | Out of scope for 1.0 | — | — |
+| S–T. Help, features, startup, support | Full | Spot | Sanity |
+| U. Selection and QUILL key | Full | — | Sanity |
+| V. Nested and secondary dialogs | Full | — | Sanity |
+| W. Power Tools | Full | — | Sanity |
+| X. Startup-only (crash recovery, trust) | Full | Spot | Sanity |
+
+"Full" = exercise the complete A11Y-4 contract. "Spot" = open, confirm title +
+default + Escape + focus return. "Sanity" = open and confirm it is not silent or
+trapped. JAWS spot priority: startup, the assistant/AI tools, sticky notes, and
+watch profiles (the surfaces with live lists, async work, and chained modals).
+
+Special attention for the AI/assistant tools (Q) — the DLG-2 / DLG-3.6
+acceptance the maintainer is signing off:
+
+- Each long-running action disables its trigger before work starts and
+  re-enables on completion.
+- "Busy" state is announced; the surface never appears hung.
+- Results marshalled back to the UI thread are announced once, not duplicated.
+- A worker exception surfaces as an announced error, not a silent failure.
+- No cloud/AI action runs without an explicit, per-action consent.
+
+## 7. Keyboard and focus pass
+
+- Tab order is sensible and complete on the main shell and every dialog.
+- No keyboard trap anywhere; Escape always has a defined meaning.
+- The QUILL key prefix (`Ctrl+Shift+Grave` by default) enters, announces, times
+  out, and is remappable; the old default stops working after a remap.
+- Browse mode enters, announces, navigates by element, and times out.
+- Quick Nav / Heading Organizer / Outline Navigator move the caret and announce.
+- Status-bar cells are reachable, announce their value, and expose their menu.
+- Focus returns to the editor after every modal closes.
+
+## 8. File, session, and document lifecycle
+
+- Open, edit, save, Save As, and encoding selection round-trip correctly.
+- Dirty-state title suffix appears and clears accurately.
+- Prompt-to-save offers Save / Don't Save / Cancel and honours each.
+- Multi-tab switch wraps correctly and is announced.
+- Session save/open restores the working set.
+- Atomic writes: a forced failure mid-save never corrupts the original file;
+  `.bak` / recovery behaves per the data-layout contract.
+- Restore Backup recovers a prior version.
+
+## 9. AI, consent, and privacy pass
+
+- No outbound document content without an explicit, visible, per-action consent.
+- The consent surface states what will be sent and to where before sending.
+- A declined consent cancels the action and announces the cancellation.
+- API keys are stored via DPAPI; "Forget API Key" clears them and confirms.
+- The device-login round trip (AI-19) completes against the live endpoint on a
+  real network (cannot be verified headless).
+- No document text appears in any log file after an AI action.
+
+## 10. OCR pass (OCR-1, OCR-3)
+
+Requires a live display, clipboard, and OCR engine, so it cannot be verified
+headless.
+
+- OCR Image, OCR Clipboard Image, and OCR Screen Capture each produce text.
+- The screen-capture target chooser offers whole screen vs active window.
+- OCR Review opens after completion, is fully keyboard/SR operable, and inserts
+  the accepted text at the caret.
+- A failed or empty OCR announces a clear outcome, not silence.
+
+## 11. Startup, onboarding, and recovery pass
+
+- First run shows onboarding; consent is recorded only on explicit accept.
+- A declined trust-consent at startup closes the app rather than continuing.
+- Each deferred startup step is isolated: a forced failure in one step logs to
+  `logs/startup-errors.log` and keeps QUILL open.
+- Crash Recovery appears after an unclean exit and restores or discards per the
+  user's choice.
+- The Untrusted Location Warning appears for files from untrusted folders.
+
+## 12. Read-aloud and speech pass
+
+- Read Aloud Voice Settings and Read Aloud Settings apply and persist.
+- Generate Speech Audio produces a file and announces completion.
+- Voice selection chain falls back gracefully when an engine is unavailable.
+
+## 13. Installer and first-run pass (clean machine)
+
+- The installer runs to completion on a fresh Windows VM with no Python.
+- Single-instance behaviour holds (a second launch focuses the first).
+- First launch reaches a usable editor with a screen reader running.
+- Uninstall removes the app and leaves user data per the documented policy.
+
+## 14. Performance and stability pass
+
+- Open and edit a large document (target sizes per the PERF acceptance rows)
+  without UI-thread stalls; cross-thread updates marshal through `wx.CallAfter`.
+- Typing latency stays within the documented budget on the primary environment.
+- No memory growth over a sustained editing session.
+- The diagnostics bundle (Save Diagnostics) collects without document content.
+
+## 15. High-contrast and visual pass
+
+- High Contrast mode renders every surface legibly; nothing disappears.
+- Focus indicators remain visible.
+- Contrast validation tooling reports the shipped theme as compliant.
+
+## 16. Localization sanity
+
+- The shipped locales load; no layout breaks truncate a control's name.
+- Announcements remain grammatical in each shipped locale.
+
+## 17. Sign-off
+
+Final sign-off is recorded by the maintainer against a single named build when
+every section has evidence, `dialogs.md` is fully ticked for that build, and no
+open Critical or High defect remains. This sign-off closes DLG-3.8 and, with it,
+the deferred SR-verification criteria of DLG-2 and DLG-3.6.
+
+| Role | Name | Build | Date | Result |
+| --- | --- | --- | --- | --- |
+| Maintainer (SR sign-off) | | | | |
+
+
+---
+
+# Appendix: Deployment
+
+_Folded in from the former docs/QUILL-PRD.md on 2026-06-13._
+
+# QUILL Deployment Guide
+
+Covers distribution, update packaging, pack distribution, and release best practices.
+
+## Table of Contents
+
+- [Release types](#release-types)
+- [Building a Windows release](#building-a-windows-release)
+- [Update mechanism overview](#update-mechanism-overview)
+- [Update feed format](#update-feed-format)
+- [Building an update archive](#building-an-update-archive)
+- [Bootstrapper binaries](#bootstrapper-binaries)
+- [Update ZIP scripts](#update-zip-scripts)
+- [Hosting the feed](#hosting-the-feed)
+- [Publishing a release](#publishing-a-release)
+- [Pack distribution](#pack-distribution)
+- [Version numbering](#version-numbering)
+- [Testing updates locally](#testing-updates-locally)
+- [Rollback](#rollback)
+- [Best practices](#best-practices)
+
+---
+
+## Release types
+
+| Type | Description | Tag pattern |
+|------|-------------|-------------|
+| Beta | Pre-release for wider testing | `v0.5.0-beta.1` |
+| Stable | Production release | `v1.0.0` |
+| Hotfix | Critical-only patch | `v1.0.1` |
+
+All three go through the same `windows-release` workflow. Mark betas as
+`prerelease: true` in the GitHub release (already the default in the
+workflow).
+
+---
+
+## Building a Windows release
+
+The build workflow (`windows-release.yml`) runs on `push` to a `v*` tag.
+To trigger it manually:
+
+```powershell
+git tag v0.5.0-beta.1
+git push origin v0.5.0-beta.1
+```
+
+The workflow produces three artifacts:
+
+- `quill-installer` — Inno Setup `.exe` installer
+- `quill-portable` — standalone folder, no installer required
+- `quill-release-artifacts` — checksums, SBOM, update feed stub
+
+To build locally (requires Inno Setup 6 and Python 3.12):
+
+```powershell
+pip install -e .[ui,spellcheck,dev]
+python scripts/build_windows_distribution.py `
+    --bundle-python `
+    --compile-installer `
+    --iscc-path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+    --output-dir windows-distribution
+```
+
+---
+
+## Update mechanism overview
+
+QUILL uses the AccessibleApps `autoupdate` library (vendored at
+`quill/_vendor/autoupdate/`) for incremental over-the-air updates.
+
+The flow:
+
+1. `QuillUpdateManager.check_for_updates()` is called (on startup or from
+   Help > Check for Updates).
+2. The manager fetches the update feed JSON from a hosted endpoint.
+3. If the feed version is newer than the running version, the user is
+   prompted via `_on_update_available`.
+4. If accepted, the update ZIP is downloaded with progress announcements.
+5. The ZIP is extracted to a temp directory.
+6. The platform bootstrapper (`bootstrap.exe` on Windows) is moved out of
+   the extracted tree and executed.
+7. The bootstrapper waits for QUILL to exit, then copies the new files over
+   the installation and restarts the app.
+
+The manager announces all state changes through the screen-reader bridge
+(`prism_bridge.announce`) so users with NVDA/JAWS/Narrator hear every step
+without watching the UI.
+
+---
+
+## Update feed format
+
+The feed is a single JSON file served over HTTPS. Example:
+
+```json
+{
+  "current_version": "0.5.0",
+  "description": "Accessibility improvements and bug fixes. See the release notes for details.",
+  "published_at": "2026-06-12T14:00:00Z",
+  "downloads": {
+    "Windows": "https://releases.example.com/quill-0.5.0-windows.zip",
+    "Darwin":  "https://releases.example.com/quill-0.5.0-macos.zip",
+    "Linux":   "https://releases.example.com/quill-0.5.0-linux.zip"
+  }
+}
+```
+
+Field notes:
+
+- `current_version` — the version string clients compare against their
+  running version. See [version numbering](#version-numbering) for the
+  comparison rules.
+- `description` — shown to the user in the update prompt. Keep it one or
+  two sentences; longer notes belong in the release notes URL.
+- `downloads` — key is the `platform.system()` return value (`Windows`,
+  `Darwin`, `Linux`). A client whose platform is not present skips the
+  update silently.
+
+Generate the feed with the bundled script:
+
+```powershell
+python scripts/generate_app_updater_feed.py `
+    --version "0.5.0" `
+    --windows-url "https://github.com/Community-Access/quill/releases/download/v0.5.0/quill-0.5.0-windows.zip" `
+    --macos-url   "https://github.com/Community-Access/quill/releases/download/v0.5.0/quill-0.5.0-macos.zip" `
+    --linux-url   "https://github.com/Community-Access/quill/releases/download/v0.5.0/quill-0.5.0-linux.zip" `
+    --description "Accessibility improvements and bug fixes." `
+    --output docs/site/updates/.quill-app-updater-v1.json
+```
+
+Commit and push; the GitHub Pages workflow publishes it automatically.
+
+---
+
+## Building an update archive
+
+The update ZIP must contain:
+
+```
+quill/                   all application Python files
+quill-data/              data files (words_alpha, thesaurus, schemas, quillins)
+bootstrap.exe            Windows bootstrapper (see below)
+```
+
+The bootstrapper **must be at the root of the ZIP** (not in a subdirectory)
+so `move_bootstrap` can find it. The rest of the layout must match the
+structure that `bootstrap.exe` expects when copying files over the existing
+installation.
+
+Use `scripts/build_update_zip.py` to produce the update ZIP automatically.
+It handles delta computation, bootstrapper placement, and `UPDATE_MANIFEST.json`
+generation. See [Update ZIP scripts](#update-zip-scripts) for full usage.
+
+> The bootstrapper binaries are not checked into this repo because they are
+> native executables maintained upstream. Run `scripts/fetch_bootstrappers.py`
+> to download them, or see
+> `quill/_vendor/autoupdate/bootstrappers/README.txt` for manual instructions.
+
+---
+
+## Bootstrapper binaries
+
+The bootstrapper (`bootstrap.exe` on Windows, `bootstrap-mac.sh` on macOS,
+`bootstrap-lin.sh` on Linux) is built and maintained by the AccessibleApps
+project:
+
+    https://github.com/accessibleapps/app_updater
+
+To obtain the binaries for a release build, use the bundled fetch script:
+
+```powershell
+python scripts/fetch_bootstrappers.py
+```
+
+This downloads all three bootstrappers from the upstream repo, verifies
+their SHA-256 hashes, and records checksums in
+`quill/_vendor/autoupdate/bootstrappers/checksums.sha256`. Re-running is
+idempotent — files with matching checksums are skipped.
+
+The binaries are not required for development or running tests. They are
+only needed when building a distributable package that supports in-place
+updates.
+
+Add the `bootstrappers/` directory to the Windows installer via the Inno
+Setup script generated by `build_windows_distribution.py`. The script
+already includes a `[Files]` directive for the bootstrapper; verify it
+points to the correct path before compiling.
+
+---
+
+## Update ZIP scripts
+
+Three scripts in `scripts/` automate the update ZIP pipeline. All three are
+stdlib-only and require no extra dependencies beyond what `pip install -e .`
+already installs.
+
+### `scripts/fetch_bootstrappers.py`
+
+Downloads `bootstrap.exe`, `bootstrap-lin.sh`, and `bootstrap-mac.sh` from
+the AccessibleApps upstream repo and writes a `checksums.sha256` file for
+verification. Binaries land in `quill/_vendor/autoupdate/bootstrappers/` and
+are excluded from git.
+
+```powershell
+# Download (idempotent — skips files whose SHA-256 matches the recorded checksum)
+python scripts/fetch_bootstrappers.py
+
+# Force re-download regardless of checksum
+python scripts/fetch_bootstrappers.py --force
+
+# Verify existing files without downloading
+python scripts/fetch_bootstrappers.py --verify-only
+```
+
+The CI `build` job runs this automatically before compiling the installer.
+
+### `scripts/generate_file_manifest.py`
+
+Walks `quill/` and records the SHA-256 hash, size, and install path of every
+distributable file. Output is `docs/site/updates/manifests/manifest-{version}.json`.
+The manifest feeds `build_update_zip.py` to compute deltas.
+
+```powershell
+# Generate manifest for the current source tree
+python scripts/generate_file_manifest.py --version 0.5.0
+
+# Generate and compare against a previous release
+python scripts/generate_file_manifest.py --version 0.5.0 --compare-to 0.4.9
+```
+
+Excluded from the manifest: `quill/tools/`, `__pycache__/`, `*.pyc`, `*.pyo`.
+The `--compare-to` flag prints changed, added, and deleted file counts and a
+net size delta — useful for sanity-checking before cutting a release.
+
+### `scripts/build_update_zip.py`
+
+Produces the update ZIP consumed by the autoupdate bootstrapper. By default
+it runs in delta mode: only files whose SHA-256 changed since the previous
+manifest are included, keeping update ZIPs lean.
+
+```powershell
+# Delta update (auto-detects base version from available manifests)
+python scripts/build_update_zip.py --version 0.5.0
+
+# Force full update
+python scripts/build_update_zip.py --version 0.5.0 --mode full
+
+# Specify base version explicitly
+python scripts/build_update_zip.py --version 0.5.0 --mode delta --base-version 0.4.9
+
+# Target a non-Windows platform
+python scripts/build_update_zip.py --version 0.5.0 --platform macos
+```
+
+The ZIP always contains:
+
+- `bootstrap.exe` (or platform equivalent) at the root
+- `UPDATE_MANIFEST.json` at the root — lists which files were changed, added,
+  or deleted
+- Changed/added files under `python/Lib/site-packages/` (the portable
+  distribution layout)
+
+If no previous manifest exists, the script falls back to full mode
+automatically.
+
+### Running the full pipeline
+
+```powershell
+# 1. Fetch bootstrappers (once per release machine)
+python scripts/fetch_bootstrappers.py
+
+# 2. Generate the manifest for this version
+python scripts/generate_file_manifest.py --version 0.5.0
+
+# 3. Build the delta update ZIP
+python scripts/build_update_zip.py --version 0.5.0
+
+# Output: release-artifacts/quill-0.5.0-update-windows.zip
+```
+
+The CI `build` job runs all three steps automatically on each `v*` tag push.
+
+---
+
+## Hosting the feed
+
+### GitHub Pages (default)
+
+The update feed lives at:
+
+    docs/site/updates/.quill-app-updater-v1.json
+
+The `github-pages` workflow publishes the entire `docs/site/` tree on every
+push to `main`. The feed URL used by `QuillUpdateManager` should be:
+
+    https://community-access.github.io/quill/updates/.quill-app-updater-v1.json
+
+Update `UPDATE_FEED_ENDPOINT` in `quill/core/settings_specs.py` (or
+wherever the URL is configured) before the first beta that ships the update
+check.
+
+### Keeping the feed up to date
+
+Workflow: after every release, regenerate the feed, commit it, and push.
+The Pages deployment runs automatically:
+
+```powershell
+python scripts/generate_app_updater_feed.py --version "0.5.1" ...
+git add docs/site/updates/.quill-app-updater-v1.json
+git commit -m "chore: update feed to 0.5.1"
+git push
+```
+
+Do not update the feed until all platform ZIPs are uploaded and their URLs
+are stable. Clients check the feed on startup; a partial update (feed
+updated before ZIPs are live) will offer a broken download to users.
+
+---
+
+## Publishing a release
+
+1. Bump the version in `pyproject.toml` and commit.
+2. Tag the commit: `git tag v0.5.0 && git push origin v0.5.0`
+3. The `windows-release` workflow runs automatically:
+   - runs tests (with `--ignore` for the two known-hanging tests)
+   - builds the installer and portable ZIP
+   - uploads artifacts
+   - creates a GitHub release draft
+4. Download the portable ZIP artifact, add the bootstrapper at the root,
+   re-upload as the final update ZIP to the GitHub release.
+5. Generate the update feed pointing at the final ZIP URLs.
+6. Commit and push the feed; Pages deploys within minutes.
+7. Announce the release (release notes, mailing list, etc.).
+
+---
+
+## Pack distribution
+
+Packs (Quillins) are distributed as `.zip` archives containing a
+`manifest.json` validated against `quill/core/schemas/extension.json`.
+
+### Creating a pack
+
+```powershell
+# Directory structure:
+my-pack/
+  manifest.json
+  README.md
+  LICENSE
+  <script-or-data files>
+
+# Validate before distributing:
+python -m quill.tools.quillin_lint my-pack --strict
+
+# Package:
+Compress-Archive -Path my-pack -DestinationPath my-pack-1.0.zip
+```
+
+### Distributing a pack
+
+Packs can be distributed through any channel — GitHub Releases, a personal
+website, email. Users install them via Tools > Quillin Manager > Install
+from File.
+
+For packs that should ship bundled with QUILL, place them in
+`quill/quillins_bundled/` and submit a pull request. Bundled Quillins are
+linted in CI with `--strict` and require a `README.md`, a `LICENSE`, and a
+`manifest.json` with a `justification` for each capability requested.
+
+### Pack versioning
+
+Pack versions are free-form strings in `manifest.json`. There is no
+automatic update mechanism for packs; users re-install a newer `.zip` to
+upgrade.
+
+---
+
+## Version numbering
+
+QUILL uses semantic versioning (`MAJOR.MINOR.PATCH`). The vendored autoupdate
+library (`quill/_vendor/autoupdate/autoupdate.py`) compares versions with a
+tuple-based integer comparison:
+
+```python
+tuple(int(x) for x in str(v).split("."))
+```
+
+This correctly orders `1.9` before `1.10`. The upstream library used a plain
+string comparison (`"1.9" > "1.10"` evaluates True — wrong). The fix is
+in `_version_tuple()` in the vendored copy; the upstream issue should be
+tracked at https://github.com/accessibleapps/app_updater if a PR is
+contributed.
+
+---
+
+## Testing updates locally
+
+To test the full update pipeline without publishing a real release:
+
+1. Start a local HTTP server:
+
+   ```powershell
+   python -m http.server 8765 --directory /path/to/test-assets
+   ```
+
+2. Create a test feed at `/path/to/test-assets/feed.json`:
+
+   ```json
+   {
+     "current_version": "99.0.0",
+     "description": "Local test update",
+     "downloads": { "Windows": "http://localhost:8765/test-update.zip" }
+   }
+   ```
+
+3. Create `test-update.zip` containing the app files and `bootstrap.exe`.
+
+4. Override the feed URL in a dev settings file (do not commit):
+
+   ```python
+   # quill/core/settings.py — temporary, revert before committing
+   update_feed_endpoint = "http://localhost:8765/feed.json"
+   ```
+
+5. Run QUILL and trigger Help > Check for Updates.
+
+The screen reader should announce "Quill 99.0.0 is available", then
+progress during download, then "Update ready. Quill will restart...".
+
+For CI-safe automated tests, see `tests/unit/ui/test_update_manager.py`.
+All HTTP is mocked; the bootstrapper execution step is always stubbed.
+
+---
+
+## Rollback
+
+To roll back to a previous version after a bad release:
+
+1. Update the feed to point at the previous version's ZIP:
+
+   ```powershell
+   python scripts/generate_app_updater_feed.py `
+       --version "0.4.9" `
+       --windows-url "https://.../quill-0.4.9-windows.zip" ...
+   ```
+
+2. Commit and push. Clients on 0.5.0 will be offered the 0.4.9 update on
+   their next startup check.
+
+   Note: `"0.4.9" > "0.5.0"` is false under string comparison, so the
+   rollback feed will **not** be offered automatically. You must either:
+
+   - Republish as a higher version number (e.g., `0.5.1-hotfix`) containing
+     the older code, or
+   - Ask users to reinstall manually.
+
+   This is a known limitation of string-comparison versioning. Plan hotfix
+   releases as forward increments.
+
+---
+
+## Best practices
+
+**Do not update the feed before the ZIPs are live.** Users who start QUILL
+in the window between feed publication and ZIP upload will get a failed
+download.
+
+**Keep description text short.** The description is read aloud by the
+screen reader when the update dialog opens. Two sentences maximum; link to
+the full release notes instead of embedding them.
+
+**Sign the ZIPs.** The autoupdate library downloads and extracts ZIPs
+without verifying a signature. For the beta, this is acceptable. Before
+1.0, add SHA-256 checksums to the feed and verify them in
+`QuillUpdateManager` before calling `extract_update`.
+
+**Test the bootstrapper on a clean machine before each major release.**
+The bootstrapper is a native binary that replaces files on disk. Run it
+manually on a clean install once per release cycle to confirm the file-copy
+logic matches the new distribution layout.
+
+**Announce update availability through the screen reader, not a modal.**
+The current `_on_update_available` implementation returns `True` without
+showing a dialog. Before 1.0, replace this with a non-modal notification
+bar (or a simple Yes/No dialog that is immediately reachable with Tab).
+Never block QUILL startup on an update prompt.
+
+**Staged rollout.** For major versions, serve the new feed to a fraction of
+users first. This is not natively supported by autoupdate; implement it by
+hosting multiple feed URLs (e.g., `/updates/beta.json` and
+`/updates/stable.json`) and shipping beta builds that point at the beta
+feed.
+
+
+---
+
+# Appendix: AccessibleApps integration
+
+_Folded in from the former docs/QUILL-PRD.md on 2026-06-13._
+
+# AccessibleApps Integration Strategy for Quill
+
+## Overview
+
+Quill now integrates multiple libraries from AccessibleApps (MIT-licensed) to accelerate accessibility improvements, enable incremental updates, and provide battle-tested UI components across Windows, macOS, and Linux.
+
+## Components Integrated
+
+### 1. **app_updater** (Incremental Updates)
+**Status**: Implemented (production-ready)  
+**Files**: 
+- `scripts/generate_app_updater_feed.py` — generates JSON feed in autoupdate format
+- `quill/ui/update_manager.py` — callback integration with screen-reader announcements
+- `pyproject.toml` — autoupdate dependency added to core
+
+**What it enables**:
+- Micro-updates: Ship patches as small ZIPs containing only changed files, not full reinstalls.
+- Automatic bootstrapper: Platform-specific scripts (`bootstrap.exe`, `bootstrap-mac.sh`, `bootstrap-lin.sh`) apply updates atomically after app exit and restart.
+- Accessible UX: Update checks and progress announced via screen reader with explicit user consent.
+- Security: Feeds can be cryptographically signed (Ed25519/RSA) and verified client-side.
+
+**Developer notes**:
+- Call `UpdateManager.check_for_updates()` from Help menu or startup checks.
+- Callbacks route through `prism_bridge.announce()` for screen-reader compatibility.
+- CI must produce ZIP update packages in release pipeline (full installer flow unchanged).
+- Test bootstrapper atomicity on Windows (NVDA/Narrator) and macOS (VoiceOver).
+
+---
+
+### 2. **smart_list** (Virtual Lists)
+**Status**: Optional (integration in progress)  
+**Files**: 
+- `pyproject.toml` — smart_list added to `[project.optional-dependencies.ui]`
+- Prototype: `quill/ui/smartlist_adapter.py` (to be created)
+
+- Virtual scrolling for large outlines/lists (millions of items without memory blowup).
+- Accessible DataView on macOS, ListView on Windows/Linux — unified API across platforms.
+- Model-based columns via attribute, dict key, or callable — maps naturally to Quill document models.
+- Windows IAT hook bypass for UIA enumeration delays on virtual lists >100K items.
+
+**Developer notes**:
+- Keep smart_list use confined to `quill/ui` (it imports `wx`).
+- Prototype: wrap SmartList/VirtualSmartList in an adapter that matches Quill's existing list interface.
+- Test with NVDA/Narrator (Windows) and VoiceOver (macOS) for focus and announcement behavior.
+- Intended for outline navigator and large-document list views.
+
+---
+
+### 3.5. **html_to_text** (HTML Paste Cleaning)
+**Status**: Fully integrated (production-ready)  
+**Files**: 
+- `quill/ui/html_paste_cleaner.py` — HTML detection and cleaning logic
+- `quill/ui/main_frame.py` — integrated into magic_paste() function
+- `tests/unit/ui/test_html_paste_cleaner.py` — 21 comprehensive tests
+- `quill/core/settings.py` — `auto_clean_html_paste` setting (currently defaults to `False`)
+- `pyproject.toml` — html_to_text added to `[project.optional-dependencies.ui]`
+
+**What it enables**:
+- Automatic HTML detection from web browser pastes (blog posts, emails, articles).
+- One-click conversion to clean plain text while preserving structure (headings, links, lists).
+- Optional auto-clean mode via Settings → Paste (currently opt-in for user safety).
+- Fallback regex-based cleaning if html_to_text library is unavailable.
+- No silent stripping; user controls every paste action via Magic Paste picker.
+
+**Workflow**:
+1. User copies HTML from web browser or email client.
+2. User presses Ctrl+Shift+V (Magic Paste).
+3. Quill detects HTML and shows picker:
+   - "Paste HTML as clean text" (recommended)
+   - "Paste HTML as-is" (original raw HTML)
+   - "Paste as plain text" (fallback)
+4. User chooses; clean version is inserted immediately.
+
+**Developer notes**:
+- `analyze_paste(text) → HtmlPasteContext`: Fast heuristic detection (doesn't require html_to_text import to detect).
+- `clean_html(html) → str`: Uses html_to_text if available; falls back to regex stripping.
+- Heuristic detects HTML tags but avoids false positives (code samples, email footers).
+- All 21 tests passing: detection, cleaning, fallback, edge cases, integration scenarios.
+- Screen-reader integration: Status bar announces cleanup (e.g., "Pasted cleaned HTML (350 chars)").
+
+---
+
+### 4. **accessible_output2** (Braille + Speech Fallback)
+**Status**: Optional (recommended for later)  
+**Files**: None yet — planned as fallback in `quill/platform/windows/prism_bridge.py`
+
+**What it enables**:
+- Braille output when Prism backend doesn't support it.
+- Fallback speech when Prism runtime is unavailable (graceful degradation).
+- Mature support for NVDA, JAWS, Narrator via multiple speech backends.
+
+**Developer notes**:
+- Do NOT add as a hard dependency; keep Prism as the primary backend.
+- Create an optional adapter `quill/platform/windows/accessible_output_adapter.py` that:
+  - Detects accessible_output2 availability at import time.
+  - Exposes `speak(message, interrupt)` matching Prism's interface.
+  - Falls back to `accessible_output2` if Prism probe fails or braille is needed.
+- This is a future enhancement after Prism stabilizes and user demand for braille surfaces.
+
+---
+
+### 4. **app_elements** (Common Dialogs)
+**Status**: Candidate for selective adoption  
+**Files**: None yet — audit and wrap per-component
+
+**What it enables**:
+- Pre-built about boxes, standard dialogs, and reusable UI elements.
+- Reduces boilerplate for non-editor UI.
+
+**Developer notes**:
+- Do NOT wholesale-import; audit each component for Quill's dialog contracts (default buttons, focus return, accessible names).
+- Create wrappers in `quill/ui/app_elements_compat.py` that enforce Quill dialog rules.
+- Use selectively for About dialog, license viewer, and settings panels.
+
+---
+
+### 5. **platform_utils** (Clipboard, Paths, Stdout)
+**Status**: Candidate for later  
+**Files**: None yet
+
+**What it enables**:
+- Cross-platform clipboard, path normalization, stdout capture — small utilities to reduce boilerplate.
+
+**Developer notes**:
+- Low-risk adoption for small utilities.
+- Can be integrated incrementally if Quill's platform layer needs it.
+
+---
+
+## Update Process: How It Works
+
+### 1. **Release Pipeline**
+```
+quill/version.py → scripts/generate_app_updater_feed.py
+                  ↓
+                  Produces: docs/site/updates/.quill-app-updater-v1.json
+                  Format: { "current_version", "description", "downloads": { "Windows": "...", "Darwin": "...", "Linux": "..." } }
+```
+
+### 2. **User Workflow (Automatic or Manual)**
+```
+User: Help → Check for Updates
+       ↓
+quill/ui/update_manager.py: UpdateManager.check_for_updates()
+       ↓
+autoupdate library:
+  - Downloads update ZIP to staging directory
+  - Announces progress via quill.platform.windows.prism_bridge.announce()
+  - Calls update_complete_callback() when ready
+       ↓
+Platform bootstrapper (after app exit):
+  - Waits for Quill process to exit
+  - Replaces old files with new files from ZIP
+  - Restarts Quill
+```
+
+### 3. **Micro-Update Example**
+```
+Release 1.0.0: Full installer (30 MB)
+Release 1.0.1: Micro-update ZIP (2 MB)
+  - One file changed (bug fix in core)
+  - User downloads 2 MB instead of 30 MB
+  - Update applied atomically on next startup
+```
+
+---
+
+## Attribution & Licensing
+
+All AccessibleApps libraries are **MIT-licensed**. Attribution is documented in:
+- `CONTRIBUTING.md` — "Acknowledgments and Attribution" section
+- Individual module docstrings (e.g., `quill/ui/update_manager.py`)
+- Release notes (when a library is integrated into a shipped version)
+
+---
+
+## Next Steps
+
+### Immediate (v1.0)
+1. ✅ Integrate `app_updater` feed generator and update callbacks.
+2. ✅ Document update process in user guide and PRD.
+3. ✅ Add AccessibleApps attribution to CONTRIBUTING.md.
+4. ✅ Fully integrate `html_to_text` with Magic Paste HTML detection and cleaning (21 tests passing).
+5. Test app_updater flow locally on Windows (bootstrapper atomicity).
+6. Set up CI to produce ZIP update packages alongside full installers.
+
+### Short-term (v1.1 – v1.5)
+1. Wire html_to_text auto-clean setting into UI (Settings → Paste → Auto-clean HTML).
+2. Prototype and integrate `smart_list` for outlines and large lists.
+3. Test `smart_list` on macOS (DataView) and Windows (ListView) with screen readers.
+4. Consider selective `app_elements` adoption for dialogs.
+5. Evaluate `accessible_output2` braille support if user demand arises.
+
+### Future
+- Optional: Add `platform_utils` for clipboard and cross-platform utilities.
+- Optional: Integrate `html_to_text` for import/export workflows.
+- Optional: Evaluate `opml_lib` if Quill adds outline import/export.
+
+---
+
+## Testing Checklist
+
+Before shipping any AccessibleApps-integrated feature:
+
+- [ ] Source license and README verified (MIT, no unforeseen restrictions).
+- [ ] Dependency audit (no heavy transitive deps added).
+- [ ] Platform testing: Windows (NVDA, Narrator), macOS (VoiceOver), Linux (Orca).
+- [ ] Accessibility: No double-talk; focus management correct; braille (if applicable).
+- [ ] Threading: UI updates via `wx.CallAfter` (if applicable); no blocking on main thread.
+- [ ] Packaging: New dependencies added to `pyproject.toml` with version pins and platform guards.
+- [ ] Docs: User guide updated; CONTRIBUTING.md updated; module docstrings reference upstream.
+
+---
+
+## Contact & Contributions
+
+Questions about AccessibleApps libraries? Open an issue or discussion in this repo. Pull requests that improve integration, fix bugs, or add tests are welcome.
+
+Links:
+- AccessibleApps: https://github.com/accessibleapps/
+- app_updater: https://github.com/accessibleapps/app_updater (MIT)
+- smart_list: https://github.com/accessibleapps/smart_list (MIT)
+- accessible_output2: https://github.com/accessibleapps/accessible_output2 (MIT)
+
+
+---
+
+# Appendix: Native RTF editing and Ulysses study (design)
+
+_Folded in from the former docs/QUILL-PRD.md on 2026-06-13._
+
+# QUILL: Native RTF Editing and a Ulysses Competitive Study
+
+Two forward-looking proposals in one place. Part One asks what it would take for
+QUILL to host a real rich-text editing surface so a writer can choose between
+plain-text-first writing and live rich editing. Part Two studies Ulysses, the
+Apple Design Award winning writing app for Mac, iPad, and iPhone, and recommends
+which of its ideas QUILL should adopt without compromising its accessibility-first
+soul.
+
+Both parts are written to be ambitious. They are also written honestly: where an
+idea collides with a non-negotiable QUILL principle, the collision is named and a
+safer path is offered.
+
+---
+
+## Part One: Native RTF Editing as an Optional Surface
+
+### The idea in one sentence
+
+Let a writer open Preferences and choose their editing surface: keep the current
+plain-text-first editor (a `wx.TextCtrl` over Markdown-style markup), or switch to
+a native rich-text surface (a hosted `wx.RichTextCtrl`) where bold, italic,
+headings, lists, and links are shown as formatted text rather than as markup
+characters, and `.rtf` files open and save with no markup translation at all.
+
+### Why this is different from what exists today
+
+QUILL already supports RTF as a *file format*. The io-layer round-trip delivered
+under EDS-21 reads RTF into Markdown-style markup and writes that markup back out
+to valid RTF. See [quill/io/rtf.py](quill/io/rtf.py). That work is real and it
+stays valuable. What it deliberately does not do is change the editing surface:
+when you open an `.rtf` today, you edit markup in a plain-text control, and the
+formatting is a translation, not a live object.
+
+This proposal is about the surface itself. It introduces a second, opt-in editor
+control where formatting is native and visible, and where RTF is the document's
+true in-memory representation rather than a serialized export of markup.
+
+### The headline tension, stated plainly
+
+QUILL's founding principle is screen-reader-first, plain-text-first writing on
+stock controls. The PRD and the repository conventions are explicit that the
+writing path should use `wx.TextCtrl` and avoid custom-drawn or heavily
+rich-formatted editor controls, because plain stock controls give the most
+predictable, best-tested screen-reader experience across NVDA, JAWS, and
+Narrator.
+
+A `wx.RichTextCtrl` is a richer, more complex control. On Windows its
+accessibility exposure is good but not identical to a plain edit control, and on
+macOS and Linux the wx rich-text implementation behaves differently again. So the
+core design question is not "can we host an RTF control" (we can) but "can we host
+it without weakening the accessibility guarantee that defines QUILL." The answer
+this proposal defends: yes, but only as an explicit, clearly-announced,
+non-default choice, with the plain-text surface remaining the supported default
+and the rich surface treated as a power-user mode with its own honest
+accessibility disclosure.
+
+### What "magical" looks like here
+
+The magic is not the formatting. Every word processor has formatting. The magic
+is making a rich surface feel as calm, legible, and screen-reader-honest as the
+plain surface, and letting a writer move between the two without ever losing a
+word.
+
+- One document, two lenses. The same file can be viewed as markup or as live
+  formatting, and switching lenses is a single command with a spoken summary of
+  what changed and what, if anything, cannot survive the switch.
+- A spoken formatting model. When the caret enters bold text, QUILL says "bold"
+  the way it already announces actions, so formatting is something you hear, not
+  only something sighted users see. This is the feature Microsoft Word and
+  Ulysses never built for screen-reader users, and it is where QUILL can lead.
+- Honest fidelity. Before any potentially lossy conversion, QUILL tells you in
+  plain language what will be preserved and what will be flattened, and offers to
+  keep a sidecar copy. No silent data loss, ever.
+
+### Architecture: where this lives
+
+QUILL's layering rules are strict. `quill/core` and `quill/io` must stay free of
+`wx`. All widget code lives in `quill/ui` and `quill/platform`. This proposal
+respects that boundary completely.
+
+- A new editor-surface abstraction in `quill/ui` (for example
+  `quill/ui/editor_surface.py`) defines a small protocol that both the plain-text
+  surface and the rich surface implement: get and set the document text, get and
+  set selection, apply and query inline formatting, report the caret context, and
+  emit change and caret events. The rest of `quill/ui/main_frame.py` talks to the
+  surface through this protocol instead of touching `self.editor` directly.
+- The plain-text surface wraps today's `wx.TextCtrl` and is the default.
+- The rich surface wraps a `wx.RichTextCtrl` and is selected only when the writer
+  opts in.
+- A pure, `wx`-free RTF formatting model can live in `quill/io` (extending the
+  existing `quill/io/rtf.py`) so that conversion logic stays testable on Linux CI
+  where `wx` cannot be imported. The control reads and writes through that model.
+
+This is the single most important design decision: introduce a surface protocol
+so the two controls are interchangeable from the application's point of view. Without
+it, every one of the command surfaces below would need a branch for "is this the
+rich control or the plain control." With it, each command asks the surface to do
+the work and the surface knows how.
+
+### Impact across every command surface
+
+This is the heart of the proposal. The instruction to "keep in mind all command
+surfaces that could be impacted" is taken literally. The table below inventories
+the real call sites discovered in the codebase and rates the work each one needs
+to support a rich surface. The plain-text surface keeps working unchanged in every
+row; the rating describes the rich-surface effort.
+
+Effort key: Low means the existing logic works through the surface protocol with
+little change. Medium means the command needs a rich-aware path. High means the
+command needs genuine new design because formatting changes its meaning.
+
+| Command surface | Representative call sites | Rich-surface effort | Why |
+| --- | --- | --- | --- |
+| Editor creation and event binding | `_create_document_tab`, `_bind_editor_events`, `_on_editor_char_hook` in [quill/ui/main_frame.py](quill/ui/main_frame.py) | High | The control is constructed here; this is where the surface protocol and the two implementations plug in. Smart-quote and dash autoformat must be re-expressed against the rich surface. |
+| Dirty-state and document buffer | `_on_text_changed`, `document.set_text(...)`, [quill/core/document.py](quill/core/document.py) | Medium | The buffer is no longer just a string. The Document model needs a representation that can hold formatting (or a paired markup-plus-format view) without `core` importing `wx`. |
+| Selection (expand, shrink, select all) | selection helpers in [quill/ui/main_frame.py](quill/ui/main_frame.py), [quill/core/selection.py](quill/core/selection.py), [quill/core/set_ops.py](quill/core/set_ops.py) | Medium | Offsets differ between a markup string and a formatted run model; selection math must move behind the surface protocol. |
+| Clipboard (cut, copy, paste) and context menu | editor context-menu wiring, `_copy_text_to_clipboard`, `copy_with_source`, [quill/platform/windows/clipboard.py](quill/platform/windows/clipboard.py), [quill/ui/main_frame_power_tools.py](quill/ui/main_frame_power_tools.py) | High | Rich paste must decide between formatted paste and paste-as-plain, and copy should offer RTF and plain flavors. This is also a security surface: pasted RTF must be sanitized. |
+| Navigation (go to line, bookmarks, headings, outline) | `go_to_line`, `_navigate_heading`, `open_heading_organizer`, bookmark commands, [quill/core/outline.py](quill/core/outline.py), [quill/core/structure_nav.py](quill/core/structure_nav.py) | Medium | Headings are styles in a rich document, not `#` prefixes. Outline and heading navigation must read paragraph styles instead of scanning markup. |
+| Find and replace | `find_text`, `_open_find_replace`, replace-all and replace-in-files, [quill/core/search.py](quill/core/search.py), [quill/core/regex_ops.py](quill/core/regex_ops.py) | Medium | Search runs over plain text extracted from the rich model; match offsets map back to formatted runs. Replace must preserve surrounding formatting. |
+| Spellcheck | `open_spell_check_dialog`, as-you-type toggle, [quill/core/spellcheck.py](quill/core/spellcheck.py) | Medium | Word extraction and squiggle placement work on runs rather than a flat string; correction must not drop a run's formatting. |
+| Markup and formatting commands | `format_bold`, `format_italic`, `format_heading`, heading-level commands, [quill/core/format_ops.py](quill/core/format_ops.py), [quill/core/autoformat.py](quill/core/autoformat.py) | High | On the plain surface these insert characters; on the rich surface they toggle native attributes. This is the clearest case for the surface protocol to own two implementations of one command. |
+| Autosave | `_maybe_autosave`, [quill/core/autosave.py](quill/core/autosave.py) | Low | Autosave serializes the document; it needs the rich serializer but the trigger logic is unchanged. |
+| Backups and recovery | `restore_backup`, [quill/core/backups.py](quill/core/backups.py), [quill/core/recovery.py](quill/core/recovery.py) | Medium | Backups must store enough to restore formatting; recovery must round-trip the rich representation atomically. |
+| Undo and redo, including persistent undo | `undo`, `redo`, persistent-undo load and flush, [quill/core/undo_store.py](quill/core/undo_store.py) | High | The rich control has its own undo stack. Reconciling it with QUILL's persistent, cross-session undo is the subtlest engineering problem in the whole proposal. |
+| Word count and statistics | `show_word_count`, [quill/core/metrics.py](quill/core/metrics.py) | Low | Metrics run on extracted plain text. |
+| Read-aloud and text-to-speech | read-aloud commands and progress handlers, [quill/core/read_aloud.py](quill/core/read_aloud.py) | Medium | Read-aloud reads plain text; an opportunity is to announce formatting boundaries (entering and leaving bold) as a spoken cue. |
+| Dictation | dictation commands and handlers, [quill/core/dictation.py](quill/core/dictation.py), [quill/platform/windows/dictation.py](quill/platform/windows/dictation.py) | Medium | Inserted dictated text must land in the rich model with the caret's current formatting. |
+| Screen-reader announcements | [quill/core/announcements.py](quill/core/announcements.py), [quill/core/a11y_regions.py](quill/core/a11y_regions.py), [quill/platform/sr_announce.py](quill/platform/sr_announce.py) | High | The defining work. The announcement grammar must grow a vocabulary for formatting so the rich surface is as legible by ear as the plain surface. |
+| Soft wrap | soft-wrap toggle and apply, [quill/core/wrap_ops.py](quill/core/wrap_ops.py) | Low | The rich control wraps natively; the toggle maps to a control style. |
+| QUILL-key command system | [quill/ui/main_frame_quill_key.py](quill/ui/main_frame_quill_key.py), [quill/core/commands.py](quill/core/commands.py), [quill/core/keymap.py](quill/core/keymap.py) | Medium | Every editor command dispatched through the QUILL key must resolve against the active surface; the dispatch indirection already exists, so this is wiring, not redesign. |
+| Dialog estate | Preferences hub, the new surface picker, [dialogs.md](dialogs.md), [tests/unit/ui/fixtures/dialog_inventory.json](tests/unit/ui/fixtures/dialog_inventory.json) | Medium | A surface-choice control and any fidelity-warning dialogs must be registered and classified under the DLG-3 dialog inventory gate. |
+
+### Cross-cutting impacts beyond individual commands
+
+- Settings and the Preferences hub. A new setting, for example
+  `editor_surface` with values `plain` and `rich`, registered in
+  [quill/core/settings_registry.py](quill/core/settings_registry.py) and surfaced
+  as a category in the new Preferences hub. Switching surfaces should be possible
+  per document and as a default.
+- The Document model. Today the buffer is text. A rich surface needs a
+  representation that carries formatting. The least invasive design keeps markup
+  as the canonical text and attaches a formatting overlay, so plain-text features
+  keep working on the canonical text and the rich control renders the overlay.
+- Security. RTF is a historically dangerous format (object packager and embedded
+  object abuse, remote image fetches). Any native RTF surface must parse defensively,
+  refuse embedded executables and OLE objects, and honor QUILL's no-silent-network
+  rule by never fetching a remote resource referenced in an RTF without explicit
+  consent. This aligns with the existing egress-audit posture.
+- Testing and CI. Because `wx` cannot be imported on Linux CI, the conversion and
+  formatting model must live in `quill/io` with pure unit tests, and the control
+  itself must be covered by the existing source-contract testing style plus the
+  dialog-inventory and public-surface gates. The wx-freedom of `core` and `io`
+  must not regress.
+- Performance. The PRD sets latency budgets for the editor. A rich control over a
+  large document has different performance characteristics; large-file behavior
+  must be measured against the existing performance gates before this ships.
+
+### A staged, honest delivery plan
+
+1. Surface protocol first. Refactor `main_frame` so all editor access goes
+   through an editor-surface protocol, with the existing `wx.TextCtrl` as the only
+   implementation. No user-visible change. This de-risks everything that follows
+   and is independently valuable.
+2. Rich model in `quill/io`. Extend the RTF model so a formatted document can be
+   represented, converted, and tested without `wx`.
+3. Read-only rich preview. Ship a rich *view* of a document before a rich
+   *editor*. Lower risk, immediately useful, and it exercises the announcement
+   grammar for formatting.
+4. Opt-in rich editor. Introduce the `wx.RichTextCtrl` surface behind a feature
+   flag and the new setting, defaulting off, with a frank accessibility note in
+   the picker.
+5. Fidelity and safety polish. Lossy-conversion warnings, sidecar preservation,
+   RTF sanitization, and the spoken formatting vocabulary.
+
+### Opening files: the moment the design lives or dies
+
+Everything above is plumbing. The place a writer actually meets this design is the
+instant they open a file. If that moment is confusing ("why is this file showing
+markup characters?" or "why did my headings turn into hash marks?"), the feature
+fails no matter how elegant the internals are. So the open and save experience
+deserves its own design, and it can be genuinely magical.
+
+#### The one principle that prevents all confusion
+
+The file chooses the surface, the writer can override, and QUILL always says which
+lens you are in. Stated as three promises:
+
+- A file opens in the surface that fits its nature, automatically.
+- The writer can flip to the other lens at any time with one command, on a
+  per-document basis, without losing a word.
+- QUILL announces the active surface on open and on every switch, so a
+  screen-reader user is never guessing.
+
+That last promise is the accessibility heart of it. The status bar shows the lens
+("Plain" or "Rich"), and the announcement grammar speaks it: "Opened report.rtf,
+Rich text lens."
+
+#### How each kind of file behaves on open
+
+There is no separate "open as plain" versus "open as rich" file picker. There is
+one Open command. QUILL inspects what you opened and does the obvious right thing,
+then tells you what it did.
+
+| You open | Default surface | What QUILL says and offers |
+| --- | --- | --- |
+| A plain text file (`.txt`, `.md`, `.markdown`, code) | Plain | Opens exactly as today. No change whatsoever for existing users. |
+| An `.rtf` file, with the rich surface available | Rich | "Opened in Rich text lens." A single command flips to Plain to see or edit the underlying markup. |
+| An `.rtf` file, with the rich surface turned off | Plain (markup) | Behaves like today's EDS-21 round-trip, and offers a one-key "Open in Rich text lens" if the writer wants formatting. |
+| A rich format QUILL can import (`.docx`, `.odt`, `.pages`) | Plain by default, Rich if opted in | QUILL says how it imported and whether formatting was simplified, with a link to view details. |
+| A non-text file (`.pdf`, image for OCR, spreadsheet) | Plain (extracted text) | Unchanged; these are read or extracted into text and never pretend to be rich documents. |
+
+The key insight: the writer's default-surface preference is a *fallback*, not a
+mandate. An `.rtf` is inherently a rich document, so it opens rich when rich is
+available, even if the writer's default is plain, because that is the least
+surprising thing. The preference only decides the ambiguous cases.
+
+#### Making the choice effortless, not a chore
+
+A few touches turn a potential annoyance into something that feels considerate:
+
+- Remember per file. If you opened `journal.rtf` in Plain last time, QUILL
+  reopens it in Plain and says so. The decision is sticky per document, stored in
+  the same schema-validated JSON used for other per-document state, so you only
+  ever decide once.
+- One command to flip lenses. A single QUILL-key command, "Switch editing lens,"
+  toggles Plain and Rich for the current document, announces the new lens, and
+  keeps the caret on the same word. No dialog, no reload.
+- No dead ends. Every flip is reversible and lossless within a session, because
+  the canonical markup-plus-overlay model holds both views at once. You can move
+  back and forth freely while you decide which you prefer for this file.
+- Speak the consequence before a lossy save, never after. If saving the current
+  lens to the chosen file type would drop something (for example, saving a richly
+  formatted document down to `.txt`), QUILL says exactly what will be flattened and
+  offers to keep a sidecar copy in a faithful format. This reuses the no-silent-loss
+  promise from the fidelity stage.
+
+#### Saving: the mirror image, equally calm
+
+Saving follows the same "least surprise, always announced" rule.
+
+- Save keeps the file's own format. An `.rtf` saves as RTF, a `.md` saves as
+  Markdown, regardless of which lens you were editing in, because the lens is a
+  *view*, not the file's identity.
+- Save As is where format genuinely changes, and that is the right place for a
+  clear, accessible format picker with a spoken fidelity note ("Saving as plain
+  text will remove bold, italic, and headings. Keep a Rich copy too?").
+- The dirty-state, autosave, and backup machinery all operate on the canonical
+  model, so switching lenses never marks a document dirty by itself and never
+  risks a recovery that loses formatting.
+
+#### Why this is magical and not just tolerable
+
+The ordinary version of this feature forces a mode decision on the user and then
+punishes wrong guesses with lost formatting. The QUILL version removes the
+decision in the common cases, makes it one reversible keystroke in the rare cases,
+keeps both views of the document alive at once so nothing is ever lost, and speaks
+every state and consequence aloud so a blind writer navigates it with exactly the
+same confidence as a sighted one. A writer opens their file and it simply looks
+right, sounds right, and saves right. That is the magic: the two surfaces feel like
+one calm editor that happens to know when to show formatting.
+
+### Recommendation
+
+Pursue it, but as a protocol-first refactor that delivers value at every stage,
+and keep the plain-text surface the default and the fully-supported path. The
+rich surface should be a celebrated power-user choice, not a replacement, and its
+accessibility story should be told honestly at the moment of opt-in. Done this
+way, QUILL becomes the rare app that offers live rich editing and still treats
+plain-text, screen-reader-first writing as first class. That is the magic: not
+catching up to word processors, but giving blind and low-vision writers a rich
+surface that finally speaks formatting out loud.
+
+---
+
+## Part Two: Competitive Study, Ulysses
+
+### Why Ulysses is the right mirror for QUILL
+
+Ulysses is a mature, respected, markup-first writing app for Mac, iPad, and
+iPhone, in active development since 2003 and an Apple Design Award winner. Like
+QUILL, it bets on markup rather than visual rich editing, keeps the writer's
+hands on the keyboard, and produces clean text as output. That shared philosophy
+makes it the most instructive comparison: where Ulysses is strong, it validates
+QUILL's direction; where QUILL is strong, it shows QUILL's distinct advantage.
+
+The comparison below reflects Ulysses as described on its official site and
+feature pages.
+
+### Side-by-side at a glance
+
+| Dimension | Ulysses | QUILL |
+| --- | --- | --- |
+| Core philosophy | Markup-first, distraction-free, keyboard-driven | Markup-first, screen-reader-first, keyboard-driven |
+| Platforms | Mac, iPad, iPhone (Apple only) | Windows first, with a macOS path |
+| Accessibility stance | General Apple platform accessibility | Accessibility is the product thesis: NVDA, JAWS, Narrator parity |
+| Library and organization | Unified library, groups, filters, keywords | Tabs, profiles, bookmarks, headings outline, quick navigation |
+| Writing goals | Deadlines, daily goals, character and word targets | Word count and statistics |
+| Proofreading | Built-in grammar and style check, 20-plus languages | Spellcheck, with AI assistance as explicit opt-in |
+| Export and publishing | PDF, Word, ebook, plus WordPress, Ghost, Medium, Micro.blog | Pandoc-backed multi-format export and conversion |
+| Sync | Seamless first-party cloud sync across Apple devices | Local-first storage, privacy-first |
+| Privacy posture | Cloud library by design | No silent network calls, explicit consent per action |
+| AI | Limited | Opt-in assistant, branchable sessions, local-first options |
+
+### What Ulysses does that QUILL can learn from
+
+These are the ideas worth bringing into QUILL, each reframed through QUILL's
+accessibility-first, privacy-first, plain-text-first lens so it arrives as a QUILL
+feature rather than a transplant.
+
+#### Writing goals you can hear
+
+Ulysses lets a writer set a deadline and a daily or per-document target and watch
+progress fill toward it. QUILL has word count and statistics but not goals as a
+first-class, motivating object. The magical QUILL version is a *spoken,
+glanceable* goal: set a target by voice or command, and QUILL announces progress
+on demand and at milestones ("halfway to your 800 words", "goal met") through the
+existing announcement grammar, with an optional status-bar field. This turns a
+visual progress bar into something a blind writer experiences exactly as richly as
+a sighted one.
+
+#### Keywords as a navigation and filtering layer
+
+Ulysses attaches keywords to sheets and filters the library by them. QUILL has
+headings, bookmarks, and profiles, but not lightweight, user-defined tags that cut
+across documents. A QUILL keyword system, stored in schema-validated JSON and fully
+keyboard and screen-reader navigable, would let a writer mark passages or files
+("research", "todo", "chapter-3") and then jump or filter by tag through the quick
+navigation surface. The magic is making tags audible and command-driven rather
+than a mouse-driven sidebar.
+
+#### A unified, navigable library
+
+Ulysses keeps every text in one searchable library that syncs everywhere. QUILL is
+file-and-tab oriented. Without abandoning local-first files, QUILL could offer an
+optional library *view*: a single accessible list or tree across a writer's
+project folders, with type-ahead, keywords, and goals visible, built from the same
+stock-control, first-letter-navigable patterns QUILL already favors. It is the
+Edge-style list pattern QUILL just adopted for Preferences, applied to a writer's
+whole corpus.
+
+#### Built-in style and grammar assistance, on QUILL's terms
+
+Ulysses ships an integrated proofreader across many languages. QUILL has
+spellcheck and an opt-in AI assistant. The recommendation is not to bolt on a
+cloud grammar service; it is to make style and grammar suggestions a *local-first,
+consent-gated* capability that announces each suggestion and never sends text
+anywhere without explicit per-action consent, consistent with QUILL's egress rules.
+Ulysses proves writers want this; QUILL can offer it without surrendering privacy.
+
+#### Frictionless, beautiful export with live preview
+
+Ulysses turns text into polished PDF, Word, and ebooks with on-the-fly style
+switching and live preview. QUILL already has strong Pandoc-backed export. The
+borrowable idea is the *experience*: a single command that previews the chosen
+output format and lets the writer switch styles before exporting, with the preview
+itself accessible. QUILL's advantage is that its preview can be screen-reader
+legible, which a purely visual preview is not.
+
+#### Distraction-free focus as an announced mode
+
+Ulysses is built around a calm, distraction-free interface. QUILL can offer a
+focus mode that does more than hide chrome: it can announce entry and exit, mute
+non-essential notifications, and optionally narrow read-aloud to the current
+paragraph, making focus a multi-sensory state rather than a visual one.
+
+### What QUILL should deliberately not copy
+
+- Apple-only reach. Ulysses is Apple-exclusive. QUILL's Windows-first,
+  screen-reader-first mission is its differentiation; that should not change to
+  chase Ulysses' aesthetic.
+- Cloud-library-by-default. Ulysses assumes a synced cloud library. QUILL's
+  local-first, no-silent-network posture is a feature, not a gap. Any library or
+  sync work must stay opt-in and consent-gated.
+- Subscription-shaped feature gating. Pricing strategy is out of scope here, but
+  QUILL should not let a feature's design be distorted by a paywall the way some
+  Ulysses capabilities are.
+
+### Where QUILL already beats Ulysses
+
+It is worth naming QUILL's lead so the roadmap protects it.
+
+- Screen-reader-first design. Ulysses inherits platform accessibility; QUILL is
+  engineered around it, with a shared announcement grammar and parity across NVDA,
+  JAWS, and Narrator.
+- Privacy by architecture. No silent network calls and explicit per-action
+  consent are guarantees Ulysses does not make.
+- Branchable AI writing sessions. QUILL's resumable, forkable session tree is a
+  genuinely novel capability with no Ulysses equivalent.
+- Windows reach. QUILL serves a platform and an audience Ulysses does not.
+
+### Recommended priorities from this study
+
+In rough order of value-to-effort for QUILL's audience:
+
+1. Spoken writing goals, building on the existing metrics and announcement
+   surfaces. High value, modest effort, distinctly QUILL.
+2. Keyword tags with audible navigation and filtering, reusing the quick
+   navigation and schema-validated JSON storage patterns.
+3. An optional accessible library view across project folders, reusing the
+   first-letter-navigable list pattern.
+4. Consent-gated, local-first style and grammar suggestions that announce each
+   finding.
+5. An accessible export preview with on-the-fly style switching.
+6. An announced, multi-sensory focus mode.
+
+Each of these takes a proven Ulysses idea and re-expresses it as something a blind
+or low-vision writer experiences fully, which is exactly the territory where QUILL
+should aim to be not just competitive but singular.
+
+---
+
+## Part Three: Compose Mode, a Workshop for Assembling Documents
+
+### The idea in one sentence
+
+Add an optional Compose mode where a document is built from a list of parts (call
+them segments, QUILL's answer to Ulysses sheets), each part holding a chunk of
+writing or a pulled-in source, where the writer reorders parts, promotes and
+demotes their heading levels, and merges them into one finished document, while a
+live HTML preview shows the assembled whole in real time, and the parts can be
+written in Markdown, RTF, or HTML.
+
+This is the writing-as-architecture idea that David Hewson praised in Ulysses
+("shuffle around the many different parts and scenes"), rebuilt so a screen-reader
+user can architect a document by ear with exactly the same fluency as by eye.
+
+### What a writer actually does in Compose mode
+
+Picture a long piece: a report, a thesis chapter, a book section. Instead of one
+unbroken file, the writer sees an accessible list of parts:
+
+- Introduction
+- Background (pulled from `research-notes.md`)
+- Method
+- A quoted source (pulled from an `.rtf` a colleague sent)
+- Findings
+- Conclusion
+
+Each part is a real, editable unit. The writer can:
+
+- Reorder parts. Move "Method" above "Background" and the whole document
+  reflows, the preview updates, and QUILL announces "Moved Method to position 3 of
+  6."
+- Re-level headings. Promote a part so its heading becomes a top-level section,
+  or demote it so it nests under the part above. QUILL announces "Background is
+  now heading level 2, nested under Introduction."
+- Pull sources together. Add a part that references another file (Markdown, RTF,
+  or HTML) so material from many places is gathered into one outline without
+  copy-paste drift. The source can be embedded (frozen copy) or linked (kept in
+  sync), and QUILL says which.
+- Mix formats per part. One part can be Markdown, the next RTF, the next HTML.
+  Compose mode normalizes them through QUILL's existing conversion layer so the
+  assembled document is coherent.
+- Merge to a single document. When the architecture is right, "Flatten to
+  document" produces one ordinary file in the writer's chosen format, with heading
+  levels already correct.
+
+### The structure tree: the document as a navigable outline
+
+A flat list of parts is good; a tree is magical, and it is the natural fit for
+QUILL because the codebase already proves the pattern. QUILL ships an accessible
+tree-navigator (`_NavigatorNode` and `_show_tree_navigator` in
+[quill/ui/main_frame.py](quill/ui/main_frame.py)) used today for the heading
+outline, EPUB chapters, and the misspelling list, and a tree-based *structure
+editor* (the YAML editor) that already performs add-child, add-sibling, rename,
+and delete on a `wx.TreeCtrl` with a live preview beside it. Compose mode should
+reuse this exact, battle-tested pattern rather than invent a new surface.
+
+Represented as a tree, the part list becomes the document's true shape:
+
+- Introduction
+- Method
+  - Participants
+  - Materials
+- Background
+- Findings
+  - Quantitative
+  - Quoted source (from a colleague's RTF)
+- Conclusion
+
+A `wx.TreeCtrl` is a first-class accessible control (it sits in the dialog
+contract's preferred-focus list), and on Windows, macOS, and Linux it gives blind
+writers what sighted writers get from an indented outline: nesting they can feel.
+
+- Arrow keys walk the structure. Up and down move between parts, right expands a
+  part to hear its children, left collapses to hear just the section. Screen
+  readers announce level and position natively ("Method, level 1, expanded, 2 of
+  6; Participants, level 2, 1 of 2").
+- Collapsing a branch hides a whole sub-section so a writer can think at the
+  chapter level, then expand to drop into detail, the outliner's core joy.
+- The tree is the document. Reordering a node reorders the prose; promoting a node
+  re-levels its heading; moving a parent carries its children. There is no
+  separate outline to drift out of sync.
+- Each node speaks its essentials on focus: title, heading level, child count,
+  word count, format (Markdown, RTF, or HTML), and link-or-embedded state, all in
+  the shared announcement grammar.
+
+The rich context menu described next hangs directly off this tree, and the live
+HTML preview sits beside it exactly as the YAML editor places a preview beside its
+structure tree, so moving a node and hearing the reflowed result is one gesture.
+
+### The live HTML preview, made accessible
+
+A real-time HTML preview is the visual half of the magic. The accessible half is
+making that preview meaningful without sight.
+
+- The preview renders the assembled document as HTML and updates as parts move or
+  change, reusing QUILL's existing HTML preview path.
+- Crucially, the preview is screen-reader legible: it is presented as structured,
+  navigable text (headings, lists, links exposed as real semantics), not as an
+  opaque image of a page, so a screen-reader user can read the assembled result by
+  heading and by element just like the final document.
+- A spoken structure summary is one keystroke away: "6 parts, 4 top-level
+  headings, estimated 2,300 words, reading order: Introduction, Method,
+  Background..." so the writer hears the shape of the whole before diving in.
+- Preview and parts stay in sync both ways: jumping to a heading in the preview
+  offers to jump to the part that produced it, closing the loop between the
+  architecture view and the reading view.
+
+### Why this is delightful, not just powerful
+
+- Nothing is lost while you experiment. Reordering and re-leveling operate on the
+  part list, never by destructively cutting and pasting text, so every arrangement
+  is reversible and the writer can try three structures in a minute.
+- The outline is the document. There is no separate, drifting outline pane to
+  maintain; the part list *is* the outline, and editing the outline edits the
+  document.
+- It speaks architecture. Every structural action has a spoken outcome in the
+  shared announcement grammar, so "move this section earlier" is a confident,
+  audible act rather than a fragile drag.
+- It meets writers where their material is. Markdown notes, an RTF from a
+  colleague, an HTML snippet from the web can all become parts without first being
+  converted by hand.
+
+### The right-click that builds a document: a rich, spoken context menu
+
+Reordering and re-leveling should not require remembering commands. The fastest,
+most direct way to architect a document is to act on the part you are standing on,
+and the context menu is where that lives. In Compose mode, invoking the context
+menu on a part (by right-click, by the keyboard context-menu key, or by QUILL's
+own context command) opens a structure menu that is the command center for the
+whole assembly. Every item is keyboard reachable, every item announces its
+outcome, and destructive items confirm.
+
+The menu is organized so the most common architectural moves are at the top:
+
+| Menu item | What it does | What QUILL announces |
+| --- | --- | --- |
+| Move Up / Move Down | Swaps this part with its neighbor | "Moved Method up to position 2 of 6." |
+| Move to Top / Move to Bottom | Jumps this part to the start or end | "Moved Conclusion to the end, position 6 of 6." |
+| Move to Position... | Accessible entry to type or pick an exact slot | "Moved Background to position 3 of 6." |
+| Promote (heading level up) | Raises this part's heading one level, outdenting it | "Background is now heading level 1, a top-level section." |
+| Demote (heading level down) | Lowers this part's heading one level, nesting it | "Background is now heading level 3, nested under Method." |
+| Make Top-Level Section | Sets this part to heading level 1 in one step | "Introduction is now a top-level section." |
+| Group Under Previous | Nests this part (and re-levels it) beneath the part above | "Grouped Findings under Method." |
+| Promote With Children / Demote With Children | Re-levels this part and everything nested under it together | "Promoted Method and its 3 sub-parts." |
+| Change Format... | Switches this part between Markdown, RTF, and HTML | "Changed Background to HTML." |
+| Convert Link to Embedded Copy | Freezes a linked source so it stops tracking the original | "Background is now an embedded copy." |
+| Refresh Linked Source | Re-pulls a linked source's latest content | "Refreshed Background from research-notes.md." |
+| Split Part Here / Merge With Previous | Breaks one part into two at the caret, or fuses two | "Split into Method and Method, part 2." |
+| Duplicate Part | Copies the part as a new sibling | "Duplicated Findings." |
+| Rename Part | Accessible text entry for the part's outline label | "Renamed to Literature Review." |
+| Add Keyword to Part... | Tags this part (see Part Four) | "Added keyword research to this part." |
+| Preview This Part | Jumps the live HTML preview to this part | "Previewing Findings." |
+| Flatten From Here... | Merges this part and those after it into a document | spoken summary of the flattened result |
+| Remove Part | Deletes the part (with confirm) | "Removed Background. 5 parts remain." |
+
+#### What makes this context menu magical rather than ordinary
+
+- It speaks position and consequence, always. Every move and re-level reports the
+  new position out of the total and the resulting heading relationship, so a
+  screen-reader user never has to re-read the list to discover what happened. The
+  menu is a place where you act and immediately *hear* the new shape.
+- It re-levels structurally, not cosmetically. Promote and Demote understand
+  nesting: "Promote With Children" lifts an entire subtree so a writer can move a
+  whole sub-section up a level in one act, and QUILL announces how many parts moved
+  with it. This is the difference between editing an outline and merely nudging
+  text.
+- It is context-aware. Items that cannot apply are absent or clearly disabled with
+  a spoken reason: "Move Up unavailable, Introduction is already first." "Refresh
+  Linked Source unavailable, this part is an embedded copy." No dead clicks, no
+  silent no-ops.
+- It mirrors keyboard commands exactly. Every menu item has a QUILL-key binding so
+  power users never need the menu, and the menu never hides a capability the
+  keyboard lacks. The context menu and the command system are two doors to one
+  room.
+- It keeps focus sane. After a move, focus stays on the part that moved (now in its
+  new position) so repeated presses of "Move Up" walk a part smoothly toward the
+  top, each step announced, exactly the predictable behavior the repository's
+  dialog and focus rules require.
+- It confirms only what is destructive. Reordering and re-leveling are instantly
+  reversible and never prompt; Remove Part and a flatten that would overwrite a
+  file confirm through a native accessible dialog. Friction lands only where loss
+  is possible.
+
+#### Beyond the single part: acting on a selection
+
+The magic compounds when the writer selects several parts in the list. The same
+context menu then operates on the whole set, spoken as a set: "Move 3 parts up,"
+"Demote 3 parts," "Group 3 parts under Introduction," "Add keyword research to 3
+parts." A scattered draft becomes a structured manuscript in a handful of audible,
+reversible gestures, all from the one context menu every editor estate already
+makes feel familiar.
+
+This context menu must, like all QUILL dialogs and menus, be registered and
+classified under the DLG-3 dialog and menu estate, with no menu items mutated while
+the menu is open (deferring label and enable updates until close), per the
+repository's dialog and menu lessons.
+
+### How Compose mode fits QUILL's architecture
+
+This respects the same boundaries as the rest of this document.
+
+- The part-list model, reordering, heading-level math, and the flatten-to-document
+  logic are pure and live in `quill/core` and `quill/io`, free of `wx` and fully
+  unit-testable on Linux CI. They build directly on the existing outline, heading,
+  and conversion modules ([quill/core/outline.py](quill/core/outline.py),
+  [quill/core/heading_styles.py](quill/core/heading_styles.py),
+  [quill/io/pandoc.py](quill/io/pandoc.py), and the RTF and HTML io paths).
+- The Compose surface itself (the accessible part list, the editor for the
+  selected part, and the live preview) lives in `quill/ui`, built from stock,
+  first-letter-navigable list controls, the same patterns QUILL already favors.
+- It honors FeatureManager as an opt-in mode, the dialog-inventory gate for any
+  new dialogs, and the no-silent-network rule for any linked remote source.
+- A composition is persisted as schema-validated JSON (the ordered part list with
+  each part's source, format, embed-or-link choice, and heading level), with atomic
+  writes and backup or recovery parity, so an assembly is as robust as any other
+  QUILL document.
+
+### Honest constraints
+
+- Mixed-format flattening is only as faithful as the conversions beneath it; the
+  same no-silent-loss warnings from Part One apply when a part's formatting cannot
+  survive the chosen output format.
+- A real-time preview of a large multi-part document must respect QUILL's
+  performance budgets; the preview should update incrementally rather than
+  re-rendering the world on every keystroke.
+- Linked (live) sources introduce freshness and trust questions; linked external
+  content must follow the existing untrusted-location and egress-consent rules.
+
+---
+
+## Part Four: Accessible Keywords for Screen-Reader Users
+
+Keywords (tags) recur through this document as a borrowed Ulysses strength. They
+are only worth building if they are fully usable by ear, so they deserve their own
+design. The goal: tagging and tag-navigation that a screen-reader user performs as
+fluently as a sighted user clicks a colored label.
+
+### What a keyword is in QUILL
+
+A keyword is a short, user-defined label ("research", "todo", "chapter-3",
+"verify") attached to a whole document or to a specific part or passage. Keywords
+are stored in schema-validated JSON alongside other per-document state, never
+embedded invisibly in the prose, so they never pollute the text a screen reader
+reads.
+
+### Assigning keywords by ear
+
+- A single command, "Add keyword," opens an accessible entry with type-ahead over
+  existing keywords, so the writer reuses "research" rather than inventing
+  "reserach". The field announces matches as they narrow.
+- Assigning announces the outcome: "Added keyword research to this section. This
+  section now has two keywords: research, verify." The writer always hears the
+  resulting state, not just the action.
+- Removing is symmetric and equally spoken: "Removed todo. One keyword remains:
+  research."
+- Keywords on a passage are anchored to that passage's position, and QUILL speaks
+  where they live ("keyword verify spans the selected sentence") so they are never
+  invisible floating state.
+
+### Hearing which keywords are present
+
+The hardest part of tags for a screen-reader user is usually discovery: sighted
+users see colored chips at a glance. QUILL replaces the glance with sound and
+structure.
+
+- On entering a tagged document or part, QUILL can announce its keywords as part
+  of the context, configurably, for example "Findings, keywords: research,
+  verify."
+- A "Read keywords here" command speaks the keywords at the caret on demand,
+  so the information is available the instant it is wanted and silent when it is
+  not.
+- A status-bar field can carry the current location's keyword count, and reading
+  that field aloud is already a supported QUILL action.
+
+### Navigating by keyword
+
+This is where keywords become a navigation superpower rather than mere labels.
+
+- "Go to keyword" opens an accessible, first-letter-navigable list of all
+  keywords with their occurrence counts ("research, 7; todo, 3; verify, 2").
+  Choosing one lists every place it appears, each entry spoken with its document,
+  section, and a short context snippet.
+- "Next keyword" and "Previous keyword" jump between occurrences of a chosen tag
+  the way heading navigation jumps between headings, each landing announced with
+  its surrounding context.
+- A keyword filter can scope the accessible library view and Compose mode part
+  list to just the tagged items ("showing 7 parts tagged research"), turning a
+  sprawling project into a focused working set, entirely by keyboard and entirely
+  spoken.
+
+### Why this is the accessible version Ulysses never built
+
+Ulysses keywords are fundamentally visual: chips you scan and click. QUILL's
+keywords are spoken objects you can add, hear, filter, and jump through without
+ever seeing them. Every keyword action has an audible outcome, every keyword
+location is announced rather than implied, and discovery is a command away instead
+of a visual scan. That is the through-line of this entire document applied once
+more: take a feature the industry built for the eye and make QUILL the place where
+it finally speaks.
+
+---
+
+## Part Five: Embedded Grammar Checking, and How It Understands Language
+
+Grammar checking is the most technically ambitious idea in this document, and the
+honest framing matters: spelling asks "is this token a word?" while grammar asks
+"is this sentence well-formed, and why?" The second question requires the software
+to understand the *structure* of language, not just a wordlist. This part explains
+how QUILL would gain that understanding, how it would surface findings through the
+same accessible machinery QUILL already uses for spelling, and where the real
+complexity and the honest limits lie.
+
+### Spelling is the proven template to build on
+
+QUILL already has the right shape. [quill/core/spellcheck.py](quill/core/spellcheck.py)
+is a pure, `wx`-free pipeline: `list_misspellings` returns typed `Misspelling`
+records with `start` and `end` offsets, `next_misspelling` and
+`previous_misspelling` walk them efficiently from the caret, `misspelling_at_position`
+identifies the issue under the cursor, and `suggest_words` offers fixes. The UI
+layer turns those records into navigation, a context menu, and the misspelling tree
+navigator. Grammar checking should mirror this contract exactly: a pure core engine
+that returns typed issue records with offsets, a category, an explanation, and
+suggested rewrites, and a UI that reuses QUILL's existing navigation, dialog, and
+announcement surfaces. If grammar issues look like richer misspellings to the rest
+of the app, the integration cost collapses.
+
+### How a computer understands grammar and parts of speech
+
+This is the core of your question. There is no single trick; there is a pipeline,
+and QUILL can choose how far down it to go based on cost and accuracy. Each stage
+turns raw text into more structure than the last.
+
+1. Tokenization and sentence segmentation. Split text into sentences and words,
+   handling abbreviations, decimals, and punctuation. QUILL already has word and
+   line tokenizing patterns to build on.
+2. Part-of-speech tagging. Label each token with its grammatical category: noun,
+   verb, adjective, determiner, preposition, and finer tags (singular noun, past
+   tense verb, comparative adjective). This is how the software knows that in
+   "the dog runs," "dog" is a singular noun and "runs" is a singular present-tense
+   verb, which is what lets it judge subject-verb agreement. POS tagging is a
+   solved, well-understood task: a tagger is trained on large hand-labeled corpora
+   and learns the probability of each tag given the word and its neighbors.
+3. Morphological analysis. Determine number (singular or plural), tense, and
+   person from word forms, so the checker can compare "dog/dogs" or "run/runs/ran."
+4. Shallow or full parsing. Group tagged words into phrases (noun phrase, verb
+   phrase) and, in fuller form, build a dependency tree linking each word to the
+   word it modifies or agrees with. The dependency link between subject and verb is
+   precisely what an agreement rule inspects.
+5. Rule and model checking. With tags and structure in hand, the checker applies
+   rules ("a singular subject takes a singular verb"; "this preposition does not
+   fit this verb") and statistical signals (this n-gram is improbable) to flag
+   likely errors and propose fixes.
+
+The crucial idea: parts of speech are the bridge. Once every word carries an
+accurate grammatical tag and the words are linked into phrases, most common grammar
+checks become tractable rules over that tagged structure rather than guesses over
+raw characters.
+
+### Don't build the engine, adopt one: the open-source options
+
+The first instinct, a hand-written ruleset, is a trap. Real grammar checking is
+years of linguistic work, and several mature open-source engines already exist.
+The honest job is to pick the one whose language understanding, license, runtime,
+and privacy posture fit QUILL, then wrap it. The survey below reflects each
+project as of mid-2026.
+
+| Engine | Language stack | License | Offline and private | Coverage | Honest fit for QUILL |
+| --- | --- | --- | --- | --- | --- |
+| Harper (Automattic) | Rust core, callable from Python via a PyO3 binding | Apache-2.0 | Yes, fully local by design | English only today; real POS tagging (its `harper-brill` tagger) and many rules | Strongest fit. No Java, no VM, milliseconds per lint, roughly one-fiftieth of LanguageTool's memory. Cost: a compiled native dependency to bundle and sign per platform, and English-only for now. |
+| LanguageTool | Java engine, driven from Python by `language_tool_python` | Engine LGPL 2.1+; Python wrapper GPL-3.0 | Yes, but only via a bundled local Java server; the public-API mode sends text off device and must never be used in QUILL | 25-plus languages, thousands of rules, optional large n-gram data | Most complete and multilingual, but requires bundling a Java 17+ runtime and managing a local server subprocess, a heavy footprint for a Python and wxPython app. The GPL-3.0 wrapper and remote-API default are both cautions. |
+| spaCy | Pure Python and Cython | MIT | Yes, fully local | Excellent POS tagging and dependency parsing, many languages | Not a grammar checker; it is the structural toolkit you would build rules on top of. Useful if QUILL ever wants its own multilingual structural layer, but it is a build-it-yourself path, not a finished checker. |
+| proselint | Pure Python | BSD | Yes, fully local | Style and usage advice, not true grammar | Lightweight and trivially embeddable, but it lints style, not subject-verb agreement; a complement, not the engine. |
+| Consent-gated AI | QUILL's existing AI path | n/a | No, sends text off device | Broadest coverage and fluent rewrites | Best raw coverage and style help, but it must be strictly opt-in per QUILL's no-silent-network rule; latency, cost, and non-determinism apply. |
+
+A note on what each actually understands. Harper, LanguageTool, and spaCy all do
+genuine part-of-speech tagging and some structural analysis, which is what lets
+them catch agreement and tense errors rather than just typos. proselint does not;
+it pattern-matches style. A hand-rolled QUILL ruleset would sit below all of them
+and is not worth building when Harper exists.
+
+### The recommended path: Harper first, with honest caveats
+
+For QUILL specifically, the leading candidate is Harper. It is open source
+(Apache-2.0), offline and privacy-first by design, fast and light enough to run
+live in an editor, and it does real POS tagging, which is exactly the
+parts-of-speech understanding the checker needs. Crucially for QUILL, it needs no
+Java and no virtual machine.
+
+The caveats must be stated plainly, because they drive the engineering:
+
+- Harper is written in Rust, not Python. It is callable from Python through a
+  PyO3 binding (`harper-python`, published on crates.io under Apache-2.0), but
+  under the hood QUILL would load a compiled native extension and ship a
+  per-platform wheel or binary that has to be built and code-signed alongside the
+  app. This is the same class of work as any native dependency, just without a
+  JVM.
+- At the time of writing, the `harper-python` crate is confirmed, but a prebuilt
+  PyPI wheel under that name could not be verified; QUILL should confirm the exact
+  Python distribution, its API, and platform wheel availability before depending on
+  it, and be ready to build the binding from the Rust crate if needed.
+- Harper is English-only today. Writers needing other languages would fall back to
+  the (heavier, multilingual) LanguageTool engine or to consent-gated AI.
+
+The staged recommendation, then, is engine-led rather than rule-led: wrap Harper
+as the default local, private grammar engine behind a feature flag; offer
+LanguageTool as an opt-in heavyweight for writers who need its breadth of
+languages and rules, bundling its Java server only when enabled; and expose deep,
+fluent AI grammar only through QUILL's existing consent gate. spaCy stays in
+reserve as the toolkit if QUILL ever wants to grow its own multilingual structural
+checks.
+
+### Why this is genuinely complex, stated plainly
+
+You called grammar complex, and that is correct. The honest difficulties:
+
+- Ambiguity is everywhere. "Time flies" can be a noun and verb or an adjective and
+  noun; many words are several parts of speech, and the tagger must use context.
+- Real grammar needs structure, not just words. Subject-verb agreement can span a
+  long clause ("The list of items *is* on the desk," not "are"), so a checker that
+  ignores phrase structure gets it wrong.
+- False positives erode trust fast. A grammar checker that nags about correct
+  sentences is worse than none; tuning for precision over recall matters more than
+  raw coverage.
+- Language and dialect specificity. Rules and models are per-language, and even
+  within English the conventions differ; QUILL must let the writer set the variety.
+- Performance under live editing. Re-checking a large document on every keystroke
+  is infeasible; the engine must check incrementally around edits, exactly as the
+  spelling scanner already works outward from the caret.
+
+### Surfacing grammar through QUILL's existing accessible machinery
+
+Here the earlier request for "keyboard commands, a dialog, and more to help with
+all of the document interaction" is answered directly. Grammar reuses every
+spelling surface, so a screen-reader user already knows how to drive it.
+
+- Keyboard commands. "Next grammar issue" and "Previous grammar issue" walk
+  findings from the caret, each landing spoken with its category and a short
+  explanation ("subject-verb agreement, line 12: the subject *list* is singular,
+  so use *is*"). "Explain grammar issue here" speaks the full rationale on demand.
+  "Apply suggested fix" and "Apply fix and continue" accept a rewrite and move on.
+  "Ignore once" and "Ignore this rule" tune the noise. All bind through the
+  QUILL-key system and appear in the command palette.
+- A grammar dialog. A dedicated, accessible review dialog (native or QUILL's web
+  surface, registered under the DLG-3 dialog estate) walks issues one at a time
+  with the sentence in context, the category, the plain-language explanation, the
+  parts of speech it is reasoning about ("*list*: singular noun; *are*: plural
+  verb"), and a list of suggested rewrites the writer can choose from, with Apply,
+  Skip, Ignore, and Ignore Rule. This mirrors the existing spell-check dialog so it
+  is instantly familiar.
+- A grammar tree navigator. The same `_NavigatorNode` tree that lists misspellings
+  lists grammar findings grouped by category (Agreement, Tense, Punctuation, Word
+  choice), each node spoken with its location and an excerpt, each Enter jumping to
+  the occurrence. A writer can survey every structural concern in the document by
+  ear, then fix them in order.
+- As-you-type, like spelling. An optional live mode flags issues incrementally
+  around edits and announces them with the restraint QUILL already applies to
+  spelling, never interrupting flow, always available on demand.
+- The context menu. Right-clicking a flagged span offers the suggested fixes,
+  Explain, Ignore, and Ignore Rule inline, exactly as spelling suggestions appear
+  in the editor context menu today.
+- Honest, spoken explanations. The defining QUILL difference: every finding is
+  explained in plain language and, when useful, names the parts of speech it
+  reasoned about, so a writer does not just hear *that* something is wrong but
+  *why*, and learns from it. That is grammar checking that teaches, by ear.
+
+### Architecture and where it lives
+
+- The grammar layer is wrapped behind a pure, `wx`-free adapter in `quill/core`
+  (for example `quill/core/grammar.py`) that returns typed issue records exactly as
+  `spellcheck.py` returns `Misspelling` records, so the rest of the app never sees
+  which engine produced a finding. Swapping Harper for LanguageTool or AI is an
+  adapter change, not an app change.
+- The engine itself (the Harper native binding, or an optional bundled
+  LanguageTool server) lives at the platform boundary, loaded lazily with the same
+  cache-locking discipline the spelling wordlist uses and with background preload
+  so the first check never stalls the editor. Because the engine is native and
+  cannot be imported on Linux CI, the adapter is tested against a fake engine, and
+  the record-shaping logic stays pure and fully unit-tested, mirroring how QUILL
+  already keeps wx and other heavy dependencies out of `core` tests.
+- All UI (commands, dialog, tree navigator, context menu, announcements) lives in
+  `quill/ui` and reuses existing surfaces, so the new code is mostly the adapter
+  plus thin wiring.
+- The optional AI engine routes only through the existing consent-gated AI path and
+  the egress audit; no grammar engine may make a silent outbound call, which also
+  means LanguageTool's public-API mode is forbidden and only its bundled local
+  server is permitted.
+- Feature-flagged through FeatureManager so grammar (and each engine) can be
+  enabled per profile.
+
+### Recommendation
+
+Do not hand-roll a grammar checker; adopt a real engine and treat grammar as
+"spelling, with structure." The leading choice for QUILL is Harper: open source
+(Apache-2.0), offline, privacy-first, fast enough to run live, real POS tagging,
+and no Java. Accept its honest costs (a Rust native binding to package per
+platform, English-only for now, and a Python distribution to verify) and wrap it
+behind a pure `quill/core` adapter that emits the same typed records as
+spellcheck. Offer LanguageTool as an opt-in multilingual heavyweight (bundled
+local Java server only, never its remote API), keep spaCy in reserve as a
+structural toolkit, and expose fluent AI grammar only through QUILL's existing
+consent gate. Whichever engine answers, make the finding *speak its reasoning*,
+parts of speech included, so QUILL becomes not just a grammar checker but the rare
+one a blind writer can fully hear, interrogate, and learn from.
+
+---
+
+## Closing note
+
+Part One argues QUILL can host a rich surface without betraying its plain-text,
+screen-reader-first heart, provided it refactors to an editor-surface protocol
+first and keeps the rich control an honest, opt-in power mode. Part Two argues the
+best ideas in the category's most admired markup app, Ulysses, can each be brought
+into QUILL in a form that is more accessible than the original. Part Three proposes
+Compose mode, a workshop that assembles a document from reorderable, re-levelable
+parts across Markdown, RTF, and HTML with a live, screen-reader-legible HTML
+preview and a rich spoken context menu for architecting structure by ear. Part
+Four designs keywords as spoken objects a writer can add, hear, filter, and jump
+through without ever seeing a chip. Part Five shows how grammar checking can
+understand parts of speech and sentence structure, in tiers from a private local
+ruleset to opt-in AI, and surface every finding, reasoning included, through the
+same accessible commands, dialog, and tree QUILL already uses for spelling.
+
+The throughline of all five is one ambition: take features the rest of the
+industry built for the eye, and make QUILL the place where they finally speak.

@@ -23,12 +23,12 @@
       },
       {
         "id": "ext.text.count_regex",
-        "title": "Count Regex Matches",
+        "title": "Count Regular Expression Matches",
         "run": { "handler": "count_regex" }
       },
       {
         "id": "ext.text.extract_regex",
-        "title": "Extract Regex Matches",
+        "title": "Extract Regular Expression Matches",
         "run": { "handler": "extract_regex" }
       },
       {

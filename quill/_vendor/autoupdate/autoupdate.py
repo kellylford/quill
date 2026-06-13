@@ -108,6 +108,7 @@ def download_update(
 
 
 def extract_update(update_archive, destination, password=None):
+    # extractall is safe against path-traversal components in Python >= 3.12.
     with contextlib.closing(zipfile.ZipFile(update_archive)) as archive:
         if password:
             archive.setpassword(password)
@@ -127,8 +128,9 @@ def move_bootstrap(extracted_path):
 
 
 def execute_bootstrap(bootstrap_path, source_path):
-    arguments = rf'"{os.getpid()}" "{source_path}" "{paths.app_path()}" "{paths.get_executable()}"'
     if platform.system() == "Windows":
+        pid = os.getpid()
+        arguments = rf'"{pid}" "{source_path}" "{paths.app_path()}" "{paths.get_executable()}"'
         import win32api  # type: ignore[import]
 
         win32api.ShellExecute(0, "open", bootstrap_path, arguments, "", 5)
@@ -136,7 +138,14 @@ def execute_bootstrap(bootstrap_path, source_path):
         import subprocess
 
         _make_executable(bootstrap_path)
-        subprocess.Popen([f"{bootstrap_path} {arguments}"], shell=True)
+        # Use an argument list (not shell=True) so paths with spaces are safe.
+        subprocess.Popen([
+            bootstrap_path,
+            str(os.getpid()),
+            source_path,
+            paths.app_path(),
+            paths.get_executable(),
+        ])
     logger.info("Bootstrap executed")
 
 

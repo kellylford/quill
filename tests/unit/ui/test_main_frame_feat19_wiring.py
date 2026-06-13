@@ -1,90 +1,83 @@
-"""Source-contract test for FEAT-19 external change watcher wiring in main_frame."""
+"""Source-contract tests for FEAT-19 external change watcher wiring in main_frame."""
 
 from pathlib import Path
 
 
-def test_feat19_imports_are_present() -> None:
-    """FEAT-19 wiring imports external_change module."""
-    main_frame_path = Path("quill/ui/main_frame.py")
-    source = main_frame_path.read_text(encoding="utf-8")
+def _source() -> str:
+    return Path("quill/ui/main_frame.py").read_text(encoding="utf-8")
 
-    # Core external_change imports must be present.
-    assert "from quill.core.external_change import (" in source
-    assert "ExternalChangeWatcher" in source
-    assert "FileSnapshot" in source
-    assert "ReloadAction" in source
-    assert "decide_reload" in source
+
+def test_feat19_imports_are_present() -> None:
+    src = _source()
+    assert "from quill.core.external_change import (" in src
+    assert "ExternalChangeWatcher" in src
+    assert "FileSnapshot" in src
+    assert "ReloadAction" in src
+    assert "decide_reload" in src
 
 
 def test_feat19_watcher_tracking_initialized() -> None:
-    """FEAT-19 wiring initializes watcher tracking fields."""
-    main_frame_path = Path("quill/ui/main_frame.py")
-    source = main_frame_path.read_text(encoding="utf-8")
-
-    # The watcher and timer are initialized in __init__.
-    assert "self._external_change_watcher: ExternalChangeWatcher | None = None" in source
-    assert "self._external_change_timer: object | None = None" in source
+    src = _source()
+    assert "self._external_change_watcher: ExternalChangeWatcher | None = None" in src
+    assert "self._external_change_timer: object | None = None" in src
 
 
-def test_feat19_start_watcher_method_exists() -> None:
-    """FEAT-19 wiring has _start_external_change_watcher method."""
-    main_frame_path = Path("quill/ui/main_frame.py")
-    source = main_frame_path.read_text(encoding="utf-8")
-
-    assert "def _start_external_change_watcher(self)" in source
-    # The method creates a watcher.
-    assert "ExternalChangeWatcher(self.document.path)" in source
-    # The method primes the watcher.
-    assert "self._external_change_watcher.prime(FileSnapshot.of(" in source
-    # The method starts a timer for polling.
-    assert "wx.Timer(self.frame)" in source
+def test_feat19_watcher_started_in_activate_tab() -> None:
+    """_activate_tab must start the watcher so tab switches wire it."""
+    src = _source()
+    assert "_start_external_change_watcher()" in src
+    # Also must stop the previous watcher before switching.
+    assert "_stop_external_change_watcher()" in src
 
 
-def test_feat19_stop_watcher_method_exists() -> None:
-    """FEAT-19 wiring has _stop_external_change_watcher method."""
-    main_frame_path = Path("quill/ui/main_frame.py")
-    source = main_frame_path.read_text(encoding="utf-8")
-
-    assert "def _stop_external_change_watcher(self)" in source
-    # The method stops the timer.
-    assert "self._external_change_timer.Stop()" in source
+def test_feat19_watcher_started_in_finish_open_document() -> None:
+    """_finish_open_document must (re)start the watcher after load."""
+    src = _source()
+    # Both stop and start must appear inside _finish_open_document context.
+    assert "FEAT-19: (re)start the external change watcher for the freshly loaded document." in src
 
 
-def test_feat19_reload_method_exists() -> None:
-    """FEAT-19 wiring has _reload_from_disk_preserving_cursor method."""
-    main_frame_path = Path("quill/ui/main_frame.py")
-    source = main_frame_path.read_text(encoding="utf-8")
-
-    assert "def _reload_from_disk_preserving_cursor(self)" in source
-    # The method saves cursor position.
-    assert "caret = self.editor.GetInsertionPoint()" in source
-    # The method reloads from path.
-    assert "self.document.path.read_text(" in source
-    # The method restores cursor.
-    assert "self.editor.SetInsertionPoint(capped_caret)" in source
+def test_feat19_watcher_primed_after_save() -> None:
+    """save_file must prime the watcher so our own save is not reported as external."""
+    src = _source()
+    assert "FEAT-19: prime the watcher so our own save is not reported" in src
 
 
-def test_feat19_uses_decide_reload() -> None:
-    """FEAT-19 wiring uses decide_reload to make reload decisions."""
-    main_frame_path = Path("quill/ui/main_frame.py")
-    source = main_frame_path.read_text(encoding="utf-8")
-
-    # The watcher polls and calls decide_reload.
-    assert "decide_reload(" in source
-    assert "buffer_dirty=self.document.modified" in source
-    # Settings are passed to decide_reload.
-    assert "watch_enabled=" in source
-    assert "auto_reload_when_clean=" in source
-    assert "prompt_on_conflict=" in source
+def test_feat19_watcher_restarted_after_save_as() -> None:
+    """save_file_as must restart the watcher because the path may have changed."""
+    src = _source()
+    assert "FEAT-19: restart the watcher on the new path so our save is the baseline." in src
 
 
-def test_feat19_respects_reload_action() -> None:
-    """FEAT-19 wiring respects ReloadAction from decide_reload."""
-    main_frame_path = Path("quill/ui/main_frame.py")
-    source = main_frame_path.read_text(encoding="utf-8")
+def test_feat19_conflict_dialog_implemented() -> None:
+    """The conflict prompt must be a real dialog, not a stub."""
+    src = _source()
+    assert "_show_external_change_prompt" in src
+    assert "PROMPT_DELETED" in src
+    assert "PROMPT_CONFLICT" in src
+    # SetYesNoCancelLabels is used for accessible button labels.
+    assert "SetYesNoCancelLabels" in src
+    # The old TODO must be gone.
+    assert "TODO: implement the conflict dialog" not in src
 
-    # The watcher handles RELOAD action.
-    assert "ReloadAction.RELOAD" in source
-    assert "_reload_from_disk_preserving_cursor()" in source
-    # The watcher handles prompt actions.
-    assert "decision.needs_prompt" in source
+
+def test_feat19_on_demand_check_exists() -> None:
+    """check_external_changes_now must be a callable method."""
+    src = _source()
+    assert "def check_external_changes_now(self)" in src
+
+
+def test_feat19_reload_uses_document_encoding() -> None:
+    """_reload_from_disk_preserving_cursor must use the document's detected encoding."""
+    src = _source()
+    assert 'encoding = getattr(self.document, "encoding", None) or "utf-8"' in src
+    # Hard-coded utf-8 as the primary encoding must be gone.
+    assert 'read_text(encoding="utf-8")' not in src or "errors=" in src
+
+
+def test_feat19_menu_item_wired() -> None:
+    """The 'Check for External Changes' menu item must exist in main_frame_menu."""
+    menu_src = Path("quill/ui/main_frame_menu.py").read_text(encoding="utf-8")
+    assert "_id_check_external_changes" in menu_src
+    assert "check_external_changes_now" in menu_src
+    assert "Check for E" in menu_src

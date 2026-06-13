@@ -90,12 +90,12 @@ def redact_command_arg(arg: str) -> str:
 def format_args_for_log(args: Sequence[str]) -> str:
     """Render a subprocess ``args`` list for safe logging.
 
-    The executable basename is preserved (so support can see "tesseract"
+    The executable basename is preserved (so support can see which tool
     was launched), the count of arguments is preserved, and every
     argument is run through :func:`redact_command_arg`. The output
     format is stable and easy to test::
 
-        tesseract input.png stdout — 3 args
+        piper --model en_US-amy-medium.onnx --output_file out.wav — 4 args
     """
 
     if not args:

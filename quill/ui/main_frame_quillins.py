@@ -468,7 +468,7 @@ class QuillinsMenuMixin:
                 "Select a Quillin folder to install",
                 style=wx.DD_DEFAULT_STYLE,
             ) as ddlg:
-                if ddlg.ShowModal() != wx.ID_OK:
+                if self._show_modal_dialog(ddlg, "Install Quillin") != wx.ID_OK:
                     return
                 src_path = ddlg.GetPath()
             from pathlib import Path

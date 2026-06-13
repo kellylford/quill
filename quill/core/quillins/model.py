@@ -2,7 +2,7 @@
 
 This module is the wx-free, dependency-free heart of the Quillins framework. It
 defines the immutable data model for a ``quill.extension/1`` manifest (the same
-contract documented in ``docs/scripting.md`` §13), the catalogue of capabilities
+contract documented in ``docs/quillins.md`` §13), the catalogue of capabilities
 an extension may request, the host API version, and the typed errors an author
 or the host may encounter.
 
@@ -26,7 +26,7 @@ RUNTIME_PYTHON = "python"
 RUNTIME_NODE = "node"
 RUNTIMES: frozenset[str] = frozenset({RUNTIME_PYTHON, RUNTIME_NODE})
 
-# Capability catalogue (docs/scripting.md §14.1). Default-deny: an extension may
+# Capability catalogue (docs/quillins.md §14.1). Default-deny: an extension may
 # only do what it declares, and ``fs.*``/``net`` additionally pass the per-action
 # consent gate at runtime. A pure snippet-only Quillin declares none of these.
 CAP_EDITOR_READ = "editor.read"

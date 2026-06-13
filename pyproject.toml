@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "quill"
-version = "0.5.0"
-description = "Screen-reader-first writing and document environment for Windows"
+dynamic = ["version"]
+description = "Screen-reader-first writing and document environment for Windows and macOS"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
@@ -93,6 +93,11 @@ dev = [
 
 [project.scripts]
 quill = "quill.__main__:main"
+
+[tool.hatch.version]
+# quill/__init__.py is the authoritative version source.
+# pyproject.toml, the installer, and all tooling derive from it.
+path = "quill/__init__.py"
 
 [tool.hatch.metadata]
 # Allow direct URL references in optional-dependencies. Quill is an app, not a

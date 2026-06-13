@@ -407,6 +407,71 @@ def _is_threading_thread_call(node: ast.AST) -> bool:
 # Note: ``quill/ui/dialog_contract.py`` exposes the sanctioned
 # ``show_message_box`` helper that wraps ``wx.MessageBox`` with announce +
 # region hooks.
+# Finding #42: show-modal wrapper gate.  Every ``dialog.ShowModal()`` call in
+# the main-frame entry-point files must go through ``_show_modal_dialog`` (or
+# the module-level ``show_modal_dialog`` from ``dialog_contract.py``) so the
+# screen reader hears "Entered <label> dialog" and focus is managed correctly.
+# The same violation caused the silent Report a Bug dialog and silent F1 help.
+# Exempt an existing site with the marker on the same or next source line:
+#
+#     dlg.ShowModal()  # GATE-42-OK: <reason>
+_GATE_42_OK_MARKER = "# GATE-42-OK:"
+# Files where all ShowModal calls must be routed through _show_modal_dialog.
+# dialog_contract.py is the wrapper itself and is excluded.
+_GATE_42_TARGET_STEMS = frozenset({
+    "main_frame",
+    "main_frame_menu",
+    "main_frame_ai",
+    "main_frame_commands",
+    "main_frame_copy_tray",
+    "main_frame_feedback",
+    "main_frame_github",
+    "main_frame_notebook",
+    "main_frame_quillins",
+    "main_frame_quillins_host",
+    "main_frame_ssh",
+    "context_help",
+})
+
+
+def _check_show_modal_wrapper(paths: Iterable[Path]) -> list[Violation]:
+    """Ban direct ``.ShowModal()`` calls in main-frame and mixin files.
+
+    GATE-42: these entry-point modules must route every modal through
+    ``_show_modal_dialog`` so screen-reader announcements fire reliably.
+    Add ``# GATE-42-OK: <reason>`` on the same line to exempt a site.
+    """
+    violations: list[Violation] = []
+    for path in paths:
+        if path.stem not in _GATE_42_TARGET_STEMS:
+            continue
+        source_lines = path.read_text(encoding="utf-8").splitlines()
+        tree = ast.parse("\n".join(source_lines), filename=str(path))
+        for node in ast.walk(tree):
+            if not (
+                isinstance(node, ast.Attribute)
+                and node.attr == "ShowModal"
+                and isinstance(node, ast.Attribute)
+            ):
+                continue
+            # Must be a Call node parent (ShowModal() not ShowModal reference)
+            lineno = _node_lineno(node)
+            window = source_lines[lineno - 1 : lineno + 4]
+            if any(_GATE_42_OK_MARKER in ln for ln in window):
+                continue
+            violations.append(
+                Violation(
+                    path,
+                    lineno,
+                    "direct .ShowModal() call bypasses _show_modal_dialog "
+                    "(GATE-42); route through self._show_modal_dialog(dlg, label) "
+                    "so screen readers hear the dialog open. "
+                    "Add '# GATE-42-OK: <reason>' to exempt an existing site.",
+                )
+            )
+    return violations
+
+
 _GATE_41_OK_MARKER = "# GATE-41-OK:"
 _GATE_41_EXEMPT_PATHS = frozenset({
     # The sanctioned wrapper itself legitimately calls wx.MessageBox.
@@ -556,13 +621,15 @@ def _check_ruff_config() -> list[Violation]:
 
 
 def find_violations() -> list[Violation]:
+    ui_files = sorted(_UI_ROOT.rglob("*.py"))
     violations: list[Violation] = []
     violations.extend(_check_bare_wx(_MAIN_FRAME))
     violations.extend(_check_raw_xml(sorted(_PACKAGE_ROOT.rglob("*.py"))))
-    violations.extend(_check_dialog_contract(sorted(_UI_ROOT.rglob("*.py"))))
-    violations.extend(_check_checklistbox(sorted(_UI_ROOT.rglob("*.py"))))
-    violations.extend(_check_threading_thread(sorted(_UI_ROOT.rglob("*.py"))))
+    violations.extend(_check_dialog_contract(ui_files))
+    violations.extend(_check_checklistbox(ui_files))
+    violations.extend(_check_threading_thread(ui_files))
     violations.extend(_check_wx_message_box(sorted(_PACKAGE_ROOT.rglob("*.py"))))
+    violations.extend(_check_show_modal_wrapper(ui_files))
     violations.extend(_check_dialog_registry())
     violations.extend(_check_ruff_config())
     return violations

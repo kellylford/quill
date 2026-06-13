@@ -283,26 +283,20 @@ from quill.core.quick_nav import (
 from quill.core.read_aloud import (
     ReadAloudController,
     ReadAloudUnavailableError,
-    discover_chatterbox_executable,
     discover_dectalk_executable,
     discover_espeak_executable,
-    discover_melotts_executable,
     discover_openvoice_executable,
     discover_piper_executable,
-    list_chatterbox_english_voices,
     list_dectalk_voices,
     list_espeak_english_voices,
     list_kokoro_voices,
-    list_melotts_english_voices,
     list_openvoice_english_voices,
     list_piper_voices,
     list_voices,
     synthesize_to_file_with_dectalk,
     synthesize_to_file_with_pyttsx3,
-    synthesize_with_chatterbox,
     synthesize_with_espeak,
     synthesize_with_kokoro,
-    synthesize_with_melotts,
     synthesize_with_openvoice,
     synthesize_with_piper,
 )
@@ -470,7 +464,6 @@ from quill.ui.assistant_panel import AskQuillChatDialog
 from quill.ui.assistant_tools import (
     AccessibilityAgentDialog,
     AgentCenterDialog,
-    AIHubDialog,
     AssistantConnectionDialog,
     PromptStudioDialog,
     RunPythonDialog,
@@ -1998,7 +1991,7 @@ class MainFrame(
         )
         self.commands.register(
             "tools.regex_helper",
-            "Regex Helper...",
+            "Regular Expression Helper...",
             self.show_regex_helper,
             None,
         )
@@ -3171,6 +3164,7 @@ class MainFrame(
             "help.open_diagnostics_folder": self._id_open_diagnostics_folder,
             "help.status_page": self._id_help_status_page,
             "help.startup_wizard": self._id_profile_onboarding,
+            "help.context_help": self._id_announce_context_shortcuts,
             "whisperer.about": self._id_whisperer_about,
             "whisperer.model_manager": self._id_bw_model_manager,
             "whisperer.model_status": self._id_bw_model_status,
@@ -3431,6 +3425,7 @@ class MainFrame(
             splitter,
             style=wx.TE_MULTILINE | wx.TE_RICH2 | wx.TE_NOHIDESEL,
         )
+        editor.SetName("Document")
         splitter.Initialize(editor)
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(splitter, 1, wx.EXPAND)
@@ -3570,6 +3565,7 @@ class MainFrame(
     def _activate_tab(self, index: int) -> None:
         if index < 0 or index >= len(self._document_tabs):
             return
+        self._stop_external_change_watcher()
         tab = self._document_tabs[index]
         self._active_tab_index = index
         self._browse_navigation_cache = None
@@ -3588,6 +3584,7 @@ class MainFrame(
         self._refresh_sessions_menu()
         self._refresh_read_only_state()
         self._maybe_auto_side_preview(tab)
+        self._start_external_change_watcher()
 
     def _maybe_auto_side_preview(self, tab) -> None:
         """Auto-show the side-by-side preview for previewable (Markdown/HTML)
@@ -4245,7 +4242,9 @@ class MainFrame(
 
     def _start_external_change_watcher(self) -> None:
         """Start the FEAT-19 external file-change watcher for the open document."""
-        wx = self._wx
+        wx = getattr(self, "_wx", None)
+        if wx is None:
+            return
         if self._external_change_watcher is not None:
             # Already watching.
             return
@@ -4269,7 +4268,6 @@ class MainFrame(
             if change == "none":
                 return
 
-            # Decide what to do.
             decision = decide_reload(
                 change,
                 buffer_dirty=self.document.modified,
@@ -4284,14 +4282,18 @@ class MainFrame(
             )
 
             if decision.action == ReloadAction.RELOAD:
-                # Reload in place, preserving cursor and scroll.
                 self._reload_from_disk_preserving_cursor()
                 self._announce(decision.announcement)
             elif decision.needs_prompt:
-                # Show a prompt dialog.
+                # Pause the timer while the dialog is open to prevent re-entrancy.
+                timer = self._external_change_timer
+                if timer is not None:
+                    timer.Stop()
                 self._announce(decision.announcement)
-                # TODO: implement the conflict dialog (needs wx.MessageDialog or custom).
-                # For now, just announce.
+                self._show_external_change_prompt(decision.action)
+                # Restart the timer unless the user closed or replaced the document.
+                if timer is not None and self._external_change_watcher is not None:
+                    timer.Start(debounce_ms)
 
         self._external_change_timer = wx.Timer(self.frame)
         self.frame.Bind(
@@ -4310,24 +4312,155 @@ class MainFrame(
         """Reload the document from disk, preserving the cursor and scroll position (FEAT-19)."""
         if self.document.path is None:
             return
-        # Save cursor and scroll state.
+        # Save cursor position before the reload.
         caret = self.editor.GetInsertionPoint()
-        # Reload the document.
+        # Use the document's detected encoding so non-UTF-8 files round-trip cleanly.
+        encoding = getattr(self.document, "encoding", None) or "utf-8"
         try:
-            reloaded_text = self.document.path.read_text(encoding="utf-8")
-        except (OSError, ValueError):
-            self._set_status("Failed to reload from disk.")
-            return
+            reloaded_text = self.document.path.read_text(encoding=encoding)
+        except (UnicodeDecodeError, OSError, ValueError):
+            try:
+                reloaded_text = self.document.path.read_text(encoding="utf-8", errors="replace")
+            except (OSError, ValueError):
+                self._set_status(f"Could not reload '{self.document.path.name}' from disk.")
+                return
         self.document.set_text(reloaded_text)
         self.document.modified = False
         self.editor.SetValue(reloaded_text)
-        # Restore cursor.
+        # Restore cursor, capped to valid range.
         capped_caret = max(0, min(caret, len(reloaded_text)))
         self.editor.SetInsertionPoint(capped_caret)
         self.editor.SetSelection(capped_caret, capped_caret)
-        # Prime the watcher with the new snapshot.
+        # Prime the watcher with the new snapshot so the reload is not re-reported.
         if self._external_change_watcher is not None:
             self._external_change_watcher.prime(FileSnapshot.of(self.document.path))
+
+    def _show_external_change_prompt(self, action: ReloadAction) -> None:
+        """Show the FEAT-19 conflict or deleted-file dialog and act on the user's choice.
+
+        PROMPT_CONFLICT: file changed on disk while buffer is dirty.
+          - Reload from Disk: discard edits and reload.
+          - Keep My Version: keep edits; on-disk version is ignored until next save.
+          - Open Disk Version in New Tab: open the on-disk copy alongside.
+
+        PROMPT_DELETED: file deleted or moved on disk.
+          - Keep Text: keep editing; document marked modified/unsaved.
+          - Save As...: immediately open Save As so the user can rescue the text.
+          - Close Tab: discard and close (with dirty-check).
+        """
+        wx = self._wx
+        if self.document.path is None:
+            return
+        file_name = self.document.path.name
+
+        if action == ReloadAction.PROMPT_DELETED:
+            with wx.MessageDialog(
+                self.frame,
+                f"'{file_name}' was deleted or moved by another program.\n\n"
+                "Your text is still open in the editor and has not been lost.\n"
+                "What would you like to do?",
+                "File Deleted from Disk",
+                wx.YES_NO | wx.CANCEL | wx.ICON_WARNING,
+            ) as dlg:
+                set_labels = getattr(dlg, "SetYesNoCancelLabels", None)
+                if callable(set_labels):
+                    set_labels("Keep Text", "Save As...", "Close Tab")
+                result = self._show_modal_dialog(dlg, "File Deleted from Disk")
+            if result == wx.ID_YES:
+                self.document.modified = True
+                self._refresh_title()
+                self._set_status(
+                    f"'{file_name}' was deleted from disk. "
+                    "Your text is unsaved. Use File > Save As to keep it."
+                )
+                self._stop_external_change_watcher()
+            elif result == wx.ID_NO:
+                self.document.modified = True
+                self._refresh_title()
+                self._stop_external_change_watcher()
+                self.save_file_as()
+            else:
+                if not self.document.modified or self._confirm_discard_changes():
+                    self._close_tab_at(self._active_tab_index)
+            return
+
+        # PROMPT_CONFLICT: file changed on disk, buffer has unsaved edits.
+        with wx.MessageDialog(
+            self.frame,
+            f"'{file_name}' was changed on disk while you have unsaved edits.\n\n"
+            "Reloading will replace your edits with the on-disk version.\n"
+            "Keeping your version will overwrite the disk changes when you save.\n"
+            "Opening in a new tab lets you compare both versions side by side.",
+            "File Changed on Disk",
+            wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION,
+        ) as dlg:
+            set_labels = getattr(dlg, "SetYesNoCancelLabels", None)
+            if callable(set_labels):
+                set_labels("Reload from Disk", "Keep My Version", "Open Disk Version in New Tab")
+            result = self._show_modal_dialog(dlg, "File Changed on Disk")
+
+        if result == wx.ID_YES:
+            self._reload_from_disk_preserving_cursor()
+            self._announce("Reloaded from disk.")
+            self._set_status(f"Reloaded '{file_name}' from disk.")
+        elif result == wx.ID_NO:
+            # Prime with the current on-disk snapshot so the watcher doesn't re-fire
+            # immediately; the user's edits will overwrite on next save.
+            if self._external_change_watcher is not None and self.document.path is not None:
+                self._external_change_watcher.prime(FileSnapshot.of(self.document.path))
+            self._set_status(f"Keeping your edits. '{file_name}' will be overwritten on next save.")
+        else:
+            # Open the on-disk version in a new tab.
+            path = self.document.path
+            if path is not None and path.exists():
+                self.open_file(path, refresh_existing=False, record_recent=False)
+                self._set_status(
+                    f"Opened the on-disk version of '{file_name}' in a new tab. "
+                    "Compare and decide which to keep."
+                )
+
+    def check_external_changes_now(self) -> None:
+        """Manually trigger the external file-change check for the active document.
+
+        Useful when the user wants to see whether the file changed on disk without
+        waiting for the next poll cycle, or when auto-reload is on and they want
+        a chance to compare before reloading.
+        """
+        if self.document.path is None:
+            self._set_status("No file to check.")
+            return
+        if not getattr(self.settings, "external_change_watch_enabled", True):
+            self._set_status(
+                "External-change watching is disabled. "
+                "Enable it in Preferences > General to use this feature."
+            )
+            return
+
+        # Ensure a watcher exists (in case the file had no path when opened).
+        if self._external_change_watcher is None:
+            self._start_external_change_watcher()
+            if self._external_change_watcher is None:
+                self._set_status("Could not start external-change watcher.")
+                return
+
+        change = self._external_change_watcher.poll()
+        decision = decide_reload(
+            change,
+            buffer_dirty=self.document.modified,
+            watch_enabled=True,
+            auto_reload_when_clean=False,
+            prompt_on_conflict=True,
+            file_name=self.document.path.name,
+        )
+
+        if decision.action == ReloadAction.NONE:
+            self._set_status(f"'{self.document.path.name}' matches the on-disk version.")
+        elif decision.action == ReloadAction.RELOAD:
+            # Force-prompt even though auto_reload_when_clean would normally reload silently.
+            self._show_external_change_prompt(ReloadAction.PROMPT_CONFLICT)
+        else:
+            self._announce(decision.announcement)
+            self._show_external_change_prompt(decision.action)
 
     def _on_editor_context_menu(self, event: object) -> None:
         wx = self._wx
@@ -5161,7 +5294,7 @@ class MainFrame(
     # ---------- §8.1 / §8.2 delight feature handlers ----------
 
     def announce_context_mode_shortcuts(self) -> None:
-        """§8.2: Announce the most useful keys for the current mode (Alt+H)."""
+        """§8.2: Announce the most useful keys for the current mode (Ctrl+Shift+H)."""
         if getattr(self, "_quill_key_mode_active", False):
             self._announce(
                 "QUILL browse mode keys: "
@@ -6417,6 +6550,9 @@ class MainFrame(
         self._set_status(build_intake_summary(loaded))
         # Switch to the profile mapped to this file's extension, if one is set (#138).
         self.maybe_switch_profile_for_open(selected_path)
+        # FEAT-19: (re)start the external change watcher for the freshly loaded document.
+        self._stop_external_change_watcher()
+        self._start_external_change_watcher()
 
     def _position_editor_at(self, line: int | None = None, column: int | None = None) -> None:
         if line is None and column is None:
@@ -7139,6 +7275,9 @@ class MainFrame(
         if self.document.modified:
             backup_document(self.document)
         self._write_document_to_disk(self.document)
+        # FEAT-19: prime the watcher so our own save is not reported as an external change.
+        if self._external_change_watcher is not None and self.document.path is not None:
+            self._external_change_watcher.prime(FileSnapshot.of(self.document.path))
         self._record_persistent_undo_state(self.document.text)
         self.flush_persistent_undo()
         self._refresh_title()
@@ -7236,7 +7375,7 @@ class MainFrame(
         wx = self._wx
         dialog = wx.PageSetupDialog(self.frame, self._page_setup_data)
         try:
-            if dialog.ShowModal() != wx.ID_OK:
+            if self._show_modal_dialog(dialog, "Page Setup") != wx.ID_OK:
                 self._set_status("Page setup cancelled")
                 return
             self._page_setup_data = dialog.GetPageSetupData()
@@ -7316,6 +7455,9 @@ class MainFrame(
         if self.document.modified and self.document.path is not None:
             backup_document(self.document)
         self._write_document_to_disk(self.document, target)
+        # FEAT-19: restart the watcher on the new path so our save is the baseline.
+        self._stop_external_change_watcher()
+        self._start_external_change_watcher()
         self._load_persistent_undo_state(target, self.document.text)
         self._record_recent(target)
         self._refresh_title()
@@ -8794,7 +8936,7 @@ class MainFrame(
                             wildcard="WAV files (*.wav)|*.wav",
                             style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
                         ) as fdlg:
-                            if fdlg.ShowModal() == wx.ID_OK:
+                            if self._show_modal_dialog(fdlg, "Choose Keyboard Sound") == wx.ID_OK:
                                 _t.SetValue(fdlg.GetPath())
 
                     browse_btn.Bind(wx.EVT_BUTTON, _on_browse_sound)
@@ -10079,6 +10221,7 @@ class MainFrame(
 
     # Contributor / project profiles on GitHub.
     _ABOUT_GITHUB_LINKS: tuple[tuple[str, str], ...] = (
+        ("QUILL on GitHub", "https://github.com/Community-Access/quill"),
         ("Community Access on GitHub", "https://github.com/Community-Access"),
         ("Taylor Arndt on GitHub", "https://github.com/taylorarndt"),
         ("Michael Doise on GitHub", "https://github.com/mikedoise"),
@@ -10112,15 +10255,20 @@ class MainFrame(
         except Exception:
             glow_summary = "GLOW engine: unknown"
         return (
-            f"# Quill 0.1 Beta\n\n"
-            f"Version {__version__}\n\n"
-            "Quill 0.1 Beta is a screen-reader-first writing and document environment "
+            f"# Quill {__version__} Beta\n\n"
+            f"Quill {__version__} Beta is a screen-reader-first writing and document environment "
             "for Windows and Mac from Blind Information Technology Solutions (BITS) "
             "and Community Access.\n\n"
             "With sincere thanks to our contributors and beta testers: "
             "Techopolis, Taylor Arndt, Michael Doise, Kayla Bentas, "
             "Shane Popplestone, Doug Langley, and Becky K.\n\n"
             f"{glow_summary}\n\n"
+            "## BITS Whisperer\n\n"
+            "BITS Whisperer brings speech and dictation integration to Quill, arriving in "
+            "phases: a speech-model manager with machine-aware recommendations, a provider "
+            "center with local-first and cloud planning, readiness checks, and a download "
+            "queue. Bundled Read Aloud voices (DECtalk and eSpeak NG) play immediately with "
+            "no downloads; Piper and Kokoro models install through the Speech Center.\n\n"
             "## Links\n\n" + md_links(self._ABOUT_LINKS) + "\n\n"
             "## Contributors on GitHub\n\n" + md_links(self._ABOUT_GITHUB_LINKS) + "\n\n"
             "## Dependencies and attributions\n\n"
@@ -10283,25 +10431,13 @@ class MainFrame(
                 "Pandoc Conversion Wizard",
                 "Document conversion into Markdown, HTML, or plain text tabs",
             ),
-            "tesseract": (
-                "OCR Image",
-                "Scanned-image and screenshot text recovery",
-            ),
             "libreoffice": (
                 "Future office conversion fallback",
                 "Difficult legacy office imports and format repair",
             ),
-            "ghostscript": (
-                "Future PDF conversion pipeline",
-                "Print-oriented and PostScript-heavy workflows",
-            ),
             "tidy_html5": (
                 "Future HTML validation",
                 "Check HTML exports and authoring output before handoff",
-            ),
-            "xmllint": (
-                "Future XML and XHTML validation",
-                "Check EPUB internals and structured markup for well-formedness",
             ),
             "pymarkdownlnt": (
                 "Future Markdown validation",
@@ -10605,9 +10741,10 @@ class MainFrame(
             schema=load_schema(schema_path),
             app_version=__version__ or "0.0.0",
         )
-        dlg.ShowModal()
+        result = self._show_modal_dialog(dlg, "Report an Issue")
         dlg.Destroy()
-        self._record_notification("Submitted feedback via feedback hub", "support")
+        if result == self._wx.ID_OK:
+            self._record_notification("Submitted feedback via feedback hub", "support")
 
     def _feedback_hub_available(self) -> bool:
         try:
@@ -12976,12 +13113,6 @@ class MainFrame(
                 espeak_executable=self.settings.read_aloud_espeak_executable,
                 espeak_voice=self.settings.read_aloud_espeak_voice,
                 espeak_rate=self.settings.read_aloud_espeak_rate,
-                melotts_executable=self.settings.read_aloud_melotts_executable,
-                melotts_voice=self.settings.read_aloud_melotts_voice,
-                melotts_rate=self.settings.read_aloud_melotts_rate,
-                chatterbox_executable=self.settings.read_aloud_chatterbox_executable,
-                chatterbox_voice=self.settings.read_aloud_chatterbox_voice,
-                chatterbox_rate=self.settings.read_aloud_chatterbox_rate,
                 openvoice_executable=self.settings.read_aloud_openvoice_executable,
                 openvoice_voice=self.settings.read_aloud_openvoice_voice,
                 openvoice_rate=self.settings.read_aloud_openvoice_rate,
@@ -13021,8 +13152,6 @@ class MainFrame(
             "dectalk",
             "kokoro",
             "espeak",
-            "melotts",
-            "chatterbox",
             "openvoice",
         }:
             return True
@@ -13171,28 +13300,6 @@ class MainFrame(
                         voice=voice_id,
                         rate=s.read_aloud_espeak_rate,
                     )
-                elif engine == "melotts":
-                    exe = discover_melotts_executable(s.read_aloud_melotts_executable)
-                    if exe is None:
-                        raise ReadAloudUnavailableError("MeloTTS executable not configured")
-                    synthesize_with_melotts(
-                        sample,
-                        wav,
-                        executable_path=exe,
-                        voice=voice_id,
-                        rate=s.read_aloud_melotts_rate,
-                    )
-                elif engine == "chatterbox":
-                    exe = discover_chatterbox_executable(s.read_aloud_chatterbox_executable)
-                    if exe is None:
-                        raise ReadAloudUnavailableError("Chatterbox executable not configured")
-                    synthesize_with_chatterbox(
-                        sample,
-                        wav,
-                        executable_path=exe,
-                        voice=voice_id,
-                        rate=s.read_aloud_chatterbox_rate,
-                    )
                 elif engine == "openvoice":
                     if not s.read_aloud_openvoice_consent:
                         raise ReadAloudUnavailableError(
@@ -13235,14 +13342,6 @@ class MainFrame(
                     espeak_executable=s.read_aloud_espeak_executable,
                     espeak_voice=voice_id if engine == "espeak" else s.read_aloud_espeak_voice,
                     espeak_rate=s.read_aloud_espeak_rate,
-                    melotts_executable=s.read_aloud_melotts_executable,
-                    melotts_voice=voice_id if engine == "melotts" else s.read_aloud_melotts_voice,
-                    melotts_rate=s.read_aloud_melotts_rate,
-                    chatterbox_executable=s.read_aloud_chatterbox_executable,
-                    chatterbox_voice=voice_id
-                    if engine == "chatterbox"
-                    else s.read_aloud_chatterbox_voice,
-                    chatterbox_rate=s.read_aloud_chatterbox_rate,
                     openvoice_executable=s.read_aloud_openvoice_executable,
                     openvoice_voice=voice_id
                     if engine == "openvoice"
@@ -13307,12 +13406,6 @@ class MainFrame(
         elif engine == "espeak":
             voices = list_espeak_english_voices()
             current_voice_id = self.settings.read_aloud_espeak_voice
-        elif engine == "melotts":
-            voices = list_melotts_english_voices()
-            current_voice_id = self.settings.read_aloud_melotts_voice
-        elif engine == "chatterbox":
-            voices = list_chatterbox_english_voices()
-            current_voice_id = self.settings.read_aloud_chatterbox_voice
         elif engine == "openvoice":
             voices = list_openvoice_english_voices()
             current_voice_id = self.settings.read_aloud_openvoice_voice
@@ -13390,10 +13483,6 @@ class MainFrame(
             self.settings.read_aloud_kokoro_voice = voices[selected].id
         elif engine == "espeak":
             self.settings.read_aloud_espeak_voice = voices[selected].id
-        elif engine == "melotts":
-            self.settings.read_aloud_melotts_voice = voices[selected].id
-        elif engine == "chatterbox":
-            self.settings.read_aloud_chatterbox_voice = voices[selected].id
         elif engine == "openvoice":
             self.settings.read_aloud_openvoice_voice = voices[selected].id
         else:
@@ -13416,8 +13505,6 @@ class MainFrame(
             ("Piper (neural, offline)", "piper"),
             ("Kokoro (neural, offline)", "kokoro"),
             ("eSpeak-NG (English variants)", "espeak"),
-            ("MeloTTS (multilingual add-on, English mode)", "melotts"),
-            ("Chatterbox (high-fidelity read/export)", "chatterbox"),
             ("OpenVoice (advanced style module)", "openvoice"),
         ]
         engine_options = [
@@ -13553,34 +13640,6 @@ class MainFrame(
                 return
             self.settings.read_aloud_espeak_rate = v
 
-        elif selected_engine == "melotts":
-            exe = _ask_text(
-                "Path to MeloTTS executable:", self.settings.read_aloud_melotts_executable
-            )
-            if exe is None:
-                self._set_status("Read aloud settings cancelled")
-                return
-            self.settings.read_aloud_melotts_executable = exe
-            v = _ask_int("Speaking rate", self.settings.read_aloud_melotts_rate, 80, 450)
-            if v is None:
-                self._set_status("Read aloud settings cancelled")
-                return
-            self.settings.read_aloud_melotts_rate = v
-
-        elif selected_engine == "chatterbox":
-            exe = _ask_text(
-                "Path to Chatterbox executable:", self.settings.read_aloud_chatterbox_executable
-            )
-            if exe is None:
-                self._set_status("Read aloud settings cancelled")
-                return
-            self.settings.read_aloud_chatterbox_executable = exe
-            v = _ask_int("Speaking rate", self.settings.read_aloud_chatterbox_rate, 80, 450)
-            if v is None:
-                self._set_status("Read aloud settings cancelled")
-                return
-            self.settings.read_aloud_chatterbox_rate = v
-
         elif selected_engine == "openvoice":
             exe = _ask_text(
                 "Path to OpenVoice executable:", self.settings.read_aloud_openvoice_executable
@@ -13610,8 +13669,6 @@ class MainFrame(
             "piper": self.settings.read_aloud_piper_model,
             "kokoro": self.settings.read_aloud_kokoro_voice,
             "espeak": self.settings.read_aloud_espeak_voice,
-            "melotts": self.settings.read_aloud_melotts_voice,
-            "chatterbox": self.settings.read_aloud_chatterbox_voice,
             "openvoice": self.settings.read_aloud_openvoice_voice,
         }.get(selected_engine, "")
         with wx.MessageDialog(
@@ -13712,30 +13769,6 @@ class MainFrame(
                 return
             espeak_exe_snap = exe
 
-        elif engine == "melotts":
-            exe = discover_melotts_executable(s.read_aloud_melotts_executable)
-            if exe is None:
-                self._show_message_box(
-                    "MeloTTS executable not found. Configure it in Read Aloud Settings.",
-                    _TITLE,
-                    wx.ICON_ERROR | wx.OK,
-                )
-                self._set_status("Speech generation cancelled")
-                return
-            melotts_exe_snap = exe
-
-        elif engine == "chatterbox":
-            exe = discover_chatterbox_executable(s.read_aloud_chatterbox_executable)
-            if exe is None:
-                self._show_message_box(
-                    "Chatterbox executable not found. Configure it in Read Aloud Settings.",
-                    _TITLE,
-                    wx.ICON_ERROR | wx.OK,
-                )
-                self._set_status("Speech generation cancelled")
-                return
-            chatterbox_exe_snap = exe
-
         elif engine == "openvoice":
             if not s.read_aloud_openvoice_consent:
                 self._show_message_box(
@@ -13770,10 +13803,6 @@ class MainFrame(
         _kokoro_speed = s.read_aloud_kokoro_speed
         _espeak_voice = s.read_aloud_espeak_voice
         _espeak_rate = s.read_aloud_espeak_rate
-        _melotts_voice = s.read_aloud_melotts_voice
-        _melotts_rate = s.read_aloud_melotts_rate
-        _chatterbox_voice = s.read_aloud_chatterbox_voice
-        _chatterbox_rate = s.read_aloud_chatterbox_rate
         _openvoice_voice = s.read_aloud_openvoice_voice
         _openvoice_rate = s.read_aloud_openvoice_rate
         _out = output_path
@@ -13808,22 +13837,6 @@ class MainFrame(
                     executable_path=espeak_exe_snap,
                     voice=_espeak_voice,
                     rate=_espeak_rate,
-                )
-            elif _engine == "melotts":
-                synthesize_with_melotts(
-                    _out_text,
-                    _out,
-                    executable_path=melotts_exe_snap,
-                    voice=_melotts_voice,
-                    rate=_melotts_rate,
-                )
-            elif _engine == "chatterbox":
-                synthesize_with_chatterbox(
-                    _out_text,
-                    _out,
-                    executable_path=chatterbox_exe_snap,
-                    voice=_chatterbox_voice,
-                    rate=_chatterbox_rate,
                 )
             elif _engine == "openvoice":
                 synthesize_with_openvoice(
@@ -15785,13 +15798,6 @@ class MainFrame(
             ("Kokoro voice", settings.read_aloud_kokoro_voice),
             ("eSpeak executable", settings.read_aloud_espeak_executable or "PATH lookup"),
             ("eSpeak English voice", settings.read_aloud_espeak_voice),
-            ("MeloTTS executable", settings.read_aloud_melotts_executable or "Not configured"),
-            ("MeloTTS voice", settings.read_aloud_melotts_voice),
-            (
-                "Chatterbox executable",
-                settings.read_aloud_chatterbox_executable or "Not configured",
-            ),
-            ("Chatterbox voice", settings.read_aloud_chatterbox_voice),
             ("OpenVoice executable", settings.read_aloud_openvoice_executable or "Not configured"),
             ("OpenVoice voice", settings.read_aloud_openvoice_voice),
             (
@@ -17993,7 +17999,7 @@ class MainFrame(
             document=str(self.editor.GetValue()),
             title=self._current_document_title(),
         )
-        dlg.show()
+        self._show_modal_dialog(dlg.dialog, "Prompt Library")
         dlg.close()
 
     def open_skill_library(self) -> None:
@@ -18008,7 +18014,8 @@ class MainFrame(
             title_text=self._current_document_title(),
             on_insert=self._ai_insert_text,
         )
-        dlg.show()
+        dlg.dialog.CenterOnParent()
+        self._show_modal_dialog(dlg.dialog, "Skill Library")
         dlg.close()
 
     def _get_skill_files(self) -> list:
@@ -18164,16 +18171,27 @@ class MainFrame(
         ).show()
 
     def open_ai_hub(self) -> None:
-        dialog = AIHubDialog(
+        # The AI Hub is the single place to configure every provider (key, model,
+        # Test Chat, per-provider Forget) plus on-device model settings. It
+        # absorbed the former "AI Model and Connection" and "AI Connection"
+        # entries (AICONS-1).
+        dialog = AssistantConnectionDialog(
             self.frame,
-            open_connection=self.open_ai_preferences,
             open_model_settings=self.open_ai_model_settings,
-            open_writing_assistant=self.open_writing_assistant,
-            open_prompt_studio=self.open_prompt_studio,
-            open_agent_center=self.open_agent_center,
-            announce=self._set_status,
         )
-        dialog.show_modal()
+        if dialog.show_modal():
+            self._set_ai_menu_status_badge(
+                dialog.last_verification_ok,
+                dialog.last_verification_message,
+            )
+            detail = self._compact_ai_status_detail(
+                self._plain_language_ai_status_detail(dialog.last_verification_message)
+            )
+            state = "Ready" if dialog.last_verification_ok else "Needs attention"
+            self._set_status(f"Updated AI Hub settings. {state}. {detail}")
+            self._request_menu_refresh()
+        else:
+            self._set_status("AI Hub closed")
 
     def open_writing_assistant(self, initial_prompt: str = "") -> None:
         # H-SAFE-1: refuse to even open the AI dialog in safe mode. The
@@ -20575,7 +20593,17 @@ class MainFrame(
         self._refresh_title()
 
     def show_help_on_control(self) -> None:
-        """F1: show context-sensitive help for the currently focused control."""
+        """F1: show context-sensitive help for the currently focused control.
+
+        The main editor is a plain ``wx.TextCtrl`` with a friendly accessible name
+        rather than a help-topic name, so F1 in the document window is routed to
+        the ``main.editor`` topic explicitly (otherwise it resolved to "no help").
+        """
+        focused = self._wx.Window.FindFocus()
+        editor = getattr(self, "editor", None)
+        if editor is not None and focused is editor:
+            self.show_topic_help("main.editor", user_guide_opener=self.open_user_guide_section)
+            return
         self.show_control_help(user_guide_opener=self.open_user_guide_section)
 
     def open_user_guide_section(self, section: str | None = None) -> None:
@@ -20587,7 +20615,9 @@ class MainFrame(
         from quill.ui.setup_wizard import run_setup_wizard
 
         feature_manager: FeatureManager = self.feature_manager  # type: ignore[attr-defined]
-        changed = run_setup_wizard(self.frame, self.settings, feature_manager)
+        changed = run_setup_wizard(
+            self.frame, self.settings, feature_manager, show_modal_fn=self._show_modal_dialog
+        )
         if changed:
             save_settings(self.settings)
             feature_manager.save()
@@ -20993,7 +21023,7 @@ class MainFrame(
         start_setup = self._show_message_box(
             "Set up speech engines now?\n\n"
             "You can download/configure DECtalk, eSpeak-NG, Piper, Kokoro, "
-            "MeloTTS, Chatterbox, and OpenVoice.\n"
+            "and OpenVoice.\n"
             "You can always change these later in AI > Speech > Settings.",
             "Speech Setup",
             wx.ICON_QUESTION | wx.YES_NO,
@@ -21009,8 +21039,6 @@ class MainFrame(
             "Configure eSpeak-NG path and English variant",
             "Configure Piper executable and English model folder",
             "Configure Kokoro English voice defaults",
-            "Configure MeloTTS executable and English voice",
-            "Configure Chatterbox executable and English voice",
             "Configure OpenVoice executable, English voice, and consent",
             "Open speech setup docs",
         ]
@@ -21104,44 +21132,6 @@ class MainFrame(
 
         if 4 in selected:
             exe = _ask_text(
-                "Path to MeloTTS executable:", self.settings.read_aloud_melotts_executable
-            )
-            if exe is not None:
-                self.settings.read_aloud_melotts_executable = exe
-            voices = list_melotts_english_voices()
-            if voices:
-                with wx.SingleChoiceDialog(
-                    self.frame,
-                    "Choose default MeloTTS English voice:",
-                    "Speech Setup",
-                    choices=[voice.name for voice in voices],
-                ) as voice_dialog:
-                    if self._show_modal_dialog(voice_dialog, "Speech Setup") == wx.ID_OK:
-                        idx = voice_dialog.GetSelection()
-                        if 0 <= idx < len(voices):
-                            self.settings.read_aloud_melotts_voice = voices[idx].id
-
-        if 5 in selected:
-            exe = _ask_text(
-                "Path to Chatterbox executable:", self.settings.read_aloud_chatterbox_executable
-            )
-            if exe is not None:
-                self.settings.read_aloud_chatterbox_executable = exe
-            voices = list_chatterbox_english_voices()
-            if voices:
-                with wx.SingleChoiceDialog(
-                    self.frame,
-                    "Choose default Chatterbox English voice:",
-                    "Speech Setup",
-                    choices=[voice.name for voice in voices],
-                ) as voice_dialog:
-                    if self._show_modal_dialog(voice_dialog, "Speech Setup") == wx.ID_OK:
-                        idx = voice_dialog.GetSelection()
-                        if 0 <= idx < len(voices):
-                            self.settings.read_aloud_chatterbox_voice = voices[idx].id
-
-        if 6 in selected:
-            exe = _ask_text(
                 "Path to OpenVoice executable:", self.settings.read_aloud_openvoice_executable
             )
             if exe is not None:
@@ -21166,7 +21156,7 @@ class MainFrame(
             )
             self.settings.read_aloud_openvoice_consent = consent == wx.YES
 
-        if 7 in selected:
+        if 5 in selected:
             docs_path = app_data_dir().parent / "Quill" / "docs" / "userguide.md"
             webbrowser.open(str(docs_path))
 
@@ -21221,7 +21211,9 @@ class MainFrame(
         ]
 
         dialog = wx.Dialog(
-            self.frame, title="Regex Helper", style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER
+            self.frame,
+            title="Regular Expression Helper",
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
         dialog.SetSize((820, 640))
         panel = wx.Panel(dialog)
@@ -21325,12 +21317,12 @@ class MainFrame(
         def on_copy(_event: object) -> None:
             pattern = pattern_ctrl.GetValue()
             if not pattern.strip():
-                self._set_status("Regex helper: no pattern to copy")
+                self._set_status("Regular Expression helper: no pattern to copy")
                 return
             if self._copy_to_clipboard(pattern):
-                self._set_status("Regex pattern copied")
+                self._set_status("Regular Expression pattern copied")
             else:
-                self._set_status("Regex helper could not copy pattern")
+                self._set_status("Regular Expression helper could not copy pattern")
 
         def on_close(_event: object) -> None:
             dialog.EndModal(wx.ID_CLOSE)
@@ -21347,7 +21339,7 @@ class MainFrame(
         recipe_list.SetFocus()
 
         try:
-            self._show_modal_dialog(dialog, "Regex Helper")
+            self._show_modal_dialog(dialog, "Regular Expression Helper")
         finally:
             dialog.Destroy()
 

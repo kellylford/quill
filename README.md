@@ -6,11 +6,11 @@
 
 **QUILL: A quality, usable, inclusive, lightweight, and literate editor built for everyone who writes, codes, learns, and creates.**
 
-## 🌟 The Quillin Hub
-Expand your editor's powers with the [Quillin Hub](https://hub.quillforall.org). Discover a curated gallery of community-created extensions—from research tools to accessibility auditors—all verified for security and WCAG 2.2 AA compliance.
+## The Quillin Hub
+
+Expand your editor's powers with the [Quillin Hub](https://hub.quillforall.org). Discover a curated gallery of community-created extensions -- from research tools to accessibility auditors -- all verified for security and WCAG 2.2 AA compliance.
 
 ## What Quill is
-...existing code...
 
 
 Quill is a screen-reader-first writing and document environment for **Windows and macOS**, focused on practical keyboard workflows, stable editing, and accessible diagnostics/support flows.
@@ -25,14 +25,14 @@ Quill is designed to stay focused and useful:
 
 ## Current release line
 
-Current release line: **0.1.5**
+Current release line: **0.5.0**
 
-Highlights in 0.1.5 include:
+Highlights in 0.5.0 include:
 
 - Insert menu with searchable Markdown/HTML insertion.
-- Word Prediction with `Ctrl+Space` plus HTML/Markdown tag IntelliSense.
-- New snippet system with `Ctrl+Alt+Space` insertion, trigger expansion, and starter packs.
-- Release-safety default for 0.1.5 testing: Word and CSV open in the normal plain-text editor surface.
+- Word Prediction with `Ctrl+.` plus HTML/Markdown tag IntelliSense.
+- New snippet system with `Ctrl+Shift+Grave, S` insertion, trigger expansion, and starter packs.
+- Release-safety default: Word and CSV open in the normal plain-text editor surface.
 - Structured Word view and CSV grid code paths remain in-repo behind an internal gate for continued verification.
 - Expanded structured intake for `.doc`/`.docx`, `.ppt`/`.pptx`, `.xlsx`/`.xls`, `.pages`, and low-confidence PDF fallback via MarkItDown when available.
 - Writing Assistant shell with prompt presets, generated tool suggestions, and a sandboxed Python runner.
@@ -44,10 +44,10 @@ Highlights in 0.1.5 include:
 - Optional Ollama cloud key mode over HTTPS (no local Ollama required for cloud endpoint access).
 - In-App Preview and Side-by-Side Preview with a dedicated Focus Preview command.
 - Heading styling tools to apply font family, size, and alignment to current-level or all headings in Markdown/HTML.
-- Heading Organizer (`Ctrl+Alt+Shift+H`) with keyboard-driven heading level changes, section reordering, and accessibility validation.
+- Heading Organizer (`Ctrl+Shift+Grave, O`) with keyboard-driven heading level changes, section reordering, and accessibility validation.
 - QUILL Quick Nav mode (browse-style cursor navigation) activated with `Ctrl+Shift+Grave`, with mnemonic single-key movement for links, lists, list items, tables, block quotes, bookmarks, code blocks, table of contents, headings, heading levels (`1` through `6`), paragraphs, sentences, and blocks.
 - Watch Folder automation under **Tools -> Dictation** to auto-open newly dropped supported files.
-- Startup Wizard now includes a Watch Folder setup step so automation can be configured on first run.
+- Unified first-run **Personalise QUILL** wizard (re-runnable from **Help -> Personalise QUILL**) covering keyboard pack, feature profile, remote access, AI, reading/accessibility, writing tools, and startup behaviour.
 - Search menu simplification with replace-all inside the Replace dialog.
 - Unified diagnostics-backed support flow under **Help -> Report a Bug**.
 - Menu IA refinement, including **Insert** before **View** and **Search** after **View**.
@@ -65,19 +65,19 @@ Ollama Cloud onboarding is available in this same flow. If you have an API key, 
 
 Snippet workflow quick start:
 
-1. Press `Ctrl+Alt+Space` to open **Insert Snippet**.
+1. Press `Ctrl+Shift+Grave, S` to open **Insert Snippet**.
 2. Type to filter by snippet name, trigger, or body text.
 3. Use arrow keys to choose, press Enter to insert, and fill placeholders when prompted.
 
 Related commands:
 
-- `Ctrl+Space`: Word Prediction (words, HTML tags, Markdown tags).
-- `Ctrl+Alt+Shift+Space`: Manage snippets (create, edit, delete, import/export, starter packs).
+- `Ctrl+.`: Word Prediction (words, HTML tags, Markdown tags).
+- `Ctrl+Shift+Grave, Shift+S`: Manage snippets (create, edit, delete, import/export, starter packs).
 - `Preferences -> Install Starter Snippet Packs`: install sample packs for writing, developer flow, and accessibility/support notes.
 
 Watch Folder quick start:
 
-1. Open `Help -> Startup Wizard...` and run the Watch Folder setup step, or open `Preferences -> Watch Folder Automation`.
+1. Open `Preferences -> Watch Folder Automation`.
 2. Choose a folder where you will drop supported Quill files.
 3. Enable watch folder monitoring.
 4. Turn on auto-start if you want it running every launch.
@@ -123,8 +123,8 @@ How tracking works for Markdown and HTML:
 - `docs/` -- product docs and generated artifacts.
   - `QUILL-PRD.md` (+ `.html`, `.epub`)
   - `userguide.md` (+ `.html`, `.epub`)
-  - `announcement-beta.md` (+ `.html`, `.epub`) -- published on GitHub Pages
-  - `engineering/` -- implementation-facing docs surfaced on GitHub Pages
+  - `announcement.md` (+ `.html`, `.epub`) -- the 0.5.0 product announcement
+  - `engineering.md`, `planning.md`, `accessibility.md`, `features.md`, `qa.md` -- consolidated reference docs (each `+ .html`, `.epub`)
 - `tests/` -- unit/integration/accessibility/performance tests.
 - `scripts/` -- release, validation, and maintenance helpers.
 
@@ -139,7 +139,7 @@ Runs on **Windows and macOS** (Python 3.12).
 3. Launch:
    - `python -m quill`  (on Windows, `pythonw -m quill` for no console window)
 
-To build a signed, notarized macOS app, see `scripts/build_macos.sh` and `docs/engineering/macos-build.md`.
+To build a signed, notarized macOS app, see `scripts/build_macos.sh` and `docs/QUILL-PRD.md`.
 
 Optional launch flags:
 
@@ -161,7 +161,7 @@ Examples:
 ## Development checks
 
 - Lint: `ruff check .`
-- Tests: `pytest -q`
+- Tests: `pytest tests/unit/ tests/stability/ -q`
 
 ## Documentation workflow
 
@@ -180,7 +180,7 @@ PRD and engineering docs for anyone who wants the deeper implementation detail.
 
 ## One-command release readiness
 
-Run the full 0.1.5 readiness flow:
+Run the full release readiness flow:
 
 - `python scripts/release_readiness.py`
 
@@ -225,7 +225,7 @@ Community contributions are welcome.
 ## Release governance
 
 - Release process and branch policy: **[RELEASE.md](RELEASE.md)**
-- Security advisory runbook: **[docs/engineering/security-advisory-workflow.md](docs/engineering/security-advisory-workflow.md)**
+- Security advisory runbook: **[docs/QUILL-PRD.md](docs/QUILL-PRD.md)**
 
 ## License
 

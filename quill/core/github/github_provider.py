@@ -135,14 +135,18 @@ class GitHubRemoteProvider(RemoteProvider):
         except gh.GithubException as exc:
             raise RuntimeError(f"Could not list refs: {exc}") from exc
         refs: list[RemoteRef] = []
+        branch_count = 0
         for b in repo.get_branches():
             refs.append(RemoteRef(name=b.name, kind="branch"))
-            if len(refs) >= limit:
-                return refs
+            branch_count += 1
+            if branch_count >= limit:
+                break
+        tag_count = 0
         for t in repo.get_tags():
             refs.append(RemoteRef(name=t.name, kind="tag"))
-            if len(refs) >= limit:
-                return refs
+            tag_count += 1
+            if tag_count >= limit:
+                break
         return refs
 
     def list_directory(

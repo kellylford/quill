@@ -40,12 +40,6 @@ def test_openai_body_uses_image_url_data_uri() -> None:
     assert content[1]["image_url"]["url"] == f"data:image/png;base64,{_B64}"
 
 
-def test_azure_openai_body_omits_model() -> None:
-    body = build_image_description_body("azure_openai", "ignored", "Describe", _B64, "image/png")
-    assert "model" not in body
-    assert body["messages"][0]["content"][1]["type"] == "image_url"  # type: ignore[index]
-
-
 def test_claude_body_uses_base64_source_block() -> None:
     body = build_image_description_body(
         "claude", "claude-3-5-sonnet", "Describe", _B64, "image/jpeg"

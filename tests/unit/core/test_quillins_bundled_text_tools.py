@@ -2,7 +2,7 @@
 
 These two Quillins were converted out of QUILL's core/UI Python (the power-tools
 mixin and ``quill/ui/features/line_transforms.py``) into real, sandboxed Quillins
-(``docs/quillin-conversion-roadmap.md`` Wave 1). This module pins the conversion:
+(``docs/quillins.md`` Wave 1). This module pins the conversion:
 
 * the vendored ``algorithms.py`` reproduces, byte for byte, the output the deleted
   ``quill.core.{regex_ops,set_ops,wrap_ops}`` modules and ``line_ops.number_lines``

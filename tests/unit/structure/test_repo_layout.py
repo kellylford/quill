@@ -37,6 +37,7 @@ _SANCTIONED_ROOT_MARKDOWN = frozenset({
     "dialogs.md",
     "issues.md",
     "menus.md",
+    "x.md",
     "x2.md",
 })
 
@@ -60,13 +61,41 @@ def test_repository_root_markdown_is_limited_to_sanctioned_files() -> None:
     )
 
 
-def test_relocated_planning_docs_live_under_docs() -> None:
-    planning = _REPO_ROOT / "docs" / "planning"
-    for stem in ("aa", "glow", "pi", "ROADMAP"):
-        assert (planning / f"{stem}.md").is_file(), f"missing docs/planning/{stem}.md"
-        # Each planning doc keeps the docs/ HTML + EPUB artifact triple in step.
-        assert (planning / f"{stem}.html").is_file(), f"missing docs/planning/{stem}.html"
-        assert (planning / f"{stem}.epub").is_file(), f"missing docs/planning/{stem}.epub"
+def test_consolidated_docs_live_at_docs_root() -> None:
+    # The former docs/planning, docs/accessibility, docs/features,
+    # docs/engineering, and docs/qa folders were each rolled up into a single
+    # root-level document under docs/ to reduce file sprawl. Guard that the
+    # consolidated documents exist and that the old sub-folders did not creep
+    # back.
+    docs = _REPO_ROOT / "docs"
+    # Documentation was aggressively consolidated into a handful of root docs:
+    # user-facing material (incl. the developer console, skills tutorial, and
+    # feature notes) lives in userguide.md; spec/design/ops material (engineering,
+    # QA, deployment, AccessibleApps, RTF design) folded into QUILL-PRD.md; the
+    # Quillin docs + scripting contract into quillins.md.
+    for name in (
+        "planning.md",
+        "quillins.md",
+        "userguide.md",
+        "QUILL-PRD.md",
+    ):
+        assert (docs / name).is_file(), f"missing consolidated docs/{name}"
+    for folder in ("planning", "accessibility", "features", "engineering", "qa"):
+        assert not (docs / folder).is_dir(), (
+            f"docs/{folder}/ should have been consolidated into a root doc"
+        )
+    # These standalone docs were folded into userguide.md / QUILL-PRD.md.
+    for gone in (
+        "engineering.md",
+        "qa.md",
+        "deployment.md",
+        "features.md",
+        "developer-console.md",
+        "skills-tutorial.md",
+        "rtf.md",
+        "ACCESSIBLEAPPS_INTEGRATION.md",
+    ):
+        assert not (docs / gone).is_file(), f"docs/{gone} should have been consolidated"
 
 
 def test_macos_build_files_live_in_sanctioned_homes() -> None:

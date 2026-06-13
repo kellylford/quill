@@ -136,7 +136,6 @@ class _FakeResponse:
         ("claude", "https://api.anthropic.com"),
         ("openrouter", "https://openrouter.ai/api"),
         ("gemini", "https://generativelanguage.googleapis.com"),
-        ("azure_openai", "https://YOUR-RESOURCE-NAME.openai.azure.com"),
     ],
 )
 def test_default_host_for_provider(provider: str, expected_host: str) -> None:
@@ -270,10 +269,6 @@ def test_build_auth_headers_for_provider_types() -> None:
         "gemini", "https://generativelanguage.googleapis.com", "gem-key"
     )
     assert gemini_headers["x-goog-api-key"] == "gem-key"
-    azure_headers = assistant_ai._build_auth_headers(
-        "azure_openai", "https://example.openai.azure.com", "az-key"
-    )
-    assert azure_headers["api-key"] == "az-key"
 
 
 def test_filter_model_names_prioritizes_prefix_matches() -> None:
@@ -575,7 +570,6 @@ def test_api_key_labels_have_no_storage_jargon() -> None:
         "claude",
         "openrouter",
         "gemini",
-        "azure_openai",
         "ollama_cloud",
         "custom",
         "off",
@@ -595,4 +589,127 @@ def test_api_key_storage_hint_is_plain_and_jargon_free() -> None:
 def test_provider_display_name_is_friendly() -> None:
     assert assistant_ai.provider_display_name("ollama_cloud") == "Ollama Cloud"
     assert assistant_ai.provider_display_name("openai") == "OpenAI"
-    assert assistant_ai.provider_display_name("azure_openai") == "Azure OpenAI"
+    assert assistant_ai.provider_display_name("claude") == "Claude"
+
+
+# --- Test Chat helper (AI Hub) -----------------------------------------------
+
+
+def test_test_chat_off_provider_returns_false(monkeypatch: pytest.MonkeyPatch) -> None:
+    settings = assistant_ai.AssistantConnectionSettings(provider="off")
+    ok, message = assistant_ai.test_chat(settings, "")
+    assert ok is False
+    assert "Off" in message
+
+
+def test_test_chat_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(assistant_ai, "generate_assistant_response", lambda *a, **k: ("pong", None))
+    settings = assistant_ai.AssistantConnectionSettings(provider="openai")
+    ok, message = assistant_ai.test_chat(settings, "key")
+    assert ok is True
+    assert "pong" in message
+
+
+def test_test_chat_error_passthrough(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        assistant_ai, "generate_assistant_response", lambda *a, **k: (None, "Rate limited.")
+    )
+    settings = assistant_ai.AssistantConnectionSettings(provider="claude")
+    ok, message = assistant_ai.test_chat(settings, "key")
+    assert ok is False
+    assert message == "Rate limited."
+
+
+def test_test_chat_empty_reply_is_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(assistant_ai, "generate_assistant_response", lambda *a, **k: ("   ", None))
+    settings = assistant_ai.AssistantConnectionSettings(provider="gemini")
+    ok, message = assistant_ai.test_chat(settings, "key")
+    assert ok is False
+    assert "empty" in message.lower()
+
+
+# --- Per-provider credentials (AI Hub) ---------------------------------------
+
+
+def _fake_credential_store(monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
+    store: dict[str, str] = {}
+
+    def _save(target, secret):
+        store[target] = secret
+
+    monkeypatch.setattr(assistant_ai, "_cs_save", _save)
+    monkeypatch.setattr(assistant_ai, "_cs_load", lambda target: store.get(target, ""))
+    monkeypatch.setattr(assistant_ai, "_cs_delete", lambda target: store.pop(target, None))
+    return store
+
+
+def test_per_provider_keys_are_isolated(monkeypatch: pytest.MonkeyPatch) -> None:
+    _fake_credential_store(monkeypatch)
+    assert assistant_ai.save_provider_api_key("openai", "openai-key") is True
+    assert assistant_ai.save_provider_api_key("claude", "claude-key") is True
+    assert assistant_ai.load_provider_api_key("openai") == "openai-key"
+    assert assistant_ai.load_provider_api_key("claude") == "claude-key"
+    # Distinct targets, so configuring one never clobbers another.
+    openai_target = assistant_ai.provider_credential_target("openai")
+    claude_target = assistant_ai.provider_credential_target("claude")
+    assert openai_target != claude_target
+
+
+def test_clear_provider_api_key_only_affects_that_provider(monkeypatch: pytest.MonkeyPatch) -> None:
+    _fake_credential_store(monkeypatch)
+    assistant_ai.save_provider_api_key("openai", "openai-key")
+    assistant_ai.save_provider_api_key("gemini", "gemini-key")
+    assistant_ai.clear_provider_api_key("openai")
+    assert assistant_ai.load_provider_api_key("openai") == ""
+    assert assistant_ai.load_provider_api_key("gemini") == "gemini-key"
+
+
+def test_save_provider_api_key_empty_clears(monkeypatch: pytest.MonkeyPatch) -> None:
+    _fake_credential_store(monkeypatch)
+    assistant_ai.save_provider_api_key("openrouter", "k")
+    assert assistant_ai.save_provider_api_key("openrouter", "  ") is False
+    assert assistant_ai.load_provider_api_key("openrouter") == ""
+
+
+def test_set_active_provider_persists_key_and_settings(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    store = _fake_credential_store(monkeypatch)
+    legacy_target = assistant_ai._ASSISTANT_CREDENTIAL_TARGET
+
+    def _save_legacy(secret):
+        store[legacy_target] = secret
+        return True
+
+    # Route the legacy active-key store through the same in-memory credential store.
+    monkeypatch.setattr(assistant_ai, "_save_api_key_with_credential_manager", _save_legacy)
+    monkeypatch.setattr(
+        assistant_ai,
+        "_load_api_key_from_credential_manager",
+        lambda: store.get(legacy_target, ""),
+    )
+    settings = assistant_ai.AssistantConnectionSettings(provider="openai", model="gpt-4o-mini")
+    assistant_ai.set_active_provider(settings, "active-key")
+    assert assistant_ai.load_provider_api_key("openai") == "active-key"
+    assert assistant_ai.load_assistant_api_key() == "active-key"
+    assert assistant_ai.load_assistant_connection_settings().provider == "openai"
+
+
+# --- Per-provider default model (AI Hub / Ask Quill) -------------------------
+
+
+def test_per_provider_model_round_trip(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    assistant_ai.save_provider_model("openai", "gpt-4o-mini")
+    assistant_ai.save_provider_model("claude", "claude-haiku-4-5-20251001")
+    assert assistant_ai.load_provider_model("openai") == "gpt-4o-mini"
+    assert assistant_ai.load_provider_model("claude") == "claude-haiku-4-5-20251001"
+    assert assistant_ai.load_provider_model("gemini") == ""
+
+
+def test_save_provider_model_empty_clears(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    assistant_ai.save_provider_model("openrouter", "openrouter/auto")
+    assistant_ai.save_provider_model("openrouter", "  ")
+    assert assistant_ai.load_provider_model("openrouter") == ""

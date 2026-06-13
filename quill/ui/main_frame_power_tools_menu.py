@@ -295,18 +295,18 @@ def _build_power_tools_registrar() -> FirstPartyRegistrar:
     # Search menu --------------------------------------------------------
     add(
         id="power.count_regex_matches",
-        title="Count Regex Matches",
+        title="Count Regular Expression Matches",
         top_level="Search",
         group="search",
-        label="&Count Regex Matches...",
+        label="&Count Regular Expression Matches...",
         separator_before=True,
     )
     add(
         id="power.extract_regex_matches",
-        title="Extract Regex Matches",
+        title="Extract Regular Expression Matches",
         top_level="Search",
         group="search",
-        label="E&xtract Regex Matches...",
+        label="E&xtract Regular Expression Matches...",
     )
     add(
         id="power.set_lines_first_not_second",

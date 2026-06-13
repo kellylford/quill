@@ -11,18 +11,24 @@
   repositories (File > Open Remote > GitHub). Token stored in Windows Credential
   Manager; first-use consent dialog before any network call.
 - **Keyboard packs (.kqp).** Export and import complete keybinding sets as
-  self-contained `.kqp` zip archives (File > Keyboard Pack). Validated on import;
+  self-contained `.kqp` JSON files (File > Keyboard Pack). Validated on import;
   atomic write on export.
 - **Autoupdate pipeline.** Vendored `accessibleapps/app_updater` under
   `quill/_vendor/autoupdate`; release scripts (`build_update_zip.py`,
   `fetch_bootstrappers.py`, `generate_file_manifest.py`) produce
   installer-compatible update ZIPs with SHA-256 manifests.
-- **Context-sensitive help.** `Alt+H` announces the most relevant shortcuts for
-  the current focus context. Implemented in `quill/ui/context_help.py`.
+- **Context-sensitive help.** `Ctrl+Shift+Grave, Shift+H` announces the most relevant shortcuts for
+  the current focus context (`Alt+H` is reserved for the Help menu mnemonic).
+  F1 shows per-control help; Shift+F1 opens "What Can I Do Here?".
+  Implemented in `quill/ui/context_help.py` and `quill/ui/main_frame.py`.
 - **Setup wizard.** First-run nine-page wizard guides new users through screen
   reader, AI, SSH, and cloud configuration.
-- **Translation infrastructure.** Babel-based i18n scaffolding; all user-facing
-  strings in new modules wrapped with `_()`.
+- **Translation infrastructure.** Babel-based i18n scaffolding: `quill/locale/quill.pot`
+  template, `babel.cfg` extraction config, and `quill/core/i18n.py` runtime loader.
+  Strings in legacy modules and several new 0.5.0 surfaces (GitHub provider,
+  update flow status strings) are not yet wrapped with `_()`. No translations are
+  shipped; the `.pot` template is the floor. See
+  `docs/localization/translation-contributor-plan.md` for contribution workflow.
 - **Per-provider model memory.** AI chat remembers the last selected model per
   provider and restores it on next open.
 
@@ -34,7 +40,7 @@
   stalled). Purged from `pyproject.toml`, CI, and scripts.
 - Stray `leasey.html` at repo root removed.
 
-## Security Hardening and UX Delight (1.0 Release Pass)
+## Security Hardening and UX Delight — 1.0 Release Pass (2026-05-01)
 
 This section records the 13 HIGH-severity security fixes, 16 UX delight features, and the LOW/NIT fixes applied during the pre-1.0 code review. All items below were open in `issues.md` before this pass and are now closed.
 
@@ -64,7 +70,7 @@ This section records the 13 HIGH-severity security fixes, 16 UX delight features
 - **Live contrast checker (`Ctrl+Shift+Grave, Shift+C`).** `announce_contrast_ratio()` computes the WCAG 2.1 relative-luminance ratio for the current theme and announces it. Also fires automatically after `_apply_theme()`.
 - **Magic Paste (`Ctrl+Alt+V`).** `magic_paste()` inspects the clipboard for a URL, Markdown block, or base64 image and presents a picker before inserting.
 - **Recovery diff UX.** `_offer_crash_recovery()` now includes a 30-line read-only snapshot preview so users can review content before deciding to restore.
-- **Status bar context help (`Alt+H`).** `show_context_help()` announces the most useful keys for the current mode in priority order.
+- **Status bar context help (`Ctrl+Shift+Grave, Shift+H`).** `announce_context_mode_shortcuts()` announces the most useful keys for the current mode in priority order. (`Alt+H` is reserved for the Help menu mnemonic.)
 - **Soft error recovery link.** `_show_error_with_hint()` is used for file-open, export, and import errors. A "What to try next..." toggle reveals a `wx.TE_READONLY` area with contextual guidance.
 - **TTS fallback announcement.** `_check_tts_fallback_on_startup()` fires at startup and announces "Screen reader fallback active. F8 to retry TTS." when `pyttsx3` could not be initialised. `retry_tts_init()` exposed in `prism_bridge.py`.
 - **Recovery `had_replacements` note.** `read_recovery_snapshot()` returns `(text, had_replacements)`; the recovery dialog shows a warning when replacement characters are detected.

@@ -1,7 +1,7 @@
 """Concurrency tests for Quill's lazily-loaded module-level caches (CQ-15).
 
 These exercise the double-checked locking documented in
-``docs/engineering/thread-safety.md``: when many threads hit a cold cache at
+``docs/QUILL-PRD.md``: when many threads hit a cold cache at
 once, the expensive load must run at most once and every thread must observe the
 same fully-built, immutable snapshot without raising.
 """

@@ -38,6 +38,7 @@ class MenuBuilderMixin:
         self._id_close_document = wx.NewIdRef()
         self._id_save_all = wx.NewIdRef()
         self._id_reload_from_disk = wx.NewIdRef()
+        self._id_check_external_changes = wx.NewIdRef()
         self._id_restore_backup = wx.NewIdRef()
         self._id_save_session = wx.NewIdRef()
         self._id_open_session = wx.NewIdRef()
@@ -119,6 +120,7 @@ class MenuBuilderMixin:
         file_menu.AppendSeparator()
         # --- Restore / reload ---
         file_menu.Append(self._id_reload_from_disk, "&Reload from Disk")
+        file_menu.Append(self._id_check_external_changes, "Check for E&xternal Changes...")
         file_menu.Append(self._id_restore_backup, "Restore &Backup...")
         file_menu.AppendSeparator()
         # --- Current-file operations (Power Tools recirculation, menus.md Phase 4) ---
@@ -409,7 +411,7 @@ class MenuBuilderMixin:
             self._id_replace_in_files,
             self._menu_label("&Replace Across Files...", "tools.replace_in_files"),
         )
-        # Regex match count/extract and block set-ops make Search the single
+        # Regular Expression match count/extract and block set-ops make Search the single
         # find / filter / extract-lines hub (Power Tools recirculation, menus.md
         # Phase 4).
         self._append_power_tools_search_items(search_menu)
@@ -1020,6 +1022,7 @@ class MenuBuilderMixin:
         self._id_open_diagnostics_folder = wx.NewIdRef()
         self._id_help_on_control = wx.NewIdRef()
         self._id_context_help = wx.NewIdRef()
+        self._id_announce_context_shortcuts = wx.NewIdRef()
         self._id_help_status_page = wx.NewIdRef()
         self._id_why_dont_i_see_feature = wx.NewIdRef()
         self._id_switch_feature_profile = wx.NewIdRef()
@@ -1074,24 +1077,27 @@ class MenuBuilderMixin:
             self._id_dictionary_status,
             self._menu_label("Dictionary &Status...", "tools.dictionary_status"),
         )
-        writing_menu.AppendSeparator()
-        writing_menu.Append(
-            self._id_glow_audit_document,
-            self._menu_label("GLOW &Audit Document", "tools.glow_audit_document"),
-        )
-        writing_menu.Append(
-            self._id_glow_audit_selection,
-            self._menu_label("GLOW Audit &Selection", "tools.glow_audit_selection"),
-        )
-        writing_menu.AppendSeparator()
-        writing_menu.Append(
-            self._id_glow_fix_document,
-            self._menu_label("GLOW &Fix Document", "tools.glow_fix_document"),
-        )
-        writing_menu.Append(
-            self._id_glow_fix_selection,
-            self._menu_label("GLOW Fix &Selection", "tools.glow_fix_selection"),
-        )
+        # GLOW is hidden for now (core.glow is locked off pending completion).
+        # When re-enabled, these audit/fix items reappear automatically.
+        if self._feature_enabled("core.glow"):
+            writing_menu.AppendSeparator()
+            writing_menu.Append(
+                self._id_glow_audit_document,
+                self._menu_label("GLOW &Audit Document", "tools.glow_audit_document"),
+            )
+            writing_menu.Append(
+                self._id_glow_audit_selection,
+                self._menu_label("GLOW Audit &Selection", "tools.glow_audit_selection"),
+            )
+            writing_menu.AppendSeparator()
+            writing_menu.Append(
+                self._id_glow_fix_document,
+                self._menu_label("GLOW &Fix Document", "tools.glow_fix_document"),
+            )
+            writing_menu.Append(
+                self._id_glow_fix_selection,
+                self._menu_label("GLOW Fix &Selection", "tools.glow_fix_selection"),
+            )
         tools_menu.AppendSubMenu(writing_menu, "&Writing && Language")
 
         # Reading & Dictation (merges Read Aloud, Dictation, OCR) ------------
@@ -1222,10 +1228,8 @@ class MenuBuilderMixin:
             self._id_ai_hub,
             self._menu_label("AI &Hub...", "tools.ai_hub"),
         )
-        ai_menu.Append(
-            self._id_ai_model,
-            self._menu_label("AI &Model and Connection...", "tools.ai_model"),
-        )
+        # AI Model and Connection were merged into the AI Hub (one place to
+        # configure every provider, its key, model, and run Test Chat).
         ai_menu.Append(
             self._id_ai_session_browser,
             self._menu_label("Session &Branches...", "tools.ai_session_browser"),
@@ -1276,18 +1280,14 @@ class MenuBuilderMixin:
             self._id_writing_instructions,
             self._menu_label("&Writing Instructions...", "tools.writing_instructions"),
         )
-        ai_menu.Append(
-            self._id_ai_forget_key,
-            "&Forget API Key",
-        )
+        # "Forget API Key" moved into the AI Hub as a per-provider action
+        # ("Forget this provider's key"), since a single global forget is
+        # ambiguous once each provider keeps its own key.
         tools_menu.AppendSubMenu(ai_menu, "AI &Assistant")
 
         # BITS Whisperer (conditional, deferred to QUILL 2.0) ----------------
+        # "About Whisperer" was folded into the single About Quill dialog.
         whisperer_menu = wx.Menu()
-        whisperer_menu.Append(
-            self._id_whisperer_about,
-            self._menu_label("&About Whisperer...", "whisperer.about"),
-        )
         whisperer_menu.Append(
             self._id_profile_onboarding,
             self._menu_label("&Startup Wizard...", "help.startup_wizard"),
@@ -1438,7 +1438,7 @@ class MenuBuilderMixin:
         power_tools_menu.AppendSeparator()
         power_tools_menu.Append(
             self._id_regex_helper,
-            self._menu_label("Regex &Helper...", "tools.regex_helper"),
+            self._menu_label("Regular Expression &Helper...", "tools.regex_helper"),
         )
         power_tools_menu.Append(
             self._id_pandoc_wizard,
@@ -1548,6 +1548,10 @@ class MenuBuilderMixin:
             self._menu_label("&What Can I Do Here?\tShift+F1", "help.what_can_i_do_here"),
         )
         help_menu.Append(
+            self._id_announce_context_shortcuts,
+            self._menu_label("Announce Mode &Shortcuts", "help.context_help"),
+        )
+        help_menu.Append(
             self._id_help_status_page,
             self._menu_label("Status &Page", "help.status_page"),
         )
@@ -1568,10 +1572,6 @@ class MenuBuilderMixin:
         help_menu.Append(
             self._id_profile_onboarding,
             self._menu_label("&Personalise QUILL...", "help.startup_wizard"),
-        )
-        help_menu.Append(
-            self._id_whisperer_about,
-            self._menu_label("About &Whisperer...", "whisperer.about"),
         )
         help_menu.AppendSeparator()
         help_menu.Append(
@@ -1615,7 +1615,8 @@ class MenuBuilderMixin:
         # "Check for Updates on Startup" lives in Settings now (removed the
         # duplicate Help-menu toggle).
         help_menu.Append(self._id_check_updates, "Check for &Updates...")
-        help_menu.Append(self._id_check_glow_updates, "Check for &GLOW Updates...")
+        if self._feature_enabled("core.glow"):
+            help_menu.Append(self._id_check_glow_updates, "Check for &GLOW Updates...")
         help_menu.Append(self._id_about_quill, "&About Quill")
 
         # MENU-REORDER (menus.md Phase 1): every top-level menu is attached to the
@@ -1679,6 +1680,11 @@ class MenuBuilderMixin:
         )
         self.frame.Bind(
             wx.EVT_MENU,
+            lambda _e: self.check_external_changes_now(),
+            id=self._id_check_external_changes,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
             lambda _e: self.restore_backup(),
             id=self._id_restore_backup,
         )
@@ -1708,6 +1714,11 @@ class MenuBuilderMixin:
             wx.EVT_MENU,
             lambda _e: self.show_context_help(),
             id=self._id_context_help,
+        )
+        self.frame.Bind(
+            wx.EVT_MENU,
+            lambda _e: self.announce_context_mode_shortcuts(),
+            id=self._id_announce_context_shortcuts,
         )
         self.frame.Bind(
             wx.EVT_MENU,

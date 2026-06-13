@@ -29,6 +29,7 @@ msg.txt
 zfix*
 /Status
 keys.txt
+/files/
 docs/leasey.md
 
 # Claude Code local state (jobs, worktrees, memory)

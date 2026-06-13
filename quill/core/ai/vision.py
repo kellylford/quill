@@ -125,9 +125,6 @@ def build_image_description_body(
         {"type": "text", "text": prompt},
         {"type": "image_url", "image_url": {"url": data_uri}},
     ]
-    if normalized == "azure_openai":
-        # The deployment is in the URL, so the body omits the model.
-        return {"messages": [{"role": "user", "content": content}], "max_tokens": max_tokens}
     return {
         "model": model,
         "messages": [{"role": "user", "content": content}],

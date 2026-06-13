@@ -275,6 +275,39 @@ def _render_html(text: str) -> str:
     return f"<pre>{html.escape(text)}</pre>"
 
 
+def _split_table_row(line: str) -> list[str]:
+    """Split a GFM table row into trimmed cells, ignoring outer pipes."""
+    s = line.strip()
+    if s.startswith("|"):
+        s = s[1:]
+    if s.endswith("|"):
+        s = s[:-1]
+    return [cell.strip() for cell in s.split("|")]
+
+
+def _is_table_separator(line: str) -> bool:
+    """True for a GFM header-separator row, e.g. ``| --- | :--: |``."""
+    s = line.strip()
+    if "-" not in s or "|" not in s:
+        return False
+    cells = _split_table_row(line)
+    if not cells:
+        return False
+    return all(re.fullmatch(r":?-+:?", cell) is not None for cell in cells if cell != "")
+
+
+def _render_table(header: str, rows: list[str]) -> str:
+    headers = _split_table_row(header)
+    parts = ["<table>", "<thead>", "<tr>"]
+    parts += [f"<th>{_render_inline(cell)}</th>" for cell in headers]
+    parts += ["</tr>", "</thead>", "<tbody>"]
+    for row in rows:
+        cells = _split_table_row(row)
+        parts.append("<tr>" + "".join(f"<td>{_render_inline(c)}</td>" for c in cells) + "</tr>")
+    parts += ["</tbody>", "</table>"]
+    return "".join(parts)
+
+
 def _render_markdown(text: str) -> str:
     lines = text.splitlines()
     blocks: list[str] = []
@@ -297,20 +330,39 @@ def _render_markdown(text: str) -> str:
             list_items = []
             list_tag = ""
 
-    for line in lines:
+    index = 0
+    total = len(lines)
+    while index < total:
+        line = lines[index]
         stripped = line.rstrip()
         if in_code:
             if stripped.startswith("```"):
                 blocks.append("<pre><code>" + html.escape("\n".join(code_lines)) + "</code></pre>")
                 in_code = False
                 code_lines = []
-                continue
-            code_lines.append(line)
+            else:
+                code_lines.append(line)
+            index += 1
             continue
         if stripped.startswith("```"):
             flush_paragraph()
             flush_list()
             in_code = True
+            index += 1
+            continue
+        # GFM pipe table: a row containing "|" immediately followed by a
+        # separator row (| --- | --- |). Consume the header, separator, and the
+        # contiguous data rows that follow.
+        if "|" in stripped and index + 1 < total and _is_table_separator(lines[index + 1]):
+            flush_paragraph()
+            flush_list()
+            header = stripped
+            index += 2
+            rows: list[str] = []
+            while index < total and lines[index].strip() and "|" in lines[index]:
+                rows.append(lines[index])
+                index += 1
+            blocks.append(_render_table(header, rows))
             continue
         heading = re.match(r"^(#{1,6})\s+(.*)$", stripped)
         if heading:
@@ -320,6 +372,7 @@ def _render_markdown(text: str) -> str:
             title = heading.group(2).strip()
             slug = _slugify(title)
             blocks.append(f'<h{level} id="{slug}">{_render_inline(title)}</h{level}>')
+            index += 1
             continue
         bullet = re.match(r"^(\s*)([-*+])\s+(.*)$", line)
         numbered = re.match(r"^(\s*)(\d+)\.\s+(.*)$", line)
@@ -330,14 +383,17 @@ def _render_markdown(text: str) -> str:
             item_match = bullet or numbered
             assert item_match is not None  # one of the two matched
             list_items.append(f"<li>{_render_inline(item_match.group(3))}</li>")
+            index += 1
             continue
         if not stripped:
             flush_paragraph()
             flush_list()
+            index += 1
             continue
         if list_tag:
             flush_list()
         paragraph.append(stripped)
+        index += 1
 
     if in_code:
         blocks.append("<pre><code>" + html.escape("\n".join(code_lines)) + "</code></pre>")

@@ -4,7 +4,7 @@ Product naming: a QUILL extension is branded a **Quillin** in everything a user
 reads or hears. The neutral technical terms used in code, schemas, and APIs —
 ``extension``, the ``quill.extension/1`` manifest schema, the ``ext.*`` command
 namespace, and :class:`QuillExtensionApi` — stay stable, so wire formats never
-change while the experience speaks of Quillins. See ``docs/scripting.md``.
+change while the experience speaks of Quillins. See ``docs/quillins.md``.
 
 This package is the **framework foundation**:
 

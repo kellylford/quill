@@ -57,24 +57,6 @@ TOOL_DEFINITIONS: tuple[ExternalToolDefinition, ...] = (
         install_command="winget install --id JohnMacFarlane.Pandoc -e",
     ),
     ExternalToolDefinition(
-        tool_id="tesseract",
-        name="Tesseract OCR",
-        category="conversion",
-        description=(
-            "Local optical character recognition for screenshots, scans, and image-heavy "
-            "document workflows."
-        ),
-        capabilities=(
-            "OCR images into editable Quill text",
-            "Improve low-confidence scanned document workflows",
-            "Extend PDF and image ingestion without cloud services",
-        ),
-        bundled_subpath="tesseract\tesseract.exe",
-        executable_names=("tesseract.exe", "tesseract"),
-        website_url="https://tesseract-ocr.github.io/",
-        install_command="winget install --id UB-Mannheim.TesseractOCR -e",
-    ),
-    ExternalToolDefinition(
         tool_id="libreoffice",
         name="LibreOffice",
         category="conversion",
@@ -91,20 +73,6 @@ TOOL_DEFINITIONS: tuple[ExternalToolDefinition, ...] = (
         install_command="winget install --id TheDocumentFoundation.LibreOffice -e",
     ),
     ExternalToolDefinition(
-        tool_id="ghostscript",
-        name="Ghostscript",
-        category="conversion",
-        description=("PDF and PostScript helper for advanced render and conversion workflows."),
-        capabilities=(
-            "Improve PDF-related conversion pipelines",
-            "Support print-oriented and PostScript-heavy workflows",
-        ),
-        bundled_subpath=r"ghostscript\bin\gswin64c.exe",
-        executable_names=("gswin64c.exe", "gswin32c.exe", "gs"),
-        website_url="https://ghostscript.com/",
-        install_command="winget install --id ArtifexSoftware.GhostScript -e",
-    ),
-    ExternalToolDefinition(
         tool_id="tidy_html5",
         name="HTML Tidy",
         category="validation",
@@ -119,24 +87,7 @@ TOOL_DEFINITIONS: tuple[ExternalToolDefinition, ...] = (
         bundled_subpath=r"tidy-html5\tidy.exe",
         executable_names=("tidy.exe", "tidy"),
         website_url="https://www.html-tidy.org/",
-        install_command="winget install --id HTACG.TidyHtml5 -e",
-    ),
-    ExternalToolDefinition(
-        tool_id="xmllint",
-        name="XML Lint",
-        category="validation",
-        description=(
-            "Lightweight XML and XHTML well-formedness checker for structured document validation."
-        ),
-        capabilities=(
-            "Validate XML and XHTML well-formedness",
-            "Help inspect EPUB internals and structured export output",
-            "Support future Quill validation workflows without Java or Node.js",
-        ),
-        bundled_subpath=r"xmllint\xmllint.exe",
-        executable_names=("xmllint.exe", "xmllint"),
-        website_url="https://gitlab.gnome.org/GNOME/libxml2",
-        install_command="winget install --id XMLSoft.XMLStarlet -e",
+        install_command="winget install --id HTACG.tidy -e",
     ),
     ExternalToolDefinition(
         tool_id="pymarkdownlnt",
@@ -154,7 +105,7 @@ TOOL_DEFINITIONS: tuple[ExternalToolDefinition, ...] = (
         bundled_subpath=r"pymarkdownlnt\pymarkdownlnt.exe",
         executable_names=("pymarkdown.exe", "pymarkdownlnt.exe", "pymarkdown"),
         website_url="https://pymarkdown.readthedocs.io/",
-        install_command="pipx install pymarkdownlnt",
+        install_command="pip install pymarkdownlnt",
     ),
 )
 
@@ -178,7 +129,7 @@ def detect_tool(definition: ExternalToolDefinition) -> ExternalToolStatus:
             installed=True,
             path=str(bundled),
             source="bundled",
-            version=_tool_version(bundled, definition.tool_id),
+            version=_tool_version(bundled),
         )
     for executable_name in definition.executable_names:
         discovered = shutil.which(executable_name)
@@ -188,7 +139,7 @@ def detect_tool(definition: ExternalToolDefinition) -> ExternalToolStatus:
                 installed=True,
                 path=discovered,
                 source="system",
-                version=_tool_version(Path(discovered), definition.tool_id),
+                version=_tool_version(Path(discovered)),
             )
     return ExternalToolStatus(
         definition=definition,
@@ -237,10 +188,8 @@ def _bundled_tool_path(definition: ExternalToolDefinition) -> Path | None:
     return None
 
 
-def _tool_version(executable: Path, tool_id: str) -> str | None:
+def _tool_version(executable: Path) -> str | None:
     command = [str(executable), "--version"]
-    if tool_id == "ghostscript":
-        command = [str(executable), "-v"]
     try:
         completed = subprocess.run(
             command,

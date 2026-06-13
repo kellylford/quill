@@ -2,7 +2,7 @@
 ; Edit build_inno_setup_script(), not this file, to change packaging.
 
 #define AppName "Quill"
-#define AppVersion "0.1.5"
+#define AppVersion "0.5.0"
 #define AppPublisher "Blind Information Technology Solutions (BITS) and Community Access"
 #define AppURL "https://github.com/Community-Access/quill"
 #define AppExeName "run-quill.cmd"
@@ -25,16 +25,32 @@ DisableProgramGroupPage=auto
 AllowNoIcons=yes
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-OutputBaseFilename=Quill-Setup-0.1.5
+; The bundle ships the amd64 embedded Python runtime, so refuse to
+; install it on a non-x64-compatible CPU and place it in the real
+; 64-bit Program Files (not the x86 folder). x64compatible also covers
+; ARM64 Windows, which runs the x64 runtime under emulation.
+; (Requires Inno Setup 6.3 or newer.)
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
+; Quill targets Windows 10 and 11: the zero-install OCR backend, winget
+; Node bootstrap, and modern wxPython all assume Windows 10+.
+MinVersion=10.0
+; The file-association and Send-to-Quill tasks write Explorer keys, so
+; tell Windows to refresh association/icon caches after install.
+ChangesAssociations=yes
+OutputBaseFilename=Quill-Setup-0.5.0
 Compression=lzma2/ultra
 SolidCompression=yes
 WizardStyle=modern
-; Accessibility: do not auto-close the wizard, so screen-reader users
-; have time to hear the final status message.
+; Force-close any processes that lock app files before copying new ones.
+; This avoids silent upgrade failures on in-use binaries.
 CloseApplications=force
 RestartApplications=no
 UninstallDisplayName={#AppName} {#AppVersion}
-UninstallDisplayIcon={app}\{#AppExeName}
+; pythonw.exe carries a real icon so Add/Remove Programs shows one;
+; the .cmd launcher has none. Falls back gracefully when no bundled
+; runtime is present (e.g. a dev build).
+UninstallDisplayIcon={app}\python\pythonw.exe
 LicenseFile=..\..\LICENSE
 InfoAfterFile=..\portable\README.txt
 SetupLogging=yes
@@ -48,7 +64,9 @@ Name: "fileassoc"; Description: "Register Quill in the Open With menu for common
 Name: "shellverbs"; Description: "Add ""Send to Quill"" actions (OCR, Open, Read aloud) to the file right-click menu"; GroupDescription: "File associations:"; Flags: unchecked
 
 [Components]
-Name: "aiassistant"; Description: "Install the Writing Assistant setup guide and AI connection shortcut"; Types: full compact custom; Flags: checkablealone
+; Every component below gates real [Files] payload. The Writing
+; Assistant and the rest of Quill's core ship unconditionally with the
+; main bundle, so there is no separate AI component to toggle here.
 Name: "pandoc"; Description: "Install bundled Pandoc for document conversion"; Types: full custom; Flags: checkablealone
 Name: "speechdectalk"; Description: "Install bundled DECtalk runtime"; Types: full custom; Flags: checkablealone
 Name: "speechdectalk\voices"; Description: "DECtalk voice selection"; Types: full custom; Flags: checkablealone
@@ -65,13 +83,11 @@ Name: "speechdectalk\voices\kit"; Description: "Kit voice"; Types: full custom; 
 Name: "speechespeak"; Description: "Install bundled eSpeak-NG runtime"; Types: full custom; Flags: checkablealone
 Name: "speechkokoro"; Description: "Install bundled Kokoro voices/models"; Types: full custom; Flags: checkablealone
 Name: "speechpiper"; Description: "Install bundled Piper voices/models"; Types: full custom; Flags: checkablealone
-Name: "speechmelotts"; Description: "Install bundled MeloTTS voices/models"; Types: full custom; Flags: checkablealone
-Name: "speechchatterbox"; Description: "Install bundled Chatterbox voices/models"; Types: full custom; Flags: checkablealone
 Name: "speechopenvoice"; Description: "Install bundled OpenVoice voices/models"; Types: full custom; Flags: checkablealone
 Name: "nodejs"; Description: "Install portable Node.js runtime for Node Quillins and the Developer Console TypeScript interface (~30 MB); not required for Python Quillins"; Types: custom; Flags: checkablealone
 
 [Files]
-Source: "..\portable\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "docs\announcement-beta.md,docs\QUILL-PRD.md,tools\pandoc\*,tools\speech\dectalk\*,tools\speech\espeak-ng\*,tools\speech\kokoro\*,tools\speech\piper\*,tools\speech\melotts\*,tools\speech\chatterbox\*,tools\speech\openvoice\*,tools\nodejs\*"
+Source: "..\portable\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "docs\QUILL-PRD.md,tools\pandoc\*,tools\speech\dectalk\*,tools\speech\espeak-ng\*,tools\speech\kokoro\*,tools\speech\piper\*,tools\speech\openvoice\*,tools\nodejs\*"
 Source: "..\portable\tools\pandoc\*"; DestDir: "{app}\tools\pandoc"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: pandoc
 Source: "..\portable\tools\speech\dectalk\*"; DestDir: "{app}\tools\speech\dectalk"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Excludes: "voices\*"; Components: speechdectalk
 Source: "..\portable\tools\speech\dectalk\voices\*"; DestDir: "{app}\tools\speech\dectalk\voices"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechdectalk\voices\all_voices
@@ -87,8 +103,6 @@ Source: "..\portable\tools\speech\dectalk\voices\kit\*"; DestDir: "{app}\tools\s
 Source: "..\portable\tools\speech\espeak-ng\*"; DestDir: "{app}\tools\speech\espeak-ng"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechespeak
 Source: "..\portable\tools\speech\kokoro\*"; DestDir: "{app}\tools\speech\kokoro"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechkokoro
 Source: "..\portable\tools\speech\piper\*"; DestDir: "{app}\tools\speech\piper"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechpiper
-Source: "..\portable\tools\speech\melotts\*"; DestDir: "{app}\tools\speech\melotts"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechmelotts
-Source: "..\portable\tools\speech\chatterbox\*"; DestDir: "{app}\tools\speech\chatterbox"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechchatterbox
 Source: "..\portable\tools\speech\openvoice\*"; DestDir: "{app}\tools\speech\openvoice"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Components: speechopenvoice
 ; Node.js portable runtime (optional). The build script copies a portable
 ; node.exe distribution into portable\tools\nodejs when building with
@@ -100,8 +114,7 @@ Source: "..\portable\tools\nodejs\*"; DestDir: "{app}\tools\nodejs"; Flags: igno
 Name: "{group}\{#AppName}"; Filename: "{app}\python\pythonw.exe"; Parameters: "-m quill"; WorkingDir: "{app}"; Check: FileExists(ExpandConstant('{app}\python\pythonw.exe'))
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; WorkingDir: "{app}"; Check: not FileExists(ExpandConstant('{app}\python\pythonw.exe'))
 Name: "{group}\{#AppName} README"; Filename: "{app}\README.txt"
-Name: "{group}\{#AppName} User Guide"; Filename: "{app}\docs\userguide.md"
-Name: "{group}\Writing Assistant Setup"; Filename: "{app}\docs\userguide.md"; Components: aiassistant
+Name: "{group}\{#AppName} User Guide"; Filename: "{app}\docs\userguide.html"
 Name: "{group}\Uninstall {#AppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\python\pythonw.exe"; Parameters: "-m quill"; WorkingDir: "{app}"; Tasks: desktopicon; Check: FileExists(ExpandConstant('{app}\python\pythonw.exe'))
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon; Check: not FileExists(ExpandConstant('{app}\python\pythonw.exe'))
@@ -247,7 +260,7 @@ Root: HKCU; Subkey: "Software\Classes\SystemFileAssociations\.pdf\shell\Quill.re
 
 [Run]
 Filename: "{app}\README.txt"; Description: "View the Quill README"; Flags: postinstall shellexec skipifsilent unchecked
-Filename: "{app}\docs\userguide.md"; Description: "View the Writing Assistant setup guide"; Flags: postinstall shellexec skipifsilent unchecked; Components: aiassistant
+Filename: "{app}\docs\userguide.html"; Description: "View the User Guide"; Flags: postinstall shellexec skipifsilent unchecked
 Filename: "{app}\python\pythonw.exe"; Parameters: "-m quill"; Description: "Launch {#AppName}"; Flags: postinstall nowait skipifsilent unchecked; Check: FileExists(ExpandConstant('{app}\python\pythonw.exe'))
 Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: postinstall nowait skipifsilent unchecked; Check: not FileExists(ExpandConstant('{app}\python\pythonw.exe'))
 

@@ -98,7 +98,18 @@ class AskQuillChatDialog:
         self._update_key_visibility()
         outer.Add(self._setup_strip, 0, wx.EXPAND)
 
+        # Always-visible bar: what provider/model is active, plus a quick reveal
+        # of the setup strip to switch and set the default.
+        active_row = wx.BoxSizer(wx.HORIZONTAL)
+        self._active_status = wx.StaticText(self.dialog, label="")
+        self._active_status.SetName("Active AI provider and model")
+        active_row.Add(self._active_status, 1, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+        self._change_provider_btn = wx.Button(self.dialog, label="Change provider or model")
+        active_row.Add(self._change_provider_btn, 0)
+        outer.Add(active_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 12)
+
         self._full_messages: list[str] = []
+        self._transcript: list[tuple[str, str]] = []
         self._webview = None
         self.messages = None
         self.input = None
@@ -132,6 +143,28 @@ class AskQuillChatDialog:
         outer.Add(approval, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 14)
         self._show_approval(False)
 
+        # Insert chat content into the document: the last response or the whole
+        # transcript, as plain text, Markdown, or HTML.
+        insert_row = wx.BoxSizer(wx.HORIZONTAL)
+        insert_row.Add(
+            wx.StaticText(self.dialog, label="Insert into document:"),
+            0,
+            wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+            6,
+        )
+        self._insert_scope = wx.Choice(self.dialog, choices=["Last response", "Entire transcript"])
+        self._insert_scope.SetName("Insert scope")
+        self._insert_scope.SetSelection(0)
+        insert_row.Add(self._insert_scope, 0, wx.RIGHT, 6)
+        self._insert_format = wx.Choice(self.dialog, choices=["Plain text", "Markdown", "HTML"])
+        self._insert_format.SetName("Insert format")
+        self._insert_format.SetSelection(0)
+        insert_row.Add(self._insert_format, 0, wx.RIGHT, 6)
+        self._insert_button = wx.Button(self.dialog, label="Insert")
+        self._insert_button.Enable(False)
+        insert_row.Add(self._insert_button, 0)
+        outer.Add(insert_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 14)
+
         footer = wx.BoxSizer(wx.HORIZONTAL)
         self.copy_button = wx.Button(self.dialog, label="Copy Last Response")
         self.copy_button.Enable(False)
@@ -144,7 +177,10 @@ class AskQuillChatDialog:
         self.approve_button.Bind(wx.EVT_BUTTON, self._on_approve)
         self.discard_button.Bind(wx.EVT_BUTTON, self._on_discard)
         self.copy_button.Bind(wx.EVT_BUTTON, self._on_copy)
+        self._insert_button.Bind(wx.EVT_BUTTON, self._on_insert_into_document)
+        self._change_provider_btn.Bind(wx.EVT_BUTTON, self._on_change_provider)
         self.dialog.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
+        self._refresh_active_status()
 
         # Defer the availability check off the UI thread so the dialog opens
         # immediately. The greeting and setup strip appear once the check completes.
@@ -307,6 +343,7 @@ class AskQuillChatDialog:
 
         self._assistant.backend = SimpleChatBackend(pid, model)
         self._setup_strip.Hide()
+        self._refresh_active_status()
         self.dialog.Layout()
         self._set_busy(False)
         if self._webview is None:
@@ -367,6 +404,9 @@ class AskQuillChatDialog:
 
     def _append(self, speaker: str, text: str) -> None:
         self._full_messages.append(text)
+        self._transcript.append((speaker, text))
+        if getattr(self, "_insert_button", None) is not None:
+            self._insert_button.Enable(True)
         if self._webview is not None:
             self._webview.append_message(speaker, text)
             return
@@ -627,6 +667,45 @@ class AskQuillChatDialog:
             finally:
                 wx.TheClipboard.Close()
             self._announce("Copied last response to clipboard")
+
+    # -- Insert into document + provider status -------------------------------
+
+    def _on_insert_into_document(self, _event: object) -> None:
+        from quill.core.ai.chat_export import render_message, render_transcript
+
+        fmt = {0: "plain", 1: "markdown", 2: "html"}.get(
+            self._insert_format.GetSelection(), "plain"
+        )
+        if self._insert_scope.GetSelection() == 1:
+            content = render_transcript(self._transcript, fmt)
+            what = "transcript"
+        else:
+            if not self._last_response.strip():
+                self._announce("No response to insert yet.")
+                return
+            content = render_message("", self._last_response, fmt)
+            what = "last response"
+        if not content.strip():
+            self._announce("Nothing to insert yet.")
+            return
+        self._insert_text(content)
+        self._announce(f"Inserted {what} into the document as {fmt}.")
+
+    def _on_change_provider(self, _event: object) -> None:
+        self._show_setup("Switch provider or model, then click Save to set it as the default.")
+        self._setup_provider.SetFocus()
+
+    def _refresh_active_status(self) -> None:
+        try:
+            from quill.core.settings import load_settings
+
+            s = load_settings()
+            pid = getattr(s, "ai_chat_default_provider", "") or ""
+            model = getattr(s, "ai_chat_default_model", "") or "(provider default)"
+            label = _PROVIDER_LABELS.get(pid, pid or "(none)")
+            self._active_status.SetLabel(f"Active provider: {label}  —  Model: {model}")
+        except Exception:  # noqa: BLE001
+            self._active_status.SetLabel("")
 
     # -- Lifecycle ------------------------------------------------------------
 

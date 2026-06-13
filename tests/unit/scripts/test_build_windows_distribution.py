@@ -68,8 +68,6 @@ version = "2.4.6"
     assert manifest["speechAssets"]["espeak"]["downloadable"] is True
     assert manifest["speechAssets"]["kokoro"]["downloadable"] is True
     assert manifest["speechAssets"]["piper"]["downloadable"] is True
-    assert manifest["speechAssets"]["melotts"]["downloadable"] is True
-    assert manifest["speechAssets"]["chatterbox"]["downloadable"] is True
     assert manifest["speechAssets"]["openvoice"]["downloadable"] is True
 
     assert installer_script.exists()
@@ -89,7 +87,15 @@ def test_build_inno_setup_script_mentions_portable_bundle() -> None:
     assert "WizardStyle=modern" in script
     assert "DisableDirPage=no" in script
     assert "InfoAfterFile=..\\portable\\README.txt" in script
-    assert "aiassistant" in script
+    # The amd64 embedded-Python bundle must install 64-bit only, target
+    # Windows 10+, and refresh Explorer associations for the assoc tasks.
+    assert "ArchitecturesAllowed=x64compatible" in script
+    assert "ArchitecturesInstallIn64BitMode=x64compatible" in script
+    assert "MinVersion=10.0" in script
+    assert "ChangesAssociations=yes" in script
+    # The dead "aiassistant" component (no [Files] payload) was removed; the
+    # Writing Assistant ships with the core bundle, not as a toggle.
+    assert "aiassistant" not in script
     assert (
         'Name: "pandoc"; Description: "Install bundled Pandoc for document conversion";' in script
     )
@@ -108,16 +114,11 @@ def test_build_inno_setup_script_mentions_portable_bundle() -> None:
     assert 'Name: "speechespeak"; Description: "Install bundled eSpeak-NG runtime";' in script
     assert 'Name: "speechkokoro"; Description: "Install bundled Kokoro voices/models";' in script
     assert 'Name: "speechpiper"; Description: "Install bundled Piper voices/models";' in script
-    assert 'Name: "speechmelotts"; Description: "Install bundled MeloTTS voices/models";' in script
-    assert (
-        'Name: "speechchatterbox"; Description: "Install bundled Chatterbox voices/models";'
-        in script
-    )
     assert (
         'Name: "speechopenvoice"; Description: "Install bundled OpenVoice voices/models";' in script
     )
     assert (
-        'Excludes: "docs\\announcement-beta.md,docs\\QUILL-PRD.md,tools\\pandoc\\*,tools\\speech\\dectalk\\*,tools\\speech\\espeak-ng\\*,tools\\speech\\kokoro\\*,tools\\speech\\piper\\*,tools\\speech\\melotts\\*,tools\\speech\\chatterbox\\*,tools\\speech\\openvoice\\*,tools\\nodejs\\*"'
+        'Excludes: "docs\\QUILL-PRD.md,tools\\pandoc\\*,tools\\speech\\dectalk\\*,tools\\speech\\espeak-ng\\*,tools\\speech\\kokoro\\*,tools\\speech\\piper\\*,tools\\speech\\openvoice\\*,tools\\nodejs\\*"'
         in script
     )
     assert 'Source: "..\\portable\\tools\\pandoc\\*"; DestDir: "{app}\\tools\\pandoc";' in script
@@ -182,14 +183,6 @@ def test_build_inno_setup_script_mentions_portable_bundle() -> None:
         in script
     )
     assert (
-        'Source: "..\\portable\\tools\\speech\\melotts\\*"; DestDir: "{app}\\tools\\speech\\melotts";'
-        in script
-    )
-    assert (
-        'Source: "..\\portable\\tools\\speech\\chatterbox\\*"; DestDir: "{app}\\tools\\speech\\chatterbox";'
-        in script
-    )
-    assert (
         'Source: "..\\portable\\tools\\speech\\openvoice\\*"; DestDir: "{app}\\tools\\speech\\openvoice";'
         in script
     )
@@ -197,11 +190,9 @@ def test_build_inno_setup_script_mentions_portable_bundle() -> None:
     assert "Components: speechespeak" in script
     assert "Components: speechkokoro" in script
     assert "Components: speechpiper" in script
-    assert "Components: speechmelotts" in script
-    assert "Components: speechchatterbox" in script
     assert "Components: speechopenvoice" in script
-    assert "Writing Assistant Setup" in script
     assert "User Guide" in script
+    assert "userguide.html" in script
     assert "python\\pythonw.exe" in script
     assert 'Parameters: "-m quill"' in script
     assert "Check: FileExists(ExpandConstant('{app}\\python\\pythonw.exe'))" in script

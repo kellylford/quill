@@ -135,3 +135,49 @@ def test_wizard_summary_page_update_summary() -> None:
     assert "Remote Access: off" in result
     assert "AI Assistance: on" in result
     assert "QUILL Default" in result
+
+
+def test_run_setup_wizard_uses_show_modal_fn_when_provided(monkeypatch) -> None:
+    import sys
+    import types
+
+    from quill.ui.setup_wizard import run_setup_wizard
+
+    modal_calls: list[tuple[object, str]] = []
+    wx_id_ok = 5100
+
+    def _fake_show_modal(dlg, label):
+        modal_calls.append((dlg, label))
+        return wx_id_ok
+
+    class _FakeSettings:
+        setup_wizard_completed = False
+
+    class _FakeFeatureManager:
+        pass
+
+    class _FakeDialog:
+        def ShowModal(self):
+            raise AssertionError("ShowModal must not be called directly")
+
+        def Destroy(self):
+            pass
+
+    fake_wx = types.ModuleType("wx")
+    fake_wx.ID_OK = wx_id_ok  # type: ignore[attr-defined]
+
+    class _FakeSetupWizardDialog:
+        def __new__(cls, *_args, **_kwargs):
+            return _FakeDialog()
+
+    fake_pages = types.ModuleType("quill.ui.setup_wizard_pages")
+    fake_pages.SetupWizardDialog = _FakeSetupWizardDialog  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "quill.ui.setup_wizard_pages", fake_pages)
+
+    settings = _FakeSettings()
+    result = run_setup_wizard(None, settings, _FakeFeatureManager(), show_modal_fn=_fake_show_modal)
+
+    assert len(modal_calls) == 1
+    assert modal_calls[0][1] == "Setup Wizard"
+    assert result is True
+    assert settings.setup_wizard_completed is True

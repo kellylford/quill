@@ -3,8 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from quill.core.external_tools import (
-    TOOL_DEFINITIONS,
-    detect_tool,
     format_tool_status_report,
     get_external_tool_status,
 )
@@ -24,21 +22,6 @@ def test_detect_tool_prefers_bundled_path(monkeypatch, tmp_path: Path) -> None:
     assert status.source == "bundled"
     assert status.path == str(executable.resolve())
     assert status.version == "Pandoc 3.0"
-
-
-def test_detect_tool_falls_back_to_system(monkeypatch) -> None:
-    definition = next(item for item in TOOL_DEFINITIONS if item.tool_id == "tesseract")
-    monkeypatch.delenv("QUILL_APP_ROOT", raising=False)
-    monkeypatch.setattr(
-        "quill.core.external_tools.shutil.which",
-        lambda name: "C:/Tools/tesseract.exe" if "tesseract" in name else None,
-    )
-    monkeypatch.setattr("quill.core.external_tools._tool_version", lambda *_args: None)
-
-    status = detect_tool(definition)
-
-    assert status.installed is True
-    assert status.source == "system"
 
 
 def test_format_tool_status_report_mentions_install_command(monkeypatch) -> None:

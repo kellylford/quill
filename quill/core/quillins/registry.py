@@ -3,7 +3,7 @@
 Each validated manifest contributes commands, menu items, context-menu entries,
 and hotkeys. Across *several* enabled Quillins these must be merged into a single
 picture the host can wire onto its menus and keymap. Two rules from
-``docs/scripting.md`` are enforced here:
+``docs/quillins.md`` are enforced here:
 
 * A contributed ``ext.*`` command id must be **globally unique** across enabled
   Quillins (§15 rule 4 lifts uniqueness from per-file to per-install).

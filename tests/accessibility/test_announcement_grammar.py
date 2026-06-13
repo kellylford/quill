@@ -39,7 +39,7 @@ def test_progress_announcements_are_well_formed() -> None:
 
 
 def test_key_phrases_match_the_published_grammar() -> None:
-    # These exact phrases appear in docs/accessibility/announcement-style-guide.md
+    # These exact phrases appear in docs/QUILL-PRD.md
     # and must keep rendering identically.
     assert format_announcement("Rewrote", "paragraph", count=42) == "Rewrote paragraph, 42 words."
     assert (

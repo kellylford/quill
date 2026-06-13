@@ -20,6 +20,8 @@ Usage::
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
+from typing import Any
 
 import wx
 
@@ -36,18 +38,26 @@ def run_setup_wizard(
     parent: wx.Window,
     settings: Settings,
     feature_manager: FeatureManager,
+    *,
+    show_modal_fn: Callable[[Any, str], int] | None = None,
 ) -> bool:
     """Open the setup wizard as a modal dialog.
 
     Returns ``True`` if the user completed or skipped to the end (Finish),
     ``False`` if they cancelled.  The caller is responsible for saving
     ``settings`` and ``feature_manager`` after a ``True`` return.
+
+    Pass ``show_modal_fn`` (typically ``MainFrame._show_modal_dialog``) so the
+    dialog gets screen-reader enter/exit announcements and region tracking.
     """
     from quill.ui.setup_wizard_pages import SetupWizardDialog
 
     dlg = SetupWizardDialog(parent, settings, feature_manager)
     try:
-        result = dlg.ShowModal()
+        if show_modal_fn is not None:
+            result = show_modal_fn(dlg, "Setup Wizard")
+        else:
+            result = dlg.ShowModal()
         completed = result == wx.ID_OK
         if completed:
             settings.setup_wizard_completed = True

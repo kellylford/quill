@@ -248,7 +248,7 @@ class NotebookUIMixin:
             with wx.TextEntryDialog(
                 dialog, "New snapshot name:", "Rename Snapshot", value=snap.name
             ) as name_dlg:
-                if name_dlg.ShowModal() != wx.ID_OK:
+                if self._show_modal_dialog(name_dlg, "Rename Snapshot") != wx.ID_OK:
                     return
                 new_name = name_dlg.GetValue().strip()
             if new_name and new_name != snap.name:

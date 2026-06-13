@@ -3,7 +3,7 @@
 A first-party, **bundled** Quillin (Tier C) that ships enabled inside QUILL. It
 re-expresses six on-demand text transforms as a genuine sandboxed Quillin,
 proving the extension platform can carry real features (see
-`docs/quillin-conversion-roadmap.md`, Wave 1).
+`docs/quillins.md`, Wave 1).
 
 ## Commands
 
@@ -11,8 +11,8 @@ proving the extension platform can carry real features (see
 | --- | --- | --- |
 | Number Lines | Format > Transform Lines | Prefix each non-blank line with a running number (you pick the start). |
 | Hard-Wrap Lines | Format > Transform Lines | Re-flow paragraphs so no line exceeds a width you choose. |
-| Count Regex Matches | Search | Count matches of a pattern in the selection or document. |
-| Extract Regex Matches | Search | Collect every match into a new buffer. |
+| Count Regular Expression Matches | Search | Count matches of a pattern in the selection or document. |
+| Extract Regular Expression Matches | Search | Collect every match into a new buffer. |
 | Lines in First Block Only | Search | Lines above the cursor that do not appear below it. |
 | Lines Common to Both Blocks | Search | Lines above the cursor that also appear below it. |
 

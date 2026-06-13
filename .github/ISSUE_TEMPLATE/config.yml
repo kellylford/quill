@@ -4,7 +4,7 @@ contact_links:
     url: https://github.com/Community-Access/quill/blob/main/docs/userguide.md#how-to-report-a-problem-from-inside-quill
     about: For end-user support, use Help -> Report a Bug in QUILL first.
   - name: Translation contributor plan
-    url: https://github.com/Community-Access/quill/blob/main/docs/localization/translation-contributor-plan.md
+    url: https://github.com/Community-Access/quill/blob/main/docs/translating.md
     about: Localization workflow, quality gates, and community translation process.
   - name: Security vulnerability report
     url: mailto:support@communityaccess.org

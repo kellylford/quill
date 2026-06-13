@@ -1,6 +1,6 @@
 """A wx-free rich-text model for QUILL's native RTF editing surface.
 
-Part One of ``docs/rtf.md`` introduces an optional rich editing surface backed by
+Part One of ``docs/QUILL-PRD.md`` introduces an optional rich editing surface backed by
 ``wx.RichTextCtrl``. The control itself lives in ``quill/ui`` (wx is forbidden in
 ``quill/core`` and ``quill/io``); this module is the pure, testable model the
 control reads and writes through.
@@ -466,7 +466,7 @@ def scan_rtf_features(rtf: str) -> list[str]:
     """Return human-readable names of RTF features the markup subset would flatten.
 
     The UI uses this to warn, before a lossy conversion, exactly what will be lost
-    (``docs/rtf.md`` "Honest fidelity"). An empty list means a clean round trip.
+    (``docs/QUILL-PRD.md`` "Honest fidelity"). An empty list means a clean round trip.
     """
     found: list[str] = []
     for pattern, label in _UNSUPPORTED_FEATURES.items():

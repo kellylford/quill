@@ -490,8 +490,8 @@ def test_redact_command_arg_strips_windows_path_prefix() -> None:
 
 
 def test_format_args_for_log_preserves_basename_and_count() -> None:
-    result = format_args_for_log(["tesseract", "input.png", "stdout", "--lang=eng"])
-    assert result.startswith("tesseract")
+    result = format_args_for_log(["piper", "--model", "en_US-amy-medium.onnx", "--output_file"])
+    assert result.startswith("piper")
     assert "3 args" in result
     assert "input.png" not in result or "PATH" in result or "input.png" in result
 

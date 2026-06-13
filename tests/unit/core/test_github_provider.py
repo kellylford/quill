@@ -97,9 +97,30 @@ def test_list_refs_caps_results() -> None:
         )
     )
     refs = provider.list_refs(SimpleNamespace(full_name="owner/repo"), limit=100)
-    # 100 branch cap means we never reach the tag pass.
-    assert len(refs) == 100
-    assert all(r.kind == "branch" for r in refs)
+    # Per-kind cap: 100 branches + 5 tags = 105 total.
+    # Tags must be visible even when branches fill the cap.
+    assert len(refs) == 105
+    branch_refs = [r for r in refs if r.kind == "branch"]
+    tag_refs = [r for r in refs if r.kind == "tag"]
+    assert len(branch_refs) == 100
+    assert len(tag_refs) == 5
+
+
+def test_list_refs_tags_visible_when_branches_at_limit() -> None:
+    """Regression: repos with >= limit branches must still show tags."""
+    _install_fake_pygithub()
+    provider = GitHubRemoteProvider(token=None)
+    branches = [SimpleNamespace(name=f"b{i}") for i in range(100)]
+    tags = [SimpleNamespace(name=f"v{i}") for i in range(10)]
+    provider._gh.get_repo = MagicMock(
+        return_value=SimpleNamespace(
+            get_branches=MagicMock(return_value=iter(branches)),
+            get_tags=MagicMock(return_value=iter(tags)),
+        )
+    )
+    refs = provider.list_refs(SimpleNamespace(full_name="owner/repo"), limit=100)
+    tag_refs = [r for r in refs if r.kind == "tag"]
+    assert len(tag_refs) == 10
 
 
 def test_list_refs_default_limit_is_100() -> None:

@@ -16,7 +16,7 @@ This module is UI-framework agnostic (no ``wx``) so both the editor shell and
 tests can build the exact same phrasing. Use :func:`format_announcement` for
 outcomes and :func:`format_progress` for the "starting an action" phrasing.
 
-The written grammar lives in ``docs/accessibility/announcement-style-guide.md``;
+The written grammar lives in ``docs/QUILL-PRD.md``;
 keep the two in sync.
 """
 

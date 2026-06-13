@@ -99,7 +99,7 @@ class _EditorHostServices:
             return None
         dialog = wx.SingleChoiceDialog(self._frame, title, title, items)
         try:
-            if dialog.ShowModal() == wx.ID_OK:
+            if self._frame._show_modal_dialog(dialog, title) == wx.ID_OK:
                 return dialog.GetStringSelection()
             return None
         finally:

@@ -1,7 +1,7 @@
 """Layer 1 snippet placeholder expansion for Quillins.
 
 A snippet-only Quillin (no ``main`` module, no capabilities) contributes literal
-text with a small, fixed set of placeholders documented in ``docs/scripting.md``
+text with a small, fixed set of placeholders documented in ``docs/quillins.md``
 §14.3. This module expands those placeholders. It executes **no code** — it only
 substitutes known tokens — which is exactly why Layer 1 is fully sandboxable.
 

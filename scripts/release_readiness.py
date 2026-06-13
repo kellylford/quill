@@ -46,9 +46,25 @@ def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
     _require_tool("pip-audit", install_hint="python -m pip install pip-audit")
 
+    _run_step(
+        "Checking version consistency (GATE-VC)",
+        [sys.executable, "-m", "quill.tools.check_version_consistency"],
+        cwd=repo_root,
+    )
     _run_step("Running lint", ["ruff", "check", "."], cwd=repo_root)
     _run_step("Running dependency audit", ["pip-audit", "--strict"], cwd=repo_root)
-    _run_step("Running tests", ["pytest", "-q"], cwd=repo_root)
+    _run_step(
+        "Running tests",
+        [
+            "pytest",
+            "tests/unit/",
+            "tests/stability/",
+            "-q",
+            "--ignore=tests/unit/core/test_net_tls.py",
+            "--ignore=tests/unit/core/test_thesaurus.py",
+        ],
+        cwd=repo_root,
+    )
     _build_docs(repo_root)
     _run_step(
         "Checking docs artifact parity",

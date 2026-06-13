@@ -31,8 +31,6 @@ def default_host_for_provider(provider: str) -> str:
         return "https://openrouter.ai/api"
     if normalized == "gemini":
         return "https://generativelanguage.googleapis.com"
-    if normalized == "azure_openai":
-        return "https://YOUR-RESOURCE-NAME.openai.azure.com"
     if normalized == "ollama_cloud":
         return "https://ollama.com"
     if normalized == "custom":
@@ -47,13 +45,11 @@ def default_model_for_provider(provider: str) -> str:
     if normalized == "openai":
         return "gpt-4o-mini"
     if normalized == "claude":
-        return "claude-3-5-sonnet-latest"
+        return "claude-haiku-4-5-20251001"
     if normalized == "openrouter":
         return "openrouter/auto"
     if normalized == "gemini":
-        return "gemini-2.0-flash"
-    if normalized == "azure_openai":
-        return "gpt-4o-mini"
+        return "gemini-2.5-flash"
     if normalized == "ollama_cloud":
         return "qwen3"
     if normalized == "custom":
@@ -71,7 +67,6 @@ def provider_requires_api_key(provider: str) -> bool:
         "claude",
         "openrouter",
         "gemini",
-        "azure_openai",
         "custom",
     }
 
@@ -87,7 +82,6 @@ def provider_display_name(provider: str) -> str:
         "claude": "Claude",
         "openrouter": "OpenRouter",
         "gemini": "Google Gemini",
-        "azure_openai": "Azure OpenAI",
         "custom": "Custom OpenAI-compatible endpoint",
     }
     return names.get(normalized, provider.strip() or "the selected provider")
@@ -103,8 +97,6 @@ def provider_api_key_label(provider: str) -> str:
         return "OpenRouter API key"
     if normalized == "gemini":
         return "Google Gemini API key"
-    if normalized == "azure_openai":
-        return "Azure OpenAI API key"
     if normalized == "ollama_cloud":
         return "Ollama Cloud API key"
     if normalized == "custom":
@@ -135,8 +127,6 @@ def provider_help_text(provider: str) -> str:
         return "OpenRouter: broad model routing with a single key."
     if normalized == "gemini":
         return "Gemini: default Google API endpoint is prefilled."
-    if normalized == "azure_openai":
-        return "Azure OpenAI: replace YOUR-RESOURCE-NAME with your Azure resource name."
     if normalized == "ollama_cloud":
         return "Ollama Cloud: add your cloud key to discover hosted models."
     if normalized == "custom":
@@ -149,13 +139,11 @@ def recommended_models_for_provider(provider: str) -> list[str]:
     if normalized == "openai":
         return ["gpt-4o-mini", "gpt-4.1-mini", "gpt-4.1"]
     if normalized == "claude":
-        return ["claude-3-5-haiku-latest", "claude-3-5-sonnet-latest"]
+        return ["claude-haiku-4-5-20251001", "claude-sonnet-4-6"]
     if normalized == "openrouter":
-        return ["openrouter/auto", "anthropic/claude-3.5-sonnet", "openai/gpt-4o-mini"]
+        return ["openrouter/auto", "anthropic/claude-sonnet-4-6", "openai/gpt-4o-mini"]
     if normalized == "gemini":
-        return ["gemini-2.0-flash", "gemini-1.5-pro"]
-    if normalized == "azure_openai":
-        return ["gpt-4o-mini", "gpt-4o", "o3-mini"]
+        return ["gemini-2.5-flash", "gemini-2.5-pro"]
     if normalized == "ollama_cloud":
         return ["qwen3", "gpt-oss:20b", "gemma3"]
     if normalized == "ollama":
@@ -170,7 +158,7 @@ def recommended_models_for_provider(provider: str) -> list[str]:
             "llama3.1:8b-instruct-q4_K_M",
             "qwen2.5:3b-instruct-q4_K_M",
         ]
-    return ["gpt-4o-mini", "claude-3-5-sonnet-latest", "gemini-2.0-flash"]
+    return ["gpt-4o-mini", "claude-sonnet-4-6", "gemini-2.5-flash"]
 
 
 def recommended_model_guidance(provider: str) -> list[ModelRecommendation]:
@@ -217,12 +205,12 @@ def recommended_model_guidance(provider: str) -> list[ModelRecommendation]:
     if normalized == "claude":
         return [
             ModelRecommendation(
-                model="claude-3-5-haiku-latest",
+                model="claude-haiku-4-5-20251001",
                 framing="Speed-first drafting",
                 reason="Responsive for rapid prompt iteration.",
             ),
             ModelRecommendation(
-                model="claude-3-5-sonnet-latest",
+                model="claude-sonnet-4-6",
                 framing="Deep writing review",
                 reason="Stronger reasoning for long-form revision.",
             ),
@@ -243,27 +231,14 @@ def recommended_model_guidance(provider: str) -> list[ModelRecommendation]:
     if normalized == "gemini":
         return [
             ModelRecommendation(
-                model="gemini-2.0-flash",
+                model="gemini-2.5-flash",
                 framing="Fast cloud drafting",
                 reason="Strong default for low-latency writing help.",
             ),
             ModelRecommendation(
-                model="gemini-1.5-pro",
+                model="gemini-2.5-pro",
                 framing="Long-context analysis",
                 reason="Better for larger prompts and deeper synthesis.",
-            ),
-        ]
-    if normalized == "azure_openai":
-        return [
-            ModelRecommendation(
-                model="gpt-4o-mini",
-                framing="Enterprise default",
-                reason="Balanced quality/cost for managed Azure deployments.",
-            ),
-            ModelRecommendation(
-                model="o3-mini",
-                framing="Reasoning-heavy tasks",
-                reason="Useful for multi-step editing and refactoring prompts.",
             ),
         ]
     return [

@@ -29,6 +29,47 @@ def _build_frame() -> MainFrame:
     return frame
 
 
+def test_report_bug_feedback_hub_path_goes_through_show_modal_dialog(monkeypatch) -> None:
+    import sys
+
+    frame = _build_frame()
+    frame._wx = type("Wx", (), {"version": staticmethod(lambda: "4.2-test"), "ID_OK": 5100})()
+
+    modal_calls: list[str] = []
+    frame._show_modal_dialog = lambda _dlg, label, **_kw: (
+        modal_calls.append(label) or frame._wx.ID_OK
+    )
+
+    monkeypatch.setattr(frame, "_feedback_hub_available", lambda: True)
+
+    class _FakeSchema:
+        pass
+
+    class _FakeDialog:
+        def __init__(self, *_args, **_kwargs) -> None:
+            pass
+
+        def ShowModal(self) -> int:
+            raise AssertionError("ShowModal must not be called directly on FeedbackDialog")
+
+        def Destroy(self) -> None:
+            pass
+
+    import types
+
+    fake_hub = types.ModuleType("feedback_hub")
+    fake_hub.load_schema = lambda _path: _FakeSchema()  # type: ignore[attr-defined]
+    fake_wx_dialog = types.ModuleType("feedback_hub.wx_dialog")
+    fake_wx_dialog.FeedbackDialog = _FakeDialog  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "feedback_hub", fake_hub)
+    monkeypatch.setitem(sys.modules, "feedback_hub.wx_dialog", fake_wx_dialog)
+
+    frame.report_bug()
+
+    assert modal_calls == ["Report an Issue"]
+    assert frame._notification == ("Submitted feedback via feedback hub", "support")
+
+
 def test_report_bug_reviews_then_opens_support_form(monkeypatch) -> None:
     frame = _build_frame()
     opened: list[str] = []
@@ -292,7 +333,7 @@ def test_skip_update_version_records_choice(monkeypatch) -> None:
 def test_check_for_updates_silent_honors_skipped_version(monkeypatch) -> None:
     frame = _build_frame()
     frame.settings.beta_updates = False
-    frame.settings.skipped_update_version = "0.2.0"
+    frame.settings.skipped_update_version = "0.6.0"
     frame.settings.last_update_check = ""
     monkeypatch.setattr(main_frame_module, "save_settings", lambda _settings: None)
     monkeypatch.setattr(
@@ -301,7 +342,7 @@ def test_check_for_updates_silent_honors_skipped_version(monkeypatch) -> None:
         lambda _url: (_ for _ in ()).throw(main_frame_module.URLError("offline")),
     )
     release = GitHubRelease(
-        version="0.2.0",
+        version="0.6.0",
         download_url="https://github.com/releases/download/x/Quill.exe",
         published_at="2026-06-01",
         notes="New",
@@ -314,4 +355,4 @@ def test_check_for_updates_silent_honors_skipped_version(monkeypatch) -> None:
 
     frame.check_for_updates(silent_no_update=True)
 
-    assert frame._notification == ("Update 0.2.0 available (skipped by you)", "update")
+    assert frame._notification == ("Update 0.6.0 available (skipped by you)", "update")

@@ -47,7 +47,12 @@ DECTALK_RELEASE_ZIP_URL = (
 )
 DECTALK_RELEASE_ZIP_SHA256 = "4a778056c109b37f95ade4b3d3e308b9396b22a4b0629f9756ec0e5051b9636d"
 
-DEFAULT_BUNDLED_DEPENDENCY_GROUPS = ("ui", "spellcheck", "ocr")
+# GLOW ships as part of the base bundle (not an optional, on-demand download):
+# the `glow` extra pulls quill-glow-core[glow] (the full acb-large-print engine)
+# into the embedded runtime so structured-document audit/fix works out of the
+# box. The vendored contract wheel (see _install_vendored_glow) remains an
+# offline fallback if the extra cannot be installed at build time.
+DEFAULT_BUNDLED_DEPENDENCY_GROUPS = ("ui", "spellcheck", "ocr", "glow")
 
 
 def main() -> int:
@@ -77,12 +82,6 @@ def main() -> int:
         help="Optional local Pandoc directory to bundle under portable\\tools\\pandoc.",
     )
     parser.add_argument(
-        "--tesseract-dir",
-        type=Path,
-        default=None,
-        help="Optional local Tesseract directory to bundle under portable\\tools\\tesseract.",
-    )
-    parser.add_argument(
         "--dectalk-dir",
         type=Path,
         default=None,
@@ -105,18 +104,6 @@ def main() -> int:
         type=Path,
         default=None,
         help="Optional local Piper voices/models directory to bundle under portable\\tools\\speech\\piper.",
-    )
-    parser.add_argument(
-        "--melotts-dir",
-        type=Path,
-        default=None,
-        help="Optional local MeloTTS voices/models directory to bundle under portable\\tools\\speech\\melotts.",
-    )
-    parser.add_argument(
-        "--chatterbox-dir",
-        type=Path,
-        default=None,
-        help="Optional local Chatterbox voices/models directory to bundle under portable\\tools\\speech\\chatterbox.",
     )
     parser.add_argument(
         "--openvoice-dir",
@@ -152,13 +139,10 @@ def main() -> int:
             tool_id: path
             for tool_id, path in {
                 "pandoc": args.pandoc_dir,
-                "tesseract": args.tesseract_dir,
                 "speech/dectalk": args.dectalk_dir,
                 "speech/espeak-ng": args.espeak_dir,
                 "speech/kokoro": args.kokoro_dir,
                 "speech/piper": args.piper_dir,
-                "speech/melotts": args.melotts_dir,
-                "speech/chatterbox": args.chatterbox_dir,
                 "speech/openvoice": args.openvoice_dir,
             }.items()
             if path is not None
@@ -483,16 +467,32 @@ def build_inno_setup_script(version: str) -> str:
         "AllowNoIcons=yes",
         "PrivilegesRequired=lowest",
         "PrivilegesRequiredOverridesAllowed=dialog",
+        "; The bundle ships the amd64 embedded Python runtime, so refuse to",
+        "; install it on a non-x64-compatible CPU and place it in the real",
+        "; 64-bit Program Files (not the x86 folder). x64compatible also covers",
+        "; ARM64 Windows, which runs the x64 runtime under emulation.",
+        "; (Requires Inno Setup 6.3 or newer.)",
+        "ArchitecturesAllowed=x64compatible",
+        "ArchitecturesInstallIn64BitMode=x64compatible",
+        "; Quill targets Windows 10 and 11: the zero-install OCR backend, winget",
+        "; Node bootstrap, and modern wxPython all assume Windows 10+.",
+        "MinVersion=10.0",
+        "; The file-association and Send-to-Quill tasks write Explorer keys, so",
+        "; tell Windows to refresh association/icon caches after install.",
+        "ChangesAssociations=yes",
         f"OutputBaseFilename=Quill-Setup-{version}",
         "Compression=lzma2/ultra",
         "SolidCompression=yes",
         "WizardStyle=modern",
-        "; Accessibility: do not auto-close the wizard, so screen-reader users",
-        "; have time to hear the final status message.",
+        "; Force-close any processes that lock app files before copying new ones.",
+        "; This avoids silent upgrade failures on in-use binaries.",
         "CloseApplications=force",
         "RestartApplications=no",
         "UninstallDisplayName={#AppName} {#AppVersion}",
-        "UninstallDisplayIcon={app}\\{#AppExeName}",
+        "; pythonw.exe carries a real icon so Add/Remove Programs shows one;",
+        "; the .cmd launcher has none. Falls back gracefully when no bundled",
+        "; runtime is present (e.g. a dev build).",
+        "UninstallDisplayIcon={app}\\python\\pythonw.exe",
         "LicenseFile=..\\..\\LICENSE",
         "InfoAfterFile=..\\portable\\README.txt",
         "SetupLogging=yes",
@@ -511,8 +511,9 @@ def build_inno_setup_script(version: str) -> str:
         ' GroupDescription: "File associations:"; Flags: unchecked',
         "",
         "[Components]",
-        'Name: "aiassistant"; Description: "Install the Writing Assistant setup guide and AI connection shortcut";'
-        " Types: full compact custom; Flags: checkablealone",
+        "; Every component below gates real [Files] payload. The Writing",
+        "; Assistant and the rest of Quill's core ship unconditionally with the",
+        "; main bundle, so there is no separate AI component to toggle here.",
         'Name: "pandoc"; Description: "Install bundled Pandoc for document conversion";'
         " Types: full custom; Flags: checkablealone",
         'Name: "speechdectalk"; Description: "Install bundled DECtalk runtime";'
@@ -536,10 +537,6 @@ def build_inno_setup_script(version: str) -> str:
         " Types: full custom; Flags: checkablealone",
         'Name: "speechpiper"; Description: "Install bundled Piper voices/models";'
         " Types: full custom; Flags: checkablealone",
-        'Name: "speechmelotts"; Description: "Install bundled MeloTTS voices/models";'
-        " Types: full custom; Flags: checkablealone",
-        'Name: "speechchatterbox"; Description: "Install bundled Chatterbox voices/models";'
-        " Types: full custom; Flags: checkablealone",
         'Name: "speechopenvoice"; Description: "Install bundled OpenVoice voices/models";'
         " Types: full custom; Flags: checkablealone",
         'Name: "nodejs"; Description: "Install portable Node.js runtime for Node Quillins'
@@ -550,7 +547,7 @@ def build_inno_setup_script(version: str) -> str:
         "[Files]",
         'Source: "..\\portable\\*"; DestDir: "{app}";'
         " Flags: ignoreversion recursesubdirs createallsubdirs;"
-        ' Excludes: "docs\\announcement-beta.md,docs\\QUILL-PRD.md,tools\\pandoc\\*,tools\\speech\\dectalk\\*,tools\\speech\\espeak-ng\\*,tools\\speech\\kokoro\\*,tools\\speech\\piper\\*,tools\\speech\\melotts\\*,tools\\speech\\chatterbox\\*,tools\\speech\\openvoice\\*,tools\\nodejs\\*"',
+        ' Excludes: "docs\\QUILL-PRD.md,tools\\pandoc\\*,tools\\speech\\dectalk\\*,tools\\speech\\espeak-ng\\*,tools\\speech\\kokoro\\*,tools\\speech\\piper\\*,tools\\speech\\openvoice\\*,tools\\nodejs\\*"',
         'Source: "..\\portable\\tools\\pandoc\\*"; DestDir: "{app}\\tools\\pandoc";'
         " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;"
         " Components: pandoc",
@@ -586,12 +583,6 @@ def build_inno_setup_script(version: str) -> str:
         'Source: "..\\portable\\tools\\speech\\piper\\*"; DestDir: "{app}\\tools\\speech\\piper";'
         " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;"
         " Components: speechpiper",
-        'Source: "..\\portable\\tools\\speech\\melotts\\*"; DestDir: "{app}\\tools\\speech\\melotts";'
-        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;"
-        " Components: speechmelotts",
-        'Source: "..\\portable\\tools\\speech\\chatterbox\\*"; DestDir: "{app}\\tools\\speech\\chatterbox";'
-        " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;"
-        " Components: speechchatterbox",
         'Source: "..\\portable\\tools\\speech\\openvoice\\*"; DestDir: "{app}\\tools\\speech\\openvoice";'
         " Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist;"
         " Components: speechopenvoice",
@@ -607,11 +598,7 @@ def build_inno_setup_script(version: str) -> str:
         'Name: "{group}\\{#AppName}"; Filename: "{app}\\python\\pythonw.exe"; Parameters: "-m quill"; WorkingDir: "{app}"; Check: FileExists(ExpandConstant(\'{app}\\python\\pythonw.exe\'))',
         'Name: "{group}\\{#AppName}"; Filename: "{app}\\{#AppExeName}"; WorkingDir: "{app}"; Check: not FileExists(ExpandConstant(\'{app}\\python\\pythonw.exe\'))',
         'Name: "{group}\\{#AppName} README"; Filename: "{app}\\README.txt"',
-        ('Name: "{group}\\{#AppName} User Guide"; Filename: "{app}\\docs\\userguide.md"'),
-        (
-            'Name: "{group}\\Writing Assistant Setup"; '
-            'Filename: "{app}\\docs\\userguide.md"; Components: aiassistant'
-        ),
+        ('Name: "{group}\\{#AppName} User Guide"; Filename: "{app}\\docs\\userguide.html"'),
         'Name: "{group}\\Uninstall {#AppName}"; Filename: "{uninstallexe}"',
         'Name: "{autodesktop}\\{#AppName}"; Filename: "{app}\\python\\pythonw.exe"; Parameters: "-m quill";'
         " WorkingDir: \"{app}\"; Tasks: desktopicon; Check: FileExists(ExpandConstant('{app}\\python\\pythonw.exe'))",
@@ -649,9 +636,9 @@ def build_inno_setup_script(version: str) -> str:
         "[Run]",
         'Filename: "{app}\\README.txt"; Description: "View the Quill README";'
         " Flags: postinstall shellexec skipifsilent unchecked",
-        'Filename: "{app}\\docs\\userguide.md";'
-        ' Description: "View the Writing Assistant setup guide";'
-        " Flags: postinstall shellexec skipifsilent unchecked; Components: aiassistant",
+        'Filename: "{app}\\docs\\userguide.html";'
+        ' Description: "View the User Guide";'
+        " Flags: postinstall shellexec skipifsilent unchecked",
         'Filename: "{app}\\python\\pythonw.exe"; Parameters: "-m quill"; Description: "Launch {#AppName}";'
         " Flags: postinstall nowait skipifsilent unchecked; Check: FileExists(ExpandConstant('{app}\\python\\pythonw.exe'))",
         'Filename: "{app}\\{#AppExeName}"; Description: "Launch {#AppName}";'
@@ -876,15 +863,14 @@ def bundle_embedded_python(
 def _install_vendored_glow(python_exe: Path, source_root: Path) -> None:
     """Install the vendored GLOW contract wheel into the runtime, fully offline.
 
-    This bundles the lightweight ``quill-glow-core`` contract wheel from
-    ``vendor/wheels`` (``--no-index`` keeps it offline). That gives the shipped
-    build the GLOW seam and its safe no-op fallback, and enables the opt-in,
-    consented GLOW updater (GLOW-8) to fetch and apply the full engine later.
-
-    The heavy ``acb-large-print`` backend (pandas, onnxruntime, pymupdf, ...) is
-    NOT vendored here; it is installed on demand through the consented updater or
-    a separate, explicit step. When no vendored wheel is present the build
-    continues without GLOW rather than failing, since GLOW is optional.
+    GLOW now ships as part of the base bundle: the full ``quill-glow-core[glow]``
+    engine is installed into the runtime by ``bundle_embedded_python`` via the
+    ``glow`` group in :data:`DEFAULT_BUNDLED_DEPENDENCY_GROUPS`. This step is the
+    offline fallback — it bundles the lightweight ``quill-glow-core`` contract
+    wheel from ``vendor/wheels`` (``--no-index`` keeps it offline) so the GLOW
+    seam and its safe behavior are present even if the online extra install was
+    skipped, and the consented GLOW updater (GLOW-8) can still refresh the engine.
+    When no vendored wheel is present the build continues rather than failing.
     """
     wheels_dir = source_root / "vendor" / "wheels"
     if not wheels_dir.is_dir():
@@ -1010,8 +996,6 @@ def _speech_asset_manifest(
         "espeak": "espeak-ng",
         "kokoro": "kokoro",
         "piper": "piper",
-        "melotts": "melotts",
-        "chatterbox": "chatterbox",
         "openvoice": "openvoice",
     }
     for engine, dir_name in engine_dirs.items():
@@ -1043,6 +1027,17 @@ def _download_with_verification(
 
 
 def _project_version(pyproject: Path) -> str:
+    # quill/__init__.py is the authoritative version source; pyproject uses
+    # hatchling dynamic version so project.version is not a static field.
+    # Fall back to project.version in pyproject.toml if __init__.py isn't present
+    # (e.g. in test sandboxes that create an isolated pyproject.toml).
+    init_py = pyproject.parent / "quill" / "__init__.py"
+    if init_py.exists():
+        import re
+
+        match = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', init_py.read_text(), re.M)
+        if match:
+            return match.group(1)
     with pyproject.open("rb") as handle:
         data = tomllib.load(handle)
     project = data.get("project", {})

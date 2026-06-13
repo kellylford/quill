@@ -147,6 +147,102 @@ class DevToolsMixin:
             return {"words": 0, "lines": 0, "chars": 0, "paragraphs": 0}
 
     # ------------------------------------------------------------------
+    # Subsystem surfaces for the q.* facades. All defensive: a console call
+    # must never crash the editor, so every accessor degrades to a safe default.
+
+    def console_get_setting(self, name: str) -> object:
+        return getattr(getattr(self, "settings", None), name, None)
+
+    def console_all_settings(self) -> dict[str, object]:
+        from dataclasses import asdict, is_dataclass
+
+        settings = getattr(self, "settings", None)
+        try:
+            if is_dataclass(settings) and not isinstance(settings, type):
+                return dict(asdict(settings))
+        except Exception:
+            pass
+        return {}
+
+    def console_active_profile(self) -> tuple[str, str]:
+        try:
+            profile = self.features.active_profile()
+            return (str(profile.id), str(profile.name))
+        except Exception:
+            return ("", "")
+
+    def console_available_profiles(self) -> list[tuple[str, str]]:
+        try:
+            return [(str(p.id), str(p.name)) for p in self.features.available_profiles()]
+        except Exception:
+            return []
+
+    def console_switch_profile(self, profile_id: str) -> None:
+        try:
+            self.features.switch_profile(profile_id)
+        except Exception:
+            pass
+
+    def console_feature_enabled(self, feature_id: str) -> bool:
+        try:
+            return bool(self.features.is_enabled(feature_id))
+        except Exception:
+            return False
+
+    def console_list_bookmarks(self) -> list[tuple[str, int]]:
+        try:
+            return [(str(name), int(pos)) for name, pos in self._bookmarks.items()]
+        except Exception:
+            return []
+
+    def console_list_quillins(self) -> list[str]:
+        names: list[str] = []
+        try:
+            for item in self._installed_quillins():
+                name = (
+                    getattr(getattr(item, "manifest", None), "name", None)
+                    or getattr(item, "id", None)
+                    or getattr(item, "name", None)
+                )
+                names.append(str(name) if name else str(item))
+        except Exception:
+            return []
+        return names
+
+    def console_start_macro(self, name: str) -> None:
+        try:
+            self.macros.start_recording(name)
+        except Exception:
+            pass
+
+    def console_stop_macro(self) -> str | None:
+        try:
+            macro = self.macros.stop_recording()
+            return getattr(macro, "name", None)
+        except Exception:
+            return None
+
+    def console_play_last_macro(self) -> None:
+        try:
+            self.macros.play_last_macro(self.commands.run)
+        except Exception:
+            pass
+
+    def console_recording_macro(self) -> str | None:
+        try:
+            return self.macros.recording_name
+        except Exception:
+            return None
+
+    def console_spell_suggest(self, word: str) -> list[str]:
+        try:
+            from quill.core.spellcheck import suggest_words
+
+            return list(suggest_words(word, self._spell_dictionary()))
+        except Exception:
+            return []
+
+    # ------------------------------------------------------------------
     # Public entry points
 
     def open_python_console(self) -> None:

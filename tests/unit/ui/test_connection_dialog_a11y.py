@@ -67,10 +67,13 @@ def test_prompt_studio_has_cancel_close_button() -> None:
     assert "escape_id=wx.ID_CANCEL" in body
 
 
-# --- menu label: literal ampersand replaced with the word "and" --------------
+# --- AI menu consolidation: Model/Connection merged into the AI Hub ----------
 
 
-def test_ai_model_menu_label_uses_the_word_and() -> None:
+def test_ai_model_and_connection_menu_item_removed() -> None:
+    # The standalone "AI Model and Connection" and "Forget API Key" menu items
+    # were merged into the AI Hub (per-provider config + per-provider Forget key).
     body = _menu_source()
-    assert '"AI &Model and Connection..."' in body
-    assert "AI &Model && Connection" not in body
+    assert '"AI &Model and Connection..."' not in body
+    assert '"&Forget API Key"' not in body
+    assert '"AI &Hub..."' in body

@@ -2,7 +2,7 @@
 
 These functions were previously ``quill/core/line_ops.number_lines``,
 ``quill/core/wrap_ops``, ``quill/core/regex_ops``, and ``quill/core/set_ops``.
-Per the Quillin conversion roadmap (``docs/quillin-conversion-roadmap.md`` §5,
+Per the Quillin conversion roadmap (``docs/quillins.md`` §5,
 "thin core, fat Quillin"), the algorithm lives *inside* the Quillin that uses it
 so the feature is self-contained and runs in the sandboxed worker, which can only
 import modules shipped alongside ``extension.py``.

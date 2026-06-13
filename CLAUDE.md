@@ -17,8 +17,8 @@ pytest -q
 # Single test
 pytest tests/unit/core/test_paths.py -x -q
 
-# Run unit + stability only (excludes slow/hanging tests)
-pytest tests/unit/ tests/stability/ -q --ignore=tests/unit/core/test_net_tls.py --ignore=tests/unit/core/test_thesaurus.py
+# Run unit + stability
+pytest tests/unit/ tests/stability/ -q
 
 # Lint
 ruff check .
@@ -30,8 +30,6 @@ mypy quill\core quill\io
 # Quillin self-lint
 python -m quill.tools.quillin_lint <dir> --strict
 ```
-
-Two tests hang in the current codebase: `tests/unit/core/test_net_tls.py` (AST walk loop) and `tests/unit/core/test_thesaurus.py` (thesaurus parse). Pass `--ignore` for both when running the full suite.
 
 The `tests/conftest.py` fixture sets `quill.core.paths._DEV_BUILD = True` for the whole test session. Any test that sets `QUILL_DATA_DIR` for isolation depends on this; do not remove it.
 
@@ -49,7 +47,7 @@ QUILL is a layered wxPython desktop application with strict import boundaries:
 
 ### Key invariants
 
-**Threading:** UI thread owns all wx widgets. Background work runs on `stability.task_manager.QuillTaskManager` (a `ThreadPoolExecutor` wrapper). Cross-thread UI updates always go through `wx.CallAfter`. See `docs/engineering/thread-safety.md`.
+**Threading:** UI thread owns all wx widgets. Background work runs on `stability.task_manager.QuillTaskManager` (a `ThreadPoolExecutor` wrapper). Cross-thread UI updates always go through `wx.CallAfter`. See `docs/QUILL-PRD.md`.
 
 **Persistence:** All JSON writes are atomic via `core.storage.write_json_atomic` (temp file + `os.replace`). Settings are schema-validated. Sensitive settings use DPAPI on Windows.
 

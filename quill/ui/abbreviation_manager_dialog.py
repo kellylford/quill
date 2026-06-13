@@ -15,7 +15,7 @@ from quill.core.abbreviations import (
     AbbreviationLibrary,
     save_abbreviation_library,
 )
-from quill.ui.dialog_contract import show_message_box
+from quill.ui.dialog_contract import apply_modal_ids, show_message_box
 
 
 class _AbbreviationEditDialog:
@@ -163,8 +163,6 @@ class AbbreviationManagerDialog:
 
         self.dialog.SetSizer(root)
         self.dialog.Layout()
-
-        from quill.ui.dialog_contract import apply_modal_ids
 
         apply_modal_ids(self.dialog, cancel_id=wx.ID_CANCEL, cancel_label="Close")
 

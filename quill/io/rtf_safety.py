@@ -2,7 +2,7 @@
 
 RTF is a historically dangerous format: it can embed OLE objects and executables
 (``\\object``/``\\objdata``), binary blobs (``\\bin``), and fields that fetch remote
-resources (``INCLUDEPICTURE``, auto-updating links). ``docs/rtf.md`` requires that
+resources (``INCLUDEPICTURE``, auto-updating links). ``docs/QUILL-PRD.md`` requires that
 any native RTF surface parse defensively, refuse embedded executables and OLE
 objects, and never fetch a remote resource without explicit consent.
 

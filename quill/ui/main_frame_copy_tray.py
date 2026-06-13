@@ -21,7 +21,10 @@ from quill.core.multi_press import MultiPressDispatcher
 
 
 class _TraySearchDialog:
-    """Minimal slot-search dialog: type to filter, Enter to paste."""
+    """Minimal slot-search dialog: type to filter, Enter to paste.
+
+    Shown via _show_modal_dialog(dlg.dialog, ...) by CopyTrayMixin.search_tray_slots.
+    """
 
     def __init__(self, parent: object, tray: CopyTray) -> None:
         self._tray = tray
@@ -70,9 +73,6 @@ class _TraySearchDialog:
 
         self._refresh([n for n, s in tray.all_slots() if not s.is_empty()])
         self._search.SetFocus()
-
-    def show(self) -> int:
-        return self.dialog.ShowModal()
 
     def close(self) -> None:
         self.dialog.Destroy()

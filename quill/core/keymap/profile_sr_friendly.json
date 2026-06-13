@@ -134,7 +134,7 @@
     "quill.quick_nav.block": "TAB",
     "quill.quick_nav.skip_forward": "]",
     "quill.quick_nav.skip_backward": "[",
-    "help.context_help": "Alt+H",
+    "help.context_help": "Ctrl+Shift+Grave, Shift+H",
     "document.summary": "Alt+I",
     "navigate.go_to_anything": "Ctrl+Shift+Grave, G",
     "help.key_cheatsheet": "Alt+Shift+/",

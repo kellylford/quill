@@ -177,6 +177,19 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
     "core.analysis": FeatureDefinition(
         "core.analysis", "Document Analysis", category="core", dependencies=("core.editor",)
     ),
+    "core.glow": FeatureDefinition(
+        "core.glow",
+        "GLOW Accessibility",
+        category="accessibility",
+        dependencies=("core.editor",),
+        locked_off=True,
+        description=(
+            "GLOW document accessibility audit, fix, and engine updates. Hidden "
+            "for now while the feature is finished; remove locked_off to re-enable. "
+            "Does not affect Report a Bug or diagnostics, which read the GLOW "
+            "engine version independently."
+        ),
+    ),
     "core.trust": FeatureDefinition(
         "core.trust", "Trust and Intake", category="safety", dependencies=("core.file",)
     ),
@@ -306,7 +319,7 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
     ),
     "future.regex_library": FeatureDefinition(
         "future.regex_library",
-        "Regex Library",
+        "Regular Expression Library",
         aliases=("regex library", "regex recipes"),
         maturity="advanced",
         category="power text",
@@ -475,7 +488,7 @@ PROFILE_DEFINITIONS: dict[str, FeatureProfile] = {
     PROFILE_DEVELOPER_POWER_TEXT: FeatureProfile(
         id=PROFILE_DEVELOPER_POWER_TEXT,
         name="Developer and Power Text",
-        description="Regex, cleanup, inspection, and document analysis tools.",
+        description="Regular Expression, cleanup, inspection, and document analysis tools.",
         states={
             "core.search.regex": FEATURE_STATE_ON,
             "core.format": FEATURE_STATE_ON,

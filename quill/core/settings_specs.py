@@ -446,15 +446,13 @@ SETTING_SPECS: tuple[SettingSpec, ...] = (
         "OCR engine",
         "accessibility",
         "choice",
-        "Which engine recognizes text in images. Automatic prefers the built-in "
-        "Windows engine and falls back to Tesseract when it is installed.",
+        "Which engine recognizes text in images. Automatic uses the built-in Windows engine.",
         choices=(
             ("auto", "Automatic"),
             ("windows", "Windows (built-in)"),
-            ("tesseract", "Tesseract"),
         ),
         feature_id="core.ocr",
-        keywords=("ocr", "image", "text", "tesseract", "windows", "recognition"),
+        keywords=("ocr", "image", "text", "windows", "recognition"),
     ),
     # --- External file-change watch and safe reload (FEAT-19) --------------
     SettingSpec(
@@ -699,8 +697,6 @@ SETTING_SPECS: tuple[SettingSpec, ...] = (
             ("piper", "Piper"),
             ("kokoro", "Kokoro"),
             ("espeak", "eSpeak"),
-            ("melotts", "MeloTTS"),
-            ("chatterbox", "Chatterbox"),
             ("openvoice", "OpenVoice"),
         ),
         feature_id="core.read_aloud",
@@ -781,8 +777,8 @@ SETTING_SPECS: tuple[SettingSpec, ...] = (
         "ai",
         "text",
         "Default provider selected when the Ask AI dialog opens"
-        " (openrouter, openai, ollama_local, ollama_cloud).",
-        keywords=("ai", "chat", "provider", "openrouter", "openai", "ollama"),
+        " (ollama, ollama_cloud, openai, claude, openrouter, gemini, custom).",
+        keywords=("ai", "chat", "provider", "ollama", "openai", "claude", "openrouter", "gemini"),
     ),
     SettingSpec(
         "ai_chat_default_model",

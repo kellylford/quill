@@ -4,8 +4,8 @@ import ast
 from pathlib import Path
 
 from quill.tools.check_banned_patterns import (
-    _BareWxVisitor,
     _REPO_ROOT,
+    _BareWxVisitor,
     _check_checklistbox,
     _check_dialog_contract,
     _check_dialog_registry,
@@ -195,7 +195,6 @@ def test_wx_message_box_is_flagged(tmp_path: Path) -> None:
     # source path must live under quill/ui or quill/devtools (the governed
     # directories) for the gate to apply, so we drop a fixture file in the
     # real source tree and assert the gate flags it, then clean up.
-    import os
 
     target_dir = _REPO_ROOT / "quill" / "ui" / "_gate41_fixture"
     target_dir.mkdir(exist_ok=True, parents=True)

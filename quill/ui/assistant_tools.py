@@ -20,12 +20,15 @@ from quill.core.assistant_agents import agent_profiles, build_agent_plan
 from quill.core.assistant_ai import (
     AssistantConnectionSettings,
     ModelRecommendation,
+    clear_provider_api_key,
     default_host_for_provider,
     default_model_for_provider,
     filter_model_names,
     list_assistant_models,
     load_assistant_api_key,
     load_assistant_connection_settings,
+    load_provider_api_key,
+    load_provider_model,
     missing_required_api_key,
     provider_api_key_label,
     provider_api_key_storage_hint,
@@ -33,8 +36,9 @@ from quill.core.assistant_ai import (
     provider_help_text,
     provider_requires_api_key,
     recommended_model_guidance,
-    save_assistant_api_key,
     save_assistant_connection_settings,
+    set_active_provider,
+    test_chat,
     verify_assistant_connection,
 )
 from quill.core.assistant_prompts import (
@@ -1463,17 +1467,17 @@ class AssistantConnectionDialog:
         ("claude", "Claude"),
         ("openrouter", "OpenRouter"),
         ("gemini", "Google Gemini"),
-        ("azure_openai", "Microsoft Azure OpenAI"),
         ("ollama_cloud", "Ollama Cloud (API key)"),
     )
 
-    def __init__(self, parent: object) -> None:
+    def __init__(self, parent: object, open_model_settings: object | None = None) -> None:
         import wx
 
         self._wx = wx
+        self._open_model_settings = open_model_settings
         self.dialog = wx.Dialog(
             parent,
-            title="AI Connection Settings",
+            title="AI Hub",
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
         self.dialog.SetSize((780, 520))
@@ -1560,9 +1564,17 @@ class AssistantConnectionDialog:
         self.verify_button = wx.Button(panel, label="Verify Connection")
         self.list_models_button = wx.Button(panel, label="List Models")
         self.recommend_button = wx.Button(panel, label="Recommend Model")
+        self.test_chat_button = wx.Button(panel, label="Test Chat")
+        self.forget_key_button = wx.Button(panel, label="Forget this provider's key")
         actions.Add(self.verify_button, 0, wx.RIGHT, 8)
         actions.Add(self.list_models_button, 0, wx.RIGHT, 8)
-        actions.Add(self.recommend_button, 0)
+        actions.Add(self.recommend_button, 0, wx.RIGHT, 8)
+        actions.Add(self.test_chat_button, 0, wx.RIGHT, 8)
+        actions.Add(self.forget_key_button, 0, wx.RIGHT, 8)
+        self.model_settings_button: object | None = None
+        if self._open_model_settings is not None:
+            self.model_settings_button = wx.Button(panel, label="On-device model...")
+            actions.Add(self.model_settings_button, 0)
         panel_sizer.Add(actions, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
         self.connection_status = wx.StaticText(
@@ -1585,6 +1597,10 @@ class AssistantConnectionDialog:
         self.verify_button.Bind(wx.EVT_BUTTON, self._on_verify_connection)
         self.list_models_button.Bind(wx.EVT_BUTTON, self._on_list_models)
         self.recommend_button.Bind(wx.EVT_BUTTON, self._on_recommend_model)
+        self.test_chat_button.Bind(wx.EVT_BUTTON, self._on_test_chat)
+        self.forget_key_button.Bind(wx.EVT_BUTTON, self._on_forget_provider_key)
+        if self.model_settings_button is not None:
+            self.model_settings_button.Bind(wx.EVT_BUTTON, self._on_open_model_settings)
         self.reveal_api_key.Bind(wx.EVT_BUTTON, self._on_toggle_api_key_reveal)
         self._per_provider_models: dict[str, str] = {}
         self._current_provider = self._provider_value()
@@ -1648,8 +1664,11 @@ class AssistantConnectionDialog:
         if event is not None:
             self._per_provider_models[self._current_provider] = self.model.GetValue().strip()
             self._current_provider = provider
-            saved = self._per_provider_models.get(provider)
+            # Each provider keeps its own saved model and key, so switching never
+            # loses another provider's configuration.
+            saved = self._per_provider_models.get(provider) or load_provider_model(provider)
             model_value = saved if saved else default_model_for_provider(provider)
+            self.api_key.SetValue(load_provider_api_key(provider))
         else:
             model_value = self.model.GetValue().strip()
             known_models = {
@@ -1795,6 +1814,50 @@ class AssistantConnectionDialog:
             f"Recommended model selected: {selected.model} ({selected.framing})"
         )
 
+    def _on_test_chat(self, _event: object) -> None:
+        # A quick round-trip to confirm the selected provider/model actually
+        # answers — run off the UI thread so a slow endpoint never freezes the
+        # screen reader (#127 pattern).
+        settings = self._current_settings()
+        api_key = self.api_key.GetValue()
+        self.test_chat_button.Enable(False)
+        self.connection_status.SetLabel("Testing chat...")
+
+        def worker() -> None:
+            try:
+                ok, message = test_chat(settings, api_key)
+            except Exception as exc:  # noqa: BLE001 - surface any failure as a result
+                ok, message = False, f"Could not test chat: {exc}"
+            call_after = getattr(self._wx, "CallAfter", None)
+            if callable(call_after):
+                call_after(self._finish_test_chat, ok, message)
+            else:  # pragma: no cover - fallback when CallAfter is unavailable
+                self._finish_test_chat(ok, message)
+
+        threading.Thread(  # GATE-40-OK: chat probe; posts via CallAfter.
+            target=worker, daemon=True
+        ).start()
+
+    def _finish_test_chat(self, ok: bool, message: str) -> None:
+        enable = getattr(self.test_chat_button, "Enable", None)
+        if callable(enable):
+            self.test_chat_button.Enable(True)
+        self.connection_status.SetLabel(message)
+        icon = self._wx.ICON_INFORMATION if ok else self._wx.ICON_WARNING
+        self._wx.MessageBox(message, "Test Chat", icon | self._wx.OK)
+
+    def _on_forget_provider_key(self, _event: object) -> None:
+        provider = self._provider_value()
+        clear_provider_api_key(provider)
+        self.api_key.SetValue("")
+        self.connection_status.SetLabel(
+            f"Forgot the saved key for {provider_display_name(provider)}."
+        )
+
+    def _on_open_model_settings(self, _event: object) -> None:
+        if callable(self._open_model_settings):
+            self._open_model_settings()
+
     def show_modal(self) -> bool:
         self.dialog.CentreOnParent()
         try:
@@ -1802,8 +1865,9 @@ class AssistantConnectionDialog:
                 return False
             settings = self._current_settings()
             api_key = self.api_key.GetValue()
-            save_assistant_connection_settings(settings)
-            save_assistant_api_key(api_key)
+            # Persist per-provider (key + default model) and make it active so the
+            # generation path uses it immediately.
+            set_active_provider(settings, api_key)
             ok, message = verify_assistant_connection(settings, api_key)
             self.last_verification_ok = ok
             self.last_verification_message = message

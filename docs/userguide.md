@@ -6,7 +6,7 @@
 
 Quill is a screen-reader-first writing and reading environment for Windows. It is designed to feel calm, predictable, deeply keyboard-friendly, and respectful of your focus. It is also ambitious. Quill is not only a place to write plain text. It is a place to open difficult documents, inspect structure, navigate long material, compare revisions, prepare content for Markdown or HTML, and work with accessibility and extraction issues without leaving the editor.
 
-This guide is aligned to Quill 0.1.5 Beta, built by Blind Information Technology Solutions (BITS) together with Community Access.
+This guide is aligned to Quill 0.5.0 Beta, built by Blind Information Technology Solutions (BITS) together with Community Access.
 
 This guide is written as a companion, not a reference wall. Read it from the beginning if you are new to Quill. Dip into the sections that matter most if you already know what kind of work you want to do.
 
@@ -116,19 +116,24 @@ See [Context-Sensitive Help (F1)](#context-sensitive-help-f1) for full details.
 
 ### The QUILL key
 
-The **QUILL key** is `Ctrl+Shift+Grave` (the key above Tab). Press it once to arm a one-shot prefix, then follow with a second key to perform a command. Press it twice to lock QUILL Quick Nav mode until `Esc`.
+The **QUILL key** is `Ctrl+Shift+Grave` (the back-tick/grave key above Tab). It is the one prefix chord that opens most of QUILL's power features without ever leaving the keyboard. Press it once and QUILL arms a one-shot prefix that listens for a second key. Press it twice and QUILL **locks** Quick Nav mode on until you press `Esc`. The QUILL key is its own tiny language: every chord is announced, every chord is remappable in **Preferences → Keyboard**, and the full cheat sheet is one keystroke away (`Ctrl+Shift+Grave, ?`).
 
 Common QUILL-key chords:
 
-| Chord | Command |
-|-------|---------|
-| QUILL key, then `N` | Enter Quick Nav browse mode |
-| QUILL key, then `G` | Open Go to Anything |
-| QUILL key, then `M` | Paste HTML clipboard as Markdown |
-| QUILL key, then `R` | Open file from remote |
-| QUILL key, then `A` | Selection actions |
-| QUILL key, then `?` | Show the QUILL key cheat sheet |
-| QUILL key, then `Esc` | Cancel the prefix |
+- `Ctrl+Shift+Grave, N` — enter Quick Nav (browse) mode for the next action. If the `browse_mode_sticky` setting is on, the mode stays locked until `Esc`; otherwise it expires on the QUILL-key timeout. Press the QUILL key again (without a chord) to lock it on regardless of the setting.
+- `Ctrl+Shift+Grave` (pressed twice) — lock Quick Nav mode on until `Esc`. This is the most common path: first press arms the prefix, second press locks browse mode.
+- `Ctrl+Shift+Grave, G` — open **Go to Anything** (Quick Nav search).
+- `Ctrl+Shift+Grave, M` — paste the rich HTML clipboard as Markdown at the cursor.
+- `Ctrl+Shift+Grave, Shift+O` — open from remote (FTP / SFTP / HTTPS / WebDAV / S3 / GitHub).
+- `Ctrl+Shift+Grave, W` — save to remote.
+- `Ctrl+Shift+Grave, Shift+M` — manage saved remote sites.
+- `Ctrl+Shift+Grave, A` — selection actions when text is selected (also expands an abbreviation manually mid-word).
+- `Ctrl+Shift+Grave, Shift+A` — open the abbreviation manager.
+- `Ctrl+Shift+Grave, E` — toggle abbreviation expansion on or off.
+- `Ctrl+Shift+Grave, X` — open the Copy Tray dialog.
+- `Ctrl+Shift+Grave, Shift+1`–`Shift+9`, `Shift+0`, `Shift+-`, `Shift+=` — copy the selection to slots 1–12 of the Copy Tray.
+- `Ctrl+Shift+Grave, ?` — show the QUILL key cheat sheet.
+- `Ctrl+Shift+Grave, Esc` — cancel the prefix without firing any command.
 
 ### Command Palette
 
@@ -328,14 +333,14 @@ Quill treats Markdown and HTML as working surfaces, not special-purpose export f
 
 Quill separates live prediction from snippet insertion so the hotkeys feel like a modern editor:
 
-1. Press `Ctrl+Space` to open **Word Prediction** (also on **Edit -> Word Prediction...**).
+1. Press `Ctrl+.` to open **Word Prediction** (also on **Edit -> Word Prediction...**).
 2. Type to surface matching document words, HTML tags, and Markdown tags.
 3. Use arrow keys to choose a result and press Enter to insert it.
 
 For setup and maintenance:
 
-- Press `Ctrl+Alt+Space` for **Insert Snippet**.
-- Press `Ctrl+Alt+Shift+Space` for **Manage Snippets** (create, edit, delete, import, export, and starter packs).
+- Press `Ctrl+Shift+Grave, S` for **Insert Snippet**.
+- Press `Ctrl+Shift+Grave, Shift+S` for **Manage Snippets** (create, edit, delete, import, export, and starter packs).
 - Open **Preferences -> Install Starter Snippet Packs** to install sample libraries for daily writing, developer flow, and support/accessibility notes.
 - In **General Preferences**, toggle **Word prediction and tag IntelliSense** or **Expand snippet triggers while typing** as needed.
 
@@ -393,7 +398,7 @@ Structural movement commands:
 - **Next Block**
 - **Previous Block**
 - **Outline Navigator...**
-- **Heading Organizer...** (`Ctrl+Alt+Shift+H`) for heading-level edits, section reorder, and heading validation
+- **Heading Organizer...** (`Ctrl+Shift+Grave, O`) for heading-level edits, section reorder, and heading validation
 - **Match Bracket**
 - **Next Structure**
 - **Previous Structure**
@@ -475,7 +480,7 @@ Trust and privacy baseline:
 
 AI connection flow:
 
-1. Open **AI Hub** and choose provider (`Ollama (local)`, `OpenAI`, `Claude`, `OpenRouter`, `Google Gemini`, `Microsoft Azure OpenAI`, `Ollama Cloud`, or `Custom OpenAI-compatible`).
+1. Open **AI Hub** and choose provider (`Ollama (local)`, `Ollama Cloud`, `OpenAI`, `Claude`, `OpenRouter`, `Google Gemini`, or `Custom OpenAI-compatible`).
 2. Confirm host URL and model.
 3. Enter key only when your endpoint requires authentication.
 4. Use **Verify Connection** to test endpoint and credentials.
@@ -534,8 +539,8 @@ For release-safe beta validation, Word and CSV open in the normal plain-text edi
 Provider setup:
 
 1. Open `Tools -> AI Assistant -> AI Hub...` (or `Tools -> AI Assistant -> AI Model & Connection...`).
-2. Choose provider: `Ollama (local)`, `OpenAI`, `Claude`, `OpenRouter`, `Google Gemini`, `Microsoft Azure OpenAI`, `Ollama Cloud`, or `Custom OpenAI-compatible`.
-3. Enter host and model (cloud defaults are prefilled; Azure requires your resource hostname).
+2. Choose provider: `Ollama (local)`, `Ollama Cloud`, `OpenAI`, `Claude`, `OpenRouter`, `Google Gemini`, or `Custom OpenAI-compatible`.
+3. Enter host and model (cloud defaults are prefilled).
 4. Enter API key only if required.
 5. Use `Verify Connection`.
 6. Use `List Models` to select from endpoint-reported models with search filtering.
@@ -586,7 +591,7 @@ Status Page behavior:
 - In **Preferences -> General**, use **Use Artificial Intelligence** to mirror the Tools > AI Assistant toggle from one place.
 - In **Preferences -> General**, enable **BITS Whisperer safe mode lock** to block download/retry actions while keeping status and onboarding surfaces available.
 
-Startup Wizard now includes a BITS Whisperer rollout setup step that applies safe defaults without enabling runtime routing changes.
+BITS Whisperer ships with safe defaults applied automatically; runtime routing changes stay off until you opt in from these Preferences surfaces.
 
 Read Aloud is particularly useful for proofreading by ear. OCR Image handles image-to-text work with an explicit consent and progress flow.
 Dictation uses Windows' own speech input. When Hey QUILL Commands is enabled, Quill stays silent and only listens while dictation is active, then runs the matching action after the wake phrase.
@@ -720,7 +725,7 @@ The **Help** menu is where Quill becomes a guide.
 - **What Can I Do Here?** gives context-aware assistance.
 - **Why Don't I See a Feature?** explains profile-driven feature visibility.
 - **Feature Profiles** commands let you switch profile, run health checks, undo the last profile change, reset to Essential, and run onboarding.
-- **Startup Wizard...** can be rerun at any time and now includes watch-folder setup.
+- **Personalise QUILL...** (the first-run setup wizard) can be rerun at any time to adjust your keyboard pack, feature profile, remote access, AI, reading and accessibility, writing tools, and startup behaviour.
 - **Check for Updates...** verifies the signed update manifest, opens the installer download page, and can close Quill so setup can run immediately.
 - **About Quill** shows version, publisher details, and linked third-party dependency attribution with license and version metadata.
 - **Open Third-Party Notices** opens a full notices document with dependency tables and bundled license texts.
@@ -811,7 +816,7 @@ The dialog lists all twelve slots. Each row shows the slot number, an optional l
 - **Clear Slot** — empty the selected slot.
 - **Close** — close without pasting.
 
-**Status bar.** The `Slots: X/12` cell in the status bar shows how many of the twelve slots are occupied. Click the cell to open the Copy Tray dialog. Add the cell via `App > Preferences > Status Bar` if it is not visible.
+**Status bar.** The `Slots: X/12` cell in the status bar shows how many of the twelve slots are occupied. Click the cell to open the Copy Tray dialog. Add the cell via `Tools > Customize & Support > Preferences > Status Bar` if it is not visible.
 
 **Tray icon access.** The system tray icon menu also includes a Copy Tray submenu listing all occupied slots. Click any slot entry to paste its content into the active editor. This makes QUILL's clipboard available from the tray without bringing the window to the front.
 
@@ -821,7 +826,7 @@ The dialog lists all twelve slots. Each row shows the slot number, an optional l
 - Use labelled slots for a research session: slot 1 "intro quote", slot 2 "methodology note", slot 3 "source URL". Copy one fragment per slot as you read, then paste in order when drafting.
 - Double-press any paste chord to hear what is in that slot without pasting — useful when navigating your tray by memory.
 - Slots survive restarts. Build a small library of recurring fragments you reach for daily.
-- All bindings are reassignable in the Keymap Editor (`App > Preferences > Keyboard`).
+- All bindings are reassignable in the Keymap Editor (`Tools > Customize & Support > Preferences > Keyboard`).
 
 ### Abbreviation Expansion
 
@@ -855,7 +860,7 @@ QUILL ships with fifteen built-in abbreviations covering common shorthand. You c
 
 - Press `Ctrl+Shift+Grave, E` — or use `Insert > Toggle Abbreviation Expansion`.
 - Click the **ABR: On / ABR: Off** cell in the status bar (if visible; add it via status bar settings).
-- Change **Abbreviation expansion** in `App > Preferences > Editing`.
+- Change **Abbreviation expansion** in `Tools > Customize & Support > Preferences > Editing`.
 
 **Managing abbreviations.** Open `Insert > Manage Abbreviations...` (or press `Ctrl+Shift+Grave, Shift+A`) to add, edit, and organise your abbreviations. Each abbreviation has:
 
@@ -880,9 +885,9 @@ The manager also has **Import** and **Export** buttons for JSON round-trips. Exp
 | `${time}` | Current time (e.g. 02:30 PM) |
 | `${clipboard}` | Current system clipboard text |
 
-**Multi-press window.** The double/triple press detection window is configurable in `App > Preferences > Editing` as **Multi-press window (ms)** (default 400 ms; range 100–1000 ms). A larger window helps if you press keys slowly; a smaller window prevents accidental double-fires for fast typists.
+**Multi-press window.** The double/triple press detection window is configurable in `Tools > Customize & Support > Preferences > Editing` as **Multi-press window (ms)** (default 400 ms; range 100–1000 ms). A larger window helps if you press keys slowly; a smaller window prevents accidental double-fires for fast typists.
 
-**Sound feedback.** Optional: enable **Play sound on abbreviation expansion** in `App > Preferences > Editing` and optionally point **Abbreviation expansion sound file** to a `.wav` file. Leave the path blank for the default system beep.
+**Sound feedback.** Optional: enable **Play sound on abbreviation expansion** in `Tools > Customize & Support > Preferences > Editing` and optionally point **Abbreviation expansion sound file** to a `.wav` file. Leave the path blank for the default system beep.
 
 **Tips.**
 
@@ -915,7 +920,7 @@ Quill uses an anchor-based selection model compatible with EdSharp:
 
 | Key | Command | Purpose |
 | --- | --- | --- |
-| Ctrl+Alt+P | Select paragraph | Selects the paragraph at the cursor; announces scope and word count. |
+| (unassigned by default) | Select paragraph | Selects the paragraph at the cursor; announces scope and word count. Assign a key in the Keyboard Manager or run it from the command palette. |
 | Ctrl+Shift+B | Select block | Selects the indented block at the cursor. |
 | Alt+Shift+Up | Expand selection | Grows the selection to the next structural unit (line to paragraph to block to document). |
 | Alt+Shift+Down | Shrink selection | Reverses the last expand step. |
@@ -981,9 +986,14 @@ When you combine this with marks and compare sessions, long-form review starts t
 
 ## QUILL Quick Nav Mode
 
-QUILL Quick Nav mode is a browse-style, cursor-only navigation layer for long documents.
+QUILL Quick Nav mode is a browse-style, cursor-only navigation layer for long documents. It is movement-only: it changes cursor location, never edits text.
 
-Enter the mode with `Ctrl+Shift+Grave`.
+There are two ways to enter Quick Nav mode:
+
+- **Locked Quick Nav (the common path).** Press `Ctrl+Shift+Grave` twice in a row. The first press arms the QUILL-key prefix; the second press (QK-5) locks browse mode on, ignores the prefix timeout, and stays active until you press `Esc`. QUILL announces "QUILL browse mode locked. It stays active until you press Escape."
+- **One-shot Quick Nav chord.** Press `Ctrl+Shift+Grave, N`. QUILL enters Quick Nav mode for the next move; if the `browse_mode_sticky` setting is on (SET-4), it stays locked until `Esc`; otherwise the mode expires when the QUILL-key timeout elapses.
+
+Either way, once Quick Nav is active the mnemonic single-key bindings below work the same. The chord table at the top of the user guide and the cheat sheet (`Ctrl+Shift+Grave, ?`) are the live reference.
 
 While the mode is active:
 
@@ -1038,7 +1048,7 @@ Performance note:
 
 Pressing the QUILL key (`Ctrl+Shift+Grave`) once arms a short prefix. Follow it with:
 
-- `N` to enter browse/Quick Nav mode (press the QUILL key again to lock it until `Esc`).
+- `N` to enter browse/Quick Nav mode. If the `browse_mode_sticky` setting is on, the mode stays locked until `Esc`; otherwise it expires on the QUILL-key timeout. (Press the QUILL key alone a second time to lock browse mode on regardless of the setting.)
 - `G` to open Go to Anything (Quick Nav search).
 - `M` to **paste HTML clipboard content as Markdown** at the cursor. Quill reads the
   clipboard's rich HTML (the `HTML Format` flavour copied from web pages and word
@@ -1061,11 +1071,11 @@ Quill detects whether the current surface looks like Markdown, HTML, or plain te
 
 The heading tools do more than insert decoration. They help you maintain usable structure. The list tools speed up common authoring patterns without forcing you into a separate composer.
 
-Markdown list editing now follows editor-standard behavior: `Enter` continues the current bullet/numbered/task item, and `Enter` on an empty list marker exits the list. When the caret is on a list item, `Tab` nests it and `Shift+Tab` promotes it. For larger reorganizations, use **Format -> List -> List Manager...** (`Ctrl+Alt+L`) to move, promote/demote, add, edit, and delete list items from a tree view.
+Markdown list editing now follows editor-standard behavior: `Enter` continues the current bullet/numbered/task item, and `Enter` on an empty list marker exits the list. When the caret is on a list item, `Tab` nests it and `Shift+Tab` promotes it. For larger reorganizations, use **Format -> List -> List Manager...** (`Ctrl+Shift+Grave, L`) to move, promote/demote, add, edit, and delete list items from a tree view.
 
 For heading presentation control, open **Insert -> Heading -> Style Headings...**. You can style either all heading levels or the current heading level, then set font family, point size, and alignment. In Markdown documents, styled headings are written as HTML heading tags so the formatting is preserved.
 
-For structure editing, open **Navigate -> Heading Organizer...** (`Ctrl+Alt+Shift+H`). The organizer lists each heading as level + title, supports keyboard promotion/demotion (`Tab` and `Shift+Tab`), lets you move sections up/down, rename headings, and validates heading order (start level, skipped levels, empty headings) before apply.
+For structure editing, open **Navigate -> Heading Organizer...** (`Ctrl+Shift+Grave, O`). The organizer lists each heading as level + title, supports keyboard promotion/demotion (`Tab` and `Shift+Tab`), lets you move sections up/down, rename headings, and validates heading order (start level, skipped levels, empty headings) before apply.
 
 ### Tables, code blocks, and tags
 
@@ -1373,7 +1383,7 @@ Quill can open, save, and copy to remote hosts the same way it works with local 
 - All remote traffic uses a **verified TLS context**. Cloud endpoints (S3, HTTPS, WebDAV over HTTPS) must be HTTPS; FTP is allowed because the user opted in for LAN or legacy hosts.
 - All remote operations are wired to the **network egress audit** (`quill/tools/network_egress_audit.py`) with explicit rationales, and S3 and WebDAV XML responses are parsed through `quill.core.safe_xml.fromstring` so an attacker cannot reach an external-entity expansion through a crafted listing.
 
-Default keys: **QUILL key, then `R`** opens from remote; **QUILL key, then `Shift+R`** saves to remote; **QUILL key, then `M`** opens the site manager. All are remappable from Preferences > Keyboard.
+Default keys: **QUILL key, then `Shift+O`** opens from remote; **QUILL key, then `W`** saves to remote; **QUILL key, then `Shift+M`** opens the site manager. All are remappable from Preferences > Keyboard.
 
 ### GitHub Remote Files
 
@@ -1617,7 +1627,7 @@ By default, Quill checks the stable update channel and only offers released vers
 
 ## Beta Feedback and Bug Reporting
 
-Quill is ready for serious beta use, and Quill 0.1.5 Beta now ships a real in-app support starting point.
+Quill is ready for serious beta use, and Quill 0.5.0 Beta now ships a real in-app support starting point.
 
 ### What exists today
 
@@ -1644,7 +1654,7 @@ Before the broadest public rollout, publish one secure feedback route that does 
 3. a plain-language bug template with environment summary and reproduction steps
 4. the current **Help -> Report a Bug...** handoff kept as the guided in-app bridge until the fuller route is live
 
-Until that exists, use the current Help-menu path as the practical bridge. The important improvement in Quill 0.1.5 Beta is that Quill now helps users gather diagnostics locally, review what is being shared, and start a structured support report without forcing them to begin outside the tool.
+Until that exists, use the current Help-menu path as the practical bridge. The important improvement in Quill 0.5.0 Beta is that Quill now helps users gather diagnostics locally, review what is being shared, and start a structured support report without forcing them to begin outside the tool.
 
 ## A Fast Shortcut Tour
 
@@ -1655,7 +1665,7 @@ If you want a compact set of shortcuts to remember first, start here:
 - `Ctrl+F`, `F3`, `Shift+F3`, `Alt+F3`
 - `Ctrl+G` and `Ctrl+Shift+G`
 - `Ctrl+K` and `Ctrl+Enter`
-- `Ctrl+Alt+L` for List Manager
+- `Ctrl+Shift+Grave, L` for List Manager
 - `F7`, `Alt+F7`, `Shift+F7`
 - `Ctrl+Shift+W` for Word Count
 - `Ctrl+Tab` and `Ctrl+Shift+Tab`
@@ -1703,11 +1713,11 @@ For developers, Quillins are designed to be "screen-reader-first." They follow a
 
 ## AI Assistant
 
-QUILL includes a built-in AI assistant that works with OpenRouter, OpenAI, and Ollama. All three are optional; QUILL detects which keys you have configured and only shows providers that are available. API keys are stored in the Windows Credential Manager by default and never written to disk in plain text.
+QUILL includes a built-in AI assistant. You can run it on-device (llama.cpp with a local GGUF model) or connect a provider: Ollama (local), Ollama Cloud, OpenAI, Claude, OpenRouter, Google Gemini, or a custom OpenAI-compatible endpoint. Providers are optional and selected explicitly. API keys are stored in the Windows Credential Manager by default, with a DPAPI-encrypted fallback, and never written to disk in plain text.
 
 ### Setting up an AI provider
 
-Open **App > Preferences > AI** to configure your provider.
+Open **Tools > AI Assistant > AI Hub...** (or **AI Model & Connection...**) to configure your provider.
 
 - **OpenRouter** — paste your API key into the OpenRouter API Key field. OpenRouter gives you access to many models (Claude, GPT-4o, Gemini, and more) with a single key.
 - **OpenAI** — paste your OpenAI API key.
@@ -1833,7 +1843,7 @@ Skills are multi-step AI workflows. Where a prompt is one instruction, a skill i
 
 **No streaming.** Each step sends a complete prompt and waits for the full response before the next step begins. This makes step outputs reliable and readable between steps.
 
-**Authoring and sharing skills.** A skill is a `.sqp` (Skill Quill Pack) file — a plain Markdown document with YAML front matter. Open any `.sqp` file in QUILL to read and edit it. Share skills by sharing the file. See `docs/scripting.md` §20 for the full authoring reference, and `docs/skills-tutorial.md` for a guided walkthrough.
+**Authoring and sharing skills.** A skill is a `.sqp` (Skill Quill Pack) file — a plain Markdown document with YAML front matter. Open any `.sqp` file in QUILL to read and edit it. Share skills by sharing the file. See `docs/quillins.md` §20 for the full authoring reference, and `docs/userguide.md` for a guided walkthrough.
 
 **Validating a skill file.** Run `python -m quill.tools.sqp_validator yourskill.sqp` to check for errors before sharing or shipping.
 
@@ -1848,3 +1858,2314 @@ The reference is auto-generated from `quill/core/help/topics.json`. To regenerat
 ```powershell
 python -m quill.tools.build_docs
 ```
+
+
+---
+
+# Appendix: QUILL Developer Console
+
+_Folded in from the former docs/userguide.md on 2026-06-13._
+
+# QUILL Developer Console (QDC) documentation
+
+_Consolidated on 2026-06-13 from qdc-tutorial and "QUILL Developer Console and Automation". The scripting contract (docs/quillins.md) remains a standalone document because code references it by section number._
+
+> **Status note (2026-06-13, supersedes the per-section "Planned for 1.1" lines below).**
+> The QDC is implemented and reachable in 0.5.0 under the Developer and Power Text
+> and Full QUILL profiles (Tools > Power Tools > Developer Console). The Python
+> console and the `q` scripting API are wired (`quill/core/scripting.py`,
+> `quill/ui/main_frame_devtools.py`), including the facades `q.selection`, `q.doc`,
+> `q.editor`, `q.settings`, `q.profile`, `q.bookmarks`, `q.quillins`, `q.macros`
+> (+`q.begin_macro`/`q.end_macro`), `q.spell`, `q.diagnostics`, plus
+> `q.a11y`/`q.commands`/`q.focus`/`q.support` and `q.describe_command`. The
+> TypeScript console runs through a Node subprocess. Sections below that still say
+> "Planned for 1.1" predate this and are being reconciled; treat this note as the
+> current status. (Tracked in `docs/planning.md` Part 2 / map item P1-3.)
+
+
+---
+
+<!-- Source: docs/qdc-tutorial.md -->
+
+# QUILL Developer Console Tutorial
+
+Status: **Implemented in 0.5.0** (Developer and Power Text / Full QUILL profiles;
+Tools > Power Tools > Developer Console). The Python console and the `q` scripting
+API are wired; the TypeScript console runs via a Node subprocess. See the status
+note at the top of this document for the exact `q` surface. (Some passages below
+were written against the original 1.1 plan and may describe a richer API than the
+current build; the status note is authoritative.)
+
+---
+
+## What the QDC is
+
+The QUILL Developer Console (QDC) is an embedded scripting surface for
+developers, power users, and accessibility professionals. It lets you inspect
+and automate the running editor without rebuilding or adding temporary menu
+items.
+
+The QDC is not for ordinary users. It is profile-gated and off by default for
+Essential, Writer, and Reader profiles. It appears as a first-class feature for
+Developer and Power Text profiles.
+
+There are two consoles:
+
+- **Python console** — runs in-process. Full access to the scripting API via `q`.
+  Prompt: `>>>` (continuation `...`).
+- **TypeScript console** — runs through a Node subprocess bridge. Async API via
+  `quill`. Prompt: `ts>` (async pending `ts*>`).
+
+Both are read through the same transcript window and announced through QUILL's
+standard accessibility announcement path.
+
+---
+
+## Opening the console
+
+Menu: `Tools > Power Tools > Developer Console > Open Python Console`
+or `Open TypeScript Console`.
+
+Command palette: `quill.console.openPython` / `quill.console.openTypeScript`.
+
+The console opens as a separate dialog. Press `Esc` to return focus to the
+editor. The dialog stays open and preserves its namespace until you explicitly
+close it.
+
+---
+
+## Console layout
+
+The console has five areas, navigable with `F6`:
+
+1. **Transcript** — read-only. Shows prompts, output, errors, and return values.
+2. **Input** — single-line by default; `Shift+Enter` adds a newline for multi-line
+   blocks.
+3. **Language selector** — switch between Python and TypeScript.
+4. **Status line** — current language, prompt state, active document, worker status.
+5. **Buttons** — Run, Clear, Copy transcript, Save transcript, Insert snippet, Help, Close.
+
+---
+
+## Keyboard reference
+
+| Key | Action |
+| --- | --- |
+| Enter | Execute current command |
+| Shift+Enter | Insert newline (multi-line input) |
+| Ctrl+Enter | Force execute multi-line block |
+| Up / Down | Previous / next history (when cursor is at line boundary) |
+| Ctrl+L | Clear transcript |
+| Ctrl+Shift+C | Copy transcript |
+| Ctrl+S | Save transcript |
+| Ctrl+F | Find in transcript |
+| F6 | Move between transcript, input, status, and buttons |
+| Esc | Return focus to editor |
+| F1 | Console help |
+| Ctrl+Space | Trigger completion |
+
+---
+
+## Python console
+
+### Available names
+
+The following names are in scope when the console opens:
+
+| Name | What it is |
+| --- | --- |
+| `q` | Primary QUILL scripting API — start here |
+| `app` | Application-level read-mostly object |
+| `commands` | Command registry facade |
+| `doc` | Active document snapshot |
+| `editor` | Active editor snapshot |
+| `sel` | Current selection snapshot |
+| `caret` | Current caret snapshot |
+| `profile` | Active feature profile snapshot |
+| `settings` | Safe settings facade |
+| `diagnostics` | Diagnostics facade |
+| `a11y` | Announcement / testing facade |
+| `log` | Console-safe logger |
+| `wx` | wx module (Developer profile only) |
+
+`doc`, `sel`, and `caret` are read-only snapshots of state at the time they were
+captured. They do not update automatically. Call `q.refresh_context()` to pull
+current state, or they update automatically when the active document changes.
+
+### Basic operations
+
+Insert text at the cursor:
+
+```python
+>>> q.insert_text("Hello from QUILL.")
+```
+
+Replace the current selection:
+
+```python
+>>> q.replace_selection("Replacement text")
+```
+
+Jump to a line:
+
+```python
+>>> q.goto_line(42)
+```
+
+Run a built-in command by ID:
+
+```python
+>>> q.run_command("quill.document.wordCount")
+```
+
+Send a screen-reader announcement:
+
+```python
+>>> q.a11y.announce("Test announcement.")
+```
+
+### Inspecting state
+
+Read the active document name:
+
+```python
+>>> doc.name
+'notes.txt'
+```
+
+Read the current selection:
+
+```python
+>>> sel.text
+'selected words here'
+```
+
+Read the caret position (1-based line and column):
+
+```python
+>>> caret.line, caret.column
+(12, 5)
+```
+
+Search for commands by keyword:
+
+```python
+>>> commands.search("spell")
+['quill.spell.check', 'quill.spell.addWord', 'quill.spell.nextError']
+```
+
+Get a diagnostic summary (useful for support tickets):
+
+```python
+>>> q.support.diagnostic_summary()
+```
+
+### Accessibility diagnostics
+
+Read the last screen-reader announcements:
+
+```python
+>>> q.a11y.last_announcements()
+['Title Case applied', '5 words selected']
+```
+
+Describe the currently focused region:
+
+```python
+>>> q.focus.describe()
+'Editor: notes.txt, line 12, col 5, no selection'
+```
+
+### Multi-line blocks
+
+Use `Shift+Enter` to add newlines, then `Enter` or `Ctrl+Enter` to execute:
+
+```python
+>>> def count_words(text):
+...     return len(text.split())
+...
+>>> count_words(doc.text)
+487
+```
+
+### Macro recording
+
+Record a sequence of commands as a reusable macro:
+
+```python
+>>> q.begin_macro("Clean OCR text")
+>>> q.run_command("quill.text.normalizeUnicode")
+>>> q.run_command("quill.text.dehyphenateLines")
+>>> q.run_command("quill.text.reflowParagraphs")
+>>> q.end_macro()
+Macro saved: "Clean OCR text"
+```
+
+---
+
+## TypeScript console
+
+The TypeScript console requires Node.js on PATH. If Node.js is not found, QUILL
+announces the requirement and offers installation assistance.
+
+### TypeScript prompt behavior
+
+```text
+ts> await quill.insertText("Hello.");
+ts*>
+Result: undefined
+```
+
+`ts>` is the ready prompt. `ts*>` means an async operation is in flight. Results
+and errors appear in the transcript automatically.
+
+### Available globals
+
+| Global | What it is |
+| --- | --- |
+| `quill` | Async QUILL scripting proxy |
+| `console` | Captured: `.log()`, `.warn()`, `.error()` appear in transcript |
+| `setTimeout` / `clearTimeout` | Standard timer |
+| `AbortController` | For cancellable operations |
+
+### Basic operations
+
+Insert text:
+
+```ts
+ts> await quill.insertText("Hello from TypeScript.");
+```
+
+Replace selection:
+
+```ts
+ts> await quill.replaceSelection("Replacement text");
+```
+
+Jump to a line:
+
+```ts
+ts> await quill.gotoLine(42);
+```
+
+Run a built-in command:
+
+```ts
+ts> await quill.runCommand("quill.markdown.normalizeHeadings");
+```
+
+### Inspecting state
+
+```ts
+ts> const doc = await quill.activeDocument();
+ts> console.log(doc.name);
+notes.txt
+```
+
+```ts
+ts> const stats = await quill.documentStats();
+ts> console.log(`${stats.words} words, ${stats.lines} lines`);
+487 words, 38 lines
+```
+
+### Multi-line TypeScript
+
+Use `Shift+Enter` to enter a multi-line block, `Ctrl+Enter` to execute:
+
+```ts
+ts> const text = await quill.getText();
+ts> const words = text.trim().split(/\s+/).filter(Boolean);
+ts> await quill.announce(`${words.length} words`);
+```
+
+### TypeScript type definitions
+
+QUILL ships `quill-console.d.ts`. If you have Node.js and an IDE, copy it into
+your project to get completion:
+
+```ts
+// quill is typed as:
+interface QuillConsoleApi {
+  insertText(text: string): Promise<void>;
+  replaceSelection(text: string): Promise<void>;
+  gotoLine(line: number): Promise<void>;
+  runCommand(commandId: string, args?: Record<string, unknown>): Promise<unknown>;
+  activeDocument(): Promise<QuillDocumentSnapshot>;
+  documentStats(): Promise<QuillDocumentStats>;
+  announce(text: string): Promise<void>;
+}
+```
+
+---
+
+## Screen-reader notes
+
+- New output in the transcript is announced without stealing focus.
+- Errors are announced with the prefix "Error".
+- Return values are announced with the prefix "Result".
+- Long output is summarized in the announcement; review the transcript with your
+  screen reader for the full text.
+- `Ctrl+Shift+C` copies the transcript at any time.
+- The console uses QUILL's central Prism announcement path — the same one used
+  by all other QUILL announcements.
+- No custom-drawn controls are used.
+
+---
+
+## Console safety settings
+
+`Tools > Power Tools > Developer Console > Console Safety Settings`
+or command `quill.console.openSafetySettings`.
+
+Settings:
+
+| Setting | Default | Notes |
+| --- | --- | --- |
+| Python console enabled | Profile-dependent | Off for Essential / Writer |
+| TypeScript console enabled | Profile-dependent | Off except Developer profile |
+| Require developer profile | On | Prevents accidental access in Writer profiles |
+| Max execution time (Python) | 30 s | Hard kill after timeout |
+| Max execution time (TypeScript) | 30 s | Worker restart after timeout |
+| Allow `wx` module access | Developer profile only | Not available in any other profile |
+| Remote console | Locked off | Not available in QUILL 1.x |
+
+---
+
+## Transcript commands
+
+| Command | What it does |
+| --- | --- |
+| `quill.console.copyTranscript` | Copy entire transcript to clipboard |
+| `quill.console.saveTranscript` | Save transcript to a file |
+| `quill.console.clear` | Clear the transcript |
+| `quill.console.saveInputAsSnippet` | Save the current input as a named snippet |
+| `quill.console.insertSnippet` | Insert a saved snippet into input |
+| `quill.console.runSelection` | Run selected text in the transcript as a command |
+| `quill.console.runCurrentDocument` | Run the active QUILL document as a script |
+| `quill.console.showContext` | Print current snapshot values to transcript |
+| `quill.console.resetNamespace` | Reset the Python namespace (clears all variables) |
+| `quill.console.restartTypeScriptWorker` | Kill and restart the Node worker |
+
+---
+
+## For Quillin authors: testing your extension in the QDC
+
+The QDC is a useful live test surface for Quillin development. Open the Python
+console while your Quillin is loaded and explore its manifest and command
+registry entry:
+
+```python
+>>> from quill.core.quillins.loader import get_loader
+>>> loader = get_loader()
+>>> ext = loader.get_extension("com.example.myextension")
+>>> ext.manifest
+ExtensionManifest(id='com.example.myextension', runtime='python', ...)
+>>> ext.manifest.contributes.commands
+(ExtensionCommand(id='ext.myext.run', title='My Command', ...),)
+```
+
+Invoke a command directly through the command registry:
+
+```python
+>>> q.run_command("ext.myext.run")
+```
+
+Inspect what a command announced:
+
+```python
+>>> q.a11y.last_announcements()
+['My command completed: 3 items processed']
+```
+
+For Node.js Quillins, the TypeScript console is the natural test surface:
+
+```ts
+ts> await quill.runCommand("ext.myext.nodeHandler");
+ts> // Check the last announcement
+ts> const ann = await quill.lastAnnouncement();
+ts> console.log(ann);
+```
+
+---
+
+## Implementation status (0.5.0)
+
+The QDC is implemented and reachable under the Developer and Power Text and
+Full QUILL profiles (Tools > Power Tools > Developer Console). Shipped today:
+
+- The Python console and console window (`quill/devtools/python_console.py`,
+  `quill/devtools/console_window.py`) wired through `quill/ui/main_frame_devtools.py`.
+- The TypeScript console via a Node subprocess (`quill/devtools/ts_console.py`,
+  `quill/tools/ts_worker/worker.js`).
+- The `q` scripting API (`quill/core/scripting.py`): the text/navigation/command
+  methods plus the facades `q.selection`, `q.doc`, `q.editor`, `q.settings`,
+  `q.profile`, `q.bookmarks`, `q.quillins`, `q.macros`
+  (+`q.begin_macro`/`q.end_macro`), `q.spell`, `q.diagnostics`, and
+  `q.a11y`/`q.commands`/`q.focus`/`q.support`, plus `q.describe_command`.
+
+The scripting contract and its Implementation Status map live in
+`docs/quillins.md`. Any passage above that still reads as "planned" predates
+this build; the status note at the top of this document is authoritative.
+
+
+---
+
+<!-- Source: docs/QUILL Developer Console and Automation.md -->
+
+# QUILL Developer Console and Automation API PRD
+
+## Feature name
+
+**QUILL Developer Console and Automation API**
+
+## Status
+
+Proposed for **QUILL 1.1**, with the Python console eligible for a 1.0 experimental/dev-preview flag if the command registry and announcement infrastructure are stable enough.
+
+## Owner
+
+Blind Information Technology Solutions (BITS) and Community Access
+
+## Target platform
+
+Windows 10 and Windows 11
+
+## Target users
+
+* QUILL developers
+* QUILL power users
+* Accessibility professionals
+* Blind programmers and technical writers
+* Macro authors
+* Support/debugging users working with BITS or Community Access staff
+* Future Quillins/plugin developers
+
+## 1. Vision
+
+QUILL should provide a screen-reader-first developer console that lets trusted users inspect and manipulate the running editor through a stable automation API.
+
+The console is not an afterthought, a hidden debug hack, or a generic unsafe scripting surface. It is a first-class, accessible automation layer that exposes QUILL’s command system, document model, editor state, diagnostics, and accessibility announcement pipeline in a predictable way.
+
+The goal is to let a developer or power user type commands such as:
+
+```python
+q.insert_text("Hello from QUILL.")
+q.goto_line(42)
+q.run_command("quill.document.wordCount")
+q.run_command("quill.markdown.normalizeHeadings")
+```
+
+or, in TypeScript:
+
+```ts
+await quill.insertText("Hello from TypeScript.");
+await quill.gotoLine(42);
+const stats = await quill.documentStats();
+console.log(stats.words);
+```
+
+Every editor-changing action must go through the QUILL command registry or official scripting API so undo, dirty-state tracking, accessibility announcements, status bar updates, telemetry, and tests remain consistent.
+
+## 2. Problem statement
+
+QUILL is becoming a rich writing and document environment with commands, macros, Quillins, profiles, diagnostics, GLOW integration, document intake, spell checking, format conversion, and accessibility-aware UI behavior.
+
+Without a developer console and automation API:
+
+* Developers must debug by adding temporary logging or breakpoints.
+* Support staff cannot easily inspect user state during troubleshooting.
+* Power users cannot automate repetitive editor actions.
+* Macro support risks becoming a separate one-off system instead of using the same command architecture as the rest of QUILL.
+* Future Quillins may lack a simple interactive testing surface.
+* Accessibility professionals cannot quickly inspect document state, selection state, command availability, profile gating, or announcement behavior.
+
+QUILL needs an embedded, accessible command line for trusted local development and automation.
+
+## 3. Goals
+
+1. Provide an accessible Python console inside the running QUILL app.
+2. Provide a TypeScript automation console through a controlled Node subprocess bridge.
+3. Expose a stable `q` / `quill` scripting object instead of raw internal objects.
+4. Route all mutations through the command registry or official scripting API.
+5. Preserve undo/redo, dirty-state tracking, backups, status bar updates, and screen-reader announcements.
+6. Make console results easy to review with NVDA, JAWS, Narrator, braille displays, and keyboard-only workflows.
+7. Support command history, multi-line input, copy/paste, saved snippets, and transcript export.
+8. Gate the feature behind profiles and explicit settings so it does not surprise ordinary users.
+9. Make the console useful for macro development, plugin development, support diagnostics, and test automation.
+10. Never enable remote execution by default.
+
+## 4. Non-goals
+
+1. QUILL will not provide a public remote execution service in v1.
+2. QUILL will not allow untrusted scripts to run silently.
+3. QUILL will not expose arbitrary internal object mutation as the recommended workflow.
+4. QUILL will not make Python or TypeScript scripting required for normal use.
+5. QUILL will not replace a full IDE, debugger, or terminal.
+6. QUILL will not guarantee sandbox security for arbitrary malicious code in the local Python console.
+7. QUILL will not let scripts bypass document protection, source-file safety, cloud-consent prompts, or profile safety rules.
+
+## 5. User stories
+
+### 5.1 Developer
+
+As a QUILL developer, I want to open a console, inspect the active document, run commands, and test editor behavior without rebuilding or adding temporary menu items.
+
+Example:
+
+```python
+q.doc.name
+q.selection.text
+q.goto_line(100)
+q.run_command("quill.find.next")
+```
+
+### 5.2 Accessibility tester
+
+As an accessibility tester, I want to inspect the focused region, active command, current screen-reader announcement backend, and the last announcements so I can diagnose what a user experienced.
+
+Example:
+
+```python
+q.a11y.last_announcements()
+q.a11y.announce("Testing announcement path.")
+q.focus.describe()
+```
+
+### 5.3 Macro author
+
+As a power user, I want to experiment with commands interactively and save successful sequences as a macro.
+
+Example:
+
+```python
+q.begin_macro("Clean OCR text")
+q.run_command("quill.text.normalizeUnicode")
+q.run_command("quill.text.dehyphenateLines")
+q.run_command("quill.text.reflowParagraphs")
+q.end_macro()
+```
+
+### 5.4 Support technician
+
+As a support technician, I want a user to run a safe diagnostic command and copy the output into an email or support ticket.
+
+Example:
+
+```python
+q.support.diagnostic_summary()
+```
+
+### 5.5 TypeScript user
+
+As a developer more comfortable with TypeScript, I want to run async commands against QUILL using a typed API and receive clear errors.
+
+Example:
+
+```ts
+const doc = await quill.activeDocument();
+await quill.gotoLine(25);
+console.log(doc.name);
+```
+
+## 6. Feature placement
+
+The feature appears in the following command surfaces:
+
+### Tools menu
+
+`Tools > Authoring and Automation > Developer Console`
+
+Submenu items:
+
+* Open Python Console
+* Open TypeScript Console
+* Open Console Transcript
+* Save Current Console as Macro
+* Manage Console Snippets
+* Console Safety Settings
+* Copy Diagnostic Summary
+
+### Command palette
+
+Commands:
+
+* `quill.console.openPython`
+* `quill.console.openTypeScript`
+* `quill.console.clear`
+* `quill.console.copyTranscript`
+* `quill.console.saveTranscript`
+* `quill.console.saveInputAsSnippet`
+* `quill.console.insertSnippet`
+* `quill.console.runSelection`
+* `quill.console.runCurrentDocument`
+* `quill.console.showContext`
+* `quill.console.resetNamespace`
+* `quill.console.restartTypeScriptWorker`
+* `quill.console.openSafetySettings`
+
+### Feature profiles
+
+Default visibility:
+
+| Profile                              | Python console | TypeScript console | Macro recording | Remote console |
+| ------------------------------------ | -------------- | ------------------ | --------------- | -------------- |
+| Essential                            | Off            | Off                | Off             | Locked off     |
+| Writer                               | Quiet          | Off                | Quiet           | Locked off     |
+| Reader and Student                   | Off            | Off                | Off             | Locked off     |
+| Office and Admin                     | Quiet          | Off                | Quiet           | Locked off     |
+| Accessibility Professional           | On             | Quiet              | On              | Locked off     |
+| Developer and Power Text             | On             | On                 | On              | Locked off     |
+| Braille and Screen Reader Power User | Quiet          | Quiet              | On              | Locked off     |
+| Full Quill                           | On             | On                 | On              | Locked off     |
+
+Remote execution remains unavailable unless an experimental developer build explicitly enables it.
+
+## 7. UX requirements
+
+### 7.1 Console window layout
+
+The console is a standard wx dialog or frame using stock controls.
+
+Required controls:
+
+1. **Transcript output**
+
+   * Read-only multi-line `wx.TextCtrl`
+   * Receives command output, errors, return values, announcements, and command prompts
+   * Supports select all, copy, find, and save transcript
+
+2. **Command input**
+
+   * Editable `wx.TextCtrl`
+   * Single-line by default
+   * Multi-line mode available with a toggle or `Shift+Enter`
+   * Enter runs the current command when the command is complete
+
+3. **Language selector**
+
+   * Python
+   * TypeScript
+   * Future: command-only mode
+
+4. **Status line**
+
+   * Shows current language, prompt state, active document, and worker status
+
+5. **Buttons**
+
+   * Run
+   * Clear
+   * Copy transcript
+   * Save transcript
+   * Insert snippet
+   * Help
+   * Close
+
+### 7.2 Keyboard behavior
+
+Required shortcuts:
+
+| Shortcut     | Action                                                                                    |
+| ------------ | ----------------------------------------------------------------------------------------- |
+| Enter        | Execute current command                                                                   |
+| Shift+Enter  | Insert newline in multi-line input                                                        |
+| Ctrl+Enter   | Force execute multi-line command                                                          |
+| Up/Down      | Previous/next command history when input cursor is at boundary                            |
+| Ctrl+L       | Clear transcript                                                                          |
+| Ctrl+Shift+C | Copy transcript                                                                           |
+| Ctrl+S       | Save transcript                                                                           |
+| Ctrl+F       | Find in transcript                                                                        |
+| F6           | Move between transcript, input, status, and buttons                                       |
+| Esc          | Return focus to editor if console is non-modal; close if modal confirmation is not needed |
+| F1           | Open console help                                                                         |
+| Ctrl+Space   | Trigger completion if available                                                           |
+| Tab          | Insert indentation in multi-line mode or move focus depending on setting                  |
+
+### 7.3 Screen-reader behavior
+
+The console must be fully usable with NVDA, JAWS, and Narrator.
+
+Requirements:
+
+* Every control has a clear accessible name.
+* The transcript announces new output without stealing focus.
+* Errors are announced with the prefix “Error”.
+* Return values are announced with the prefix “Result”.
+* Long output is not automatically spoken in full; the console announces a summary and lets the user review the transcript.
+* The console supports a “copy last result” command.
+* The console supports a “speak last result” command.
+* The console uses QUILL’s central announcement path.
+* Braille users can review the transcript as plain text.
+* No custom drawn controls are allowed in the primary console workflow.
+
+### 7.4 Prompt behavior
+
+Python prompt:
+
+```text
+>>>
+```
+
+Continuation prompt:
+
+```text
+...
+```
+
+TypeScript prompt:
+
+```text
+ts>
+```
+
+Async TypeScript pending prompt:
+
+```text
+ts*>
+```
+
+The prompt itself is included in the transcript but not required in copied code unless the user chooses “Copy with prompts”.
+
+## 8. Python console requirements
+
+### 8.1 Execution model
+
+The Python console runs in-process and uses Python’s embedded interpreter facilities.
+
+The console maintains a persistent namespace for the session. Hiding the console does not destroy the namespace unless the user explicitly resets it.
+
+### 8.2 Default namespace
+
+The following names are available by default:
+
+```python
+q              # Primary QUILL scripting API
+app            # Application-level read-mostly object
+frame          # Main frame, available for debugging
+commands       # Command registry read/execute facade
+doc            # Active document snapshot
+editor         # Active editor snapshot
+sel            # Current selection snapshot
+caret          # Current caret snapshot
+profile        # Active feature profile snapshot
+settings       # Safe settings facade
+diagnostics    # Diagnostics facade
+a11y           # Announcement/testing facade
+log            # Console-safe logger
+wx             # wx module, developer profile only
+```
+
+### 8.3 Snapshot refresh
+
+The console updates snapshot variables when:
+
+* The console opens.
+* The active document changes.
+* The user runs `q.refresh_context()`.
+* A command changes editor state.
+* The user chooses “Refresh Console Context”.
+
+Snapshot variables such as `doc`, `sel`, and `caret` are safe read-only snapshots unless explicitly documented otherwise.
+
+### 8.4 Python examples
+
+```python
+q.insert_text("Hello from QUILL.")
+```
+
+```python
+q.replace_selection("Replacement text")
+```
+
+```python
+q.goto_line(42)
+```
+
+```python
+q.run_command("quill.document.wordCount")
+```
+
+```python
+q.a11y.announce("This is a test announcement.")
+```
+
+```python
+q.diagnostics.document_summary()
+```
+
+```python
+q.commands.search("spell")
+```
+
+## 9. TypeScript console requirements
+
+### 9.1 Execution model
+
+The TypeScript console runs out-of-process through a Node worker.
+
+Python QUILL process:
+
+* Owns the editor, document model, command registry, and UI thread.
+* Sends TypeScript code to the Node worker.
+* Receives JSON-RPC-style command requests from the worker.
+* Executes approved commands on the wx main thread.
+* Returns structured results or errors.
+
+Node TypeScript worker:
+
+* Receives TypeScript code.
+* Transpiles it to JavaScript.
+* Executes it with a limited `quill` proxy object.
+* Sends editor actions back to Python as structured requests.
+* Captures `console.log`, warnings, errors, and return values.
+
+### 9.2 TypeScript global API
+
+The TypeScript console exposes:
+
+```ts
+quill
+console
+setTimeout
+clearTimeout
+AbortController
+```
+
+The TypeScript worker must not expose unrestricted filesystem, network, process, or shell access through the default console environment.
+
+### 9.3 TypeScript examples
+
+```ts
+await quill.insertText("Hello from TypeScript.");
+```
+
+```ts
+await quill.replaceSelection("Replacement text");
+```
+
+```ts
+await quill.gotoLine(42);
+```
+
+```ts
+const stats = await quill.documentStats();
+console.log(`${stats.words} words`);
+```
+
+```ts
+await quill.runCommand("quill.markdown.normalizeHeadings");
+```
+
+### 9.4 Type definitions
+
+QUILL ships a `quill-console.d.ts` type definition file so TypeScript users get completion and documentation.
+
+Example:
+
+```ts
+interface QuillConsoleApi {
+  insertText(text: string): Promise<void>;
+  replaceSelection(text: string): Promise<void>;
+  gotoLine(line: number): Promise<void>;
+  runCommand(commandId: string, args?: Record<string, unknown>): Promise<unknown>;
+  activeDocument(): Promise<QuillDocumentSnapshot>;
+  documentStats(): Promise<QuillDocumentStats>;
+  announce(text: string, options?: AnnouncementOptions): Promise<void>;
+}
+```
+
+### 9.5 Worker lifecycle
+
+The TypeScript worker starts only when the TypeScript console is opened.
+
+The worker stops when:
+
+* QUILL exits.
+* The user closes the console and worker idle timeout expires.
+* The user chooses “Restart TypeScript Worker”.
+* The worker exceeds memory or time limits.
+* The worker crashes.
+
+Worker crashes must not crash QUILL.
+
+## 10. QUILL scripting API
+
+### 10.1 API principles
+
+The scripting API is the official automation surface.
+
+Rules:
+
+1. Mutations go through the command registry.
+2. Undo/redo must work.
+3. Dirty state must update.
+4. Status bar must update.
+5. Screen-reader announcements must happen.
+6. Profile and feature gates must be respected.
+7. Cloud/network actions must still ask for consent.
+8. Protected originals must stay protected.
+9. Commands must return structured results.
+10. Errors must be plain-language first, traceback second.
+
+### 10.2 Python API shape
+
+```python
+class QuillScriptAPI:
+    def insert_text(self, text: str) -> None: ...
+    def replace_selection(self, text: str) -> None: ...
+    def selected_text(self) -> str: ...
+    def document_text(self) -> str: ...
+    def set_document_text(self, text: str) -> None: ...
+    def goto_line(self, line: int) -> None: ...
+    def goto_offset(self, offset: int) -> None: ...
+    def run_command(self, command_id: str, **kwargs): ...
+    def command_exists(self, command_id: str) -> bool: ...
+    def list_commands(self, query: str | None = None) -> list[CommandInfo]: ...
+    def active_document(self) -> DocumentSnapshot: ...
+    def document_stats(self) -> DocumentStats: ...
+    def refresh_context(self) -> None: ...
+```
+
+### 10.3 TypeScript API shape
+
+```ts
+interface QuillApi {
+  insertText(text: string): Promise<void>;
+  replaceSelection(text: string): Promise<void>;
+  selectedText(): Promise<string>;
+  documentText(): Promise<string>;
+  setDocumentText(text: string): Promise<void>;
+  gotoLine(line: number): Promise<void>;
+  gotoOffset(offset: number): Promise<void>;
+  runCommand(commandId: string, args?: Record<string, unknown>): Promise<unknown>;
+  commandExists(commandId: string): Promise<boolean>;
+  listCommands(query?: string): Promise<CommandInfo[]>;
+  activeDocument(): Promise<DocumentSnapshot>;
+  documentStats(): Promise<DocumentStats>;
+  refreshContext(): Promise<void>;
+}
+```
+
+### 10.4 Safe facades
+
+The console exposes safe facades instead of raw internals wherever possible.
+
+Required facades:
+
+* `q.documents`
+* `q.editor`
+* `q.selection`
+* `q.commands`
+* `q.bookmarks`
+* `q.search`
+* `q.spell`
+* `q.markdown`
+* `q.text`
+* `q.a11y`
+* `q.diagnostics`
+* `q.profile`
+* `q.settings`
+* `q.support`
+* `q.macros`
+* `q.quillins`
+
+## 11. Command registry integration
+
+Every console-callable command must declare metadata:
+
+```python
+Command(
+    id="quill.editor.insertText",
+    title="Insert Text",
+    description="Insert text at the current caret position.",
+    handler=insert_text_handler,
+    default_key=None,
+    when="editorFocus",
+    scriptable=True,
+    mutates_document=True,
+    undo_group="typing",
+    requires_consent=False,
+    profile_feature="developer.console",
+)
+```
+
+Required metadata fields for scriptable commands:
+
+* `id`
+* `title`
+* `description`
+* `scriptable`
+* `mutates_document`
+* `undo_group`
+* `requires_consent`
+* `profile_feature`
+* `privacy_label`
+* `network_label`
+* `return_schema`
+* `argument_schema`
+
+The console refuses to run commands marked `scriptable=False` unless developer unsafe mode is enabled.
+
+## 12. Macro integration
+
+The console is the fastest path to creating and testing macros.
+
+Requirements:
+
+* Users can save selected console history as a macro.
+* Macros are stored as command sequences by default, not arbitrary Python code.
+* Python macros are developer-profile-only.
+* TypeScript macros are developer-profile-only.
+* Command-sequence macros are allowed in more profiles.
+* Macro execution shows a preview when it will modify the document.
+* Macro execution is one undo group unless the macro author explicitly splits undo groups.
+* Macro failures stop execution and announce the failed step.
+
+Example command-sequence macro:
+
+```json
+{
+  "name": "Clean OCR text",
+  "steps": [
+    {"command": "quill.text.normalizeUnicode"},
+    {"command": "quill.text.dehyphenateLines"},
+    {"command": "quill.text.reflowParagraphs"}
+  ]
+}
+```
+
+## 13. Security and safety
+
+### 13.1 Local trust model
+
+The Python console is trusted local code execution.
+
+QUILL must clearly warn users:
+
+```text
+The Developer Console can run code inside QUILL.
+Only run commands you understand or received from a trusted source.
+```
+
+This warning appears:
+
+* The first time the console opens.
+* When enabling the feature from Settings.
+* When pasting multi-line code from the clipboard.
+* When attempting to enable unsafe developer mode.
+
+### 13.2 Remote execution
+
+Remote execution is locked off by default.
+
+Requirements:
+
+* No listening socket in stable builds.
+* No hidden remote console.
+* No command-line flag that silently enables remote execution.
+* Experimental remote console, if ever added, must bind to localhost only by default.
+* Remote console must require an explicit one-time token.
+* Remote console must show a persistent status bar warning.
+* Remote console must auto-disable on restart unless the user explicitly chooses otherwise.
+
+### 13.3 Dangerous operations
+
+The console must prompt or block for:
+
+* Running shell commands
+* Reading arbitrary files outside allowed locations
+* Writing arbitrary files outside QUILL-controlled flows
+* Sending document content to network services
+* Installing Quillins
+* Changing profile safety rules
+* Disabling backups or crash recovery
+* Accessing protected source documents
+* Running pasted multi-line code
+
+### 13.4 TypeScript worker limits
+
+Default limits:
+
+| Limit                  | Default                     |
+| ---------------------- | --------------------------- |
+| Execution timeout      | 30 seconds                  |
+| Idle timeout           | 10 minutes                  |
+| Memory warning         | 256 MB                      |
+| Memory hard limit      | 512 MB                      |
+| Output flood threshold | 100 KB                      |
+| Max transcript size    | 5 MB before rotation prompt |
+
+Long-running TypeScript scripts must support cancellation.
+
+## 14. Accessibility requirements
+
+The console must pass QUILL’s normal accessibility gates.
+
+Required tests:
+
+* NVDA reads console controls correctly.
+* JAWS reads console controls correctly.
+* Narrator reads console controls correctly.
+* F6 cycles through console regions.
+* Escape behavior is predictable.
+* New output does not steal focus.
+* Long output is summarized.
+* Errors are reviewable character-by-character.
+* Braille display review works through the transcript control.
+* High contrast mode remains readable.
+* Large font mode does not clip prompts or buttons.
+* Keyboard-only users can run, copy, save, clear, and close.
+* No console action traps focus.
+
+## 15. Error handling
+
+Errors appear in three layers:
+
+1. Plain-language summary
+2. Actionable suggestion
+3. Technical details, expandable or copyable
+
+Example:
+
+```text
+Error: Unknown command "quill.markdown.fixHeading".
+Suggestion: Run q.commands.search("heading") to find matching commands.
+Details: CommandNotFoundError: quill.markdown.fixHeading
+```
+
+Python tracebacks are available but collapsed behind “Show technical details” unless the active profile is Developer and Power Text.
+
+TypeScript stack traces are captured and mapped to the user’s submitted code when possible.
+
+## 16. Logging and transcripts
+
+The console keeps a local transcript of:
+
+* Commands entered
+* Results
+* Errors
+* Warnings
+* Announcements triggered by console commands
+* Worker lifecycle events
+* Macro recording markers
+
+Privacy requirements:
+
+* Transcripts are not sent anywhere automatically.
+* Document text is included only when commands print or return it.
+* “Copy diagnostic summary” redacts document content by default.
+* Users can save transcripts manually.
+* Support packages ask before including transcript content.
+
+## 17. Settings
+
+Settings page: `Settings > Developer Console and Automation`
+
+Settings:
+
+* Enable Developer Console
+* Enable Python Console
+* Enable TypeScript Console
+* Show first-run safety warning again
+* Require confirmation before pasted multi-line execution
+* Require confirmation before document-wide mutation
+* Allow script access to raw wx objects
+* Allow shell commands
+* Allow filesystem access
+* TypeScript worker path
+* TypeScript worker timeout
+* Transcript retention
+* History retention
+* Clear history on exit
+* Enable completions
+* Enable result announcements
+* Output verbosity: concise, normal, verbose
+* Unsafe developer mode
+
+Dangerous settings are available only in Developer and Power Text or Full Quill profiles.
+
+## 18. Data storage
+
+Suggested files:
+
+```text
+%APPDATA%\Quill\console\
+  history.jsonl
+  snippets.json
+  transcripts\
+  types\
+    quill-console.d.ts
+  ts-worker\
+    worker.js
+```
+
+Portable mode stores the same structure next to the portable QUILL configuration directory.
+
+History entries contain:
+
+```json
+{
+  "timestamp": "2026-06-10T00:00:00Z",
+  "language": "python",
+  "input": "q.document_stats()",
+  "success": true
+}
+```
+
+History must not store command output by default.
+
+## 19. Technical architecture
+
+### 19.1 New modules
+
+```text
+quill/
+  core/
+    scripting.py              Official QuillScriptAPI facade
+    script_context.py         Active console context snapshots
+    script_permissions.py     Console permission checks
+    script_results.py         Structured result and error models
+  devtools/
+    console_window.py         wx console UI
+    python_console.py         Embedded Python console
+    ts_console.py             Python-side TypeScript bridge
+    ts_worker_protocol.py     JSON-RPC message schema
+    completions.py            Completion provider
+    history.py                Console history manager
+    snippets.py               Snippet manager
+    transcripts.py            Transcript manager
+  tools/
+    ts_worker/
+      worker.ts               TypeScript worker source
+      worker.js               Built worker
+      quill-console.d.ts      Type definitions
+```
+
+### 19.2 Threading model
+
+Rules:
+
+* UI mutations must run on the wx main thread.
+* Console input handling may occur in the UI thread only for quick commands.
+* Long commands must run as background tasks.
+* TypeScript worker communication runs asynchronously.
+* Results are marshaled back to the UI through QUILL’s event queue or `wx.CallAfter`.
+* Command cancellation must be supported for long-running tasks.
+
+### 19.3 Command execution flow
+
+```text
+User enters command
+    ↓
+Console parser receives input
+    ↓
+Python console or TypeScript worker executes code
+    ↓
+Code calls q / quill API
+    ↓
+API validates permission, profile, and command metadata
+    ↓
+Command registry executes command
+    ↓
+Document/editor/status/a11y systems update
+    ↓
+Structured result returns to console
+    ↓
+Transcript updates and concise result is announced
+```
+
+## 20. Completion and help
+
+The console should provide discoverability without requiring users to memorize APIs.
+
+Completion sources:
+
+* `q` methods
+* command ids
+* active document properties
+* macro names
+* snippet names
+* settings keys
+* feature ids
+
+Help commands:
+
+```python
+q.help()
+q.help("insert_text")
+q.commands.search("bookmark")
+q.describe_command("quill.editor.gotoLine")
+q.examples("markdown")
+```
+
+TypeScript equivalents:
+
+```ts
+await quill.help();
+await quill.commands.search("bookmark");
+await quill.describeCommand("quill.editor.gotoLine");
+```
+
+## 21. Testing strategy
+
+### 21.1 Unit tests
+
+* `QuillScriptAPI.insert_text` routes through command registry.
+* `replace_selection` creates one undoable operation.
+* `goto_line` rejects invalid line numbers with plain-language errors.
+* `run_command` refuses non-scriptable commands.
+* Profile gates hide or reject console commands properly.
+* Permission checks block dangerous operations.
+* Snapshot refresh updates document, selection, and caret state.
+* TypeScript protocol serializes and deserializes results correctly.
+* Worker crash returns a structured error.
+
+### 21.2 Integration tests
+
+* Open Python console, run `q.insert_text`, verify document changes.
+* Run document-wide command, verify undo restores prior state.
+* Run command that announces result, verify announcement transcript.
+* Open TypeScript console, run `await quill.insertText(...)`.
+* Restart TypeScript worker and verify QUILL stays alive.
+* Save console history as macro and run macro.
+* Copy diagnostic summary and verify redaction.
+* Paste multi-line code and verify confirmation prompt.
+
+### 21.3 Accessibility tests
+
+* NVDA reads transcript and input controls.
+* JAWS reads transcript and input controls.
+* Narrator reads transcript and input controls.
+* F6 region cycling works.
+* Escape returns focus predictably.
+* High contrast and large fonts work.
+* Long output does not cause speech flood.
+* Error details are reachable and copyable.
+
+### 21.4 Security tests
+
+* Remote execution is not listening in stable builds.
+* TypeScript worker cannot directly access unrestricted shell by default.
+* Console cannot bypass network consent.
+* Console cannot silently overwrite protected source documents.
+* Pasted multi-line execution triggers confirmation.
+* Unsafe developer mode cannot be enabled by imported profile alone.
+
+## 22. Success criteria
+
+The feature is successful when:
+
+1. A developer can open the Python console and inspect/manipulate the active document through `q`.
+2. A TypeScript user can run async editor commands through `quill`.
+3. All document mutations are undoable.
+4. Screen-reader users can operate the console without custom scripts.
+5. Console commands respect profile, permission, and consent rules.
+6. Long or failed commands do not crash QUILL.
+7. TypeScript worker crashes do not crash QUILL.
+8. Support diagnostics can be copied without leaking document content by default.
+9. Macro creation can reuse console command history.
+10. CI covers unit, integration, accessibility, and safety behavior.
+
+## 23. MVP scope
+
+### MVP: Python Developer Console
+
+Included:
+
+* Python console window
+* `q` scripting API
+* Command registry execution
+* Transcript output
+* History
+* Clear/copy/save transcript
+* Basic completions
+* Plain-language errors
+* First-run safety warning
+* Profile gating
+* Undo-aware document mutations
+* Accessibility tests with NVDA
+
+Not included in MVP:
+
+* TypeScript console
+* Macro recording from history
+* Advanced snippets
+* Remote execution
+* Raw wx unsafe mode
+* Plugin authoring APIs
+
+### MVP+1: TypeScript Console
+
+Included:
+
+* Node worker bridge
+* TypeScript transpilation
+* `quill` async proxy
+* Type definitions
+* Worker restart
+* Worker timeout and memory limits
+* Console output capture
+* TypeScript examples
+
+### MVP+2: Macro and Quillin authoring
+
+Included:
+
+* Save console history as macro
+* Snippet manager
+* Quillin test harness
+* Command-sequence macro editor
+* Console-based plugin diagnostics
+
+## 24. Open questions
+
+1. Should Python console be included in QUILL 1.0 as hidden experimental functionality?
+2. Should the console be modal, non-modal, or dockable?
+3. Should command history persist by default or require opt-in?
+4. Should TypeScript support be bundled or require Node detection?
+5. Should a minimal embedded JS engine be considered later for users who do not have Node?
+6. Should console snippets sync with macros, or remain separate?
+7. Should support technicians have a restricted “diagnostics-only console” mode?
+8. Should unsafe developer mode require a launch flag in addition to a setting?
+9. Should QUILL ship sample scripts for OCR cleanup, Markdown repair, and diagnostics?
+10. Should console transcript export support Markdown, plain text, and JSON?
+
+## 25. Example first-run warning
+
+```text
+Developer Console
+
+This console can run commands inside QUILL and may change the current document.
+Only run commands you understand or received from a trusted source.
+
+Recommended:
+- Use q.run_command(...) or documented q methods.
+- Do not paste code from unknown sources.
+- Save your document before running document-wide commands.
+
+[Open Console] [Cancel] [Learn More]
+```
+
+## 26. Example diagnostic summary command
+
+Python:
+
+```python
+q.support.diagnostic_summary()
+```
+
+Output:
+
+```text
+QUILL diagnostic summary
+Version: 1.1.0-dev
+Profile: Developer and Power Text
+Active document: chapter-7.md
+Modified: yes
+Documents open: 3
+Screen reader detected: NVDA
+Announcement backend: auto
+Python console: enabled
+TypeScript console: available
+Last command: quill.editor.gotoLine
+Last error: none
+Document content included: no
+```
+
+## 27. Definition of done
+
+This feature is done when:
+
+* The Python console is fully keyboard accessible.
+* The Python console exposes the official `q` scripting API.
+* TypeScript console runs through a subprocess bridge and cannot crash QUILL.
+* All editor mutations go through the command registry or scripting API.
+* Undo/redo, dirty-state, status bar, and accessibility announcements remain correct after console-driven changes.
+* Profile gating and safety settings work.
+* First-run safety warnings are present.
+* Console history, transcript copy, and transcript save work.
+* Dangerous actions require confirmation or are blocked.
+* Automated tests cover command execution, accessibility, worker failure, permissions, and undo behavior.
+* User documentation explains examples, risks, and safe patterns.
+
+
+---
+
+# Appendix: Skills tutorial
+
+_Folded in from the former docs/userguide.md on 2026-06-13._
+
+# Writing Skills for QUILL — A Tutorial
+
+This guide teaches you to write, validate, and share `.sqp` (Skill Quill Pack) files.
+A skill is a multi-step AI workflow written in plain Markdown. If you can write a
+prompt, you can write a skill.
+
+---
+
+## 1. What is a skill?
+
+A QUILL prompt is one instruction. A skill is a conversation — a series of instructions
+where each step can see what the previous step produced.
+
+You might use a skill when:
+
+- You want to analyse your text first, then act on the analysis.
+- You want to gather information in one step and draft with it in the next.
+- You want to check a condition (is this a question or a statement?) and take a
+  different path depending on the answer.
+- You want to repeat the same sub-task at a higher quality by giving the model
+  context it built in an earlier step.
+
+---
+
+## 2. Your first skill
+
+Create a file called `my-first-skill.sqp` and open it in QUILL.
+
+```markdown
+---
+schema: quill.skill/1
+name: Explain Then Simplify
+description: Explains the selected text in plain terms, then simplifies it further.
+author: Your Name
+version: 1.0.0
+---
+
+# Step 1: Explain
+
+Explain the following text as if the reader has no prior knowledge. Use simple
+vocabulary and short sentences. Aim for 50-80 words.
+
+Text to explain:
+{selection}
+
+# Step 2: Simplify further
+
+The explanation below is good, but we need it even simpler. Rewrite it so a
+twelve-year-old would understand it immediately. Keep the core meaning.
+
+Explanation to simplify:
+{step1.output}
+
+```output
+format: text
+label: Plain-language explanation
+accept_into: clipboard
+```
+```
+
+Save the file, then validate it:
+
+```powershell
+python -m quill.tools.sqp_validator my-first-skill.sqp
+```
+
+You should see:
+
+```
+my-first-skill.sqp: OK
+```
+
+---
+
+## 3. Adding parameters
+
+Parameters let users choose options before the skill runs. QUILL shows a small dialog
+collecting the choices before step 1 begins.
+
+Add a reading-level choice to the skill above:
+
+```markdown
+---
+schema: quill.skill/1
+name: Explain Then Simplify
+description: Explains and simplifies selected text at a chosen reading level.
+author: Your Name
+version: 1.0.0
+parameters:
+  - name: level
+    label: Target reading level
+    type: choice
+    choices: [Grade 4, Grade 6, Grade 8]
+    default: Grade 6
+---
+
+# Step 1: Explain
+
+Explain the following text so it is accessible at {parameters.level} reading level.
+Use simple vocabulary and short sentences. Aim for 50-80 words.
+
+Text to explain:
+{selection}
+
+# Step 2: Simplify further
+
+Rewrite the explanation below to be even clearer. Target: {parameters.level}.
+Keep the core meaning intact.
+
+{step1.output}
+
+```output
+format: text
+label: Plain-language explanation
+accept_into: clipboard
+```
+```
+
+Now the parameter `{parameters.level}` is available in both steps. The value
+comes from the user's choice in the dialog.
+
+**Parameter types.**
+
+| Type | UI control | Example |
+| --- | --- | --- |
+| `text` | Single-line text field | A keyword or name |
+| `multiline` | Multi-line text area | A block of context |
+| `choice` | Drop-down list | Reading level, tone, language |
+| `bool` | Checkbox | Include citations: yes/no |
+| `number` | Numeric field | Word count target |
+
+---
+
+## 4. Using the input block
+
+Long texts can clutter the prompt. The `input` block appends data after the
+instruction text, keeping the step prose readable:
+
+```markdown
+# Step 1: Extract key claims
+
+Read the following document and list the five most important claims it makes.
+Number each claim. One sentence per claim.
+
+```input
+{document}
+```
+```
+
+Without the `input` block you would write:
+
+```markdown
+# Step 1: Extract key claims
+
+Read the following document and list the five most important claims it makes.
+Number each claim. One sentence per claim.
+
+Document:
+{document}
+```
+
+Both are equivalent; the `input` block is just cleaner when the data is long.
+
+---
+
+## 5. Conditional branching
+
+Use a `condition` block to route execution based on a step's output.
+
+```markdown
+# Step 1: Detect intent
+
+Read the following text. Is it asking a question, or making a statement?
+Answer with exactly one word: "question" or "statement".
+
+```input
+{selection}
+```
+
+```condition
+if: "{step1.output}" contains "question"
+then: step2
+else: step3
+```
+
+# Step 2: Answer the question
+
+Answer this question clearly and concisely:
+{selection}
+
+```output
+format: text
+label: Answer
+accept_into: clipboard
+```
+
+# Step 3: Expand the statement
+
+Expand the following statement into a full paragraph with supporting detail:
+{selection}
+
+```output
+format: text
+label: Expanded statement
+accept_into: clipboard
+```
+```
+
+**How it works.** After step 1 runs, QUILL checks the condition: if the output
+contains "question", it jumps to step 2. Otherwise, it jumps to step 3. Whichever
+step runs last is the one that produces the output.
+
+**Supported operators.**
+
+| Operator | Matches when |
+| --- | --- |
+| `contains` | Subject contains value (case-insensitive) |
+| `equals` | Subject exactly matches value (case-insensitive) |
+| `starts_with` | Subject starts with value |
+| `ends_with` | Subject ends with value |
+| `length_gt` | Subject length > number |
+| `length_lt` | Subject length < number |
+| `is_empty` | Subject is blank |
+
+---
+
+## 6. Controlling the output
+
+The `output` block on the last step controls what happens to the result.
+
+```markdown
+```output
+format: text
+label: Rewritten paragraph
+accept_into: selection
+```
+```
+
+**`format`:** `text` (default), `list` (AI should return a bulleted or numbered
+list), `json` (AI should return valid JSON).
+
+**`accept_into`:** What happens when the user presses Accept in the result dialog.
+- `selection` — replaces the current editor selection.
+- `clipboard` — copies to clipboard.
+- `none` — shows read-only (default).
+
+The `label` appears in the result dialog header so the user knows what they are
+reviewing.
+
+---
+
+## 7. A complete example — Accessible Rewrite
+
+Here is the bundled "Accessible Rewrite" skill in full, with commentary.
+
+```markdown
+---
+schema: quill.skill/1
+name: Accessible Rewrite
+description: Rewrites selected text for plain-language accessibility.
+author: QUILL Project
+version: 1.0.0
+parameters:
+  - name: reading_level
+    label: Target reading level
+    type: choice
+    choices: [Grade 6, Grade 8, Grade 10, No target]
+    default: Grade 8
+---
+
+# Step 1: Analyse accessibility issues
+
+Review the following text for plain-language accessibility issues. List the
+problems as a numbered list. Focus on: sentence length (over 25 words), passive
+voice, unexplained jargon or acronyms, abstract nouns where concrete ones would
+serve better, and complex nested clauses. Be concise — one clear problem per
+line. If the text has no issues, say "No issues found."
+
+```input
+{selection}
+```
+
+# Step 2: Rewrite for accessibility
+
+Rewrite the text below to fix the issues identified in Step 1. Requirements:
+- Target reading level: {parameters.reading_level}
+- Preserve all factual content
+- Do not add new information
+
+Original text:
+{selection}
+
+Issues to fix:
+{step1.output}
+
+```output
+format: text
+label: Rewritten text
+accept_into: selection
+```
+```
+
+**Step 1** analyses the text and produces a numbered list of issues.
+**Step 2** uses `{step1.output}` (the issue list) as context alongside the
+original text, so the model knows exactly what to fix. The output replaces the
+selection when the user presses Accept.
+
+---
+
+## 8. Validating your skill
+
+Always run the validator before sharing:
+
+```powershell
+python -m quill.tools.sqp_validator my-skill.sqp
+```
+
+For extra checks:
+
+```powershell
+python -m quill.tools.sqp_validator my-skill.sqp --strict
+```
+
+`--strict` also warns if `description` or `author` are missing.
+
+**Common errors and how to fix them.**
+
+| Error | Cause | Fix |
+| --- | --- | --- |
+| `schema must be 'quill.skill/1'` | Missing or wrong schema | Add `schema: quill.skill/1` to front matter |
+| `front matter must include 'name'` | No `name:` field | Add `name: My Skill` |
+| `must have at least one step` | No `# Heading` lines | Add at least one `# Step N:` heading |
+| `{step3.output} references a step that hasn't run yet` | Forward reference | Steps can only reference outputs from earlier steps |
+| `unknown parameter 'tone'` | Used `{parameters.tone}` but didn't declare it | Add `tone` to the `parameters` list in front matter |
+| `output format 'xml' is invalid` | Bad `format:` value | Use `text`, `list`, or `json` |
+
+---
+
+## 9. Sharing skills
+
+A `.sqp` file is a plain text file — share it the same way you share any document.
+
+**Via the Skill Library.** When someone receives your `.sqp` file, they import it
+through `Tools > AI Assistant > Skill Library > Import .sqp`.
+
+**Via a Quillin.** If you maintain a Quillin, add your `.sqp` files to the Quillin
+directory. QUILL discovers them automatically at Skill Library load time.
+
+**As a standalone file.** A `.sqp` file is self-contained. The recipient can also
+open it in QUILL's editor to read, understand, and customise every step.
+
+---
+
+## 10. Skill authoring tips
+
+**Keep step instructions specific.** "List the five most important claims" is
+better than "What are the claims?" The model follows precision.
+
+**Name outputs explicitly.** Instead of "Summarise the following", write "Write a
+one-sentence summary of the following text. Return only the summary sentence,
+no preamble." This ensures `{step1.output}` contains exactly what you expect.
+
+**Test with short text first.** Paste two or three sentences into the editor,
+select them, and run the skill. Short inputs are faster and errors are easier to
+trace.
+
+**Use `input` blocks for long data.** If your selection might be a full document,
+put `{document}` in an `input` block rather than inline in the prompt. The step
+reads more cleanly.
+
+**Put conditions after a clean-detection step.** If you are branching on whether
+text is a question, a statement, a list, or something else, dedicate step 1 to
+just that classification. Ask for a single-word answer. The more constrained the
+output, the more reliably the condition evaluates.
+
+**Use the output block's `accept_into` intentionally.** If the skill rewrites the
+selection, use `accept_into: selection`. If it produces supplementary content
+(meeting summary, outline), use `accept_into: clipboard` so the user can paste
+where they choose. Use `none` for informational skills (grammar analysis,
+readability score) where the result is read but not inserted.
+
+---
+
+## Reference card
+
+**Front matter fields.**
+
+| Field | Required | Default |
+| --- | --- | --- |
+| `schema: quill.skill/1` | yes | — |
+| `name: ...` | yes | — |
+| `description: ...` | recommended | `""` |
+| `author: ...` | recommended | `""` |
+| `version: ...` | no | `1.0.0` |
+| `parameters: [...]` | no | `[]` |
+
+**Variables.**
+
+| Variable | Value |
+| --- | --- |
+| `{selection}` | Selected editor text (full document if nothing selected) |
+| `{document}` | Full document text |
+| `{title}` | Document title |
+| `{clipboard}` | Clipboard text at skill-start time |
+| `{stepN.output}` | Output from step N (must be a lower-numbered step) |
+| `{parameters.name}` | Value of a declared parameter |
+
+**Fenced block types.**
+
+| Block | Where | Purpose |
+| --- | --- | --- |
+| `` `input` `` | Any step | Appends data to the prompt |
+| `` `condition` `` | Any step | Branch to `then`/`else` step after this step runs |
+| `` `output` `` | Last step | Controls format, label, accept_into |
+| `` `use-prompt` `` | Any step | Delegates to a named Prompt Library prompt |
+
+**Condition operators.** `contains`, `equals`, `starts_with`, `ends_with`,
+`length_gt`, `length_lt`, `is_empty`.
+
+**Output formats.** `text`, `list`, `json`.
+
+**Output accept_into values.** `selection`, `clipboard`, `none`.
+
+
+---
+
+# Appendix: Feature notes (Copy Tray)
+
+_Folded in from the former docs/userguide.md on 2026-06-13._
+
+# QUILL feature documentation
+
+_Consolidated from the former docs/features/ folder on 2026-06-13. Each section preserves the original document in full._
+
+
+---
+
+<!-- Source: docs/features/copy_tray.md -->
+
+# Copy Tray
+
+## Overview
+
+Copy Tray gives you nine independently addressable clipboard slots. Each slot
+holds a piece of text that you copy there explicitly. Slots survive application
+restarts — their contents are written to disk automatically so nothing is lost
+when you close and reopen QUILL.
+
+Unlike the system clipboard, which is shared with every other application and
+holds only the most recently copied item, Copy Tray slots are exclusive to
+QUILL and hold their contents until you explicitly replace or clear them. This
+makes Copy Tray well suited for accumulating related fragments across a long
+editing session: quotes from multiple sources, code snippets, address blocks,
+standard disclaimers, or any text you paste repeatedly.
+
+## Keyboard Access
+
+### Paste from a slot
+
+Hold `Ctrl+Shift` and press a number key. That is all.
+
+| Key | Action |
+| --- | --- |
+| `Ctrl+Shift+1` | Paste from slot 1 at cursor |
+| `Ctrl+Shift+2` | Paste from slot 2 at cursor |
+| `Ctrl+Shift+3` | Paste from slot 3 at cursor |
+| `Ctrl+Shift+4` | Paste from slot 4 at cursor |
+| `Ctrl+Shift+5` | Paste from slot 5 at cursor |
+| `Ctrl+Shift+6` | Paste from slot 6 at cursor |
+| `Ctrl+Shift+7` | Paste from slot 7 at cursor |
+| `Ctrl+Shift+8` | Paste from slot 8 at cursor |
+| `Ctrl+Shift+9` | Paste from slot 9 at cursor |
+
+If a selection is active when you paste, the pasted text replaces it.
+If the slot is empty, QUILL announces "Slot N is empty".
+
+### Copy to a slot
+
+Hold the QUILL key (`Ctrl+Shift+Grave`), release, then press `Shift+digit`.
+The QUILL-key bare digits 1-6 are heading shortcuts; adding Shift is a distinct
+binding with no conflict.
+
+| Key | Action |
+| --- | --- |
+| `Ctrl+Shift+Grave, Shift+1` | Copy selection to slot 1 |
+| `Ctrl+Shift+Grave, Shift+2` | Copy selection to slot 2 |
+| `Ctrl+Shift+Grave, Shift+3` | Copy selection to slot 3 |
+| `Ctrl+Shift+Grave, Shift+4` | Copy selection to slot 4 |
+| `Ctrl+Shift+Grave, Shift+5` | Copy selection to slot 5 |
+| `Ctrl+Shift+Grave, Shift+6` | Copy selection to slot 6 |
+| `Ctrl+Shift+Grave, Shift+7` | Copy selection to slot 7 |
+| `Ctrl+Shift+Grave, Shift+8` | Copy selection to slot 8 |
+| `Ctrl+Shift+Grave, Shift+9` | Copy selection to slot 9 |
+
+You must have text selected. QUILL announces the slot number and a text
+preview: "Copied to slot 2".
+
+### Management
+
+| Key | Action |
+| --- | --- |
+| `Ctrl+Shift+Grave, X` | Open Copy Tray dialog |
+
+All bindings are reassignable in `Tools > Customize & Support > Keyboard Manager` or the Command
+Palette.
+
+## Using the Edit Menu
+
+All commands are available in `Edit > Copy Tray`. The submenu contains:
+
+- `Copy to Slot 1` through `Copy to Slot 9` — copy the current selection
+- `Paste from Slot 1` through `Paste from Slot 9` — paste at the cursor
+- `Open Copy Tray...` — open the management dialog
+- `Clear All Tray Slots` — clear all slots after confirmation
+
+## Using the System Tray Icon
+
+Right-click the QUILL icon in the system notification area (bottom-right
+taskbar area). The context menu includes a **Copy Tray** submenu that lists
+every occupied slot with its label (if any) and a text preview. Clicking a slot
+pastes its content into the currently active QUILL document. This lets you
+paste from the tray without bringing the main window to the front.
+
+## Using the Dialog
+
+Open the dialog with `Ctrl+Shift+Grave, X`, `Edit > Copy Tray > Open Copy
+Tray`, or the Command Palette (`edit.open_copy_tray`). The dialog shows all
+nine slots in a list. Each row displays:
+
+- The slot number
+- An optional label
+- A preview of the stored text (empty slots show `(empty)`)
+
+Navigate the list with the arrow keys. The following buttons appear below the
+list:
+
+- **Paste** (Enter or double-click) — paste the selected slot's text at the
+  cursor position and close the dialog. Disabled when the selected slot is
+  empty.
+- **Copy Selection Here** — copy the current editor selection into the selected
+  slot and refresh the list. Disabled when no text is selected in the editor.
+- **Set Label...** — open a text-entry prompt to name the selected slot. Labels
+  appear in all slot listings and in screen-reader announcements.
+- **Clear Slot** — empty the selected slot. Disabled when already empty.
+- **Close** (Escape) — close the dialog without pasting.
+
+## Labelling Slots
+
+Slot labels are optional but recommended for any slot you use regularly. A
+label makes the slot identifiable in the dialog and in every spoken
+announcement. Labelling slot 1 "signature" means you will hear "Pasted from
+slot 1 (signature)" instead of "Pasted from slot 1".
+
+To set a label:
+
+1. Open the Copy Tray dialog.
+2. Select the slot you want to label.
+3. Press `Set Label...`.
+4. Type the label and press Enter.
+
+Labels are persisted alongside slot text and survive restarts.
+
+## Accessibility Notes
+
+- Every Copy Tray operation announces its result through QUILL's screen-reader
+  interface. Copy, paste, clear, and label operations all produce spoken
+  feedback.
+- The slot list in the dialog receives initial focus when the dialog opens.
+- Slot labels, when set, are included in every announcement.
+- Empty slots are clearly identified as `(empty)` in all contexts.
+- The `Clear All Tray Slots` confirmation dialog defaults to No to prevent
+  accidental data loss.
+- The `Ctrl+Shift+N` paste scheme is designed for screen reader users: one
+  familiar chord activates slot N instantly, no menu navigation required.
+
+## Tips
+
+- **Research accumulator.** Assign each tray slot to a document section. Copy
+  a relevant excerpt to each slot as you read through a source, then paste
+  them in order when drafting.
+- **Code boilerplate.** Keep import blocks, standard headers, and closing
+  patterns in labelled slots for one-chord insertion.
+- **Cross-document paste.** Copy a phrase to a tray slot, switch documents,
+  paste from the tray — the system clipboard is untouched.
+- **Persistent library.** Slots survive restarts. Build a set of standard
+  fragments you reach for daily.
+- **System tray access.** Paste into any QUILL document directly from the
+  notification-area icon without bringing the window to the front.
+
+
+---
+
+# Appendix: Copy Tray design notes
+
+_Folded in from the former docs/copy_tray_notes.md on 2026-06-13._
+
+# Copy Tray: What Was Built and How It Feels
+
+## What Was Built
+
+Copy Tray is a nine-slot persistent clipboard integrated across QUILL's menu
+bar, keyboard layer, dialog system, and system tray icon. Every slot holds text
+that survives application restarts.
+
+### Core model (`quill/core/copy_tray.py`)
+
+A pure Python model with no wx dependency. `CopyTray` owns nine `TraySlot`
+instances. Each slot has `text`, `label`, and `copied_at`. The model reads and
+writes `copy_tray.json` in the QUILL data directory using `write_json_atomic`
+(temp file + `os.replace`). A corrupt file causes a silent fresh start; it
+never raises to the UI.
+
+### UI mixin (`quill/ui/main_frame_copy_tray.py`)
+
+`CopyTrayMixin` is mixed into `MainFrame`. Methods:
+
+- `copy_to_tray_slot(n)` — copies the editor selection to slot n; announces
+  slot number and text preview.
+- `paste_from_tray_slot(n)` — inserts slot n text at cursor (or replaces
+  selection); announces slot number and label.
+- `open_copy_tray()` — opens the management dialog; pastes if the user chooses
+  Paste and returns to the editor.
+- `clear_all_tray_slots()` — Yes/No confirmation (default No); clears all nine
+  slots on Yes.
+
+### Dialog (`quill/ui/copy_tray_dialog.py`)
+
+A resizable wx.Dialog with a ListBox and five action buttons. Each list row
+shows slot number, optional label, and a 60-character preview. The list
+receives focus on open. Buttons: Paste (Enter), Copy Selection Here, Set
+Label..., Clear Slot, Close (Escape). Double-click pastes. Button states
+update on every selection change: Paste and Clear Slot are disabled on empty
+slots; Copy Selection Here is disabled when no editor text is selected.
+
+### Keyboard bindings (`quill/core/keymap.py`)
+
+| Key | Action |
+| --- | --- |
+| `Ctrl+Shift+1` through `Ctrl+Shift+9` | Paste from slot 1-9 |
+| `Ctrl+Shift+Grave, Shift+1` through `Ctrl+Shift+Grave, Shift+9` | Copy selection to slot 1-9 |
+| `Ctrl+Shift+Grave, X` | Open Copy Tray dialog |
+
+The paste bindings use the number row with `Ctrl+Shift`. These keys were
+confirmed free across the entire QUILL keymap. QUILL-key bare digits 1-6 are
+heading shortcuts; adding Shift produces a distinct chord with no conflict.
+
+All 20 commands (`edit.open_copy_tray`, `edit.clear_all_tray_slots`,
+`edit.copy_to_tray_1..9`, `edit.paste_from_tray_1..9`) are registered in
+the keymap and appear in the Command Palette. All are reassignable in the
+Keymap Editor.
+
+### Menu integration (`quill/ui/main_frame_menu.py`)
+
+`Edit > Copy Tray` submenu with:
+- Copy to Slot 1-9
+- Paste from Slot 1-9
+- Open Copy Tray...
+- Clear All Tray Slots
+
+The 18 per-slot items use dedicated `wx.NewIdRef()` IDs (`_id_copy_tray_slots`
+and `_id_paste_tray_slots` arrays). Management commands are recirculated from
+the power tools manifest via `_append_power_tools_copy_tray_items`.
+
+### Power tools manifest (`quill/ui/main_frame_power_tools_menu.py`)
+
+New `"copy_tray"` group with `edit.open_copy_tray` and
+`edit.clear_all_tray_slots`. New recirculation helper
+`_append_power_tools_copy_tray_items`. The 18 individual slot commands are also
+registered in the manifest for Command Palette discoverability.
+
+### System tray integration (`quill/ui/main_frame.py`)
+
+The `_on_tray_right_click` method now builds a **Copy Tray** submenu listing
+every occupied slot with its label (if any) and a 50-character text preview.
+Clicking a slot calls `_tray_paste_slot(n)`, which restores the main window if
+it is hidden, then pastes the slot content. If all slots are empty, the submenu
+shows "(all slots empty)" as a disabled item. "Open Copy Tray..." is always
+present at the bottom of the submenu.
+
+### Documentation
+
+- `docs/userguide.md` — complete feature reference with keyboard
+  tables, dialog walkthrough, accessibility notes, and workflow tips.
+- `docs/QUILL-PRD.md` — section 5.77 added with motivation, operations table,
+  keyboard defaults, storage spec, accessibility guarantees, and implementation
+  map.
+- `docs/userguide.md` — "Copy Tray" section added in Writing and Editing,
+  before "Copy With Source", with full keyboard tables and a tips block.
+
+---
+
+## The User Experience
+
+### First encounter
+
+You open QUILL to write a long document while researching from several other
+sources. You read a quote you want to use, select it, and press
+`Ctrl+Shift+Grave, Shift+1`. QUILL says "Copied to slot 1". You read another
+fragment. `Ctrl+Shift+Grave, Shift+2`. "Copied to slot 2". A third. Slot 3.
+
+You switch to your draft. Where you want the first quote, press `Ctrl+Shift+1`.
+QUILL says "Pasted from slot 1" and the text is there. The system clipboard was
+never disturbed. The other two quotes are still in their slots.
+
+You close QUILL. Come back tomorrow. Slots 1, 2, and 3 still hold their
+contents.
+
+### Using labels
+
+After a few days you decide to give slot 1 a permanent home: your email
+signature. You open `Ctrl+Shift+Grave, X`, navigate to slot 1, press Set
+Label..., type "signature", press Enter. Now when you paste, QUILL says "Pasted
+from slot 1 (signature)". The slot is identifiable without looking at a screen.
+
+### From the system tray
+
+QUILL is minimized to the system tray while you read in another browser. You
+right-click the QUILL icon. The menu shows:
+
+```
+Show Quill
+Copy Tray  >
+  1.  signature — Hi, I wanted to follow up...
+  2.  Hello world...
+  3.  import sys, os, pathlib...
+  ...
+  Open Copy Tray...
+Sticky Notes...
+Exit Quill
+```
+
+You click slot 3. QUILL restores its window and pastes the import block at
+your cursor. You minimize again.
+
+### Screen reader workflow
+
+Press `Ctrl+Shift+5`. QUILL says "Slot 5 is empty." You know immediately
+without opening a dialog or reading the screen. Select some text, press
+`Ctrl+Shift+Grave, Shift+5`. "Copied to slot 5." Move elsewhere. Press
+`Ctrl+Shift+5`. "Pasted from slot 5." Everything happened through voice, at
+typing speed, with standard modifier+number chords.
+
+---
+
+## Future Directions: Double-Tap and Beyond
+
+The user asked whether pressing a key twice quickly could trigger an alternative
+action. For Copy Tray, the natural double-tap behaviour would be:
+
+- **Single `Ctrl+Shift+N`** — paste from slot N immediately.
+- **Double `Ctrl+Shift+N`** (two presses within ~300ms) — peek: QUILL speaks
+  what is in slot N *without pasting* ("Slot 3: Hello world..."). This lets
+  a screen-reader user verify a slot's content before committing to paste.
+
+Implementing double-tap detection requires a timer in the QUILL-key prefix
+state machine, a 300ms debounce, and a clear screen-reader announcement
+pattern. It is architecturally clean and would make the Copy Tray even more
+efficient for screen-reader-only workflows. This is noted here as a planned
+enhancement, not yet implemented.
+
+Other places in QUILL where double-tap patterns could add value:
+
+- **Double QUILL key** (two presses of `Ctrl+Shift+Grave`) = open Copy Tray
+  dialog, similar to how Windows `Win+V` opens clipboard history.
+- **Double `F3`** = repeat the last Find All and jump to the next cluster of
+  matches.
+- **Double `Ctrl+Z`** = undo back to the last explicit save point.
+- **Double `Ctrl+G`** = return to the previous location (ping-pong navigation).
+- **Double `Escape`** = collapse all side panels and return focus to the editor.
+
+These should be evaluated selectively — double-tap timing is sensitive and can
+interfere with rapid typists. The patterns with the clearest benefit and the
+lowest collision risk are: Copy Tray peek and QUILL-key-double-press for the
+tray dialog.
