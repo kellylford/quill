@@ -34,7 +34,7 @@
         "quill/ui/github_dialogs.py": 638,
         "quill/core/glow.py": 810,
         "quill/core/settings_registry.py": 158,
-        "quill/core/settings_specs.py": 1097,
+        "quill/core/settings_specs.py": 1106,
         "quill/core/watch_actions.py": 700,
         "quill/io/structured.py": 664,
         "quill/core/settings.py": 690,
@@ -44,7 +44,7 @@
         "quill/ui/main_frame_statusbar.py": 540,
         "quill/core/abbreviations.py": 266,
         "quill/core/multi_press.py": 59,
-        "quill/ui/main_frame_abbreviations.py": 152,
+        "quill/ui/main_frame_abbreviations.py": 202,
         "quill/ui/abbreviation_manager_dialog.py": 401,
         "quill/core/ai_chat.py": 208,
         "quill/ui/ai_chat_dialog.py": 480,
@@ -85,5 +85,6 @@
     "_rebaseline_2026_06_13e": "assistant_tools.py 1866 -> 1877: AI Hub now hosts an optional 'On-device model...' button (+_on_open_model_settings) so the merged AI Model/Connection entry reaches the on-device model dialog from one place. Re-baselined to measured size.",
     "_rebaseline_2026_06_13f": "features.py 1020 -> 1029 for the new locked-off core.glow feature (GLOW hidden for 0.5.0 pending completion; audit/fix/update commands gated by it). Re-baselined to measured size.",
     "_rebaseline_2026_06_13g": "keymap.py 438 -> 439 for the edit.find legacy rebinding that restores Find to Ctrl+F. Re-baselined to measured size.",
-    "_rebaseline_2026_06_13h": "QSP sound pack feature (feat/sound-notifications): settings_specs.py 1070 -> 1097 for 4 new specs (sound_enabled, sound_pack_path, sound_volume, sound_events_disabled); main_frame_abbreviations.py 147 -> 152 for updated _play_abbreviation_sound() that gates on is_active() before falling back to legacy winsound. Budget re-baselined to measured sizes."
+    "_rebaseline_2026_06_13h": "QSP sound pack feature (feat/sound-notifications): settings_specs.py 1070 -> 1097 for 4 new specs (sound_enabled, sound_pack_path, sound_volume, sound_events_disabled); main_frame_abbreviations.py 147 -> 152 for updated _play_abbreviation_sound() that gates on is_active() before falling back to legacy winsound. Budget re-baselined to measured sizes.",
+    "_rebaseline_2026_06_13i": "Backspace-after-expansion feature: settings_specs.py 1097 -> 1106 for abbreviation_backspace_behavior choice spec; main_frame_abbreviations.py 152 -> 202 for _pending_undo state, _try_undo_expansion() method (delete or revert), and ABBREVIATION_DELETED sound hook. Budget re-baselined to measured sizes."
 }

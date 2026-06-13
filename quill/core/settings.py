@@ -183,6 +183,8 @@ class Settings:
     sound_pack_path: str = ""  # empty = bundled Ink pack
     sound_volume: int = 80  # 0-100; passed to sound_lib Output.set_volume()
     sound_events_disabled: str = ""  # comma-separated SoundEvent IDs to silence
+    # Abbreviation backspace: "delete" removes expansion, "revert" puts the original back.
+    abbreviation_backspace_behavior: str = "delete"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Settings:
@@ -496,6 +498,9 @@ class Settings:
             sound_volume = 80
         sound_volume = max(0, min(100, sound_volume))
         sound_events_disabled = str(data.get("sound_events_disabled", ""))
+        abbreviation_backspace_behavior = str(data.get("abbreviation_backspace_behavior", "delete"))
+        if abbreviation_backspace_behavior not in {"delete", "revert"}:
+            abbreviation_backspace_behavior = "delete"
         raw_mp = int(data.get("multi_press_window_ms", 400))
         multi_press_window_ms = max(100, min(1000, raw_mp))
         if recent_files_limit < 1:
@@ -646,6 +651,7 @@ class Settings:
             sound_pack_path=sound_pack_path,
             sound_volume=sound_volume,
             sound_events_disabled=sound_events_disabled,
+            abbreviation_backspace_behavior=abbreviation_backspace_behavior,
         )
 
 

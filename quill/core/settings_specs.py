@@ -300,6 +300,15 @@ SETTING_SPECS: tuple[SettingSpec, ...] = (
         keywords=("abbreviation", "sound", "wav", "audio"),
     ),
     SettingSpec(
+        "abbreviation_backspace_behavior",
+        "Backspace after expansion",
+        "editing",
+        "choice",
+        "What to do when you press Backspace immediately after an abbreviation expands.",
+        choices=("delete", "revert"),
+        keywords=("abbreviation", "backspace", "undo", "delete", "revert"),
+    ),
+    SettingSpec(
         "persistent_undo",
         "Enable persistent undo",
         "editing",
