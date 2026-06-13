@@ -478,5 +478,12 @@ def _load_local_license_texts(
     return output
 
 
-def _escape_table_cell(text: str) -> str:
-    return text.replace("|", "\\|")
+def _escape_table_cell(text: str, *, max_length: int = 80) -> str:
+    # Collapse all whitespace (a raw newline ends a GFM table row, which is what
+    # broke the About dependency table when a package exposes its full license
+    # text instead of an SPDX id), escape pipes, and cap the length so one giant
+    # cell cannot dominate the table. The full text is in Third-Party Notices.
+    collapsed = " ".join(str(text).split())
+    if len(collapsed) > max_length:
+        collapsed = collapsed[: max_length - 3].rstrip() + "..."
+    return collapsed.replace("|", "\\|")
