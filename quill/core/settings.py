@@ -178,6 +178,11 @@ class Settings:
     console_enabled: bool = True
     console_python_timeout: int = 30
     console_typescript_timeout: int = 30
+    # QSP: sound notification system (earcons).
+    sound_enabled: bool = True
+    sound_pack_path: str = ""  # empty = bundled Ink pack
+    sound_volume: int = 80  # 0-100; passed to sound_lib Output.set_volume()
+    sound_events_disabled: str = ""  # comma-separated SoundEvent IDs to silence
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Settings:
@@ -483,6 +488,14 @@ class Settings:
         abbreviation_expansion = bool(data.get("abbreviation_expansion", True))
         abbreviation_expansion_sound = bool(data.get("abbreviation_expansion_sound", False))
         abbreviation_expansion_sound_file = str(data.get("abbreviation_expansion_sound_file", ""))
+        sound_enabled = bool(data.get("sound_enabled", True))
+        sound_pack_path = str(data.get("sound_pack_path", ""))
+        try:
+            sound_volume = int(data.get("sound_volume", 80))
+        except (TypeError, ValueError):
+            sound_volume = 80
+        sound_volume = max(0, min(100, sound_volume))
+        sound_events_disabled = str(data.get("sound_events_disabled", ""))
         raw_mp = int(data.get("multi_press_window_ms", 400))
         multi_press_window_ms = max(100, min(1000, raw_mp))
         if recent_files_limit < 1:
@@ -629,6 +642,10 @@ class Settings:
             console_enabled=console_enabled,
             console_python_timeout=console_python_timeout,
             console_typescript_timeout=console_typescript_timeout,
+            sound_enabled=sound_enabled,
+            sound_pack_path=sound_pack_path,
+            sound_volume=sound_volume,
+            sound_events_disabled=sound_events_disabled,
         )
 
 

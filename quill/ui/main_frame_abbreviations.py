@@ -68,6 +68,13 @@ class AbbreviationsMixin:
         return ""
 
     def _play_abbreviation_sound(self) -> None:
+        from quill.core.sound_events import SoundEvent
+        from quill.ui.sound_manager import is_active, post_sound
+
+        if is_active():
+            post_sound(SoundEvent.ABBREVIATION_EXPANDED)
+            return
+        # Legacy per-event winsound path for users without a QSP configured.
         if not getattr(self.settings, "abbreviation_expansion_sound", False):
             return
         sound_path = getattr(self.settings, "abbreviation_expansion_sound_file", "")

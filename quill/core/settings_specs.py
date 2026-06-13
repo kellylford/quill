@@ -607,6 +607,41 @@ SETTING_SPECS: tuple[SettingSpec, ...] = (
         feature_id="core.accessibility",
         keywords=("trace", "diagnostics", "announcement"),
     ),
+    # --- Sound notifications (QSP) ----------------------------------------
+    SettingSpec(
+        "sound_enabled",
+        "Enable sound notifications",
+        "accessibility",
+        "bool",
+        "Play short earcon sounds for editing events (abbreviation expansion, save, search, etc.).",
+        keywords=("sound", "audio", "earcon", "notification", "beep"),
+    ),
+    SettingSpec(
+        "sound_pack_path",
+        "Sound pack path",
+        "accessibility",
+        "text",
+        "Path to a .qsp file or folder. Leave blank to use the bundled Ink pack.",
+        keywords=("sound", "pack", "qsp", "earcon", "theme"),
+    ),
+    SettingSpec(
+        "sound_volume",
+        "Sound notification volume",
+        "accessibility",
+        "int",
+        "Volume for earcon sounds (0 = silent, 100 = full).",
+        minimum=0,
+        maximum=100,
+        keywords=("sound", "volume", "audio", "earcon"),
+    ),
+    SettingSpec(
+        "sound_events_disabled",
+        "Silenced sound events",
+        "accessibility",
+        "text",
+        "Comma-separated list of sound event IDs to silence, e.g. transcription_word_inserted.",
+        keywords=("sound", "disable", "mute", "earcon", "events"),
+    ),
     # --- Read Aloud --------------------------------------------------------
     SettingSpec(
         "announcement_verbosity",
