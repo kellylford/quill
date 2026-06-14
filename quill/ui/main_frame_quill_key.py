@@ -521,6 +521,19 @@ class QuillKeyMixin:
                 return
             except Exception:
                 pass
+        # When QSP is active, route to the Ink pack instead of winsound.Beep.
+        # "enter"/"exit" are already fired unconditionally by _enter/exit_quill_key_mode.
+        from quill.ui.sound_manager import is_active, post_sound
+
+        if is_active():
+            from quill.core.sound_events import SoundEvent
+
+            _QSP_MAP = {"move": SoundEvent.HEADING_JUMPED, "error": SoundEvent.ERROR}
+            event = _QSP_MAP.get(kind)
+            if event:
+                post_sound(event)
+            return
+        # Legacy winsound.Beep fallback when QSP is not available.
         pattern = {
             "enter": [(880, 45), (1175, 45)],
             "exit": [(660, 70)],
