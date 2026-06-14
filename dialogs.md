@@ -292,7 +292,6 @@ Tools**. Only the commands that present a dialog are listed here; the remaining
 power-tool commands act directly on the document and announce their result.
 
 - [ ] Insert Special Character (codepoint prompt): Insert > Insert Special Character
-- [ ] Insert Calculated Date: Insert > Insert Calculated Date
 - [ ] Insert File Content (file picker): Insert > Insert File Content
 - [ ] Number Lines (start prompt): Format > Transform Lines > Number Lines
 - [ ] Hard-Wrap Lines (width prompt): Format > Transform Lines > Hard-Wrap Lines

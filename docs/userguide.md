@@ -330,7 +330,7 @@ The **Insert** menu adds structured content at the cursor.
 - **List** submenu: **Bullet**, **Numbered**, **Task**, and **List Manager...**.
 - **Insert Code Block**, **Insert Footnote**, **Insert Table...**, **Insert HTML Tag...**, and **Insert Markdown Tag...**.
 - **Insert Snippet...** and **Manage Snippets...** for reusable text with placeholders.
-- **Special Character...**, **Date and Time**, **Calculated Date...**, and **File Content...** insert symbols, timestamps, computed dates, and the contents of another file.
+- **Special Character...**, **Date and Time** submenu, and **File Content...** insert symbols, timestamps (date, time, and date and time), and the contents of another file. The **Date and Time** submenu is provided by the bundled `com.quill.bundled.insert-tools` Quillin.
 
 Quill treats Markdown and HTML as working surfaces, not special-purpose export formats, so tag insertion lives here beside the structural inserts.
 

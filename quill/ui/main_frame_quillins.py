@@ -98,14 +98,27 @@ class QuillinsMenuMixin:
                 )
         return menu
 
-    def _append_quillin_menu_items(self, menu: object, parent_title: str) -> None:
+    def _append_quillin_menu_items(
+        self,
+        menu: object,
+        parent_title: str,
+        *,
+        prepend_separator: bool = True,
+    ) -> None:
         """Append bundled/third-party Quillin commands whose menu home is ``parent_title``.
 
         This is what lets a Quillin's ``menus`` contribution land in its declared
-        conventional home (Insert, Format, Search, ...) instead of only the flat
-        Tools > Quillins backstop list, so a converted built-in keeps the menu
-        placement recorded in ``menus.md``. Each item is bound to run through the
-        same capability/consent-gated path as any other Quillin command.
+        conventional home (Insert, Format, Search, ...) or in a conventional
+        submenu (e.g. "Date and Time") instead of only the flat Tools > Quillins
+        backstop list, so a converted built-in keeps the menu placement recorded
+        in ``menus.md``. Each item is bound to run through the same
+        capability/consent-gated path as any other Quillin command.
+
+        ``prepend_separator`` defaults to True and prepends a separator before
+        the first appended item — which is what the top-level callers want
+        (a Quillin block visually separate from the host's own items). Submenu
+        callers pass ``prepend_separator=False`` so the first item lands at the
+        top of the submenu without a leading separator.
         """
 
         registry = getattr(self, "_quillin_registry", None)
@@ -120,7 +133,8 @@ class QuillinsMenuMixin:
             if resolved is None:
                 continue
             if not appended:
-                menu.AppendSeparator()
+                if prepend_separator:
+                    menu.AppendSeparator()
                 appended = True
             item_id = wx.NewIdRef()
             menu.Append(item_id, self._menu_label(resolved.command.title, contribution.command_id))

@@ -23,11 +23,11 @@
   "_next_target_main_frame": 15000,
   "_default_cap": 600,
   "budgets": {
-    "quill/ui/main_frame.py": 22406,
+    "quill/ui/main_frame.py": 22449,
     "quill/ui/assistant_tools.py": 1877,
     "quill/ui/assistant_panel.py": 725,
     "quill/ui/main_frame_power_tools.py": 863,
-    "quill/ui/main_frame_menu.py": 3001,
+    "quill/ui/main_frame_menu.py": 3016,
     "quill/core/read_aloud.py": 1244,
     "quill/core/assistant_ai.py": 1300,
     "quill/core/features.py": 1029,
@@ -48,7 +48,7 @@
     "quill/ui/abbreviation_manager_dialog.py": 401,
     "quill/core/ai_chat.py": 208,
     "quill/ui/ai_chat_dialog.py": 480,
-    "quill/ui/main_frame_quillins.py": 619,
+    "quill/ui/main_frame_quillins.py": 629,
     "quill/core/prompt_library.py": 364,
     "quill/ui/prompt_library_dialog.py": 488,
     "quill/ui/skill_library_dialog.py": 540,
@@ -98,7 +98,9 @@
   "_rebaseline_2026_06_14_bugs": "bugs branch (#165-#180) merged into main: a11y fixes (#166/#167/#170/#177/#178/#180), startup folder (#168), feature-search coverage (#171), glossary/guide-in-browser/WebView2 guard (#172/#173/#175), wizard UX (#177), Describe Image AttributeError (#165), Kelly Ford credits. Budgets re-measured after the merge.",
   "_rebaseline_2026_06_15_docx": "Save As Word/.docx (#204): main_frame.py 22231->22232 for docx wildcard + filter-extension map entry. export.py gains write_docx_document (Pandoc gfm->docx); pandoc.py gains convert_file_with_pandoc.",
   "_rebaseline_2026_06_15_citations": "Citation help (#203): main_frame.py 22232->22320 for insert_citation (form-driven MLA/Chicago/APA builder) + command registration + command-map entry; main_frame_menu.py 2993->3001 for Insert > Insert Citation id/item/binding. New core module citations.py (pure).",
+  "_rebaseline_2026_06_15_date_time_submenu": "Date/time consolidation: main_frame_menu.py 3001->3014 for the new Insert > Date and Time submenu (builds the wx.Menu, calls _append_quillin_menu_items with prepend_separator=False, appends the submenu under Insert). The two first-party power-tools entries for insert_date_time/calculate_and_insert_date were removed; the bundled com.quill.bundled.insert-tools Quillin is the single canonical home for date/time snippets. main_frame_quillins.py 619->629 for the prepend_separator kwarg on _append_quillin_menu_items (default True, set False by the new submenu caller) plus a docstring update describing the convention. main_frame_power_tools.py budget unchanged at current size; the mixin is strictly smaller after the migration.",
   "_rebaseline_2026_06_15_bugfix": "#209/#210 fixes: setup_wizard_pages.py 632->637 (Profile page -> wx.RadioBox so arrow keys wrap within the group, #209); main_frame.py 22337->22352 (_on_close destroys straggler top-level windows so run-from-source exits, #210).",
   "_rebaseline_2026_06_15_clearlogs": "Crash Recovery dialog: add Clear Logs button + _clear_recovery_logs helper (unlink, truncate in-use files) with a confirmation message dialog showing the count. main_frame.py 22352->22397.",
-  "_rebaseline_2026_06_15_close": "#210 (reopened): _on_close guards every shutdown step with _safely() so a failing/slow step (watch worker, ssh, settings write, recovery lock, sound backend) can never throw before event.Skip(), plus an explicit ExitMainLoop fallback. main_frame.py re-measured."
+  "_rebaseline_2026_06_15_close": "#210 (reopened): _on_close guards every shutdown step with _safely() so a failing/slow step (watch worker, ssh, settings write, recovery lock, sound backend) can never throw before event.Skip(), plus an explicit ExitMainLoop fallback. main_frame.py re-measured.",
+  "_rebaseline_2026_06_15_macos_pref": "macOS Preferences crash + snippet a11y (#212 / 6d1bc9e): open_preferences rebinds to open_general_preferences so Cmd+, lands on the settings, the Preferences hub unifies on wx.Listbook (Toolbook's native selector null-derefs in wxToolBarTool::UpdateImages on Cocoa when AddPage omits a bitmap, segfaulting Cmd+,), the abbreviation_backspace_behavior choice spec is fixed to (value, label) pairs, and the snippet editor migrates from four sequential wx.TextEntryDialog prompts to one labelled wx.Dialog (MainFrame._prompt_snippet_editor) with z-order-safe label-then-control field helpers. main_frame.py 22397->22449; main_frame_menu.py 3014->3016 (preferences handler now points at open_general_preferences)."
 }

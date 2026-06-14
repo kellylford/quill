@@ -20566,25 +20566,41 @@ class MainFrame(
         with wx.Dialog(self.frame, title=title) as dialog:
             root = wx.BoxSizer(wx.VERTICAL)
 
-            def _field(label_text: str, accessible_name: str, value: str, *, multiline=False):
+            def _add_field(make_ctrl, label_text: str) -> wx.TextCtrl:
+                # A11Y-Z-ORDER: always add the StaticText label to the sizer
+                # before instantiating the control, so the control's z-order
+                # position follows the label (screen readers associate the
+                # two by z-order, so label-after-control breaks association).
                 root.Add(wx.StaticText(dialog, label=label_text), 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
+                ctrl = make_ctrl()
+                root.Add(ctrl, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 8)
+                return ctrl
+
+            def _make_text(value: str, accessible_name: str, multiline: bool) -> wx.TextCtrl:
                 style = wx.TE_MULTILINE if multiline else 0
                 ctrl = wx.TextCtrl(
                     dialog, value=value, style=style, size=(-1, 90) if multiline else (-1, -1)
                 )
                 ctrl.SetName(accessible_name)
-                root.Add(ctrl, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 8)
                 return ctrl
 
-            name_ctrl = _field("&Name (required):", "Name", name)
-            trigger_ctrl = _field("&Trigger (required, example: ;meeting):", "Trigger", trigger)
-            description_ctrl = _field("&Description (optional):", "Description", description)
-            body_ctrl = _field(
+            name_ctrl = _add_field(lambda: _make_text(name, "Name", False), "&Name (required):")
+            trigger_ctrl = _add_field(
+                lambda: _make_text(trigger, "Trigger", False),
+                "&Trigger (required, example: ;meeting):",
+            )
+            description_ctrl = _add_field(
+                lambda: _make_text(description, "Description", False),
+                "&Description (optional):",
+            )
+            body_ctrl = _add_field(
+                lambda: _make_text(
+                    body,
+                    "Body",
+                    True,
+                ),
                 "&Body (required) - supports ${input:name}, ${choice:a|b}, "
                 "${date}, ${time}, ${cursor}:",
-                "Body",
-                body,
-                multiline=True,
             )
 
             buttons = dialog.CreateButtonSizer(wx.OK | wx.CANCEL)

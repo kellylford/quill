@@ -56,20 +56,12 @@ def _build_power_tools_registrar() -> FirstPartyRegistrar:
         label="Special &Character...",
         separator_before=True,
     )
-    add(
-        id="power.insert_date_time",
-        title="Insert Date and Time",
-        top_level="Insert",
-        group="insert",
-        label="Date and &Time",
-    )
-    add(
-        id="power.calculate_and_insert_date",
-        title="Insert Calculated Date",
-        top_level="Insert",
-        group="insert",
-        label="C&alculated Date...",
-    )
+    # NOTE: Power-tool date/time items (``power.insert_date_time`` and
+    # ``power.calculate_and_insert_date``) used to live on the Insert menu next to
+    # the bundled Quillin snippets of the same names. They were removed to
+    # eliminate the duplicate and to honour the Quillin migration: the bundled
+    # ``com.quill.bundled.insert-tools`` Quillin now ships these as a Layer 1
+    # snippet pack surfaced through the new ``Insert > Date and Time`` submenu.
     add(
         id="power.insert_file_content",
         title="Insert File Content",

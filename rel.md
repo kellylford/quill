@@ -88,5 +88,6 @@ This release also clears out a batch of accessibility and startup problems that 
 ## Things that work a little differently now
 
 - **Two entity commands, two jobs.** The older **Encode HTML Entities** still escapes only the five markup characters (`<`, `>`, `&`, `"`, `'`). The new **Convert Non-ASCII to HTML Entities** is the one that handles accents and symbols. If you used to reach for the old command expecting it to fix accented text for Pandoc, reach for the new one instead.
+- **Insert > Date and Time is a submenu now.** The flat **Date and Time** and **Calculated Date...** items have been replaced by a single **Date and Time** submenu that ships three items: **Insert Date**, **Insert Time**, and **Insert Date and Time**. The bundled `com.quill.bundled.insert-tools` Quillin owns the submenu — this is the canonical home for date/time snippets and is the model we use for migrating other built-in conveniences into Quillins.
 - **Sound is opt-in.** Most earcons are off until you choose a sound pack and enable events, so nothing about your current setup gets noisier on upgrade. Turn sound on from **Preferences → Sound** and **Tools → Reading & Dictation → Sound Events...**.
 - **Indentation tones default to Off.** They only play once you pick a scale, so code files stay silent unless you ask for the tones.

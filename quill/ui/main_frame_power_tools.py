@@ -9,16 +9,23 @@ relies on its helpers: ``self.editor``, ``self.document``, ``self.settings``,
 ``self._create_document_tab`` and the ``_apply_*`` mutation helpers.
 
 The wx-free logic lives in dedicated ``quill/core`` modules (unicode_insert,
-datetime_insert, wrap_ops, set_ops, regex_ops, cursor_address, indent_infer,
-clipboard_collector, key_describer, run_target) and ``quill/core/line_ops``; this
-layer only wires those into the editor, dialogs, and announcements.
+wrap_ops, set_ops, regex_ops, cursor_address, indent_infer, clipboard_collector,
+key_describer, run_target) and ``quill/core/line_ops``; this layer only wires
+those into the editor, dialogs, and announcements.
+
+NOTE: the former ``insert_date_time`` and ``calculate_and_insert_date`` EDS-2
+and EDS-3 methods were removed in lock-step with the date/time consolidation
+that moved all Insert-menu date/time items into the bundled
+``com.quill.bundled.insert-tools`` Quillin (``Insert > Date and Time``).
+``quill.core.datetime_insert`` is no longer imported here for that reason;
+``datetime.now`` is still used for unrelated helpers (clipboard collector,
+session metadata).
 """
 
 from __future__ import annotations
 
 import os
 import webbrowser
-from datetime import datetime
 from pathlib import Path
 
 from quill.core import format_ops as _fmt
@@ -28,12 +35,6 @@ from quill.core.cursor_address import (
     describe_document_status,
     describe_selection_length,
     offset_for_percent,
-)
-from quill.core.datetime_insert import (
-    DEFAULT_DATETIME_FORMAT,
-    calculate_date,
-    format_datetime,
-    parse_weekday,
 )
 from quill.core.document import Document
 from quill.core.html_to_markdown import extract_cf_html_fragment, html_to_markdown
@@ -59,8 +60,6 @@ from quill.core.run_target import classify_target, is_dangerous_executable, targ
 from quill.core.set_ops import format_lines, lines_common_to_both, lines_in_first_not_second
 from quill.core.storage import read_json, write_json_atomic
 from quill.core.unicode_insert import CodepointError, parse_codepoint
-
-_DATE_INSERT_FORMAT = "%Y-%m-%d"
 
 
 class PowerToolsActionsMixin:
@@ -191,60 +190,14 @@ class PowerToolsActionsMixin:
             return
         self._power_tools_insert_at_cursor(character, f"Inserted U+{ord(character):04X}")
 
-    # --------------------------------------------------------- EDS-2 date/time
-    def insert_date_time(self) -> None:
-        fmt = str(getattr(self.settings, "datetime_insert_format", "") or DEFAULT_DATETIME_FORMAT)
-        rendered = format_datetime(datetime.now(), fmt)
-        self._power_tools_insert_at_cursor(rendered, f"Inserted date and time: {rendered}")
-
-    # ------------------------------------------------------- EDS-3 calc a date
-    def calculate_and_insert_date(self) -> None:
-        from quill.ui.web_form import show_web_form
-
-        now = datetime.now()
-        values = show_web_form(
-            self.frame,
-            self._wx,
-            title="Calculate Date",
-            intro=(
-                "Enter a year and month, then either a fixed day, or a week and "
-                "weekday (for example week 4, Thursday for the 4th Thursday)."
-            ),
-            fields=[
-                {"name": "year", "label": "Year", "type": "text", "value": str(now.year)},
-                {"name": "month", "label": "Month (1-12)", "type": "text", "value": str(now.month)},
-                {"name": "day", "label": "Day of month (optional)", "type": "text", "value": ""},
-                {
-                    "name": "week",
-                    "label": "Week (optional, -1 = last)",
-                    "type": "text",
-                    "value": "",
-                },
-                {
-                    "name": "weekday",
-                    "label": "Weekday name (optional)",
-                    "type": "text",
-                    "value": "",
-                },
-            ],
-        )
-        if values is None:
-            return
-        try:
-            year = int(str(values.get("year", "")).strip())
-            month = int(str(values.get("month", "")).strip())
-            day_raw = str(values.get("day", "")).strip()
-            week_raw = str(values.get("week", "")).strip()
-            weekday_raw = str(values.get("weekday", "")).strip()
-            day = int(day_raw) if day_raw else None
-            week = int(week_raw) if week_raw else None
-            weekday = parse_weekday(weekday_raw) if weekday_raw else None
-            result = calculate_date(year, month, day=day, week=week, weekday=weekday)
-        except ValueError as error:
-            self._set_status(f"Could not calculate date: {error}")
-            return
-        rendered = result.strftime(_DATE_INSERT_FORMAT)
-        self._power_tools_insert_at_cursor(rendered, f"Inserted date: {rendered}")
+    # NOTE: EDS-2 (``insert_date_time``) and EDS-3 (``calculate_and_insert_date``)
+    # were removed in the date/time consolidation that moved all Insert-menu
+    # date/time items into the bundled ``com.quill.bundled.insert-tools``
+    # Quillin (``Insert > Date and Time``). The handlers used to live here and
+    # the corresponding ``power.insert_date_time`` / ``power.calculate_and_insert_date``
+    # commands are no longer registered. ``quill.core.datetime_insert`` still
+    # exists for tests and downstream callers but is no longer imported by this
+    # module.
 
     # ----------------------------------- EDS-4/5 line transforms (migrated)
     # ``number_lines`` and ``hard_wrap_lines`` moved onto the contribution

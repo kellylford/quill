@@ -114,8 +114,8 @@
             "properties": {
               "parent": {
                 "type": "string",
-                "description": "Top-level menu title to attach under, e.g. File, Edit, Insert, Format, Tools, Navigate, Search, Help.",
-                "enum": ["File", "Edit", "Insert", "Format", "Tools", "Navigate", "Search", "View", "Help"]
+                "description": "Top-level menu (e.g. File, Edit, Insert, Format, Tools, Navigate, Search, View, Help) or a conventional submenu parent (Date and Time) the host builds and exposes to Quillins.",
+                "enum": ["File", "Edit", "Insert", "Format", "Tools", "Navigate", "Search", "View", "Help", "Date and Time"]
               },
               "command": { "type": "string", "description": "A command id contributed above or a built-in command id." }
             }

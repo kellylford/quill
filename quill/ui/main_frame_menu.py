@@ -961,10 +961,25 @@ class MenuBuilderMixin:
                 "&Toggle Abbreviation Expansion", "format.toggle_abbreviation_expansion"
             ),
         )
-        # Special character / date-time / calculated date / file content (Power Tools
-        # recirculation, menus.md Phase 4).
+        # Power Tools recirculation (menus.md Phase 4). The power-tool date/time
+        # entries were removed: the bundled ``com.quill.bundled.insert-tools``
+        # Quillin is now the single home for Insert Date / Insert Time / Insert
+        # Date and Time, surfaced through the new "Date and Time" submenu below.
         self._append_power_tools_insert_items(insert_menu)
+        # Quillin contributions whose ``parent`` is one of the conventional
+        # top-level menus. The new ``Date and Time`` submenu is built explicitly
+        # below and routes Quillin contributions whose parent matches its name.
         self._append_quillin_menu_items(insert_menu, "Insert")
+        date_time_menu = wx.Menu()
+        # No separator-before: this is the first item of a new submenu.
+        self._append_quillin_menu_items(date_time_menu, "Date and Time", prepend_separator=False)
+        # Always show the submenu, even when no Quillin contributes a date/time
+        # item (the bundled ``insert-tools`` Quillin is enabled by default and
+        # ships the three snippets, but a user can disable it). The disabled
+        # case is the only one that surfaces an empty submenu, and a stock
+        # ``wx.Menu`` with a single visible item is still a navigable
+        # submenu, not a bug.
+        insert_menu.AppendSubMenu(date_time_menu, "Date and &Time")
         self._id_next_document = wx.NewIdRef()
         self._id_previous_document = wx.NewIdRef()
         window_menu = wx.Menu()

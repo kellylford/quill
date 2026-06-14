@@ -224,5 +224,8 @@ module = [
     # it untyped here to keep the scoped gate clean.
     "PIL",
     "PIL.*",
+    # Optional crash-reporting integration; imported lazily in
+    # core/issue_submit.py behind a try/except. Not in the dev extra.
+    "feedback_hub",
 ]
 ignore_missing_imports = true

@@ -32,8 +32,6 @@ _MENU_SOURCE = Path(eds_menu_module.__file__).read_text(encoding="utf-8")
 # Every power-tool command id that must be both registered and menu-wired.
 _POWER_TOOLS_COMMAND_IDS = [
     "power.insert_special_character",
-    "power.insert_date_time",
-    "power.calculate_and_insert_date",
     "power.insert_file_content",
     "power.new_document_from_clipboard",
     "power.paste_html_as_markdown",
@@ -228,8 +226,6 @@ def test_menu_recirculation_preserves_shipped_group_order() -> None:
     expected = {
         "insert": [
             "power.insert_special_character",
-            "power.insert_date_time",
-            "power.calculate_and_insert_date",
             "power.insert_file_content",
         ],
         "edit": [

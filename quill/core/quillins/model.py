@@ -68,7 +68,13 @@ CONSENT_GATED_CAPABILITIES: frozenset[str] = frozenset({
     CAP_NET,
 })
 
-# The fixed set of top-level menus an extension may attach a command under.
+# The fixed set of menu parents an extension may attach a command under.
+# These are the conventional top-level menus ("File", "Insert", ...) and a
+# handful of conventional submenu names (e.g. "Date and Time") that the host
+# builds and exposes to Quillins. The host maps each parent string to the
+# correct live wx menu; submenu parents are routed to the dedicated submenu
+# declared in ``quill/ui/main_frame_menu.py`` and skip the conventional
+# "Append a separator + the item" path used for the top-level menus.
 MENU_PARENTS: tuple[str, ...] = (
     "File",
     "Edit",
@@ -79,6 +85,10 @@ MENU_PARENTS: tuple[str, ...] = (
     "Search",
     "View",
     "Help",
+    # Conventional submenu parents. Keep this list in lock-step with the
+    # submenus actually built by ``quill.ui.main_frame_menu._build_menus``
+    # and with the schema enum in ``quill/core/schemas/extension.json``.
+    "Date and Time",
 )
 
 # Optional visibility guards for a context-menu contribution.
