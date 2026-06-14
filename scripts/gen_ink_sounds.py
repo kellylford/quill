@@ -329,19 +329,16 @@ def generate_all() -> None:
 
     # -- ai_thinking_started: four-note ascending arpeggio (shimmer) ---------
     arp_env = _swell_env(3, 10, 0.3, 15)
-    write_wav(
-        "ai_start.wav",
-        _concat(
-            _tone(440, 40, sine_at, arp_env),
-            _tone(550, 40, sine_at, arp_env),
-            _tone(660, 40, sine_at, arp_env),
-            _tone(880, 50, sine_at, arp_env),
-        ),
-        vol=0.65,
+    ai_start_samples = _concat(
+        _tone(440, 40, sine_at, arp_env),
+        _tone(550, 40, sine_at, arp_env),
+        _tone(660, 40, sine_at, arp_env),
+        _tone(880, 50, sine_at, arp_env),
     )
+    write_wav("ai_start.wav", ai_start_samples, vol=0.65)
 
-    # -- ai_response_received: bell tone (resonant, clean, pleasant) ---------
-    write_wav("ai_done.wav", _bell(1046, 200), vol=0.65)
+    # -- ai_response_received: exact time-reverse of ai_start ----------------
+    write_wav("ai_done.wav", list(reversed(ai_start_samples)), vol=0.65)
 
     # -- error: double square-wave buzz (intentionally harsh) ----------------
     def buzz_env(i: int, n: int) -> float:
