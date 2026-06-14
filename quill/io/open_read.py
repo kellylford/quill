@@ -101,29 +101,44 @@ def read_open_document(
         # surface a non-BRF-ASCII warning in source_metadata so the UI can
         # announce it on open. The save path (quill.io.text.write_text_document
         # + the braille_sanitized_input guard added in #228) preserves form
-        # feeds, trailing spaces, and line endings byte-for-byte.
+        # feeds, trailing spaces, and line endings byte-for-byte. A
+        # BRFDocument is built alongside the Document so downstream modules
+        # (brf_page_map, braille_position, braille_status) can consume a
+        # single, typed snapshot.
         from quill.core.brf_ascii import (
             find_non_brf_ascii_offsets,
             strip_bom,
         )
+        from quill.core.brf_document import BRFDocument
 
         raw_bytes = selected_path.read_bytes()
         text, had_bom = strip_bom(raw_bytes)
         non_ascii = find_non_brf_ascii_offsets(text)
+        brf_doc = BRFDocument.from_text_and_suffix(
+            text,
+            suffix.lstrip("."),
+            had_bom=had_bom,
+            non_ascii_offsets=non_ascii,
+        )
         loaded = Document(
             text=text,
             path=selected_path,
             modified=False,
-            encoding="ascii",
-            line_ending="\r\n" if "\r\n" in text else "\n",
+            encoding=brf_doc.encoding,
+            line_ending=brf_doc.line_ending,
             source_metadata={
                 "source_kind": "brf",
                 "engine": "braille text",
                 "quality_score": 100,
-                "brf_suffix": suffix.lstrip("."),
+                "brf_suffix": brf_doc.suffix,
                 "brf_had_bom": had_bom,
                 "brf_non_ascii_offsets": non_ascii,
                 "brf_non_ascii_count": len(non_ascii),
+                "brf_form_feed_count": brf_doc.form_feed_count,
+                "brf_is_mixed_line_endings": brf_doc.is_mixed_line_endings,
+                "brf_profile": brf_doc.profile,
+                "brf_cell_width": brf_doc.cell_width,
+                "brf_line_height": brf_doc.line_height,
             },
         )
         return loaded, None
