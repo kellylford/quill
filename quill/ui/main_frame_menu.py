@@ -1731,6 +1731,7 @@ class MenuBuilderMixin:
         menu_bar.Append(navigate_menu, "&Navigate")
         menu_bar.Append(search_menu, "&Search")
         menu_bar.Append(tools_menu, "&Tools")
+        menu_bar.Append(self._build_braille_menu(), "&Braille")
         menu_bar.Append(window_menu, "&Window")
         menu_bar.Append(help_menu, "&Help")
 
@@ -1764,6 +1765,7 @@ class MenuBuilderMixin:
         )
         self._bind_ssh_file_menu()
         self._bind_github_menu()
+        self._bind_braille_menu()
         self._dt_bind_devtools_menu()
         self.frame.Bind(wx.EVT_MENU, lambda _e: self.save_file(), id=self._id_save)
         self.frame.Bind(wx.EVT_MENU, lambda _e: self.save_file_as(), id=self._id_save_as)

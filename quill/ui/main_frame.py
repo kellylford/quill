@@ -484,6 +484,7 @@ from quill.ui.editor_surface import PLAIN, RICH, surface_kind
 from quill.ui.html_paste_cleaner import analyze_paste
 from quill.ui.main_frame_abbreviations import AbbreviationsMixin
 from quill.ui.main_frame_ai_actions import AiActionsMixin
+from quill.ui.main_frame_braille import BrailleCommandsMixin
 from quill.ui.main_frame_browse import BrowseModeMixin
 from quill.ui.main_frame_copy_tray import CopyTrayMixin
 from quill.ui.main_frame_devtools import DevToolsMixin
@@ -778,6 +779,7 @@ class _IntellisensePopup:
 class MainFrame(
     AbbreviationsMixin,
     AiActionsMixin,
+    BrailleCommandsMixin,
     ImageCaptureMixin,
     BrowseModeMixin,
     MenuBuilderMixin,
@@ -3181,6 +3183,7 @@ class MainFrame(
         )
         self._register_power_tools_commands()
         self._register_quillins_commands()
+        self._register_braille_commands()
 
     def _apply_accelerators(self) -> None:
         wx = self._wx

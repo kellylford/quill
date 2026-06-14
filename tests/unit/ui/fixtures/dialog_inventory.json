@@ -159,6 +159,7 @@
   "quill/ui/main_frame.py::MainFrame.show_thesaurus::wx.TextEntryDialog": "native",
   "quill/ui/main_frame.py::MainFrame.show_watch_folder_status::wx.Dialog": "hardened_custom",
   "quill/ui/main_frame.py::MainFrame.start_macro_recording::wx.TextEntryDialog": "native",
+  "quill/ui/main_frame_braille.py::BrailleCommandsMixin.go_to_braille_page::wx.TextEntryDialog": "native",
   "quill/ui/main_frame_copy_tray.py::CopyTrayMixin.clear_all_tray_slots::wx.MessageDialog": "native",
   "quill/ui/main_frame_copy_tray.py::_TraySearchDialog.__init__::wx.Dialog": "hardened_custom",
   "quill/ui/main_frame_github.py::GitHubRemoteMixin.github_save_back::wx.TextEntryDialog": "native",
