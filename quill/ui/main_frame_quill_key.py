@@ -185,11 +185,15 @@ class QuillKeyMixin:
         return True
 
     def _enter_quill_key_mode(self, *, sticky: bool = False) -> None:
+        from quill.core.sound_events import SoundEvent
+        from quill.ui.sound_manager import post_sound
+
         self._quill_key_prefix_pending = False
         self._quill_key_prefix_started_at = 0.0
         self._quill_key_mode_active = True
         self._quill_key_mode_sticky = sticky
         self._quill_key_mode_started_at = time.monotonic()
+        post_sound(SoundEvent.BROWSE_MODE_ON)
         if sticky:
             self._quill_feedback(
                 "QUILL browse mode locked. It stays active until you press Escape.",
@@ -208,9 +212,13 @@ class QuillKeyMixin:
         self._refresh_statusbar()
 
     def _exit_quill_key_mode(self, message: str) -> None:
+        from quill.core.sound_events import SoundEvent
+        from quill.ui.sound_manager import post_sound
+
         self._quill_key_mode_active = False
         self._quill_key_mode_sticky = False
         self._quill_key_mode_started_at = 0.0
+        post_sound(SoundEvent.BROWSE_MODE_OFF)
         self._quill_feedback(message, status_message=message, sound_kind="exit")
         self._refresh_statusbar()
 

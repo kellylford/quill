@@ -1118,6 +1118,13 @@ class MainFrame(
             self._refresh_title()
         except Exception:
             self._report_startup_task_failure("startup finalization")
+        if not safe_mode:
+            try:
+                from quill.ui import sound_manager
+
+                sound_manager.init(self.settings)
+            except Exception:
+                self._report_startup_task_failure("sound manager init")
 
     @property
     def _help_frame(self) -> object:
@@ -4974,6 +4981,12 @@ class MainFrame(
         save_settings(self.settings)
         self.flush_persistent_undo()
         mark_clean_exit(self.session_id)
+        try:
+            from quill.ui import sound_manager
+
+            sound_manager.shutdown()
+        except Exception:  # noqa: BLE001
+            pass
         event.Skip()
 
     def _on_iconize(self, event: object) -> None:
@@ -6420,6 +6433,10 @@ class MainFrame(
         self._location_ring = LocationRing()
         self._location_ring.record(0)
         self._set_status("New document")
+        from quill.core.sound_events import SoundEvent
+        from quill.ui.sound_manager import post_sound
+
+        post_sound(SoundEvent.DOCUMENT_CREATED)
 
     def open_file(
         self,
@@ -7282,6 +7299,10 @@ class MainFrame(
         self.flush_persistent_undo()
         self._refresh_title()
         self._set_status(f"Saved {self.document.name}")
+        from quill.core.sound_events import SoundEvent
+        from quill.ui.sound_manager import post_sound
+
+        post_sound(SoundEvent.DOCUMENT_SAVED)
         # If this file was opened over SSH, upload it back to the remote host
         # with a tilde backup in its original newline style (#139).
         self.maybe_upload_remote_on_save()
@@ -8238,6 +8259,12 @@ class MainFrame(
         self._refresh_title()
         self._refresh_view_menu_checks()
         self._clear_navigation_issue_state()
+        try:
+            from quill.ui import sound_manager
+
+            sound_manager.on_settings_changed(self.settings)
+        except Exception:  # noqa: BLE001
+            pass
         self._set_status(status)
 
     def open_menu_editor(self) -> None:
@@ -17178,6 +17205,10 @@ class MainFrame(
             return
         if not matches:
             self._set_status("No matches found")
+            from quill.core.sound_events import SoundEvent
+            from quill.ui.sound_manager import post_sound
+
+            post_sound(SoundEvent.SEARCH_NOT_FOUND)
             return
 
         cursor = self.editor.GetInsertionPoint()
@@ -17206,6 +17237,10 @@ class MainFrame(
 
         if chosen is None:
             self._set_status("No matches found from the current position")
+            from quill.core.sound_events import SoundEvent
+            from quill.ui.sound_manager import post_sound
+
+            post_sound(SoundEvent.SEARCH_NOT_FOUND)
             return
 
         start, end = chosen
@@ -17222,6 +17257,10 @@ class MainFrame(
             " (wrapped)" if wrapped and getattr(self.settings, "announce_wrap", True) else ""
         )
         self._set_status(f"Found {direction} at position {start + 1}{wrap_suffix}")
+        from quill.core.sound_events import SoundEvent
+        from quill.ui.sound_manager import post_sound
+
+        post_sound(SoundEvent.SEARCH_WRAPPED if wrapped else SoundEvent.SEARCH_FOUND)
 
     def _ensure_extend_selection_anchor(self) -> None:
         if not self._extend_selection_mode or self._extend_selection_anchor is not None:

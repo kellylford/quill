@@ -1,0 +1,32 @@
+{
+  "format": "qsp",
+  "version": "1",
+  "name": "Ink",
+  "author": "Jeff Bishop",
+  "description": "Crisp synthesised earcons for focused writing. Placeholder tones — replace WAV files with recorded audio.",
+  "license": "CC0",
+  "events": {
+    "abbreviation_expanded":  "expand.wav",
+    "abbreviation_deleted":   "delete.wav",
+    "snippet_inserted":       "snippet.wav",
+    "autocomplete_accepted":  "expand.wav",
+    "document_saved":         "save.wav",
+    "document_created":       "create.wav",
+    "search_found":           "found.wav",
+    "search_not_found":       "notfound.wav",
+    "search_wrapped":         "wrap.wav",
+    "heading_jumped":         "nav_heading.wav",
+    "table_entered":          "nav_table.wav",
+    "browse_mode_on":         "browse_on.wav",
+    "browse_mode_off":        "browse_off.wav",
+    "ai_thinking_started":    "ai_start.wav",
+    "ai_response_received":   "ai_done.wav",
+    "ai_error":               "error.wav",
+    "transcription_started":  "rec_start.wav",
+    "transcription_stopped":  "rec_stop.wav",
+    "ssh_connected":          "connect.wav",
+    "ssh_disconnected":       "disconnect.wav",
+    "error":                  "error.wav",
+    "warning":                "warning.wav"
+  }
+}

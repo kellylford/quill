@@ -89,6 +89,23 @@ def is_active() -> bool:
     return _manager is not None and _manager.enabled
 
 
+def register_quillin_sounds(
+    quillin_id: str,
+    directory: Path,
+    sound_pack: str,
+    sound_events: tuple[tuple[str, str], ...],
+) -> None:
+    """Merge a Quillin's QSP contribution into the active pack.
+
+    Called once per Quillin at registration time.  A missing or broken
+    sound_pack directory is silently ignored so Quillin load never fails on
+    audio issues.
+    """
+    if _manager is None or not sound_pack:
+        return
+    _manager.register_quillin_sounds(quillin_id, directory, sound_pack, sound_events)
+
+
 # ---------------------------------------------------------------------------
 # Internal manager class
 # ---------------------------------------------------------------------------
@@ -161,6 +178,30 @@ class _SoundManager:
                 output.set_volume(volume / 100.0)
             except Exception:  # noqa: BLE001
                 pass
+
+    def register_quillin_sounds(
+        self,
+        quillin_id: str,
+        directory: Path,
+        sound_pack: str,
+        sound_events: tuple[tuple[str, str], ...],
+    ) -> None:
+        """Merge WAV bytes from a Quillin's sound_pack into the active player pack."""
+        pack_dir = directory / sound_pack
+        if not pack_dir.is_dir():
+            logger.debug(
+                "SoundManager: Quillin %s sound_pack dir not found: %s", quillin_id, pack_dir
+            )
+            return
+        for event_id, wav_name in sound_events:
+            wav_path = pack_dir / wav_name
+            if not wav_path.is_file():
+                continue
+            try:
+                wav_bytes = wav_path.read_bytes()
+                self.player.register_event(event_id, wav_bytes)
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("SoundManager: Quillin %s sound %s: %s", quillin_id, wav_name, exc)
 
     @staticmethod
     def _bundled_ink_path() -> Path | None:

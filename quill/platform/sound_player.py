@@ -238,6 +238,11 @@ class SoundPlayer:
             len(disabled),
         )
 
+    def register_event(self, event_id: str, wav: bytes) -> None:
+        """Add or replace a single event's WAV bytes (used by Quillin sound packs)."""
+        with self._lock:
+            self._events[event_id] = wav
+
     def set_disabled(self, disabled: frozenset[str]) -> None:
         with self._lock:
             self._disabled = disabled
