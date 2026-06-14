@@ -1866,6 +1866,12 @@ class MainFrame(
             None,
         )
         self.commands.register(
+            "tools.sound_toggle",
+            "Toggle Sound Notifications",
+            self.toggle_sound,
+            self._binding_for("tools.sound_toggle"),
+        )
+        self.commands.register(
             "tools.dictation_toggle",
             "Dictation",
             self.toggle_dictation,
@@ -3138,6 +3144,7 @@ class MainFrame(
             "tools.dictionary_status": self._id_dictionary_status,
             "tools.announcement_backend": self._id_announcement_backend,
             "tools.announcement_trace_toggle": self._id_toggle_announcement_trace,
+            "tools.sound_toggle": self._id_toggle_sound,
             "tools.watch_folder_toggle": self._id_watch_folder_toggle,
             "tools.watch_folder_settings": self._id_watch_folder_settings,
             "tools.watch_folder_status": self._id_watch_folder_status,
@@ -9452,6 +9459,20 @@ class MainFrame(
         """Open Settings at the Accessibility tab where announcement trace can be toggled."""
         self.open_general_preferences()
         self._set_status("Announcement trace setting is in Settings > Accessibility")
+
+    def toggle_sound(self, enabled: bool | None = None) -> None:
+        from quill.core.settings import save_settings
+        from quill.ui import sound_manager
+
+        current = bool(getattr(self.settings, "sound_enabled", True))
+        if enabled is None:
+            enabled = not current
+        self.settings.sound_enabled = enabled
+        save_settings(self.settings)
+        sound_manager.on_settings_changed(self.settings)
+        state = "on" if enabled else "off"
+        self._announce(f"Sound notifications {state}")
+        self._set_status(f"Sound notifications {state}")
 
     def _set_keyboard_pack(self, pack_name: str) -> None:
         self.settings.keyboard_pack = pack_name
