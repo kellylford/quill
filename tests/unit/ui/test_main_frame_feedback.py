@@ -70,6 +70,25 @@ def test_report_bug_feedback_hub_path_goes_through_show_modal_dialog(monkeypatch
     assert frame._notification == ("Submitted feedback via feedback hub", "support")
 
 
+def test_report_bug_falls_back_to_legacy_when_hub_raises(monkeypatch) -> None:
+    # A broken/incompatible feedback_hub must not strand the user without a
+    # report dialog (#210 follow-up): report_bug falls back to the built-in form.
+    frame = _build_frame()
+    monkeypatch.setattr(frame, "_feedback_hub_available", lambda: True)
+
+    def _boom() -> None:
+        raise RuntimeError("hub exploded")
+
+    monkeypatch.setattr(frame, "_report_bug_via_hub", _boom)
+    legacy_called: list[bool] = []
+    monkeypatch.setattr(frame, "_report_bug_legacy", lambda: legacy_called.append(True))
+
+    frame.report_bug()
+
+    assert legacy_called == [True]
+    assert frame._status_message == "Report a Bug: using the built-in form"
+
+
 def test_report_bug_reviews_then_opens_support_form(monkeypatch) -> None:
     frame = _build_frame()
     opened: list[str] = []

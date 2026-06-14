@@ -23,7 +23,7 @@
   "_next_target_main_frame": 15000,
   "_default_cap": 600,
   "budgets": {
-    "quill/ui/main_frame.py": 22422,
+    "quill/ui/main_frame.py": 22441,
     "quill/ui/assistant_tools.py": 1877,
     "quill/ui/assistant_panel.py": 725,
     "quill/ui/main_frame_power_tools.py": 863,
@@ -101,5 +101,6 @@
   "_rebaseline_2026_06_15_bugfix": "#209/#210 fixes: setup_wizard_pages.py 632->637 (Profile page -> wx.RadioBox so arrow keys wrap within the group, #209); main_frame.py 22337->22352 (_on_close destroys straggler top-level windows so run-from-source exits, #210).",
   "_rebaseline_2026_06_15_clearlogs": "Crash Recovery dialog: add Clear Logs button + _clear_recovery_logs helper (unlink, truncate in-use files) with a confirmation message dialog showing the count. main_frame.py 22352->22397.",
   "_rebaseline_2026_06_15_close": "#210 (reopened): _on_close guards every shutdown step with _safely() so a failing/slow step (watch worker, ssh, settings write, recovery lock, sound backend) can never throw before event.Skip(), plus an explicit ExitMainLoop fallback. main_frame.py re-measured.",
+  "_rebaseline_2026_06_14_reportbug": "#210 follow-up (report-a-bug failsafe + token unification): main_frame.py 22422->22441. report_bug() now prefers feedback_hub but on ANY runtime failure falls back to the always-present built-in form (a missing/broken feedback_hub, which ships from a separate repo, must never strand the user with no dialog). Extracted _report_bug_via_hub() which passes a unified token from the new core.feedback_token.effective_github_token (QUILL secure store first, env import second). New files keep growth off main_frame; core/schemas/feedback.json gains a screen_reader select so the SR combo shows in the feedback_hub dialog too.",
   "_rebaseline_2026_06_14_hardexit": "#210 (still reopened): the guarded close cannot rescue a shutdown step that BLOCKS the UI thread or a wx main loop that never returns. Reporter diagnostics show 5-10s UI stalls. main_frame.py 22406->22422 for: (1) arming a daemon hard-exit watchdog once _on_close passes its veto checks, and (2) reordering _on_close so save-settings/undo-flush/clean-exit-marker run BEFORE the blocking teardown (ssh, sound) so the 5s force-exit can never lose user data. The watchdog itself is extracted to the new quill/stability/shutdown_watchdog.py (arm_hard_exit) to keep main_frame growth minimal."
 }

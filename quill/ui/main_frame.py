@@ -11424,17 +11424,36 @@ class MainFrame(
         self._set_status(f"Saved diagnostics bundle to {bundle_path.name}")
 
     def report_bug(self) -> None:
-        if not self._feedback_hub_available():
-            self._report_bug_legacy()
-            return
+        # feedback_hub is an optional, separately-shipped component (#210
+        # follow-up). When it is importable we prefer it, but any runtime
+        # failure must still leave the user with a working report dialog, so we
+        # fall back to the always-present built-in form rather than crashing
+        # with no window.
+        if self._feedback_hub_available():
+            try:
+                self._report_bug_via_hub()
+                return
+            except Exception:  # noqa: BLE001 - never strand the user without a form
+                import logging
+
+                logging.getLogger(__name__).warning(
+                    "feedback_hub bug report failed; using the built-in form", exc_info=True
+                )
+                self._set_status("Report a Bug: using the built-in form")
+        self._report_bug_legacy()
+
+    def _report_bug_via_hub(self) -> None:
         from feedback_hub import load_schema
         from feedback_hub.wx_dialog import FeedbackDialog
+
+        from quill.core.feedback_token import effective_github_token
 
         schema_path = Path(__file__).parent.parent / "core" / "schemas" / "feedback.json"
         dlg = FeedbackDialog(
             self.frame,
             schema=load_schema(schema_path),
             app_version=__version__ or "0.0.0",
+            github_token=effective_github_token(),
         )
         result = self._show_modal_dialog(dlg, "Report an Issue")
         dlg.Destroy()
