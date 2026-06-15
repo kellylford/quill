@@ -26,7 +26,7 @@
     "quill/ui/main_frame.py": 22619,
     "quill/ui/main_frame_quill_key.py": 641,
     "quill/ui/main_frame_braille.py": 610,
-    "quill/ui/assistant_tools.py": 1877,
+    "quill/ui/assistant_tools.py": 1982,
     "quill/ui/assistant_panel.py": 725,
     "quill/ui/main_frame_power_tools.py": 863,
     "quill/ui/main_frame_menu.py": 3018,
@@ -36,10 +36,10 @@
     "quill/ui/github_dialogs.py": 638,
     "quill/core/glow.py": 810,
     "quill/core/settings_registry.py": 158,
-    "quill/core/settings_specs.py": 1290,
+    "quill/core/settings_specs.py": 1323,
     "quill/core/watch_actions.py": 700,
     "quill/io/structured.py": 664,
-    "quill/core/settings.py": 750,
+    "quill/core/settings.py": 782,
     "quill/core/copy_tray.py": 139,
     "quill/ui/main_frame_copy_tray.py": 332,
     "quill/ui/copy_tray_dialog.py": 267,
@@ -117,5 +117,6 @@
   "_rebaseline_2026_06_14_braille_save": "#235 (BR-012) BRF byte-for-byte save: main_frame.py 22567->22576 for registering the soft save-warning hook and _announce_brf_save_warning. The verbatim write path (no line-ending normalization, no trailing-space trim, form feeds + encoding preserved) and the non-NABCC warning live in quill/io/text.py (_write_brf_document + set_save_warning_hook), with byte-for-byte round-trip tests over the corpus fixture.",
   "_rebaseline_2026_06_14_braille_menu": "#234 (BR-011) Braille menu + Phase 1 commands: main_frame.py 22564->22567 (BrailleCommandsMixin added to the MRO + import + _register_braille_commands call) and main_frame_menu.py 3016->3018 (top-level Braille menu append + _bind_braille_menu call). The 14 command handlers, command registration, and the Status/Navigation/Page-Tools menu live in the new quill/ui/main_frame_braille.py (388 lines, under the default cap) to keep main_frame growth to the wiring only.",
   "_rebaseline_2026_06_14_quill_key_chord": "Grave key detection + data-driven chord dispatch (QUILL key session): main_frame_quill_key.py new explicit entry at 641 (over 600 default cap) for _event_matches_grave_key, _chord_command_for_event, _parse_chord_second_key, _second_key_matches_event; main_frame.py 22605->22619 for chord binding validator in _apply_keymap_binding; keymap.py 442->443 for power.paste_html_as_markdown binding (M was previously dead, now wired via keymap).",
-  "_rebaseline_2026_06_14_non_ascii_jump": "#197 non-ASCII jump navigation: keymap.py 443->445 for two new empty-binding stubs (power.non_ascii_jump_to_source, power.non_ascii_jump_to_report). main_frame_power_tools.py stays under its 863 budget (858 actual). main_frame_power_tools_menu.py stays under the 600 default cap (597 actual)."
+  "_rebaseline_2026_06_14_non_ascii_jump": "#197 non-ASCII jump navigation: keymap.py 443->445 for two new empty-binding stubs (power.non_ascii_jump_to_source, power.non_ascii_jump_to_report). main_frame_power_tools.py stays under its 863 budget (858 actual). main_frame_power_tools_menu.py stays under the 600 default cap (597 actual).",
+  "_rebaseline_2026_06_15_vision_prompts": "#195 Vision Prompt Library: settings.py 750->782 for four new vision_* fields (default_prompt_style, prompt_picker_enabled, disabled_builtin_styles, custom_prompts) with validation and BUILTIN_STYLE_IDS top-level import; settings_specs.py 1290->1323 for four new SettingSpec entries; assistant_tools.py 1877->1982 for vision prompt UI controls (picker checkbox, default-style Choice, Image Prompt Styles button) and _refresh_vision_style_dropdown helper."
 }

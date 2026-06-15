@@ -309,8 +309,7 @@ class VisionPromptManagerDialog:
         current_default = self._settings.vision_default_prompt_style
         surviving_custom_ids = {e.get("id", "") for e in self._custom}
         if current_default in self._disabled or (
-            current_default not in BUILTIN_STYLE_IDS
-            and current_default not in surviving_custom_ids
+            current_default not in BUILTIN_STYLE_IDS and current_default not in surviving_custom_ids
         ):
             self._settings.vision_default_prompt_style = "accessibility"
         save_settings(self._settings)
@@ -401,9 +400,7 @@ class VisionPromptManagerDialog:
             new_id = f"custom-{new_id}"
         # Avoid collision with existing custom prompt IDs (excluding the entry
         # being edited, if any)
-        existing_custom_ids = {
-            e.get("id", "") for e in self._custom if e.get("id") != exclude_id
-        }
+        existing_custom_ids = {e.get("id", "") for e in self._custom if e.get("id") != exclude_id}
         if new_id in existing_custom_ids:
             suffix = 2
             base_id = new_id
