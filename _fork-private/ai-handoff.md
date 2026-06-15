@@ -8,6 +8,10 @@ This document captures the process and constraints for using multiple AI tools
 to develop and contribute features to this project. Written after the Vision
 Prompt Library (issue #195 / PR #248) contribution.
 
+**See also:** `_fork-private/spec-template.md` — the full spec template adapted
+for this project. Use it for Session 1 (spec drafting). Section 5 of the
+template is the constraints block that gets copy-pasted to the implementing AI.
+
 ---
 
 ## The workflow that works
@@ -82,10 +86,46 @@ TYPING — new core/ and io/ code must be strict-typed (mypy clean):
 Before giving a spec to an implementing AI, verify it covers:
 
 - [ ] Names every existing file/class/dialog the feature touches
-- [ ] Notes other consumers of any shared component being modified
+- [ ] **Shared component audit complete** — for every existing class/dialog being modified, lists all its other callers
 - [ ] Specifies new settings fields, their types, and valid values
-- [ ] Describes the dialog/UI structure down to button labels and control names
+- [ ] Describes the dialog/UI structure down to button labels and control names (`SetName()` values matter for screen readers)
 - [ ] Calls out any module budget files that will grow
+- [ ] Keyboard walkthrough covers every path including error cases and edge cases
+- [ ] **Acceptance walkthrough written** — numbered steps to run in the app after implementation (see below)
+
+---
+
+## Acceptance walkthrough (add to every spec)
+
+The keyboard walkthrough in the spec proves the feature is *designed*. The
+acceptance walkthrough proves it *works*. Write it in the spec before
+implementation starts, then run it yourself at Session 3.
+
+**Format:** numbered steps with concrete actions and verifiable outcomes.
+Each step is something you physically do and something you physically observe.
+
+```
+### Scenario: [Name]
+Setup: [app state — e.g., "app running, image loaded"]
+
+1. Do [action]. Verify: [exact observable outcome].
+2. Do [action]. Verify: [exact observable outcome].
+3. Edge case: Do [unusual action]. Verify: [no crash / graceful handling].
+```
+
+**Always include:**
+- The primary happy path end-to-end
+- The primary error/failure case
+- Every shared component you modified — one scenario per call site
+- New settings toggled on and off — verify UI responds without restart
+- Screen reader — tab through every new control, read `SetName()` aloud
+- Safe mode (`QUILL_SAFE_MODE=1`) if the feature touches AI/network/Quillins
+
+**Lesson from #195:** The `OcrReviewDialog` shared dialog bug (retry button
+appearing in OCR context) would have been caught immediately by a scenario
+that said: "Run OCR. Verify: no retry button is present." Write those
+scenarios for every shared component — don't assume unchanged call sites
+are safe.
 
 ---
 
@@ -152,9 +192,13 @@ PRs.
   it couldn't have known without CLAUDE.md — ruff formatting, banned patterns,
   module budgets. Feed it the constraints block above next time.
 - A pre-existing bug (`OcrReviewDialog` edit control always named "Recognized
-  text" regardless of caller) was discovered during manual testing. AI review
-  would not have caught this without running the app. Always test the golden
-  path manually.
+  text" regardless of caller) was discovered during manual testing, not during
+  code review. AI cannot test UI. The acceptance walkthrough would have surfaced
+  this with a single scenario: "Run OCR. Verify: no retry button, control named
+  'Recognized text'."
+- The spec's shared component audit was missing — it didn't name `OcrReviewDialog`'s
+  second call site (OCR results). A shared component audit + acceptance walkthrough
+  scenario per call site would have caught this before implementation.
 - The spec document was committed to `main` but never cherry-picked onto the
   feature branch — caught during PR review. Make adding the spec to the feature
   branch part of the initial commit.
