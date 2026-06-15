@@ -390,13 +390,19 @@ class ImageCaptureMixin:
             resolve_prompt_text,
         )
 
+        # Reload settings from disk so vision prompt preferences saved by the
+        # AI Hub are visible without restarting Quill.
+        from quill.core.settings import load_settings
+
+        current_settings = load_settings()
+
         # Gather settings for the prompt library.
-        default_style_id = getattr(self.settings, "vision_default_prompt_style", "accessibility")
-        picker_enabled = bool(getattr(self.settings, "vision_prompt_picker_enabled", False))
+        default_style_id = getattr(current_settings, "vision_default_prompt_style", "accessibility")
+        picker_enabled = bool(getattr(current_settings, "vision_prompt_picker_enabled", False))
         disabled_builtins: list[str] = list(
-            getattr(self.settings, "vision_disabled_builtin_styles", [])
+            getattr(current_settings, "vision_disabled_builtin_styles", [])
         )
-        custom_prompts: list[dict] = list(getattr(self.settings, "vision_custom_prompts", []))
+        custom_prompts: list[dict] = list(getattr(current_settings, "vision_custom_prompts", []))
 
         # --- Phase 3: opt-in pre-describe picker ---
         current_style_id = default_style_id
@@ -427,9 +433,7 @@ class ImageCaptureMixin:
                 _state: dict[str, object] = progress_state,
             ) -> None:
                 try:
-                    text, error = describe_image(
-                        connection, api_key, image_path, prompt=_prompt
-                    )
+                    text, error = describe_image(connection, api_key, image_path, prompt=_prompt)
                     _state["text"] = text
                     _state["error"] = error
                 except Exception as exc:  # noqa: BLE001
