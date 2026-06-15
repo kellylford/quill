@@ -583,7 +583,15 @@ model — switching providers never loses another provider's configuration:
    actually answer — quick quality confirmation before you rely on them.
 7. **Forget this provider's key** clears just that one provider's key.
 8. **On-device model...** opens the local model (GGUF) settings for llama.cpp.
-9. Save (OK). The chosen provider/model becomes active immediately and Quill
+9. **Image Prompt Styles…** opens the vision prompt manager where you can enable
+   or disable built-in description styles, add custom prompts, and preview the
+   full prompt text for any style.
+10. **Show a style picker before each image description** — when checked, a
+    style list appears after you choose an image source so you can pick a
+    different prompt each time.
+11. **Default description style** — the style Quill uses for image descriptions
+    when the picker is off. Defaults to Accessibility.
+12. Save (OK). The chosen provider/model becomes active immediately and Quill
    announces plain-language verification feedback (ready, auth failure, timeout,
    or endpoint unreachable).
 
@@ -1961,6 +1969,60 @@ Skills are multi-step AI workflows. Where a prompt is one instruction, a skill i
 **Authoring and sharing skills.** A skill is a `.sqp` (Skill Quill Pack) file — a plain Markdown document with YAML front matter. Open any `.sqp` file in QUILL to read and edit it. Share skills by sharing the file. See `docs/quillins.md` §20 for the full authoring reference, and `docs/userguide.md` for a guided walkthrough.
 
 **Validating a skill file.** Run `python -m quill.tools.sqp_validator yourskill.sqp` to check for errors before sharing or shipping.
+
+### Describe Image with AI
+
+`Tools > Describe Image with AI` sends an image to your configured vision model and returns a written description you can insert, copy, or discard. The feature supports file images, clipboard images, and screen captures.
+
+**Choosing an image source.** When you activate the command, Quill asks how to get the image:
+
+- **File** — opens a standard file picker for common image formats (PNG, JPEG, GIF, WebP, BMP, TIFF, HEIC).
+- **Clipboard** — uses the image currently on the clipboard.
+- **Screen capture** — captures a region of the screen.
+
+After you choose a source, Quill shows a progress dialog while the model works. When the description arrives, a review dialog opens with the text in a read-only area. From there you can:
+
+- **Insert** — places the description at the cursor in the current document.
+- **Copy** — copies the description to the clipboard.
+- **Discard** — closes the dialog without keeping the description.
+- **Try a different prompt…** — re-runs the description with a different style (see below).
+
+**Description styles.** Quill ships twelve prompt styles, each tuned for a different purpose:
+
+| Style | Best for |
+| --- | --- |
+| Accessibility *(default)* | Screen-reader descriptions with sizes, positions, and verbatim text |
+| Narrative | Scene overview, left-to-right, spatial relationships |
+| Detailed | Structured output: subject, setting, colors, composition, details |
+| Concise | Two to three sentences covering what, where, and what is happening |
+| Artistic | Visual qualities: light, color relationships, mood |
+| Technical | Orientation, lighting, composition, clarity, strengths and limits |
+| Colorful | Specific color names, lighting direction, atmosphere |
+| Simple | One sentence |
+| Comparison | Analogies and familiar-object comparisons |
+| Mood | Emotional atmosphere and psychological tone |
+| Functional | Focus on function, purpose, and action verbs |
+| AI Alt Text | Three alt-text variants at 25, 50, and 100 words |
+
+By default, Quill uses the Accessibility style and never shows a picker — the feature works exactly as it did before the prompt library was added. If you want to choose a style each time, turn on the picker in the AI Hub.
+
+**Trying a different style from the review dialog.** After a description appears, press Tab to reach the **Try a different prompt…** button and activate it. A list of enabled styles appears. Choose one and Quill re-runs the description with that style. If the retry fails for any reason, the original description stays available so you never lose work.
+
+**Enabling the pre-describe picker.** Open the AI Hub (`Tools > AI Assistant > AI Hub...`) and check **Show a style picker before each image description**. With this on, a style list appears right after you choose an image source, before the model runs. The picker remembers your last choice within the session.
+
+**Setting a default style.** In the AI Hub, use the **Default description style** dropdown to pick which style Quill uses when the picker is off. The default is Accessibility.
+
+**Managing prompt styles.** Press the **Image Prompt Styles…** button in the AI Hub to open the manager:
+
+- The list shows every built-in and custom style. Arrow through to hear each name.
+- Select a style to read its full prompt text in the preview pane below the list.
+- Use **Disable** to hide a built-in style from the picker. Disabled styles show `[hidden]` in the list. Use **Enable** to bring one back.
+- Use **Add…** to create a custom prompt. Give it a title and write the instruction text the model will receive.
+- Use **Edit…** to change a custom prompt's title or text. Built-in prompts cannot be edited in place — disable the built-in and create a custom replacement instead.
+- Use **Delete** to remove a custom prompt. Built-in prompts cannot be deleted.
+- Changes save when you press **Close**. There is no separate save step.
+
+Built-in prompt text is never visible in the picker or the review dialog — only in this manager's preview pane, and only when you choose to look at it.
 
 ## Control Reference
 

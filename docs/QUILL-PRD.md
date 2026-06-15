@@ -2947,6 +2947,65 @@ By default QUILL stores AI provider keys in the Windows Credential Manager, whic
 
 ---
 
+### 5.86 Vision Prompt Library — twelve description styles for Describe Image with AI
+
+Quill's Describe Image with AI feature sends an image to a vision-capable model and returns a written description. Before the prompt library, it used a single hardcoded prompt optimized for screen-reader users. The Vision Prompt Library adds twelve evaluated prompt styles so users can choose a style that fits their purpose — a screen-reader description, alt-text drafts, a technical evaluation, or a mood description — while keeping the default behaviour unchanged for users who never change a setting.
+
+**Design principles.**
+
+1. **Zero disruption by default.** Users who never change a setting see identical behaviour. The default style maps to the same Accessibility intent as the original hardcoded prompt.
+2. **One action to try a different style.** A "Try a different prompt…" button in the review dialog lets users re-run the description without restarting the flow.
+3. **Opt-in picker, not forced picker.** Showing a style picker before every description is off by default. Users who want it can turn it on in the AI Hub.
+4. **Built-in prompts are immutable; custom prompts are additive.** Users can disable built-ins and add their own, but the shipped prompts are not editable in place.
+5. **Progressive involvement.** Casual users see only the result. Users who open the style picker see names only. Users who open the manager can read the full prompt text and create custom prompts.
+
+**The twelve styles.**
+
+| ID | Title | Purpose |
+| --- | --- | --- |
+| `narrative` | Narrative | Scene overview, left-to-right, spatial relationships |
+| `detailed` | Detailed | Structured: SUBJECT / SETTING / COLORS / COMPOSITION / DETAILS |
+| `concise` | Concise | Two to three sentence summary: what, where, happening |
+| `artistic` | Artistic | Visual qualities: light, colour relationships, mood |
+| `technical` | Technical | Orientation, lighting, composition, clarity, strengths and limits |
+| `colorful` | Colorful | Specific colour names, lighting direction, one-sentence atmosphere |
+| `simple` | Simple | One sentence |
+| `accessibility` | Accessibility *(default)* | Screen-reader optimised; left-to-right with sizes and positions |
+| `comparison` | Comparison | Analogies and familiar-object comparisons |
+| `mood` | Mood | Emotional atmosphere, psychological tone |
+| `functional` | Functional | Focus on function, purpose, verbs |
+| `aialttext` | AI Alt Text | Three alt-text variants at 25, 50, and 100 words |
+
+**Settings.**
+
+| Setting | Type | Default | Description |
+| --- | --- | --- | --- |
+| `vision_default_prompt_style` | str | `"accessibility"` | Style used when the picker is off. Validated against built-in and custom IDs; falls back to `"accessibility"` if the referenced style no longer exists. |
+| `vision_prompt_picker_enabled` | bool | `False` | When True, a style picker appears before each describe. |
+| `vision_disabled_builtin_styles` | list[str] | `[]` | Built-in style IDs to hide from the picker. |
+| `vision_custom_prompts` | list[dict] | `[]` | User-defined `{id, title, prompt}` entries appended after built-ins. |
+
+**Describe-again loop.** When the review dialog returns `ID_RETRY` (from the "Try a different prompt…" button), `describe_image_with_ai()` shows the style picker, re-runs `describe_image(prompt=chosen_prompt)` in a background thread, and re-opens the review dialog with the new text. The original description is cached as a fallback — if the retry fails, the user can still insert the first result.
+
+**Manage Image Prompts dialog.** Opened from the AI Hub via "Image Prompt Styles…". A `wx.ListBox` lists all built-in and custom styles (disabled built-ins marked `[hidden]`). A read-only `wx.TextCtrl` preview pane shows the full prompt text for the selected style. Buttons: Disable/Enable (for built-ins), Add…, Edit…, Delete (for custom prompts). Changes are written to settings on Close; there is no separate save step.
+
+**AI Hub integration.** The AI Hub gains three controls: a "Show a style picker before each image description" checkbox, a "Default description style" dropdown populated from enabled styles, and an "Image Prompt Styles…" button that opens the manager.
+
+**Implementation map.**
+
+| File | Role |
+| --- | --- |
+| `quill/core/ai/vision_prompts.py` | Twelve prompt constants, `BUILTIN_PROMPT_STYLES` registry, `resolve_prompt_text()`, `enabled_style_choices()` |
+| `quill/core/settings.py` | Four new fields on `Settings` with validation |
+| `quill/ui/main_frame_image.py` | Picker branch, retry loop, `_show_style_picker()` helper |
+| `quill/ui/ocr_review_dialog.py` | `ID_RETRY` constant, "Try a different prompt…" button |
+| `quill/ui/vision_prompt_manager_dialog.py` | `VisionPromptManagerDialog` |
+| `quill/ui/assistant_tools.py` | AI Hub controls for picker toggle, default style, and manager button |
+
+**Out of scope for v1.** "Run all styles" at once, per-document remembered style, editing built-in prompt text in place, reordering built-in prompts, and any Quillin/extension API changes.
+
+---
+
 ## 6. Spell checking deep dive
 
 ### 6.1 The TinySpell question

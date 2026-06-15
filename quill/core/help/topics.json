@@ -527,6 +527,19 @@
     "see_also": ["ai_chat.provider_selector"]
   },
   {
+    "id": "vision_prompt_manager.style_list",
+    "title": "Image Prompt Styles",
+    "body": "Lists all built-in and custom image description styles. Arrow through to hear each style's name. Disabled built-in styles show [hidden] before the name. Select a style to read its full prompt text in the preview pane below.",
+    "keystrokes": ["Alt+D - Disable/Enable selected", "Alt+A - Add custom prompt", "Alt+E - Edit custom prompt"],
+    "user_guide_section": "ai-assistant"
+  },
+  {
+    "id": "vision_prompt_manager.prompt_preview",
+    "title": "Prompt Text Preview",
+    "body": "Shows the full prompt text for the selected image description style. This is the instruction sent to the AI model when describing an image. Built-in prompt text is read-only; custom prompts can be edited.",
+    "user_guide_section": "ai-assistant"
+  },
+  {
     "id": "abbreviation_manager.trigger_list",
     "title": "Abbreviation List",
     "body": "Lists all saved text abbreviations. Arrow through to hear each trigger and its expansion. Press Enter or Edit to modify the selected entry. Abbreviations are expanded automatically as you type when enabled.",
