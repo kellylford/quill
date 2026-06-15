@@ -24,7 +24,7 @@ class OcrReviewDialog:
     and ``text`` (the rendered OCR result from :func:`quill.io.ocr.render_ocr_review`).
 
     Call :meth:`show_modal` to display the dialog; it returns ``ID_INSERT``,
-    ``ID_COPY``, or ``ID_DISCARD`` depending on the user's choice.
+    ``ID_COPY``, ``ID_DISCARD``, or ``ID_RETRY`` depending on the user's choice.
     """
 
     # Return codes for the three actions. These map to the stable wxWidgets
@@ -36,6 +36,7 @@ class OcrReviewDialog:
     ID_INSERT = 5100  # wx.ID_OK (affirmative / default)
     ID_DISCARD = 5101  # wx.ID_CANCEL (escape)
     ID_COPY = 5102  # wx.ID_APPLY (middle action)
+    ID_RETRY = 5103  # wx.ID_HELP — "Try a different prompt…" action
 
     def __init__(self, parent: object, title: str, text: str) -> None:
         """Create an OCR review dialog.
@@ -74,6 +75,17 @@ class OcrReviewDialog:
         self.text_ctrl = wx.TextCtrl(panel, value=text, style=wx.TE_MULTILINE | wx.TE_READONLY)
         self.text_ctrl.SetMinSize((760, 440))
         root.Add(self.text_ctrl, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+
+        # "Try a different prompt…" button in its own row above the standard
+        # button sizer.  Uses wx.ID_HELP (5103) so it is a recognised standard
+        # ID, but it lives in a separate sizer row — not inside the
+        # StdDialogButtonSizer — to avoid fighting the native button layout.
+        retry_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.retry_btn = wx.Button(panel, id=self.ID_RETRY, label="Try a different prompt…")
+        self.retry_btn.SetName("Try a different prompt")
+        self.retry_btn.Bind(wx.EVT_BUTTON, lambda _e: self._end(self.ID_RETRY))
+        retry_sizer.Add(self.retry_btn, 0, wx.LEFT | wx.RIGHT, 10)
+        root.Add(retry_sizer, 0, wx.EXPAND | wx.BOTTOM, 6)
 
         # Button row using a standard dialog button sizer for platform-native,
         # screen-reader-friendly layout (A11Y-4). Buttons carry standard wx ids

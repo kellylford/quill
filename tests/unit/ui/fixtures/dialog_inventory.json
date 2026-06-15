@@ -167,6 +167,7 @@
   "quill/ui/main_frame_image.py::ImageCaptureMixin._pick_image_source::wx.FileDialog": "native",
   "quill/ui/main_frame_image.py::ImageCaptureMixin._pick_image_source::wx.SingleChoiceDialog": "native",
   "quill/ui/main_frame_image.py::ImageCaptureMixin._run_ocr_on_path::wx.ProgressDialog": "native",
+  "quill/ui/main_frame_image.py::ImageCaptureMixin._show_style_picker::wx.SingleChoiceDialog": "native",
   "quill/ui/main_frame_image.py::ImageCaptureMixin.describe_image_with_ai::wx.ProgressDialog": "native",
   "quill/ui/main_frame_image.py::ImageCaptureMixin.ocr_image_file::wx.FileDialog": "native",
   "quill/ui/main_frame_image.py::ImageCaptureMixin.ocr_screen_capture::wx.SingleChoiceDialog": "native",
@@ -224,5 +225,8 @@
   "quill/ui/sticky_notes.py::StickyNoteEditorDialog.__init__::wx.Dialog": "hardened_custom",
   "quill/ui/sticky_notes.py::StickyNotesVaultDialog.__init__::wx.Dialog": "hardened_custom",
   "quill/ui/style_panel.py::TrainStyleDialog.__init__::wx.Dialog": "hardened_custom",
+  "quill/ui/vision_prompt_manager_dialog.py::VisionPromptManagerDialog.__init__::wx.Dialog": "hardened_custom",
+  "quill/ui/vision_prompt_manager_dialog.py::VisionPromptManagerDialog._on_delete::wx.MessageDialog": "native",
+  "quill/ui/vision_prompt_manager_dialog.py::VisionPromptManagerDialog._show_prompt_editor::wx.Dialog": "hardened_custom",
   "quill/ui/web_form.py::_WebFormDialog.__init__::wx.Dialog": "hardened_custom"
 }

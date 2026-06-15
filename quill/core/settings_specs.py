@@ -883,6 +883,39 @@ SETTING_SPECS: tuple[SettingSpec, ...] = (
         " Leave blank to fall back to the Ask AI default model.",
         keywords=("ai", "prompt", "model", "prompt library", "grammar"),
     ),
+    SettingSpec(
+        "vision_default_prompt_style",
+        "Default image description style",
+        "ai",
+        "text",
+        "The prompt style used when describing images with AI. Defaults to 'accessibility'.",
+        keywords=("vision", "image", "description", "prompt", "style", "accessibility"),
+    ),
+    SettingSpec(
+        "vision_prompt_picker_enabled",
+        "Show style picker before image description",
+        "ai",
+        "bool",
+        "When enabled, a style picker appears before each image description"
+        " so you can choose a different prompt style each time.",
+        keywords=("vision", "image", "description", "picker", "style"),
+    ),
+    SettingSpec(
+        "vision_disabled_builtin_styles",
+        "Disabled built-in image prompt styles",
+        "ai",
+        "text",
+        "List of built-in style IDs to hide from the style picker.",
+        keywords=("vision", "image", "description", "disabled", "hidden"),
+    ),
+    SettingSpec(
+        "vision_custom_prompts",
+        "Custom image prompt styles",
+        "ai",
+        "text",
+        "User-defined image description prompt styles.",
+        keywords=("vision", "image", "description", "custom", "prompt"),
+    ),
     # --- Bug reporting --------------------------------------------------------
     SettingSpec(
         "bug_reporter_name",

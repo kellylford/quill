@@ -215,6 +215,7 @@ state and lists any installed Quillins read-only.
 - [ ] Agent Center: via Tools menu
 - [ ] Accessibility Tune-Up: via Tools > AI Assistant (Tools > AI Assistant > Accessibility Tune-Up...)
 - [ ] AI Hub: via Tools menu
+- [ ] Manage Image Prompts: via AI Hub > "Image Prompt Styles…" button
 
 ## R. Tools: BITS Whisperer (speech)
 

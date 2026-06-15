@@ -208,6 +208,11 @@ class Settings:
     braille_include_proofing_status: bool = True
     braille_include_running_head: bool = False
     braille_include_continuation: bool = True
+    # Vision prompt library: image description style management.
+    vision_default_prompt_style: str = "accessibility"
+    vision_prompt_picker_enabled: bool = False
+    vision_disabled_builtin_styles: list[str] = field(default_factory=list)
+    vision_custom_prompts: list[dict] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Settings:
@@ -559,6 +564,28 @@ class Settings:
         braille_include_proofing_status = bool(data.get("braille_include_proofing_status", True))
         braille_include_running_head = bool(data.get("braille_include_running_head", False))
         braille_include_continuation = bool(data.get("braille_include_continuation", True))
+        # Vision prompt library fields
+        vision_default_prompt_style = str(
+            data.get("vision_default_prompt_style", "accessibility")
+        ).strip()
+        vision_prompt_picker_enabled = bool(data.get("vision_prompt_picker_enabled", False))
+        vision_disabled_builtin_styles_raw = data.get("vision_disabled_builtin_styles")
+        vision_disabled_builtin_styles: list[str] = (
+            [str(s) for s in vision_disabled_builtin_styles_raw]
+            if isinstance(vision_disabled_builtin_styles_raw, list)
+            else []
+        )
+        vision_custom_prompts_raw = data.get("vision_custom_prompts")
+        vision_custom_prompts: list[dict] = (
+            list(vision_custom_prompts_raw) if isinstance(vision_custom_prompts_raw, list) else []
+        )
+        # Validate vision_default_prompt_style against known IDs
+        from quill.core.ai.vision_prompts import BUILTIN_STYLE_IDS
+
+        if vision_default_prompt_style not in BUILTIN_STYLE_IDS and not any(
+            e.get("id") == vision_default_prompt_style for e in vision_custom_prompts
+        ):
+            vision_default_prompt_style = "accessibility"
         raw_mp = int(data.get("multi_press_window_ms", 400))
         multi_press_window_ms = max(100, min(1000, raw_mp))
         if recent_files_limit < 1:
@@ -726,6 +753,10 @@ class Settings:
             braille_include_proofing_status=braille_include_proofing_status,
             braille_include_running_head=braille_include_running_head,
             braille_include_continuation=braille_include_continuation,
+            vision_default_prompt_style=vision_default_prompt_style,
+            vision_prompt_picker_enabled=vision_prompt_picker_enabled,
+            vision_disabled_builtin_styles=vision_disabled_builtin_styles,
+            vision_custom_prompts=vision_custom_prompts,
         )
 
 

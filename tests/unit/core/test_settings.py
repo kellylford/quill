@@ -388,3 +388,79 @@ def test_settings_normalize_invalid_shell_file_types(
     )
     loaded = load_settings()
     assert loaded.shell_file_types == "images_pdf"
+
+
+# ---------------------------------------------------------------------------
+# Vision prompt library settings
+# ---------------------------------------------------------------------------
+
+
+def test_vision_prompt_settings_defaults(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """New vision prompt fields default correctly when absent from settings."""
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    (tmp_path / "settings.json").write_text("{}", encoding="utf-8")
+    loaded = load_settings()
+    assert loaded.vision_default_prompt_style == "accessibility"
+    assert loaded.vision_prompt_picker_enabled is False
+    assert loaded.vision_disabled_builtin_styles == []
+    assert loaded.vision_custom_prompts == []
+
+
+def test_vision_prompt_settings_round_trip(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """All four vision prompt fields survive a save/load round-trip."""
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    save_settings(
+        Settings(
+            vision_default_prompt_style="concise",
+            vision_prompt_picker_enabled=True,
+            vision_disabled_builtin_styles=["mood", "colorful"],
+            vision_custom_prompts=[
+                {"id": "my-style", "title": "My Style", "prompt": "Describe briefly."}
+            ],
+        )
+    )
+    loaded = load_settings()
+    assert loaded.vision_default_prompt_style == "concise"
+    assert loaded.vision_prompt_picker_enabled is True
+    assert loaded.vision_disabled_builtin_styles == ["mood", "colorful"]
+    assert len(loaded.vision_custom_prompts) == 1
+    assert loaded.vision_custom_prompts[0]["id"] == "my-style"
+
+
+def test_vision_default_prompt_style_falls_back_on_unknown(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """An unknown vision_default_prompt_style falls back to 'accessibility'."""
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    (tmp_path / "settings.json").write_text(
+        '{"vision_default_prompt_style":"nonexistent"}',
+        encoding="utf-8",
+    )
+    loaded = load_settings()
+    assert loaded.vision_default_prompt_style == "accessibility"
+
+
+def test_vision_disabled_builtin_styles_ignores_non_list(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Non-list values for vision_disabled_builtin_styles are normalized to []."""
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    (tmp_path / "settings.json").write_text(
+        '{"vision_disabled_builtin_styles":"not-a-list"}',
+        encoding="utf-8",
+    )
+    loaded = load_settings()
+    assert loaded.vision_disabled_builtin_styles == []
+
+
+def test_vision_custom_prompts_ignores_non_list(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Non-list values for vision_custom_prompts are normalized to []."""
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    (tmp_path / "settings.json").write_text(
+        '{"vision_custom_prompts":"not-a-list"}',
+        encoding="utf-8",
+    )
+    loaded = load_settings()
+    assert loaded.vision_custom_prompts == []

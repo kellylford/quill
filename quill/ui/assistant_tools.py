@@ -1575,6 +1575,11 @@ class AssistantConnectionDialog:
         if self._open_model_settings is not None:
             self.model_settings_button = wx.Button(panel, label="On-device model...")
             actions.Add(self.model_settings_button, 0)
+        # Vision prompt library: "Image Prompt Styles…" button
+        self.vision_prompt_styles_button = wx.Button(panel, label="Image Prompt Styles…")
+        self.vision_prompt_styles_button.SetName("Image Prompt Styles")
+        self.vision_prompt_styles_button.Bind(wx.EVT_BUTTON, self._on_vision_prompt_styles)
+        actions.Add(self.vision_prompt_styles_button, 0)
         panel_sizer.Add(actions, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
         self.connection_status = wx.StaticText(
@@ -1584,6 +1589,54 @@ class AssistantConnectionDialog:
             ),
         )
         panel_sizer.Add(self.connection_status, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+        # --- Vision prompt library settings ---
+        from quill.core.settings import load_settings
+
+        _app_settings = load_settings()
+
+        # Picker toggle
+        self.vision_picker_enabled = wx.CheckBox(
+            panel, label="Show a style picker before each image description"
+        )
+        self.vision_picker_enabled.SetValue(
+            bool(getattr(_app_settings, "vision_prompt_picker_enabled", False))
+        )
+        self.vision_picker_enabled.SetName("Show style picker before image description")
+        panel_sizer.Add(self.vision_picker_enabled, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
+
+        # Default style dropdown
+        from quill.core.ai.vision_prompts import enabled_style_choices
+
+        _style_choices = enabled_style_choices(
+            disabled_builtins=list(getattr(_app_settings, "vision_disabled_builtin_styles", [])),
+            custom_prompts=list(getattr(_app_settings, "vision_custom_prompts", [])),
+        )
+        _style_labels = [c["title"] for c in _style_choices]
+        _style_ids = [c["id"] for c in _style_choices]
+        _current_default = getattr(_app_settings, "vision_default_prompt_style", "accessibility")
+        _default_index = 0
+        try:
+            _default_index = _style_ids.index(_current_default)
+        except ValueError:
+            pass
+
+        default_style_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        default_style_sizer.Add(
+            wx.StaticText(panel, label="Default description style:"),
+            0,
+            wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+            8,
+        )
+        self.vision_default_style = wx.Choice(panel, choices=_style_labels)
+        self.vision_default_style.SetName("Default image description style")
+        if _style_labels:
+            self.vision_default_style.SetSelection(_default_index)
+        default_style_sizer.Add(self.vision_default_style, 1, wx.EXPAND)
+        panel_sizer.Add(default_style_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+        # Store the style ID list for saving
+        self._vision_style_ids = _style_ids
 
         panel.SetSizer(panel_sizer)
         root.Add(panel, 1, wx.EXPAND | wx.ALL, 8)
@@ -1858,6 +1911,15 @@ class AssistantConnectionDialog:
         if callable(self._open_model_settings):
             self._open_model_settings()
 
+    def _on_vision_prompt_styles(self, _event: object) -> None:
+        """Open the Manage Image Prompts dialog."""
+        from quill.core.settings import load_settings
+        from quill.ui.vision_prompt_manager_dialog import VisionPromptManagerDialog
+
+        settings = load_settings()
+        dlg = VisionPromptManagerDialog(self.dialog, settings)
+        dlg.show_modal()
+
     def show_modal(self) -> bool:
         self.dialog.CentreOnParent()
         try:
@@ -1872,6 +1934,17 @@ class AssistantConnectionDialog:
             self.last_verification_ok = ok
             self.last_verification_message = message
             self.connection_status.SetLabel(message)
+
+            # Save vision prompt library settings
+            from quill.core.settings import load_settings, save_settings
+
+            app_settings = load_settings()
+            app_settings.vision_prompt_picker_enabled = bool(self.vision_picker_enabled.GetValue())
+            style_sel = self.vision_default_style.GetSelection()
+            if 0 <= style_sel < len(self._vision_style_ids):
+                app_settings.vision_default_prompt_style = self._vision_style_ids[style_sel]
+            save_settings(app_settings)
+
             return True
         finally:
             self.dialog.Destroy()
