@@ -397,12 +397,10 @@ class ImageCaptureMixin:
         current_settings = load_settings()
 
         # Gather settings for the prompt library.
-        default_style_id = getattr(current_settings, "vision_default_prompt_style", "accessibility")
-        picker_enabled = bool(getattr(current_settings, "vision_prompt_picker_enabled", False))
-        disabled_builtins: list[str] = list(
-            getattr(current_settings, "vision_disabled_builtin_styles", [])
-        )
-        custom_prompts: list[dict] = list(getattr(current_settings, "vision_custom_prompts", []))
+        default_style_id = current_settings.vision_default_prompt_style
+        picker_enabled = current_settings.vision_prompt_picker_enabled
+        disabled_builtins: list[str] = list(current_settings.vision_disabled_builtin_styles)
+        custom_prompts: list[dict[str, str]] = list(current_settings.vision_custom_prompts)
 
         # --- Phase 3: opt-in pre-describe picker ---
         current_style_id = default_style_id
@@ -487,7 +485,13 @@ class ImageCaptureMixin:
 
             from quill.ui.ocr_review_dialog import OcrReviewDialog
 
-            review_dialog = OcrReviewDialog(self.frame, _TITLE, str(description))
+            review_dialog = OcrReviewDialog(
+                self.frame,
+                _TITLE,
+                str(description),
+                allow_retry=True,
+                text_label="Image description",
+            )
             choice = review_dialog.show_modal(
                 announce=self._announce,
                 enter_region=self._region_tracker.enter,

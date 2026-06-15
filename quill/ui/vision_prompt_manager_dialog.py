@@ -9,6 +9,7 @@ settings panels).
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 import wx
@@ -257,6 +258,7 @@ class VisionPromptManagerDialog:
             "Edit Custom Prompt",
             entry["title"],
             entry["prompt"],
+            exclude_id=entry["id"],
         )
         if result is None:
             return
@@ -284,10 +286,10 @@ class VisionPromptManagerDialog:
             wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
         )
         dlg.SetName("Delete custom prompt confirmation")
-        if dlg.ShowModal() != wx.ID_YES:
-            dlg.Destroy()
-            return
+        result = show_modal_dialog(dlg, "Delete Custom Prompt")
         dlg.Destroy()
+        if result != wx.ID_YES:
+            return
         # Remove from custom list
         self._custom = [c for c in self._custom if c.get("id") != entry["id"]]
         self._rebuild_list()
@@ -301,8 +303,15 @@ class VisionPromptManagerDialog:
         """Write changes to settings and close."""
         self._settings.vision_disabled_builtin_styles = sorted(self._disabled)
         self._settings.vision_custom_prompts = self._custom
-        # If the default style is now disabled, fall back to "accessibility".
-        if self._settings.vision_default_prompt_style in self._disabled:
+        # Reset the default style if it is no longer reachable: a built-in was
+        # disabled, a custom prompt was deleted, or a custom prompt's title was
+        # edited (which regenerates its ID).
+        current_default = self._settings.vision_default_prompt_style
+        surviving_custom_ids = {e.get("id", "") for e in self._custom}
+        if current_default in self._disabled or (
+            current_default not in BUILTIN_STYLE_IDS
+            and current_default not in surviving_custom_ids
+        ):
             self._settings.vision_default_prompt_style = "accessibility"
         save_settings(self._settings)
         self.dialog.EndModal(wx.ID_CLOSE)
@@ -312,7 +321,7 @@ class VisionPromptManagerDialog:
     # ------------------------------------------------------------------
 
     def _show_prompt_editor(
-        self, title: str, initial_title: str, initial_prompt: str
+        self, title: str, initial_title: str, initial_prompt: str, *, exclude_id: str = ""
     ) -> tuple[str, str, str] | None:
         """Show a sub-dialog for editing a custom prompt's title and text.
 
@@ -363,7 +372,7 @@ class VisionPromptManagerDialog:
         cancel_btn = wx.Button(panel, id=wx.ID_CANCEL, label="&Cancel")
         btn_sizer.Add(ok_btn, 0, wx.RIGHT, 6)
         btn_sizer.Add(cancel_btn, 0)
-        root.Add(btn_sizer, 0, wx.ALIGN_RIGHT | wx.ALL, 10)
+        root.Add(btn_sizer, 0, wx.EXPAND | wx.ALL, 10)
 
         panel.SetSizer(root)
         outer = wx.BoxSizer(wx.VERTICAL)
@@ -384,14 +393,23 @@ class VisionPromptManagerDialog:
             return None
 
         # Generate a stable ID from the title
-        import re
-
         new_id = re.sub(r"[^a-z0-9]+", "-", new_title.lower()).strip("-")
         if not new_id:
             new_id = "custom-prompt"
         # Avoid collision with built-in IDs
         if new_id in BUILTIN_STYLE_IDS:
             new_id = f"custom-{new_id}"
+        # Avoid collision with existing custom prompt IDs (excluding the entry
+        # being edited, if any)
+        existing_custom_ids = {
+            e.get("id", "") for e in self._custom if e.get("id") != exclude_id
+        }
+        if new_id in existing_custom_ids:
+            suffix = 2
+            base_id = new_id
+            while f"{base_id}-{suffix}" in existing_custom_ids:
+                suffix += 1
+            new_id = f"{base_id}-{suffix}"
 
         return new_id, new_title, new_prompt
 

@@ -1912,13 +1912,45 @@ class AssistantConnectionDialog:
             self._open_model_settings()
 
     def _on_vision_prompt_styles(self, _event: object) -> None:
-        """Open the Manage Image Prompts dialog."""
+        """Open the Manage Image Prompts dialog, then refresh the style dropdown."""
         from quill.core.settings import load_settings
         from quill.ui.vision_prompt_manager_dialog import VisionPromptManagerDialog
 
         settings = load_settings()
         dlg = VisionPromptManagerDialog(self.dialog, settings)
         dlg.show_modal()
+        self._refresh_vision_style_dropdown()
+
+    def _refresh_vision_style_dropdown(self) -> None:
+        """Rebuild the default-style Choice control from the current saved settings.
+
+        Called after the Manage Image Prompts dialog closes so that any newly
+        added, removed, or disabled styles are reflected immediately without
+        requiring the AI Hub to be closed and reopened.
+        """
+        from quill.core.ai.vision_prompts import enabled_style_choices
+        from quill.core.settings import load_settings
+
+        app_settings = load_settings()
+        style_choices = enabled_style_choices(
+            disabled_builtins=list(app_settings.vision_disabled_builtin_styles),
+            custom_prompts=list(app_settings.vision_custom_prompts),
+        )
+        style_labels = [c["title"] for c in style_choices]
+        style_ids = [c["id"] for c in style_choices]
+        current_default = app_settings.vision_default_prompt_style
+        default_index = 0
+        try:
+            default_index = style_ids.index(current_default)
+        except ValueError:
+            pass
+
+        self.vision_default_style.Clear()
+        for label in style_labels:
+            self.vision_default_style.Append(label)
+        if style_labels:
+            self.vision_default_style.SetSelection(default_index)
+        self._vision_style_ids = style_ids
 
     def show_modal(self) -> bool:
         self.dialog.CentreOnParent()

@@ -73,17 +73,15 @@
   Go, Rust, and more) (#191); **file-open focus** now lands in the editor with a
   screen-reader announcement, removing the Alt+Tab workaround (#187).
 - **HEIC/HEIF image support** for AI image description (#164).
-- **Vision Prompt Library.** `quill/core/ai/vision_prompts.py` ships 12 evaluated
-  IDT prompt styles (narrative, detailed, concise, artistic, technical, colorful,
-  simple, accessibility, comparison, mood, functional, aialttext) for image
-  description. `quill/ui/main_frame_image.py::describe_image_with_ai()` resolves
-  the active prompt from settings, supports an opt-in pre-describe style picker,
-  and adds a "Try a different prompt…" retry loop in the review dialog with
-  fallback caching. `quill/ui/vision_prompt_manager_dialog.py` provides
-  enable/disable and Add/Edit/Delete for custom prompts, opened from the AI Hub
-  alongside a picker-toggle checkbox and default-style dropdown. Covered by
-  `tests/unit/core/test_vision_prompts.py` and
-  `tests/unit/core/test_settings.py` (#195).
+- **Vision Prompt Library.** Choose from 12 image description styles — Narrative,
+  Detailed, Concise, Artistic, Technical, Colorful, Simple, Accessibility,
+  Comparison, Mood, Functional, and AI Alt Text — each tuned for a different use
+  case. After describing an image, a **"Try a different prompt…"** button in the
+  review dialog lets you re-run with a different style without starting over. An
+  opt-in pre-describe picker (off by default) can show the style list before every
+  description. Manage styles — enable/disable built-ins, add your own custom
+  prompts — from **AI Hub > Image Prompt Styles**. Users who have not changed any
+  settings continue to see identical behavior (#195).
 - **About screen** lists all GitHub contributors, fetched from the contributors
   API with a baked-in offline fallback; Ken Perry and Kelly Ford added.
 

@@ -13,6 +13,7 @@ from quill.core.settings_normalizers import (
     _normalize_status_bar_hidden,
     _normalize_status_bar_order,
 )
+from quill.core.ai.vision_prompts import BUILTIN_STYLE_IDS
 from quill.core.storage import read_json, write_json_atomic
 
 __all__ = [
@@ -212,7 +213,7 @@ class Settings:
     vision_default_prompt_style: str = "accessibility"
     vision_prompt_picker_enabled: bool = False
     vision_disabled_builtin_styles: list[str] = field(default_factory=list)
-    vision_custom_prompts: list[dict] = field(default_factory=list)
+    vision_custom_prompts: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Settings:
@@ -576,12 +577,12 @@ class Settings:
             else []
         )
         vision_custom_prompts_raw = data.get("vision_custom_prompts")
-        vision_custom_prompts: list[dict] = (
-            list(vision_custom_prompts_raw) if isinstance(vision_custom_prompts_raw, list) else []
+        vision_custom_prompts: list[dict[str, Any]] = (
+            [e for e in vision_custom_prompts_raw if isinstance(e, dict) and e.get("id")]
+            if isinstance(vision_custom_prompts_raw, list)
+            else []
         )
         # Validate vision_default_prompt_style against known IDs
-        from quill.core.ai.vision_prompts import BUILTIN_STYLE_IDS
-
         if vision_default_prompt_style not in BUILTIN_STYLE_IDS and not any(
             e.get("id") == vision_default_prompt_style for e in vision_custom_prompts
         ):

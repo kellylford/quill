@@ -464,3 +464,18 @@ def test_vision_custom_prompts_ignores_non_list(
     )
     loaded = load_settings()
     assert loaded.vision_custom_prompts == []
+
+
+def test_vision_custom_prompts_filters_non_dict_entries(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Non-dict and ID-less entries in vision_custom_prompts are silently dropped."""
+    monkeypatch.setenv("QUILL_DATA_DIR", str(tmp_path))
+    (tmp_path / "settings.json").write_text(
+        '{"vision_custom_prompts": [42, null, {}, {"id": "", "title": "Bad"}, '
+        '{"id": "good", "title": "Good", "prompt": "Describe it."}]}',
+        encoding="utf-8",
+    )
+    loaded = load_settings()
+    assert len(loaded.vision_custom_prompts) == 1
+    assert loaded.vision_custom_prompts[0]["id"] == "good"

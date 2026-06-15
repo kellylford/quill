@@ -38,13 +38,27 @@ class OcrReviewDialog:
     ID_COPY = 5102  # wx.ID_APPLY (middle action)
     ID_RETRY = 5103  # wx.ID_HELP — "Try a different prompt…" action
 
-    def __init__(self, parent: object, title: str, text: str) -> None:
+    def __init__(
+        self,
+        parent: object,
+        title: str,
+        text: str,
+        *,
+        allow_retry: bool = False,
+        text_label: str = "Recognized text",
+    ) -> None:
         """Create an OCR review dialog.
 
         Args:
             parent: The parent window (typically MainFrame).
             title: The dialog title.
             text: The rendered OCR result text to display.
+            allow_retry: When True, adds a "Try a different prompt…" button that
+                returns ID_RETRY.  Only pass True from AI image description — the
+                OCR flow has no concept of retrying with a different prompt.
+            text_label: Accessible label for the text display control and its
+                static-text heading.  Defaults to "Recognized text" for OCR;
+                pass "Image description" for the AI image description path.
         """
         # Defer wx import to avoid import-time dependency on wx when testing
         import wx
@@ -62,30 +76,37 @@ class OcrReviewDialog:
         root = wx.BoxSizer(wx.VERTICAL)
 
         # Instructions at the top
-        intro = wx.StaticText(
-            panel,
-            label="Review the recognized text below, then choose Insert, Copy, or Discard.",
-        )
+        if allow_retry:
+            intro_label = (
+                "Review the text below, then choose Insert, Copy, Discard, "
+                "or Try a different prompt."
+            )
+        else:
+            intro_label = "Review the recognized text below, then choose Insert, Copy, or Discard."
+        intro = wx.StaticText(panel, label=intro_label)
         root.Add(intro, 0, wx.EXPAND | wx.ALL, 10)
 
         # Main text display (multiline readonly TextCtrl for screen-reader review)
-        label = wx.StaticText(panel, label="Recognized text")
+        label = wx.StaticText(panel, label=text_label)
         root.Add(label, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
         self.text_ctrl = wx.TextCtrl(panel, value=text, style=wx.TE_MULTILINE | wx.TE_READONLY)
+        self.text_ctrl.SetName(text_label)
         self.text_ctrl.SetMinSize((760, 440))
         root.Add(self.text_ctrl, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
-        # "Try a different prompt…" button in its own row above the standard
-        # button sizer.  Uses wx.ID_HELP (5103) so it is a recognised standard
-        # ID, but it lives in a separate sizer row — not inside the
-        # StdDialogButtonSizer — to avoid fighting the native button layout.
-        retry_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.retry_btn = wx.Button(panel, id=self.ID_RETRY, label="Try a different prompt…")
-        self.retry_btn.SetName("Try a different prompt")
-        self.retry_btn.Bind(wx.EVT_BUTTON, lambda _e: self._end(self.ID_RETRY))
-        retry_sizer.Add(self.retry_btn, 0, wx.LEFT | wx.RIGHT, 10)
-        root.Add(retry_sizer, 0, wx.EXPAND | wx.BOTTOM, 6)
+        # "Try a different prompt…" button — only shown for AI image description.
+        # Uses wx.ID_HELP (5103) so it is a recognised standard ID, but it lives
+        # in a separate sizer row — not inside the StdDialogButtonSizer — to avoid
+        # fighting the native button layout.
+        self.retry_btn = None
+        if allow_retry:
+            retry_sizer = wx.BoxSizer(wx.HORIZONTAL)
+            self.retry_btn = wx.Button(panel, id=self.ID_RETRY, label="Try a different prompt…")
+            self.retry_btn.SetName("Try a different prompt")
+            self.retry_btn.Bind(wx.EVT_BUTTON, lambda _e: self._end(self.ID_RETRY))
+            retry_sizer.Add(self.retry_btn, 0, wx.LEFT | wx.RIGHT, 10)
+            root.Add(retry_sizer, 0, wx.EXPAND | wx.BOTTOM, 6)
 
         # Button row using a standard dialog button sizer for platform-native,
         # screen-reader-friendly layout (A11Y-4). Buttons carry standard wx ids

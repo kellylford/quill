@@ -103,6 +103,13 @@ def test_enabled_style_choices_skips_empty_id_custom() -> None:
     assert len(choices) == 12  # only built-ins
 
 
+def test_enabled_style_choices_all_disabled_returns_empty() -> None:
+    """enabled_style_choices returns [] when every built-in style is disabled."""
+    all_ids = [s["id"] for s in BUILTIN_PROMPT_STYLES]
+    choices = enabled_style_choices(disabled_builtins=all_ids)
+    assert choices == []
+
+
 def test_builtin_prompt_by_id_coverage() -> None:
     """BUILTIN_PROMPT_BY_ID has an entry for every style."""
     for style in BUILTIN_PROMPT_STYLES:
