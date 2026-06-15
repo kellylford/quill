@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from quill.core.ai.vision_prompts import BUILTIN_STYLE_IDS
 from quill.core.paths import app_data_dir
 from quill.core.settings_normalizers import (
     STATUS_BAR_ITEMS,
@@ -13,7 +14,6 @@ from quill.core.settings_normalizers import (
     _normalize_status_bar_hidden,
     _normalize_status_bar_order,
 )
-from quill.core.ai.vision_prompts import BUILTIN_STYLE_IDS
 from quill.core.storage import read_json, write_json_atomic
 
 __all__ = [
