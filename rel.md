@@ -1,4 +1,4 @@
-# QUILL 0.5.1 release notes
+# QUILL 0.6.0 release notes
 
 This release is about feedback you can hear, comparisons you can move through by keyboard, smarter handling of code, and a set of practical encoding tools for anyone who prepares text for the web. Everything below is built screen-reader-first: sound is always optional and never replaces speech, and every new view is a real, navigable control rather than a visual-only flourish.
 
@@ -59,16 +59,22 @@ Setting up MLA or Chicago citations has a special talent for going wrong at 2 a.
 
 You provide the facts; QUILL handles the punctuation gymnastics. The goal here is simple and, frankly, a little bit personal for an accessibility-first editor: a screen-reader user should never be at a disadvantage just because citation formatting is finicky visual busywork. Now you are on the same footing as everyone else in the seminar — and you got there without fighting a single hanging indent.
 
-## New: Braille Mode for BRF, BRL, PEF, and UEB files
+## New: Universal BRF Pack
 
-QUILL now opens and edits formatted braille text files as plain braille ASCII, built for the people who actually proofread transcriptions. The whole point is to move through a braille file the way it is laid out — in braille pages, lines, and cells — with speech that says exactly where you are.
+QUILL now supports a Universal Braille Pack, designed to make translation both comprehensive and verifiable. Instead of a flat list of tables, it uses a three-layer architecture: a full inventory of every available table, a user-facing profile system that maps friendly names to technical tables, and a suite of verified translation paths for English UEB and international braille.
 
-- **It opens braille like braille.** Open a `.brf`, `.brl`, `.pef`, or `.ueb` file and QUILL reads it as NABCC text: it strips a stray byte-order mark, flags any non-braille-ASCII characters, and changes nothing on the way in.
-- **It saves byte-for-byte.** Saving preserves the file exactly — no trailing-space trimming, no line-ending changes, form feeds (the hard page breaks) kept. Open it, save it, and you get an identical file back. If something outside braille ASCII is present, QUILL still saves it as-is and gives you one quiet spoken heads-up.
-- **A braille position cell.** While a braille file is active, the status bar carries a cell that updates as you move — `BRF Pg 12/87 | Ln 14/25 | Cell 31/40 | Print 7` — and a new top-level **Braille** menu gathers the commands: read the status at your chosen verbosity, read the current line and cell, jump to a braille page, step page to page, and insert or remove a braille page break. Bindings are left unset on purpose so nothing fights your screen reader; assign your own or use the Command Palette.
-- **Translation is optional and out-of-process.** Forward and back translation between print and UEB need the optional **QUILL Braille Pack** (liblouis plus the English UEB tables). Until it is installed, the Translation submenu stays hidden rather than greyed out, and an **Install Braille Pack…** item tells you where to get it. When it is present, you can translate a selection or a document to UEB Grade 1 or Grade 2, and back-translate — with the back-translation always labeled a *draft* to review against the BRF. The translator runs in a separate process, so a liblouis hiccup can never take the editor down.
+- **Verified by default.** Every profile in the pack is smoke-tested against golden BRF samples to ensure that "available" means "working."
+- **Easy to expand.** Adding a new language or a legacy table is as simple as adding a new entry to the profiles manifest; the system handles the mapping to the underlying liblouis tables.
+- **Surgical precision.** Because translation runs in a separate process, a liblouis error cannot crash the editor.
 
-Braille Mode ships with both its core reading/editing phase and its translation phase: the Translation commands, the optional-pack detection, and the out-of-process liblouis bridge are all in place, and a deployment build script (`scripts/build_braille_pack.py`) plus a full packaging and language-pack plan are documented in `docs/braille.md`. What remains is operational — vendoring and hosting the first signed translation pack so **Install Braille Pack…** can fetch it directly — along with print-page detection and the proofing workflow on the roadmap.
+## New: Dynamic Keyboard Reference
+
+The keyboard reference is no longer a static document. It is now generated live from the active command registry and your current feature profile.
+
+- **Reflects your actual setup.** If you rebind a key or switch to a different keyboard pack, the exported HTML reference updates instantly to show exactly what is bound.
+- **Layer-aware.** The reference now explicitly documents the layered nature of the QUILL key, including the prefix chords and the dedicated browse mode (Quick Nav) shortcuts.
+- **Accessible export.** The output is a clean, semantic HTML page designed for high-performance screen-reader review.
+
 
 ## Smaller additions worth knowing
 
@@ -91,7 +97,6 @@ This release also clears out a batch of accessibility and startup problems that 
 - **Faster, quieter startup.** Screen-reader detection now runs in the background instead of stalling the first window, a crash in the preview warm-up is fixed, and the title bar no longer flashes "untitled Quill unavailable" before the app is ready. The preview pane also no longer hangs for minutes with no way to close it.
 - **A reliable first run.** The first window now comes to the foreground so the trust and privacy dialog is reachable, and you can re-open the personalization wizard later if you skipped it. The wizard's startup beep and its Cancel-button focus are fixed too.
 - **A tidier Personalize Quill wizard.** Two snags in the setup wizard are gone: the "Play sounds for mode changes" checkbox on step 2 now reads with its label instead of as an unlabeled control, and the profile choices on step 3 now wrap when you arrow past the last one instead of dumping you onto the Back and Next buttons.
-- **Quill actually quits now.** When running from source, Quill could refuse to close — the window would shut but the process kept running until you killed it from the console. A stray background window was holding the door open; it now gets cleaned up on exit, so closing the window closes Quill.
 - **The user guide opens the right way.** It now opens as a read-only page in your browser instead of as an editable Markdown document you could accidentally change — and a stray edit can no longer throw a `0x8007139f` browser error. A glossary of QUILL terms was added to the guide as well.
 - **macOS keeps your API keys.** Saving an Ask Quill API key on macOS used to crash; keys and tokens are now stored in the login Keychain, so you set them up once and on-device or cloud AI just works.
 - **macOS builds install cleanly.** The notarized macOS build now signs its bundled image libraries and uses hardened-runtime entitlements, so the app installs without security warnings.
@@ -102,14 +107,3 @@ This release also clears out a batch of accessibility and startup problems that 
 - **Insert > Date and Time is a submenu now.** The flat **Date and Time** and **Calculated Date...** items have been replaced by a single **Date and Time** submenu that ships three items: **Insert Date**, **Insert Time**, and **Insert Date and Time**. The bundled `com.quill.bundled.insert-tools` Quillin owns the submenu — this is the canonical home for date/time snippets and is the model we use for migrating other built-in conveniences into Quillins.
 - **Sound is opt-in.** Most earcons are off until you choose a sound pack and enable events, so nothing about your current setup gets noisier on upgrade. Turn sound on from **Preferences → Sound** and **Tools → Reading & Dictation → Sound Events...**.
 - **Indentation tones default to Off.** They only play once you pick a scale, so code files stay silent unless you ask for the tones.
-
-## Roadmap: what's coming
-
-- **QUILL Braille Mode** is now captured as a six-phase roadmap. The full
-  spec lives at `docs/braille.md`; `.brf`, `.brl`, `.pef`, and `.ueb` files
-  are first-class document types in v1.0, with English UEB only and
-  liblouis kept strictly out-of-process. Track the work through issues
-  #224–#246 (labels `braille` + `p1`…`p6`). Implementation begins with
-  Phase 1 (BRF Core: open, save, page map, status bar, first commands);
-  Phase 5 (the optional UEB Braille Pack) and Phase 6 (source-to-BRF
-  linking) are gated on later phases.

@@ -98,7 +98,7 @@ From there, a natural first session looks like this:
 3. Use `Ctrl+Shift+P` to explore commands without memorizing everything.
 4. Use the **Navigate** menu to jump by line, heading, block, region, or page.
 5. Use the **Tools** menu for spelling, word count, extraction review, compare, macros, regex help, and GLOW workflows.
-6. Open **Help → Open Keyboard Reference** to see the exact shortcuts that exist in your current configuration, including your keyboard pack and any custom bindings.
+6. Open **Help → Open Keyboard Reference** to see the exact shortcuts that exist in your current configuration. This reference is generated dynamically, so it always reflects your current feature profile and any custom keybindings.
 
 That first session matters because it teaches the most important Quill habit: you do not need to hunt. If an action exists, Quill wants you to be able to reach it from where you already are.
 
@@ -118,7 +118,13 @@ See [Context-Sensitive Help (F1)](#context-sensitive-help-f1) for full details.
 
 ### The QUILL key
 
-The **QUILL key** is `Ctrl+Shift+Grave` (the back-tick/grave key above Tab). It is the one prefix chord that opens most of QUILL's power features without ever leaving the keyboard. Press it once and QUILL arms a one-shot prefix that listens for a second key. Press it twice and QUILL **locks** Quick Nav mode on until you press `Esc`. The QUILL key is its own tiny language: every chord is announced, every chord is remappable in **Preferences → Keyboard**, and the full cheat sheet is one keystroke away (`Ctrl+Shift+Grave, ?`).
+The **QUILL key** is `Ctrl+Shift+Grave` (the back-tick/grave key above Tab). It is a layered prefix chord that opens most of QUILL's power features without ever leaving the keyboard. 
+
+It operates in two primary layers:
+1. **Prefix Mode (One-shot).** Press it once and QUILL arms a short-lived prefix. The next key you press triggers a specific action (like `G` for Go to Anything or `M` for Markdown paste), and then the prefix expires.
+2. **Browse Mode (Locked).** Press the QUILL key twice in a row, and QUILL locks **Quick Nav (Browse) mode** on. In this mode, single-letter keys (like `H` for headings, `P` for paragraphs, or `S` for sentences) move the cursor through the document structure. This mode stays active until you press `Esc`.
+
+The QUILL key is its own tiny language: every chord is announced, every chord is remappable in **Preferences → Keyboard**, and the full cheat sheet is one keystroke away (`Ctrl+Shift+Grave, ?`).
 
 Common QUILL-key chords:
 
@@ -1556,7 +1562,9 @@ QUILL opens and edits formatted braille text files — `.brf`, `.brl`, `.pef`, a
 
 Every status and navigation command is safe to run on a non-braille document — it simply tells you "This is not a braille document" rather than doing anything.
 
-**Translation (optional Braille Pack).** Forward and back translation between print text and UEB braille require the optional **QUILL Braille Pack** (liblouis plus the English UEB tables). The pack is not bundled by default; when it is absent, the **Translation** submenu is hidden so you never see disabled items, and a **Braille → Install Braille Pack…** item points you at the docs. When the pack is installed, the Translation submenu offers Translate to UEB Grade 1, Translate to UEB Grade 2, Translate Selection to UEB, and Back-Translate UEB. Forward translation opens the BRF result in a new document and tells you how many braille pages it produced. Back-translation always opens its result as a clearly labeled **draft** ("Back-translation draft. N words. Review against the BRF.") because no automatic back-translation is authoritative. Translation runs entirely out of process, so a liblouis failure can never take QUILL down; if it fails, QUILL announces the reason and does not open an empty document. The Translation submenu and the installer are also hidden in Safe Mode.
+**Translation (Universal BRF Pack).** Forward and back translation between print text and UEB braille require the optional **QUILL Braille Pack**. Instead of a simple set of tables, the pack uses a three-layer architecture: a full technical catalog of every available liblouis table, a set of user-facing profiles that map friendly names (like "UEB Grade 2") to the correct tables, and the translation runtime itself. 
+
+The pack is not bundled by default; when it is absent, the **Translation** submenu is hidden so you never see disabled items, and a **Braille → Install Braille Pack…** item points you at the docs. When the pack is installed, the Translation submenu offers Translate to UEB Grade 1, Translate to UEB Grade 2, Translate Selection to UEB, and Back-Translate UEB. Forward translation opens the BRF result in a new document and tells you how many braille pages it produced. Back-translation always opens its result as a clearly labeled **draft** ("Back-translation draft. N words. Review against the BRF.") because no automatic back-translation is authoritative. Translation runs entirely out of process, so a liblouis failure can never take QUILL down; if it fails, QUILL announces the reason and does not open an empty document. The Translation submenu and the installer are also hidden in Safe Mode.
 
 ## Help, Learning, and Daily Confidence
 

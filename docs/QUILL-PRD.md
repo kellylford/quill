@@ -2163,7 +2163,11 @@ A dedicated menu surfacing transforms that are otherwise reachable via Tools or 
 ### 5.34 Welcome and Keyboard Reference
 
 - **Welcome** opens a tutorial document in a new tab that walks new users through the editor, command palette, outline navigator, find/F3, spell check, and accessibility audit. The document is editable; users can save their own annotated copy.
-- **Keyboard Reference** is auto-generated from the current keymap and opens as a Markdown document in the editor. It is grouped by menu, includes the "when" context for each binding, and updates the next time the user opens it after any rebind. Because it is just a document, users can search it with Find, jump with the Outline Navigator, and print it.
+- **Keyboard Reference** is auto-generated from the active command registry and the current feature profile. It is available in two formats:
+  1. **Markdown Document**: Grouped by menu, opens in the editor for easy searching and navigation.
+  2 la **Dynamic HTML Export**: A self-contained, accessible HTML page that reflects all active bindings, including custom re-assignments.
+  
+  The reference explicitly documents the **QUILL Key layered system**, including the one-shot **Prefix Layer** and the locked **Browse Layer (Quick Nav)**. This ensures the reference is a precise mirror of the current editor state.
 - **Tip of the Day** is off by default; when on, it appears once per launch as a small dismissible dialog with a single tip drawn from real palette actions, each tip a one-liner with a `Try it` button that runs the action.
 
 ### 5.35 Notifications centre
@@ -4709,7 +4713,14 @@ deployment/packaging plan are in `docs/braille.md`.
   command degrades to a spoken "not a braille document" on non-braille files.
 - **Translation, optional and out-of-process (BR-020/021/022).** Forward and
   back UEB translation require the optional **Braille Pack** (liblouis + UEB
-  tables). liblouis is **never** imported in-process: each translation runs a
+  tables). 
+  
+  The pack implements a three-layer architecture:
+  1. **Table Inventory (Catalog)**: A machine-readable JSON catalog (`tables_catalog.json`) of every table file in the pack, including metadata (language, type, grade) extracted from table headers.
+  2. **User Profiles**: A mapping (`brf_profiles.json`) of friendly names to specific translation and display tables, categorized by role (Recommended, Legacy, etc.) and status.
+  3. **Verified Runtime**: Each profile is smoke-tested against golden BRF samples using `lou_translate.exe` to ensure validity before being marked as 'available'.
+  
+  liblouis is **never** imported in-process: each translation runs a
   short-lived worker subprocess via `stability.safe_subprocess`, killed on
   timeout and respawned on the next call, so a liblouis crash or hang cannot take
   QUILL down. The Translation submenu is shown only when the pack is detected and
